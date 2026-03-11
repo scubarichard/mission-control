@@ -86,6 +86,23 @@ $domainServer      = $LibreChatUrl.TrimEnd('/')
 Write-Host "  AZURE_OPENAI_API_INSTANCE_NAME: $azureInstanceName"
 Write-Host "  DOMAIN_CLIENT:                  $domainClient"
 
+# Derive Key Vault name (matches key-vault.bicep: strip hyphens, cap at 24)
+$kvRaw = ("kv-dax-$ClientName" -replace '-', '')
+if ($kvRaw.Length -gt 24) { $kvName = $kvRaw.Substring(0, 24) } else { $kvName = $kvRaw }
+
+Write-Host "`nReading Entra credentials from Key Vault ($kvName)..." -ForegroundColor Yellow
+
+$entraClientId = az keyvault secret show --vault-name "$kvName" --name "entra-client-id" --query "value" -o tsv
+$entraClientSecret = az keyvault secret show --vault-name "$kvName" --name "entra-client-secret" --query "value" -o tsv
+
+if (-not $entraClientId -or -not $entraClientSecret) {
+    Write-Error "Failed to read Entra credentials from Key Vault. Run Deploy-EntraApp.ps1 first."
+    return
+}
+
+Write-Host "  entra-client-id:     $($entraClientId.Substring(0,8))..."
+Write-Host "  entra-client-secret: ********"
+
 # ============================================================================
 # 3. Build updated container template
 # ============================================================================
@@ -164,11 +181,12 @@ $template = @{
                         @{ name = 'OPENID_BUTTON_LABEL'; value = 'Login with Microsoft' }
                         @{ name = 'ALLOW_SOCIAL_LOGIN'; value = 'true' }
                         @{ name = 'ALLOW_SOCIAL_REGISTRATION'; value = 'true' }
+                        # Entra credentials resolved from Key Vault at deploy time (secretRef was unreliable)
+                        @{ name = 'OPENID_CLIENT_ID'; value = $entraClientId }
+                        @{ name = 'OPENID_CLIENT_SECRET'; value = $entraClientSecret }
                         # Secret-backed env vars (refs to Container App secrets from Key Vault)
                         @{ name = 'OPENAI_API_KEY'; secretRef = 'openai-api-key' }
                         @{ name = 'MONGO_URI'; secretRef = 'cosmos-connection-string' }
-                        @{ name = 'OPENID_CLIENT_ID'; secretRef = 'entra-client-id' }
-                        @{ name = 'OPENID_CLIENT_SECRET'; secretRef = 'entra-client-secret' }
                         @{ name = 'JWT_SECRET'; secretRef = 'jwt-secret' }
                         @{ name = 'JWT_REFRESH_SECRET'; secretRef = 'jwt-refresh-secret' }
                         @{ name = 'CREDS_KEY'; secretRef = 'creds-key' }
