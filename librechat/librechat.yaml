@@ -30,9 +30,9 @@ endpoints:
     plugins: false
     groups:
       - group: "dax-default"
-        apiKey: "${OPENAI_API_KEY}"
-        instanceName: "${AZURE_OPENAI_API_INSTANCE_NAME}"
-        version: "${AZURE_API_VERSION}"
+        apiKey: "635645200b2c4f90a1833de2bda6b753"
+        instanceName: "oai-dax-dakona-pilot"
+        version: "2024-08-01-preview"
         models:
           gpt-4o:
             deploymentName: "gpt-4o"
