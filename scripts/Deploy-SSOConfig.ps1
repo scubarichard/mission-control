@@ -35,7 +35,8 @@
 param(
     [Parameter(Mandatory)] [string] $ClientName,
     [Parameter(Mandatory)] [string] $ClientTenantId,
-    [Parameter(Mandatory)] [string] $LibreChatUrl
+    [Parameter(Mandatory)] [string] $LibreChatUrl,
+    [string] $OpenAIInstanceName = "oai-dax-$ClientName"
 )
 
 $ErrorActionPreference = 'Stop'
@@ -69,19 +70,18 @@ $yamlBase64 = [System.Convert]::ToBase64String($yamlBytes)
 Write-Host "  Encoded $($yamlBytes.Length) bytes -> $($yamlBase64.Length) chars base64"
 
 # ============================================================================
-# 2. Read current Container App template to preserve Bicep-set values
+# 2. Read current Container App config and resolve env var values
 # ============================================================================
 
 Write-Host "`nReading current Container App configuration..." -ForegroundColor Yellow
 
 $currentApp = az containerapp show -n "$caName" -g "$rgName" -o json | ConvertFrom-Json
-$currentEnv = $currentApp.properties.template.containers[0].env
 
-# Extract dynamic values set by Bicep at deploy time
-$azureInstanceName = ($currentEnv | Where-Object { $_.name -eq 'AZURE_OPENAI_API_INSTANCE_NAME' }).value
-$azureApiVersion   = ($currentEnv | Where-Object { $_.name -eq 'AZURE_API_VERSION' }).value
-$domainClient      = ($currentEnv | Where-Object { $_.name -eq 'DOMAIN_CLIENT' }).value
-$domainServer      = ($currentEnv | Where-Object { $_.name -eq 'DOMAIN_SERVER' }).value
+# Use parameter values directly (not container state, which may be corrupted)
+$azureInstanceName = $OpenAIInstanceName
+$azureApiVersion   = "2024-08-01-preview"
+$domainClient      = $LibreChatUrl.TrimEnd('/')
+$domainServer      = $LibreChatUrl.TrimEnd('/')
 
 Write-Host "  AZURE_OPENAI_API_INSTANCE_NAME: $azureInstanceName"
 Write-Host "  DOMAIN_CLIENT:                  $domainClient"
