@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
     Sets per-table archive retention on a Log Analytics workspace to meet
-    SEC Rule 17a-4 (6-year / 2555-day total retention).
+    SEC Rule 17a-4 (6-year / 2556-day total retention).
 
 .DESCRIPTION
     Bicep can only set workspace-level interactive retention (up to 730 days).
@@ -11,7 +11,7 @@
     This script:
     1. Lists all tables in the workspace
     2. Skips tables that cannot be modified (read-only system tables)
-    3. Sets totalRetentionInDays to 2555 on all eligible tables
+    3. Sets totalRetentionInDays to 2556 on all eligible tables
 
     The interactive retention (retentionInDays) is left unchanged - it stays
     at the workspace-level default (730 days). Archive covers the remaining
@@ -33,7 +33,7 @@ $ErrorActionPreference = 'Stop'
 
 $rgName        = "rg-dax-$ClientName"
 $workspaceName = "law-dax-$ClientName"
-$totalRetention = 2555  # 6 years + 365 days buffer ≈ 7 years (SEC 17a-4 requires 6)
+$totalRetention = 2556  # Azure's closest allowed value to 7 years (SEC 17a-4 requires 6)
 
 Write-Host "=== Log Analytics Archive Retention ===" -ForegroundColor Cyan
 Write-Host "Workspace:       $workspaceName"
@@ -60,9 +60,9 @@ foreach ($table in $tables) {
 
     # Skip tables that don't support custom retention
     # provisioningState must be Succeeded, and plan must not be "Basic"
-    # (Basic tables don't support archive). Also skip SearchResults/RestoredLogs tables.
-    if ($tableName -match '_RST$|_SRCH$') {
-        Write-Host "  SKIP (restore/search): $tableName" -ForegroundColor DarkGray
+    # (Basic tables don't support archive). Also skip SearchResults/RestoredLogs/ACS tables.
+    if ($tableName -match '_RST$|_SRCH$|^ACS') {
+        Write-Host "  SKIP (system):         $tableName" -ForegroundColor DarkGray
         $skipped++
         continue
     }
