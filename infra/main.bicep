@@ -25,6 +25,9 @@ param openAiCapacity int = 30
 @description('Entra ID tenant ID for the client.')
 param clientTenantId string
 
+@description('Log and audit retention in days. SEC Rule 17a-4 requires minimum 3 years (1095 days) for RIA firms.')
+param logRetentionDays int = 1095
+
 @description('VNet address space (CIDR).')
 param vnetAddressPrefix string = '10.0.0.0/16'
 
@@ -62,6 +65,7 @@ module logAnalytics 'modules/log-analytics.bicep' = {
   params: {
     nameSuffix: nameSuffix
     location: location
+    retentionInDays: logRetentionDays
     tags: tags
   }
 }
@@ -73,6 +77,7 @@ module keyVault 'modules/key-vault.bicep' = {
     nameSuffix: nameSuffix
     location: location
     logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
+    softDeleteRetentionInDays: logRetentionDays
     tags: tags
   }
 }

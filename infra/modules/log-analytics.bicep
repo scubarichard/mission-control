@@ -4,8 +4,8 @@ param nameSuffix string
 param location string
 param tags object
 
-@description('Retention period in days.')
-param retentionInDays int = 90
+@description('Retention period in days. SEC Rule 17a-4 requires minimum 1095 (3 years) for RIA firms.')
+param retentionInDays int = 1095
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: 'law-${nameSuffix}'
