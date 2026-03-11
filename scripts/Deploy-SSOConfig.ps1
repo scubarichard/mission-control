@@ -39,8 +39,7 @@
 param(
     [Parameter(Mandatory)] [string] $ClientName,
     [Parameter(Mandatory)] [string] $ClientTenantId,
-    [Parameter(Mandatory)] [string] $LibreChatUrl,
-    [string] $OpenAIInstanceName = "oai-dax-$ClientName"
+    [Parameter(Mandatory)] [string] $LibreChatUrl
 )
 
 $ErrorActionPreference = 'Stop'
@@ -82,12 +81,9 @@ Write-Host "`nReading current Container App configuration..." -ForegroundColor Y
 $currentApp = az containerapp show -n "$caName" -g "$rgName" -o json | ConvertFrom-Json
 
 # Use parameter values directly (not container state, which may be corrupted)
-$azureInstanceName = $OpenAIInstanceName
-$azureApiVersion   = "2024-08-01-preview"
 $domainClient      = $LibreChatUrl.TrimEnd('/')
 $domainServer      = $LibreChatUrl.TrimEnd('/')
 
-Write-Host "  AZURE_OPENAI_API_INSTANCE_NAME: $azureInstanceName"
 Write-Host "  DOMAIN_CLIENT:                  $domainClient"
 
 # Derive Key Vault name (matches key-vault.bicep: strip hyphens, cap at 24)
@@ -177,9 +173,7 @@ $template = @{
                         @{ name = 'HOST'; value = '0.0.0.0' }
                         @{ name = 'PORT'; value = '3080' }
                         @{ name = 'CONFIG_PATH'; value = '/config/librechat.yaml' }
-                        @{ name = 'AZURE_OPENAI_API_INSTANCE_NAME'; value = $azureInstanceName }
-                        @{ name = 'AZURE_API_VERSION'; value = $azureApiVersion }
-                        @{ name = 'AZURE_OPENAI_MODELS'; value = 'gpt-4o' }
+                        @{ name = 'AZURE_API_VERSION'; value = '2024-08-01-preview' }
                         @{ name = 'DOMAIN_CLIENT'; value = $domainClient }
                         @{ name = 'DOMAIN_SERVER'; value = $domainServer }
                         @{ name = 'OPENID_ISSUER'; value = "$entraBase/v2.0" }
@@ -262,7 +256,7 @@ Write-Host "  Token:          $entraBase/oauth2/v2.0/token"
 Write-Host "  UserInfo:       https://graph.microsoft.com/oidc/userinfo"
 Write-Host "  Callback:       $callbackUrl"
 Write-Host ""
-Write-Host "Plain-text env vars:  17 (main) + 1 (init)"
+Write-Host "Plain-text env vars:  15 (main) + 1 (init)"
 Write-Host "Secret-backed refs:    8"
 Write-Host ""
 Write-Host "The 'Login with Microsoft' button should now appear on the login page."
