@@ -10,7 +10,7 @@ cache: true
 #                OPENID_SCOPE, OPENID_CALLBACK_URL, OPENID_BUTTON_LABEL
 registration:
   socialLogins: ["openid"]
-  allowedDomains: [] # populated per-client
+  allowedDomains: ["dakona.com"] # set to client's email domain per deployment
 
 # ---------- OpenID Connect (Entra ID) ----------
 # SSO is configured entirely via Container App environment variables (not this file).
