@@ -13,7 +13,7 @@
     2. Skips tables that cannot be modified (read-only system tables)
     3. Sets totalRetentionInDays to 2555 on all eligible tables
 
-    The interactive retention (retentionInDays) is left unchanged — it stays
+    The interactive retention (retentionInDays) is left unchanged - it stays
     at the workspace-level default (730 days). Archive covers the remaining
     ~1825 days. Archived data is queryable via search jobs or restore.
 
@@ -73,7 +73,7 @@ foreach ($table in $tables) {
         continue
     }
 
-    # Already at target — skip to avoid unnecessary API calls
+    # Already at target - skip to avoid unnecessary API calls
     if ($table.totalRetentionInDays -eq $totalRetention) {
         Write-Host "  OK   (already set):    $tableName" -ForegroundColor DarkGray
         $skipped++
@@ -91,11 +91,11 @@ foreach ($table in $tables) {
 
         if ($LASTEXITCODE -ne 0) { throw "az command failed" }
 
-        Write-Host "  SET  ($totalRetention days):  $tableName" -ForegroundColor Green
+        Write-Host "  SET  $totalRetention days:     $tableName" -ForegroundColor Green
         $updated++
     }
     catch {
-        Write-Host "  FAIL:                  $tableName — $_" -ForegroundColor Red
+        Write-Host "  FAIL:                  $tableName - $_" -ForegroundColor Red
         $failed++
     }
 }
@@ -105,6 +105,6 @@ Write-Host "=== Complete ===" -ForegroundColor Cyan
 Write-Host "Updated: $updated  |  Skipped: $skipped  |  Failed: $failed"
 Write-Host ""
 if ($failed -gt 0) {
-    Write-Host "Some tables could not be updated. These are typically system tables" -ForegroundColor Yellow
-    Write-Host "with read-only retention settings (e.g., Usage, Operation)." -ForegroundColor Yellow
+    Write-Host 'Some tables could not be updated. These are typically system tables' -ForegroundColor Yellow
+    Write-Host 'with read-only retention settings (e.g., Usage, Operation).' -ForegroundColor Yellow
 }
