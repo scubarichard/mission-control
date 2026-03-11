@@ -1,0 +1,22 @@
+# Secrets
+.env
+*.env.local
+librechat/.env
+
+# Client secrets (params may contain tenant IDs — track selectively)
+# clients/*/secrets/
+
+# Azure
+.azure/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PowerShell
+*.psm1.bak

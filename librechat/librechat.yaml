@@ -1,0 +1,88 @@
+# LibreChat configuration for DAX
+# Docs: https://www.librechat.ai/docs/configuration/librechat_yaml
+version: 1.2.1
+
+cache: true
+
+# ---------- Registration & Social Login (Entra ID via OpenID Connect) ----------
+# Deploy-EntraApp.ps1 creates the app registration; env vars are injected by Container App.
+# Env vars used: OPENID_ISSUER, OPENID_CLIENT_ID, OPENID_CLIENT_SECRET,
+#                OPENID_SCOPE, OPENID_CALLBACK_URL, OPENID_BUTTON_LABEL
+registration:
+  socialLogins: ["openid"]
+  allowedDomains: [] # populated per-client
+
+# ---------- OpenID Connect (Entra ID) ----------
+socialLogins:
+  openid:
+    # All values are read from environment variables at runtime.
+    # OPENID_ISSUER:        https://login.microsoftonline.com/<tenant-id>/v2.0
+    # OPENID_CLIENT_ID:     from Key Vault (entra-client-id)
+    # OPENID_CLIENT_SECRET: from Key Vault (entra-client-secret)
+    # OPENID_SCOPE:         openid profile email
+    # OPENID_CALLBACK_URL:  /oauth/openid/callback
+    label: "Sign in with Microsoft"
+    id: "openid"
+
+# ---------- Endpoints ----------
+endpoints:
+  azureOpenAI:
+    # Instance-level config is injected via env vars at deploy time
+    titleConvo: true
+    titleModel: "gpt-4o"
+    summarize: true
+    summaryModel: "gpt-4o"
+    plugins: false
+    groups:
+      - group: "dax-default"
+        apiKey: "${OPENAI_API_KEY}"
+        instanceName: "${AZURE_OPENAI_API_INSTANCE_NAME}"
+        version: "${AZURE_API_VERSION}"
+        models:
+          gpt-4o:
+            deploymentName: "gpt-4o"
+            version: "2024-08-06"
+
+  # Disable non-Azure endpoints
+  openAI:
+    disabled: true
+  google:
+    disabled: true
+  anthropic:
+    disabled: true
+  assistants:
+    disabled: true
+
+# ---------- Model Specs (controls what users see) ----------
+modelSpecs:
+  enforce: true
+  prioritize: true
+  list:
+    - name: "gpt-4o"
+      label: "DAX Assistant"
+      description: "GPT-4o via Azure OpenAI"
+      default: true
+      preset:
+        endpoint: "azureOpenAI"
+        model: "gpt-4o"
+        temperature: 0.7
+        maxOutputTokens: 4096
+
+# ---------- Interface ----------
+interface:
+  endpointsMenu: false  # hide endpoint picker — single model experience
+  modelSelect: false
+  presets: false
+
+# ---------- Rate Limiting ----------
+rateLimits:
+  fileUploads:
+    ipMax: 10
+    ipWindowInMinutes: 60
+    userMax: 25
+    userWindowInMinutes: 60
+  conversationsImport:
+    ipMax: 5
+    ipWindowInMinutes: 60
+    userMax: 10
+    userWindowInMinutes: 60
