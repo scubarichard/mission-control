@@ -10,8 +10,12 @@
        - Init container: decodes CONFIG_YAML_B64 -> /config/librechat.yaml
        - Main container: all env vars (plain-text + secret-backed)
        - Shared EmptyDir volume for config file handoff
-    4. Applies the template via az containerapp update --yaml
+    4. Applies the template via az rest PATCH against the ARM API
     5. Restarts the active revision
+
+    WARNING: Never use 'az containerapp update --set-env-vars' on this
+    container — it corrupts the template by stripping plain-text env var
+    values. Always use this script to update env vars.
 
     Requires: Deploy-EntraApp.ps1 and Deploy-LibreChatSecrets.ps1 must have
     already run (creates Key Vault secrets and Container App secret refs).
@@ -43,7 +47,7 @@ $ErrorActionPreference = 'Stop'
 
 $rgName = "rg-dax-$ClientName"
 $caName = "ca-dax-$ClientName"
-$callbackUrl = "$($LibreChatUrl.TrimEnd('/'))/oauth/openid/callback"
+$callbackUrl = "/oauth/openid/callback"  # relative path; LibreChat prepends DOMAIN_SERVER
 $entraBase = "https://login.microsoftonline.com/$ClientTenantId"
 
 Write-Host "=== DAX SSO Configuration ===" -ForegroundColor Cyan
