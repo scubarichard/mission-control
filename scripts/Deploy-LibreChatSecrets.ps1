@@ -44,7 +44,7 @@ $identityName = "id-dax-$ClientName"
 
 if (-not $KeyVaultName) {
     $kvRaw = ("kv-dax-$ClientName" -replace '-', '')
-    $KeyVaultName = if ($kvRaw.Length -gt 24) { $kvRaw.Substring(0, 24) } else { $kvRaw }
+    if ($kvRaw.Length -gt 24) { $KeyVaultName = $kvRaw.Substring(0, 24) } else { $KeyVaultName = $kvRaw }
 }
 
 Write-Host "=== DAX LibreChat Session Secrets ===" -ForegroundColor Cyan
@@ -54,8 +54,9 @@ Write-Host "Container App: $caName"
 
 # ---------- Helper: generate crypto-random hex string ----------
 function New-RandomHex([int]$Bytes) {
-    $buf = [byte[]]::new($Bytes)
-    [System.Security.Cryptography.RandomNumberGenerator]::Fill($buf)
+    $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    $buf = New-Object byte[] $Bytes
+    $rng.GetBytes($buf)
     return ($buf | ForEach-Object { $_.ToString("x2") }) -join ''
 }
 
@@ -75,10 +76,10 @@ foreach ($s in $secrets) {
     Write-Host "`nSetting $($s.Name) ($($s.Desc))..." -ForegroundColor Yellow
 
     az keyvault secret set `
-        --vault-name $KeyVaultName `
-        --name $s.Name `
-        --value $value `
-        --description $s.Desc `
+        --vault-name "$KeyVaultName" `
+        --name "$($s.Name)" `
+        --value "$value" `
+        --description "$($s.Desc)" `
         | Out-Null
 
     Write-Host "  $($s.Name) -> Key Vault ($($value.Length) hex chars)" -ForegroundColor Green
@@ -91,16 +92,16 @@ foreach ($s in $secrets) {
 Write-Host "`nWiring secrets into Container App ($caName)..." -ForegroundColor Yellow
 
 $kvUri = "https://$KeyVaultName.vault.azure.net/"
-$identityId = az identity show -n $identityName -g $rgName --query id -o tsv
+$identityId = az identity show -n "$identityName" -g "$rgName" --query "id" -o tsv
 
-az containerapp secret set -n $caName -g $rgName --secrets `
-    "jwt-secret=keyvaultref:${kvUri}secrets/jwt-secret,identityref:$identityId" `
-    "jwt-refresh-secret=keyvaultref:${kvUri}secrets/jwt-refresh-secret,identityref:$identityId" `
-    "creds-key=keyvaultref:${kvUri}secrets/creds-key,identityref:$identityId" `
-    "creds-iv=keyvaultref:${kvUri}secrets/creds-iv,identityref:$identityId" `
+az containerapp secret set -n "$caName" -g "$rgName" --secrets `
+    "jwt-secret=keyvaultref:${kvUri}secrets/jwt-secret,identityref:${identityId}" `
+    "jwt-refresh-secret=keyvaultref:${kvUri}secrets/jwt-refresh-secret,identityref:${identityId}" `
+    "creds-key=keyvaultref:${kvUri}secrets/creds-key,identityref:${identityId}" `
+    "creds-iv=keyvaultref:${kvUri}secrets/creds-iv,identityref:${identityId}" `
     | Out-Null
 
-az containerapp update -n $caName -g $rgName --set-env-vars `
+az containerapp update -n "$caName" -g "$rgName" --set-env-vars `
     "JWT_SECRET=secretref:jwt-secret" `
     "JWT_REFRESH_SECRET=secretref:jwt-refresh-secret" `
     "CREDS_KEY=secretref:creds-key" `

@@ -131,7 +131,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'OPENID_CALLBACK_URL', value: '/oauth/openid/callback' }
             { name: 'OPENID_BUTTON_LABEL', value: 'Sign in with Microsoft' }
             { name: 'ALLOW_SOCIAL_LOGIN', value: 'true' }
-            { name: 'ALLOW_REGISTRATION', value: 'false' }
+            { name: 'ALLOW_SOCIAL_REGISTRATION', value: 'true' }
             { name: 'MONGO_URI', secretRef: 'cosmos-connection-string' }
             // OPENID_CLIENT_ID, OPENID_CLIENT_SECRET → added by Deploy-EntraApp.ps1
             // JWT_SECRET, JWT_REFRESH_SECRET, CREDS_KEY, CREDS_IV → added by Deploy-LibreChatSecrets.ps1

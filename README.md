@@ -41,10 +41,15 @@ docs/               Architecture diagrams & runbooks
 ./scripts/Deploy-EntraApp.ps1 -ClientName <name> `
   -LibreChatUrl "https://ca-dax-<name>.<container-app-domain>"
 
-# 4. Generate session secrets (stores in KV + wires into Container App)
+# 4. Configure SSO env vars on Container App (after granting admin consent)
+./scripts/Deploy-SSOConfig.ps1 -ClientName <name> `
+  -ClientTenantId <tenant-id> `
+  -LibreChatUrl "https://ca-dax-<name>.<container-app-domain>"
+
+# 5. Generate session secrets (stores in KV + wires into Container App)
 ./scripts/Deploy-LibreChatSecrets.ps1 -ClientName <name>
 
-# 5. Apply Purview policies
+# 6. Apply Purview policies
 ./scripts/Deploy-PurviewPolicies.ps1 -ClientName <name> `
   -ClientTenantId <tenant-id> `
   -ComplianceAdminUpn <upn>

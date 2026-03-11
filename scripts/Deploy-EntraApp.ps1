@@ -47,7 +47,7 @@ $ErrorActionPreference = 'Stop'
 if (-not $KeyVaultName) {
     # Matches key-vault.bicep: replace('kv-dax-${clientName}', '-', ''), truncated to 24 chars
     $kvRaw = ("kv-dax-$ClientName" -replace '-', '')
-    $KeyVaultName = if ($kvRaw.Length -gt 24) { $kvRaw.Substring(0, 24) } else { $kvRaw }
+    if ($kvRaw.Length -gt 24) { $KeyVaultName = $kvRaw.Substring(0, 24) } else { $KeyVaultName = $kvRaw }
 }
 
 $redirectUri = "$($LibreChatUrl.TrimEnd('/'))/oauth/openid/callback"
@@ -70,7 +70,7 @@ Write-Host "`nCreating app registration..." -ForegroundColor Yellow
 # email:   64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0
 $graphResourceId = "00000003-0000-0000-c000-000000000000"  # Microsoft Graph
 
-$requiredResourceAccess = (@(
+$requiredResourceAccess = @(
     @{
         resourceAppId  = $graphResourceId
         resourceAccess = @(
@@ -79,15 +79,20 @@ $requiredResourceAccess = (@(
             @{ id = "64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0"; type = "Scope" }  # email
         )
     }
-) | ConvertTo-Json -Depth 10 -Compress)
+)
+
+$jsonPath = [System.IO.Path]::GetTempFileName() + ".json"
+$requiredResourceAccess | ConvertTo-Json -Depth 5 | Set-Content $jsonPath
 
 $app = az ad app create `
-    --display-name $AppDisplayName `
+    --display-name "$AppDisplayName" `
     --sign-in-audience "AzureADMyOrg" `
-    --web-redirect-uris $redirectUri `
+    --web-redirect-uris "$redirectUri" `
     --enable-id-token-issuance true `
-    --required-resource-accesses $requiredResourceAccess `
+    --required-resource-accesses "@$jsonPath" `
     | ConvertFrom-Json
+
+Remove-Item $jsonPath -Force
 
 $clientId = $app.appId
 $objectId = $app.id
@@ -102,7 +107,7 @@ Write-Host "  Object ID:         $objectId" -ForegroundColor DarkGray
 
 Write-Host "`nCreating service principal..." -ForegroundColor Yellow
 
-az ad sp create --id $clientId | Out-Null
+az ad sp create --id "$clientId" | Out-Null
 
 Write-Host "  Service principal created." -ForegroundColor Green
 
@@ -115,11 +120,11 @@ Write-Host "`nGenerating client secret ($SecretExpiryDays-day expiry)..." -Foreg
 $endDate = (Get-Date).AddDays($SecretExpiryDays).ToString("yyyy-MM-ddTHH:mm:ssZ")
 
 $secret = az ad app credential reset `
-    --id $objectId `
+    --id "$objectId" `
     --append `
     --display-name "DAX LibreChat SSO" `
-    --end-date $endDate `
-    --query password `
+    --end-date "$endDate" `
+    --query "password" `
     --output tsv
 
 if (-not $secret) {
@@ -136,16 +141,16 @@ Write-Host "  Client secret generated." -ForegroundColor Green
 Write-Host "`nStoring credentials in Key Vault ($KeyVaultName)..." -ForegroundColor Yellow
 
 az keyvault secret set `
-    --vault-name $KeyVaultName `
+    --vault-name "$KeyVaultName" `
     --name "entra-client-id" `
-    --value $clientId `
+    --value "$clientId" `
     --description "Entra ID app client ID for LibreChat SSO" `
     | Out-Null
 
 az keyvault secret set `
-    --vault-name $KeyVaultName `
+    --vault-name "$KeyVaultName" `
     --name "entra-client-secret" `
-    --value $secret `
+    --value "$secret" `
     --description "Entra ID app client secret for LibreChat SSO" `
     | Out-Null
 
@@ -163,14 +168,14 @@ $identityName = "id-dax-$ClientName"
 Write-Host "`nWiring secrets into Container App ($caName)..." -ForegroundColor Yellow
 
 $kvUri = "https://$KeyVaultName.vault.azure.net/"
-$identityId = az identity show -n $identityName -g $rgName --query id -o tsv
+$identityId = az identity show -n "$identityName" -g "$rgName" --query "id" -o tsv
 
-az containerapp secret set -n $caName -g $rgName --secrets `
-    "entra-client-id=keyvaultref:${kvUri}secrets/entra-client-id,identityref:$identityId" `
-    "entra-client-secret=keyvaultref:${kvUri}secrets/entra-client-secret,identityref:$identityId" `
+az containerapp secret set -n "$caName" -g "$rgName" --secrets `
+    "entra-client-id=keyvaultref:${kvUri}secrets/entra-client-id,identityref:${identityId}" `
+    "entra-client-secret=keyvaultref:${kvUri}secrets/entra-client-secret,identityref:${identityId}" `
     | Out-Null
 
-az containerapp update -n $caName -g $rgName --set-env-vars `
+az containerapp update -n "$caName" -g "$rgName" --set-env-vars `
     "OPENID_CLIENT_ID=secretref:entra-client-id" `
     "OPENID_CLIENT_SECRET=secretref:entra-client-secret" `
     | Out-Null
@@ -187,7 +192,9 @@ Write-Host "Client ID:    $clientId"
 Write-Host "Key Vault:    $KeyVaultName"
 Write-Host "Redirect URI: $redirectUri"
 Write-Host ""
-Write-Host "Next step:" -ForegroundColor Yellow
-Write-Host "  Grant admin consent for the API permissions in the Azure portal:"
-Write-Host "  Entra ID > App registrations > $AppDisplayName > API permissions > Grant admin consent"
+Write-Host "Next steps:" -ForegroundColor Yellow
+Write-Host "  1. Grant admin consent for the API permissions in the Azure portal:"
+Write-Host "     Entra ID > App registrations > $AppDisplayName > API permissions > Grant admin consent"
+Write-Host "  2. Run Deploy-SSOConfig.ps1 to set OpenID Connect env vars on the Container App:"
+Write-Host "     ./scripts/Deploy-SSOConfig.ps1 -ClientName `"$ClientName`" -ClientTenantId `"<tenant-id>`" -LibreChatUrl `"$($LibreChatUrl.TrimEnd('/'))`""
 Write-Host ""

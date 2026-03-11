@@ -13,16 +13,11 @@ registration:
   allowedDomains: [] # populated per-client
 
 # ---------- OpenID Connect (Entra ID) ----------
-socialLogins:
-  openid:
-    # All values are read from environment variables at runtime.
-    # OPENID_ISSUER:        https://login.microsoftonline.com/<tenant-id>/v2.0
-    # OPENID_CLIENT_ID:     from Key Vault (entra-client-id)
-    # OPENID_CLIENT_SECRET: from Key Vault (entra-client-secret)
-    # OPENID_SCOPE:         openid profile email
-    # OPENID_CALLBACK_URL:  /oauth/openid/callback
-    label: "Sign in with Microsoft"
-    id: "openid"
+# SSO is configured entirely via Container App environment variables (not this file).
+# Run Deploy-EntraApp.ps1 then Deploy-SSOConfig.ps1 to configure.
+# Env vars: OPENID_ISSUER, OPENID_CLIENT_ID, OPENID_CLIENT_SECRET,
+#           OPENID_AUTHORIZATION_URL, OPENID_TOKEN_URL, OPENID_USERINFO_URL,
+#           OPENID_SCOPE, OPENID_CALLBACK_URL, OPENID_BUTTON_LABEL
 
 # ---------- Endpoints ----------
 endpoints:
