@@ -126,7 +126,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'AZURE_OPENAI_MODELS', value: 'gpt-4o' }
             { name: 'DOMAIN_CLIENT', value: 'https://ca-${nameSuffix}.${environment.properties.defaultDomain}' }
             { name: 'DOMAIN_SERVER', value: 'https://ca-${nameSuffix}.${environment.properties.defaultDomain}' }
-            { name: 'OPENID_ISSUER', value: 'https://login.microsoftonline.com/${clientTenantId}/v2.0' }
+            { name: 'OPENID_ISSUER', value: '${az.environment().authentication.loginEndpoint}${clientTenantId}/v2.0' }
             { name: 'OPENID_SCOPE', value: 'openid profile email' }
             { name: 'OPENID_CALLBACK_URL', value: '/oauth/openid/callback' }
             { name: 'OPENID_BUTTON_LABEL', value: 'Sign in with Microsoft' }

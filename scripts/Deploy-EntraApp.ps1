@@ -70,28 +70,24 @@ Write-Host "`nCreating app registration..." -ForegroundColor Yellow
 # email:   64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0
 $graphResourceId = "00000003-0000-0000-c000-000000000000"  # Microsoft Graph
 
-$appBody = @{
-    displayName            = $AppDisplayName
-    signInAudience         = "AzureADMyOrg"
-    web                    = @{
-        redirectUris           = @($redirectUri)
-        implicitGrantSettings  = @{
-            enableIdTokenIssuance = $true
-        }
+$requiredResourceAccess = (@(
+    @{
+        resourceAppId  = $graphResourceId
+        resourceAccess = @(
+            @{ id = "37f7f235-527c-4136-accd-4a02d197296e"; type = "Scope" }  # openid
+            @{ id = "14dad69e-099b-42c9-810b-d002981feec1"; type = "Scope" }  # profile
+            @{ id = "64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0"; type = "Scope" }  # email
+        )
     }
-    requiredResourceAccess = @(
-        @{
-            resourceAppId  = $graphResourceId
-            resourceAccess = @(
-                @{ id = "37f7f235-527c-4136-accd-4a02d197296e"; type = "Scope" }  # openid
-                @{ id = "14dad69e-099b-42c9-810b-d002981feec1"; type = "Scope" }  # profile
-                @{ id = "64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0"; type = "Scope" }  # email
-            )
-        }
-    )
-} | ConvertTo-Json -Depth 10
+) | ConvertTo-Json -Depth 10 -Compress)
 
-$app = az ad app create --body $appBody | ConvertFrom-Json
+$app = az ad app create `
+    --display-name $AppDisplayName `
+    --sign-in-audience "AzureADMyOrg" `
+    --web-redirect-uris $redirectUri `
+    --enable-id-token-issuance true `
+    --required-resource-accesses $requiredResourceAccess `
+    | ConvertFrom-Json
 
 $clientId = $app.appId
 $objectId = $app.id
