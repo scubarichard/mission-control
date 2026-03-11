@@ -1,16 +1,20 @@
 <#
 .SYNOPSIS
-    Configures LibreChat OpenID Connect SSO via Container App environment variables.
+    Configures LibreChat OpenID Connect SSO and injects librechat.yaml config
+    via Container App environment variables and an init container.
 
 .DESCRIPTION
-    Uses --replace-env-vars to reliably set all environment variables on the
-    Container App. This replaces the entire env var set, so the script reads
-    existing dynamic values (AZURE_OPENAI_API_INSTANCE_NAME, DOMAIN_CLIENT,
-    DOMAIN_SERVER) from the current container template before replacing.
+    1. Base64-encodes librechat/librechat.yaml from the repo
+    2. Reads the current Container App JSON to preserve Bicep-set values
+    3. Exports a modified container template JSON with:
+       - Init container: decodes CONFIG_YAML_B64 -> /config/librechat.yaml
+       - Main container: all env vars (plain-text + secret-backed)
+       - Shared EmptyDir volume for config file handoff
+    4. Applies the template via az containerapp update --yaml
+    5. Restarts the active revision
 
-    Requires: Deploy-EntraApp.ps1 must have already run (creates the Key Vault
-    secrets entra-client-id and entra-client-secret and wires them as Container
-    App secret refs).
+    Requires: Deploy-EntraApp.ps1 and Deploy-LibreChatSecrets.ps1 must have
+    already run (creates Key Vault secrets and Container App secret refs).
 
 .PARAMETER ClientName
     Short client identifier.
@@ -48,13 +52,30 @@ Write-Host "Container App: $caName"
 Write-Host "Callback URL:  $callbackUrl"
 
 # ============================================================================
-# 1. Read existing env vars we need to preserve
+# 1. Base64-encode librechat.yaml
+# ============================================================================
+
+$yamlPath = "$PSScriptRoot/../librechat/librechat.yaml"
+if (-not (Test-Path $yamlPath)) {
+    Write-Error "librechat.yaml not found: $yamlPath"
+    return
+}
+
+Write-Host "`nEncoding librechat.yaml as base64..." -ForegroundColor Yellow
+
+$yamlBytes = [System.IO.File]::ReadAllBytes((Resolve-Path $yamlPath).Path)
+$yamlBase64 = [System.Convert]::ToBase64String($yamlBytes)
+
+Write-Host "  Encoded $($yamlBytes.Length) bytes -> $($yamlBase64.Length) chars base64"
+
+# ============================================================================
+# 2. Read current Container App template to preserve Bicep-set values
 # ============================================================================
 
 Write-Host "`nReading current Container App configuration..." -ForegroundColor Yellow
 
-$currentEnv = az containerapp show -n "$caName" -g "$rgName" `
-    --query "properties.template.containers[0].env" -o json | ConvertFrom-Json
+$currentApp = az containerapp show -n "$caName" -g "$rgName" -o json | ConvertFrom-Json
+$currentEnv = $currentApp.properties.template.containers[0].env
 
 # Extract dynamic values set by Bicep at deploy time
 $azureInstanceName = ($currentEnv | Where-Object { $_.name -eq 'AZURE_OPENAI_API_INSTANCE_NAME' }).value
@@ -66,46 +87,122 @@ Write-Host "  AZURE_OPENAI_API_INSTANCE_NAME: $azureInstanceName"
 Write-Host "  DOMAIN_CLIENT:                  $domainClient"
 
 # ============================================================================
-# 2. Replace all env vars (plain-text + secret-backed)
+# 3. Build updated container template
 # ============================================================================
 
-Write-Host "`nReplacing env vars on Container App..." -ForegroundColor Yellow
+Write-Host "`nBuilding updated container template..." -ForegroundColor Yellow
 
-# Build env vars as an array and splat to avoid PowerShell arg-passing issues
-# with backtick continuation stripping values from key=value pairs.
-$envVars = @(
-    "HOST=0.0.0.0"
-    "PORT=3080"
-    "AZURE_OPENAI_API_INSTANCE_NAME=$azureInstanceName"
-    "AZURE_API_VERSION=$azureApiVersion"
-    "AZURE_OPENAI_MODELS=gpt-4o"
-    "DOMAIN_CLIENT=$domainClient"
-    "DOMAIN_SERVER=$domainServer"
-    "OPENID_ISSUER=$entraBase/v2.0"
-    "OPENID_AUTHORIZATION_URL=$entraBase/oauth2/v2.0/authorize"
-    "OPENID_TOKEN_URL=$entraBase/oauth2/v2.0/token"
-    "OPENID_USERINFO_URL=https://graph.microsoft.com/oidc/userinfo"
-    "OPENID_SCOPE=openid profile email"
-    "OPENID_CALLBACK_URL=$callbackUrl"
-    "OPENID_BUTTON_LABEL=Login with Microsoft"
-    "ALLOW_SOCIAL_LOGIN=true"
-    "ALLOW_SOCIAL_REGISTRATION=true"
-    "OPENAI_API_KEY=secretref:openai-api-key"
-    "MONGO_URI=secretref:cosmos-connection-string"
-    "OPENID_CLIENT_ID=secretref:entra-client-id"
-    "OPENID_CLIENT_SECRET=secretref:entra-client-secret"
-    "JWT_SECRET=secretref:jwt-secret"
-    "JWT_REFRESH_SECRET=secretref:jwt-refresh-secret"
-    "CREDS_KEY=secretref:creds-key"
-    "CREDS_IV=secretref:creds-iv"
-)
+# Preserve existing container image, resource settings, and configuration
+$currentContainer = $currentApp.properties.template.containers[0]
+$containerImage = $currentContainer.image
+$containerCpu = $currentContainer.resources.cpu
+$containerMemory = $currentContainer.resources.memory
+$currentConfig = $currentApp.properties.configuration
 
-az containerapp update -n "$caName" -g "$rgName" --replace-env-vars @envVars | Out-Null
-
-Write-Host "  Environment variables replaced ($($envVars.Count) vars)." -ForegroundColor Green
+$template = @{
+    properties = @{
+        configuration = @{
+            ingress = $currentConfig.ingress
+            secrets = @($currentConfig.secrets | ForEach-Object {
+                # Preserve each secret's KV ref and identity binding
+                $secret = @{ name = $_.name }
+                if ($_.keyVaultUrl) { $secret.keyVaultUrl = $_.keyVaultUrl }
+                if ($_.identity)    { $secret.identity = $_.identity }
+                $secret
+            })
+        }
+        template = @{
+            volumes = @(
+                @{
+                    name = 'config-vol'
+                    storageType = 'EmptyDir'
+                }
+            )
+            initContainers = @(
+                @{
+                    name = 'write-config'
+                    image = 'mcr.microsoft.com/cbl-mariner/base/core:2.0'
+                    command = @( '/bin/sh', '-c', 'echo "$CONFIG_YAML_B64" | base64 -d > /config/librechat.yaml' )
+                    env = @(
+                        @{ name = 'CONFIG_YAML_B64'; value = $yamlBase64 }
+                    )
+                    resources = @{
+                        cpu = 0.25
+                        memory = '0.5Gi'
+                    }
+                    volumeMounts = @(
+                        @{ volumeName = 'config-vol'; mountPath = '/config' }
+                    )
+                }
+            )
+            containers = @(
+                @{
+                    name = 'librechat'
+                    image = $containerImage
+                    resources = @{
+                        cpu = $containerCpu
+                        memory = $containerMemory
+                    }
+                    volumeMounts = @(
+                        @{ volumeName = 'config-vol'; mountPath = '/config' }
+                    )
+                    env = @(
+                        @{ name = 'HOST'; value = '0.0.0.0' }
+                        @{ name = 'PORT'; value = '3080' }
+                        @{ name = 'CONFIG_PATH'; value = '/config/librechat.yaml' }
+                        @{ name = 'AZURE_OPENAI_API_INSTANCE_NAME'; value = $azureInstanceName }
+                        @{ name = 'AZURE_API_VERSION'; value = $azureApiVersion }
+                        @{ name = 'AZURE_OPENAI_MODELS'; value = 'gpt-4o' }
+                        @{ name = 'DOMAIN_CLIENT'; value = $domainClient }
+                        @{ name = 'DOMAIN_SERVER'; value = $domainServer }
+                        @{ name = 'OPENID_ISSUER'; value = "$entraBase/v2.0" }
+                        @{ name = 'OPENID_AUTHORIZATION_URL'; value = "$entraBase/oauth2/v2.0/authorize" }
+                        @{ name = 'OPENID_TOKEN_URL'; value = "$entraBase/oauth2/v2.0/token" }
+                        @{ name = 'OPENID_USERINFO_URL'; value = 'https://graph.microsoft.com/oidc/userinfo' }
+                        @{ name = 'OPENID_SCOPE'; value = 'openid profile email' }
+                        @{ name = 'OPENID_CALLBACK_URL'; value = $callbackUrl }
+                        @{ name = 'OPENID_BUTTON_LABEL'; value = 'Login with Microsoft' }
+                        @{ name = 'ALLOW_SOCIAL_LOGIN'; value = 'true' }
+                        @{ name = 'ALLOW_SOCIAL_REGISTRATION'; value = 'true' }
+                        # Secret-backed env vars (refs to Container App secrets from Key Vault)
+                        @{ name = 'OPENAI_API_KEY'; secretRef = 'openai-api-key' }
+                        @{ name = 'MONGO_URI'; secretRef = 'cosmos-connection-string' }
+                        @{ name = 'OPENID_CLIENT_ID'; secretRef = 'entra-client-id' }
+                        @{ name = 'OPENID_CLIENT_SECRET'; secretRef = 'entra-client-secret' }
+                        @{ name = 'JWT_SECRET'; secretRef = 'jwt-secret' }
+                        @{ name = 'JWT_REFRESH_SECRET'; secretRef = 'jwt-refresh-secret' }
+                        @{ name = 'CREDS_KEY'; secretRef = 'creds-key' }
+                        @{ name = 'CREDS_IV'; secretRef = 'creds-iv' }
+                    )
+                }
+            )
+        }
+    }
+}
 
 # ============================================================================
-# 3. Restart active revision
+# 4. Apply template via ARM REST API (PATCH)
+# ============================================================================
+# Using az rest instead of az containerapp update --yaml because:
+# - --yaml expects YAML format with full resource definition, not a JSON fragment
+# - az rest accepts native JSON and handles camelCase field names correctly
+# - Secret refs (secretRef) are preserved without casing issues
+
+Write-Host "`nApplying container template update via ARM API..." -ForegroundColor Yellow
+
+$subscriptionId = az account show --query "id" -o tsv
+$resourceUrl = "/subscriptions/$subscriptionId/resourceGroups/$rgName/providers/Microsoft.App/containerApps/${caName}?api-version=2024-03-01"
+
+$jsonPath = [System.IO.Path]::GetTempFileName() + ".json"
+$template | ConvertTo-Json -Depth 15 | Set-Content $jsonPath -Encoding UTF8
+
+az rest --method PATCH --url "$resourceUrl" --body "@$jsonPath" | Out-Null
+Remove-Item $jsonPath -Force
+
+Write-Host "  Template updated (init container + main container + shared volume)." -ForegroundColor Green
+
+# ============================================================================
+# 5. Restart active revision
 # ============================================================================
 
 Write-Host "`nRestarting active revision..." -ForegroundColor Yellow
@@ -121,10 +218,13 @@ az containerapp revision restart `
 Write-Host "  Revision restarted." -ForegroundColor Green
 
 # ============================================================================
-# 4. Summary
+# 6. Summary
 # ============================================================================
 
 Write-Host "`n=== SSO Configuration Complete ===" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Config:  librechat.yaml injected via init container ($($yamlBytes.Length) bytes)"
+Write-Host "Path:    /config/librechat.yaml (CONFIG_PATH)"
 Write-Host ""
 Write-Host "OpenID Connect URLs (tenant: $ClientTenantId):"
 Write-Host "  Issuer:         $entraBase/v2.0"
@@ -133,7 +233,7 @@ Write-Host "  Token:          $entraBase/oauth2/v2.0/token"
 Write-Host "  UserInfo:       https://graph.microsoft.com/oidc/userinfo"
 Write-Host "  Callback:       $callbackUrl"
 Write-Host ""
-Write-Host "Plain-text env vars:  15"
+Write-Host "Plain-text env vars:  17 (main) + 1 (init)"
 Write-Host "Secret-backed refs:    8"
 Write-Host ""
 Write-Host "The 'Login with Microsoft' button should now appear on the login page."

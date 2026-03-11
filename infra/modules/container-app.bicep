@@ -12,7 +12,7 @@ param tags object
 param infrastructureSubnetId string
 
 @description('LibreChat container image.')
-param containerImage string = 'ghcr.io/danny-avila/librechat:latest'
+param containerImage string = 'ghcr.io/danny-avila/librechat:v0.8.3'
 
 @description('CPU cores for the container.')
 param cpuCores string = '1.0'
@@ -109,6 +109,35 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
       ]
     }
     template: {
+      // Shared ephemeral volume for init container to write librechat.yaml
+      volumes: [
+        {
+          name: 'config-vol'
+          storageType: 'EmptyDir'
+        }
+      ]
+      // Init container: decodes CONFIG_YAML_B64 env var and writes /config/librechat.yaml
+      // CONFIG_YAML_B64 is set by Deploy-SSOConfig.ps1 (base64-encoded librechat/librechat.yaml)
+      initContainers: [
+        {
+          name: 'write-config'
+          image: 'mcr.microsoft.com/cbl-mariner/base/core:2.0'
+          command: [ '/bin/sh', '-c', 'echo "$CONFIG_YAML_B64" | base64 -d > /config/librechat.yaml' ]
+          env: [
+            // CONFIG_YAML_B64 → added by Deploy-SSOConfig.ps1
+          ]
+          resources: {
+            cpu: json('0.25')
+            memory: '0.5Gi'
+          }
+          volumeMounts: [
+            {
+              volumeName: 'config-vol'
+              mountPath: '/config'
+            }
+          ]
+        }
+      ]
       containers: [
         {
           name: 'librechat'
@@ -117,9 +146,16 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             cpu: json(cpuCores)
             memory: memorySize
           }
+          volumeMounts: [
+            {
+              volumeName: 'config-vol'
+              mountPath: '/config'
+            }
+          ]
           env: [
             { name: 'HOST', value: '0.0.0.0' }
             { name: 'PORT', value: '3080' }
+            { name: 'CONFIG_PATH', value: '/config/librechat.yaml' }
             { name: 'OPENAI_API_KEY', secretRef: 'openai-api-key' }
             { name: 'AZURE_OPENAI_API_INSTANCE_NAME', value: replace(replace(openAiEndpoint, 'https://', ''), '.openai.azure.com/', '') }
             { name: 'AZURE_API_VERSION', value: '2024-08-01-preview' }
@@ -134,6 +170,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'ALLOW_SOCIAL_REGISTRATION', value: 'true' }
             { name: 'MONGO_URI', secretRef: 'cosmos-connection-string' }
             // OPENID_CLIENT_ID, OPENID_CLIENT_SECRET → added by Deploy-EntraApp.ps1
+            // OPENID_ISSUER, OPENID_AUTHORIZATION_URL, OPENID_TOKEN_URL, etc. → added by Deploy-SSOConfig.ps1
             // JWT_SECRET, JWT_REFRESH_SECRET, CREDS_KEY, CREDS_IV → added by Deploy-LibreChatSecrets.ps1
           ]
         }
