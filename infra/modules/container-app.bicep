@@ -170,6 +170,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'ALLOW_SOCIAL_REGISTRATION', value: 'true' }
             { name: 'MONGO_URI', secretRef: 'cosmos-connection-string' }
             // OPENID_CLIENT_ID, OPENID_CLIENT_SECRET → added by Deploy-EntraApp.ps1
+            // OPENID_SESSION_SECRET (from jwt-secret) → added by Deploy-SSOConfig.ps1 (required by socialLogins.js)
             // OPENID_ISSUER, OPENID_AUTHORIZATION_URL, OPENID_TOKEN_URL, etc. → added by Deploy-SSOConfig.ps1
             // JWT_SECRET, JWT_REFRESH_SECRET, CREDS_KEY, CREDS_IV → added by Deploy-LibreChatSecrets.ps1
           ]

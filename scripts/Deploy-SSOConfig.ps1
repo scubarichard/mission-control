@@ -90,18 +90,24 @@ Write-Host "  DOMAIN_CLIENT:                  $domainClient"
 $kvRaw = ("kv-dax-$ClientName" -replace '-', '')
 if ($kvRaw.Length -gt 24) { $kvName = $kvRaw.Substring(0, 24) } else { $kvName = $kvRaw }
 
-Write-Host "`nReading Entra credentials from Key Vault ($kvName)..." -ForegroundColor Yellow
+Write-Host "`nReading secrets from Key Vault ($kvName)..." -ForegroundColor Yellow
 
 $entraClientId = az keyvault secret show --vault-name "$kvName" --name "entra-client-id" --query "value" -o tsv
 $entraClientSecret = az keyvault secret show --vault-name "$kvName" --name "entra-client-secret" --query "value" -o tsv
+$sessionSecret = az keyvault secret show --vault-name "$kvName" --name "jwt-secret" --query "value" -o tsv
 
 if (-not $entraClientId -or -not $entraClientSecret) {
     Write-Error "Failed to read Entra credentials from Key Vault. Run Deploy-EntraApp.ps1 first."
     return
 }
+if (-not $sessionSecret) {
+    Write-Error "Failed to read jwt-secret from Key Vault. Run Deploy-LibreChatSecrets.ps1 first."
+    return
+}
 
-Write-Host "  entra-client-id:     $($entraClientId.Substring(0,8))..."
-Write-Host "  entra-client-secret: ********"
+Write-Host "  entra-client-id:         $($entraClientId.Substring(0,8))..."
+Write-Host "  entra-client-secret:     ********"
+Write-Host "  openid-session-secret:   (from jwt-secret) ********"
 
 # ============================================================================
 # 3. Build updated container template
@@ -181,9 +187,10 @@ $template = @{
                         @{ name = 'OPENID_BUTTON_LABEL'; value = 'Login with Microsoft' }
                         @{ name = 'ALLOW_SOCIAL_LOGIN'; value = 'true' }
                         @{ name = 'ALLOW_SOCIAL_REGISTRATION'; value = 'true' }
-                        # Entra credentials resolved from Key Vault at deploy time (secretRef was unreliable)
+                        # Entra credentials + session secret resolved from Key Vault at deploy time
                         @{ name = 'OPENID_CLIENT_ID'; value = $entraClientId }
                         @{ name = 'OPENID_CLIENT_SECRET'; value = $entraClientSecret }
+                        @{ name = 'OPENID_SESSION_SECRET'; value = $sessionSecret }
                         # Secret-backed env vars (refs to Container App secrets from Key Vault)
                         @{ name = 'OPENAI_API_KEY'; secretRef = 'openai-api-key' }
                         @{ name = 'MONGO_URI'; secretRef = 'cosmos-connection-string' }
