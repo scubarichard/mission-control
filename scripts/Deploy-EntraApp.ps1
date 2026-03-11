@@ -157,7 +157,32 @@ Write-Host "  entra-client-id      -> Key Vault" -ForegroundColor Green
 Write-Host "  entra-client-secret   -> Key Vault" -ForegroundColor Green
 
 # ============================================================================
-# 5. Summary
+# 5. Wire secrets into Container App
+# ============================================================================
+
+$rgName = "rg-dax-$ClientName"
+$caName = "ca-dax-$ClientName"
+$identityName = "id-dax-$ClientName"
+
+Write-Host "`nWiring secrets into Container App ($caName)..." -ForegroundColor Yellow
+
+$kvUri = "https://$KeyVaultName.vault.azure.net/"
+$identityId = az identity show -n $identityName -g $rgName --query id -o tsv
+
+az containerapp secret set -n $caName -g $rgName --secrets `
+    "entra-client-id=keyvaultref:${kvUri}secrets/entra-client-id,identityref:$identityId" `
+    "entra-client-secret=keyvaultref:${kvUri}secrets/entra-client-secret,identityref:$identityId" `
+    | Out-Null
+
+az containerapp update -n $caName -g $rgName --set-env-vars `
+    "OPENID_CLIENT_ID=secretref:entra-client-id" `
+    "OPENID_CLIENT_SECRET=secretref:entra-client-secret" `
+    | Out-Null
+
+Write-Host "  Container App updated with Entra secrets." -ForegroundColor Green
+
+# ============================================================================
+# 6. Summary
 # ============================================================================
 
 Write-Host "`n=== Entra App Registration Complete ===" -ForegroundColor Cyan
@@ -166,9 +191,7 @@ Write-Host "Client ID:    $clientId"
 Write-Host "Key Vault:    $KeyVaultName"
 Write-Host "Redirect URI: $redirectUri"
 Write-Host ""
-Write-Host "Next steps:" -ForegroundColor Yellow
-Write-Host "  1. Grant admin consent for the API permissions in the Azure portal"
-Write-Host "     (Entra ID > App registrations > $AppDisplayName > API permissions > Grant admin consent)"
-Write-Host "  2. Restart the Container App to pick up the updated Key Vault secrets:"
-Write-Host "     az containerapp revision restart -n ca-dax-$ClientName -g rg-dax-$ClientName --revision <revision>"
+Write-Host "Next step:" -ForegroundColor Yellow
+Write-Host "  Grant admin consent for the API permissions in the Azure portal:"
+Write-Host "  Entra ID > App registrations > $AppDisplayName > API permissions > Grant admin consent"
 Write-Host ""

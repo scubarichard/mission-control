@@ -34,34 +34,35 @@ docs/               Architecture diagrams & runbooks
   -DakonaTenantId <dakona-tenant-id> `
   -DakonaPrincipalId <dakona-principal-id>
 
-# 2. Deploy Azure infrastructure (all resources + seed secrets)
-az deployment sub create \
-  --location eastus \
-  --template-file infra/main.bicep \
-  --parameters @clients/<client>/params.bicepparam
+# 2. Deploy Azure infrastructure
+./scripts/Deploy-Infrastructure.ps1 -ClientName <name>
 
-# 3. Generate production session secrets
-./scripts/Deploy-LibreChatSecrets.ps1 -ClientName <name>
-
-# 4. Register Entra ID app for SSO
+# 3. Register Entra ID app for SSO (stores secrets in KV + wires into Container App)
 ./scripts/Deploy-EntraApp.ps1 -ClientName <name> `
   -LibreChatUrl "https://ca-dax-<name>.<container-app-domain>"
 
-# 5. Restart Container App to pick up updated secrets
-az containerapp revision restart \
-  -n ca-dax-<name> -g rg-dax-<name> --revision <active-revision>
+# 4. Generate session secrets (stores in KV + wires into Container App)
+./scripts/Deploy-LibreChatSecrets.ps1 -ClientName <name>
 
-# 6. Grant admin consent for Entra app API permissions (Azure Portal)
-
-# 7. Apply Purview policies
+# 5. Apply Purview policies
 ./scripts/Deploy-PurviewPolicies.ps1 -ClientName <name> `
   -ClientTenantId <tenant-id> `
   -ComplianceAdminUpn <upn>
 ```
 
+After step 3, grant admin consent for the Entra app API permissions in the Azure portal
+(Entra ID > App registrations > DAX - Dakona AI Workspace > API permissions > Grant admin consent).
+
+### Redeployment
+
+Bicep can be safely redeployed without affecting script-managed secrets. Only the 2
+Bicep-managed secrets (`openai-api-key`, `cosmos-connection-string`) are in the template.
+The 6 script-managed secrets persist in Key Vault and on the Container App across
+infrastructure redeployments.
+
 ### Prerequisites for scripts
 
-Scripts that write to Key Vault (`Deploy-LibreChatSecrets.ps1`, `Deploy-EntraApp.ps1`)
+Scripts that write to Key Vault (`Deploy-EntraApp.ps1`, `Deploy-LibreChatSecrets.ps1`)
 use the data-plane API and require the **Key Vault Secrets Officer** role:
 
 ```powershell

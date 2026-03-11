@@ -5,6 +5,9 @@ param location string
 param logAnalyticsWorkspaceId string
 param tags object
 
+@description('Soft-delete retention in days. Capped at 90 by Azure; audit retention is handled by Log Analytics.')
+param softDeleteRetentionInDays int = 90
+
 // Key Vault names: 3-24 alphanumeric chars, globally unique
 var kvName = replace('kv-${nameSuffix}', '-', '')
 
@@ -20,7 +23,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     tenantId: tenant().tenantId
     enableRbacAuthorization: true
     enableSoftDelete: true
-    softDeleteRetentionInDays: 90
+    softDeleteRetentionInDays: min(softDeleteRetentionInDays, 90)
     enablePurgeProtection: true
   }
 }
@@ -45,58 +48,10 @@ resource diagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' 
   }
 }
 
-// ---------- Seed secrets ----------
-// Deterministic seed values ensure Bicep deploys cleanly on first run.
-// Deploy-LibreChatSecrets.ps1 replaces session secrets with crypto-random values.
-// Deploy-EntraApp.ps1 replaces Entra placeholders with real credentials.
-
-resource jwtSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  parent: keyVault
-  name: 'jwt-secret'
-  properties: {
-    value: guid(nameSuffix, 'jwt-secret')
-  }
-}
-
-resource jwtRefreshSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  parent: keyVault
-  name: 'jwt-refresh-secret'
-  properties: {
-    value: guid(nameSuffix, 'jwt-refresh-secret')
-  }
-}
-
-resource credsKey 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  parent: keyVault
-  name: 'creds-key'
-  properties: {
-    value: replace(guid(nameSuffix, 'creds-key'), '-', '')
-  }
-}
-
-resource credsIv 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  parent: keyVault
-  name: 'creds-iv'
-  properties: {
-    value: substring(replace(guid(nameSuffix, 'creds-iv'), '-', ''), 0, 16)
-  }
-}
-
-resource entraClientId 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  parent: keyVault
-  name: 'entra-client-id'
-  properties: {
-    value: 'placeholder-run-Deploy-EntraApp'
-  }
-}
-
-resource entraClientSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  parent: keyVault
-  name: 'entra-client-secret'
-  properties: {
-    value: 'placeholder-run-Deploy-EntraApp'
-  }
-}
+// Script-managed secrets (NOT in Bicep — avoids overwrite on redeploy):
+// Deploy-EntraApp.ps1       → entra-client-id, entra-client-secret
+// Deploy-LibreChatSecrets.ps1 → jwt-secret, jwt-refresh-secret, creds-key, creds-iv
+// These scripts also wire their secrets into the Container App.
 
 output keyVaultName string = keyVault.name
 output keyVaultUri string = keyVault.properties.vaultUri

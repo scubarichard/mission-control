@@ -1,14 +1,18 @@
 <#
 .SYNOPSIS
-    Generates cryptographically random session secrets for LibreChat and stores them in Key Vault.
+    Generates cryptographically random session secrets for LibreChat,
+    stores them in Key Vault, and wires them into the Container App.
 
 .DESCRIPTION
-    Replaces the deterministic seed values created by key-vault.bicep with
-    production-grade crypto-random secrets:
+    Creates/updates 4 secrets in Key Vault:
     - jwt-secret          (64 hex chars)
     - jwt-refresh-secret  (64 hex chars)
     - creds-key           (32 hex chars)
     - creds-iv            (16 hex chars)
+
+    Then adds them as KV-backed secrets on the Container App and sets
+    the corresponding environment variables. A new revision is created
+    automatically, picking up the secret values.
 
     Idempotent: safe to run multiple times. Each run generates new values,
     which invalidates existing user sessions (users must re-authenticate).
@@ -33,15 +37,20 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# ---------- Derive Key Vault name if not provided ----------
+# ---------- Derive names ----------
+$rgName = "rg-dax-$ClientName"
+$caName = "ca-dax-$ClientName"
+$identityName = "id-dax-$ClientName"
+
 if (-not $KeyVaultName) {
     $kvRaw = ("kv-dax-$ClientName" -replace '-', '')
     $KeyVaultName = if ($kvRaw.Length -gt 24) { $kvRaw.Substring(0, 24) } else { $kvRaw }
 }
 
 Write-Host "=== DAX LibreChat Session Secrets ===" -ForegroundColor Cyan
-Write-Host "Client:    $ClientName"
-Write-Host "Key Vault: $KeyVaultName"
+Write-Host "Client:        $ClientName"
+Write-Host "Key Vault:     $KeyVaultName"
+Write-Host "Container App: $caName"
 
 # ---------- Helper: generate crypto-random hex string ----------
 function New-RandomHex([int]$Bytes) {
@@ -50,7 +59,9 @@ function New-RandomHex([int]$Bytes) {
     return ($buf | ForEach-Object { $_.ToString("x2") }) -join ''
 }
 
-# ---------- Generate and store secrets ----------
+# ============================================================================
+# 1. Generate and store secrets in Key Vault
+# ============================================================================
 
 $secrets = @(
     @{ Name = 'jwt-secret';         Bytes = 32; Desc = 'JWT signing secret' }
@@ -73,8 +84,37 @@ foreach ($s in $secrets) {
     Write-Host "  $($s.Name) -> Key Vault ($($value.Length) hex chars)" -ForegroundColor Green
 }
 
-Write-Host "`n=== Session secrets stored ===" -ForegroundColor Cyan
+# ============================================================================
+# 2. Wire secrets into Container App
+# ============================================================================
+
+Write-Host "`nWiring secrets into Container App ($caName)..." -ForegroundColor Yellow
+
+$kvUri = "https://$KeyVaultName.vault.azure.net/"
+$identityId = az identity show -n $identityName -g $rgName --query id -o tsv
+
+az containerapp secret set -n $caName -g $rgName --secrets `
+    "jwt-secret=keyvaultref:${kvUri}secrets/jwt-secret,identityref:$identityId" `
+    "jwt-refresh-secret=keyvaultref:${kvUri}secrets/jwt-refresh-secret,identityref:$identityId" `
+    "creds-key=keyvaultref:${kvUri}secrets/creds-key,identityref:$identityId" `
+    "creds-iv=keyvaultref:${kvUri}secrets/creds-iv,identityref:$identityId" `
+    | Out-Null
+
+az containerapp update -n $caName -g $rgName --set-env-vars `
+    "JWT_SECRET=secretref:jwt-secret" `
+    "JWT_REFRESH_SECRET=secretref:jwt-refresh-secret" `
+    "CREDS_KEY=secretref:creds-key" `
+    "CREDS_IV=secretref:creds-iv" `
+    | Out-Null
+
+Write-Host "  Container App updated with session secrets." -ForegroundColor Green
+
+# ============================================================================
+# 3. Summary
+# ============================================================================
+
+Write-Host "`n=== Session secrets deployed ===" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Next: restart the Container App to pick up new secrets:" -ForegroundColor Yellow
-Write-Host "  az containerapp revision restart -n ca-dax-$ClientName -g rg-dax-$ClientName --revision <revision>"
+Write-Host "Key Vault secrets created and wired into $caName."
+Write-Host "A new Container App revision was created automatically."
 Write-Host ""

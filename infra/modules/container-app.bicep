@@ -93,6 +93,8 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
         transport: 'http'
         allowInsecure: false
       }
+      // Bicep-managed secrets only. Script-managed secrets (Entra, session)
+      // are added by Deploy-EntraApp.ps1 and Deploy-LibreChatSecrets.ps1.
       secrets: [
         {
           name: 'openai-api-key'
@@ -102,36 +104,6 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
         {
           name: 'cosmos-connection-string'
           keyVaultUrl: '${keyVault.properties.vaultUri}secrets/cosmos-connection-string'
-          identity: identity.id
-        }
-        {
-          name: 'entra-client-id'
-          keyVaultUrl: '${keyVault.properties.vaultUri}secrets/entra-client-id'
-          identity: identity.id
-        }
-        {
-          name: 'entra-client-secret'
-          keyVaultUrl: '${keyVault.properties.vaultUri}secrets/entra-client-secret'
-          identity: identity.id
-        }
-        {
-          name: 'jwt-secret'
-          keyVaultUrl: '${keyVault.properties.vaultUri}secrets/jwt-secret'
-          identity: identity.id
-        }
-        {
-          name: 'jwt-refresh-secret'
-          keyVaultUrl: '${keyVault.properties.vaultUri}secrets/jwt-refresh-secret'
-          identity: identity.id
-        }
-        {
-          name: 'creds-key'
-          keyVaultUrl: '${keyVault.properties.vaultUri}secrets/creds-key'
-          identity: identity.id
-        }
-        {
-          name: 'creds-iv'
-          keyVaultUrl: '${keyVault.properties.vaultUri}secrets/creds-iv'
           identity: identity.id
         }
       ]
@@ -155,18 +127,14 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'DOMAIN_CLIENT', value: 'https://ca-${nameSuffix}.${environment.properties.defaultDomain}' }
             { name: 'DOMAIN_SERVER', value: 'https://ca-${nameSuffix}.${environment.properties.defaultDomain}' }
             { name: 'OPENID_ISSUER', value: 'https://login.microsoftonline.com/${clientTenantId}/v2.0' }
-            { name: 'OPENID_CLIENT_ID', secretRef: 'entra-client-id' }
-            { name: 'OPENID_CLIENT_SECRET', secretRef: 'entra-client-secret' }
             { name: 'OPENID_SCOPE', value: 'openid profile email' }
             { name: 'OPENID_CALLBACK_URL', value: '/oauth/openid/callback' }
             { name: 'OPENID_BUTTON_LABEL', value: 'Sign in with Microsoft' }
             { name: 'ALLOW_SOCIAL_LOGIN', value: 'true' }
             { name: 'ALLOW_REGISTRATION', value: 'false' }
-            { name: 'JWT_SECRET', secretRef: 'jwt-secret' }
-            { name: 'JWT_REFRESH_SECRET', secretRef: 'jwt-refresh-secret' }
-            { name: 'CREDS_KEY', secretRef: 'creds-key' }
-            { name: 'CREDS_IV', secretRef: 'creds-iv' }
             { name: 'MONGO_URI', secretRef: 'cosmos-connection-string' }
+            // OPENID_CLIENT_ID, OPENID_CLIENT_SECRET → added by Deploy-EntraApp.ps1
+            // JWT_SECRET, JWT_REFRESH_SECRET, CREDS_KEY, CREDS_IV → added by Deploy-LibreChatSecrets.ps1
           ]
         }
       ]
