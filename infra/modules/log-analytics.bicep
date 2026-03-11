@@ -1,7 +1,8 @@
 // Log Analytics workspace for audit trail and diagnostics
-// TODO: SEC Rule 17a-4 long-term retention (6 years) will be handled via a Diagnostic
-// Setting that exports logs to an Azure Storage Account with immutable blob storage
-// (WORM policy). Log Analytics 90-day retention covers hot/queryable storage only.
+// Workspace-level retentionInDays sets interactive (hot) retention (max 730 days).
+// Per-table archive retention (totalRetentionInDays up to 2555) cannot be set in Bicep —
+// run scripts/Set-LogRetention.ps1 after deployment to configure SEC Rule 17a-4
+// 6-year archive retention on all tables.
 
 param nameSuffix string
 param location string
