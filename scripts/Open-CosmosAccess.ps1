@@ -32,12 +32,11 @@ $myIp = (Invoke-RestMethod -Uri 'https://api.ipify.org' -UseBasicParsing).Trim()
 Write-Host "Your public IP: $myIp"
 
 # Enable public network access and allow caller IP + portal
-az cosmosdb update `
-    --name "$accountName" `
-    --resource-group "$rgName" `
-    --enable-public-network true `
-    --ip-range-filter "$myIp,0.0.0.0" `
-    -o none
+$subId = (az account show --query id -o tsv)
+$uri = "https://management.azure.com/subscriptions/$subId/resourceGroups/$rgName/providers/Microsoft.DocumentDB/databaseAccounts/${accountName}?api-version=2023-04-15"
+$body = '{"properties":{"publicNetworkAccess":"Enabled","ipRules":[{"ipAddressOrRange":"' + $myIp + '"},{"ipAddressOrRange":"0.0.0.0"}]}}'
+
+az rest --method PATCH --uri $uri --body $body -o none
 
 # Save IP so Close script knows what to remove
 $myIp | Out-File -FilePath $ipFile -Encoding utf8 -NoNewline

@@ -36,12 +36,11 @@ $myIp = (Get-Content -Path $ipFile -Raw).Trim()
 Write-Host "Removing IP: $myIp"
 
 # Disable public network access
-az cosmosdb update `
-    --name "$accountName" `
-    --resource-group "$rgName" `
-    --enable-public-network false `
-    --ip-range-filter "" `
-    -o none
+$subId = (az account show --query id -o tsv)
+$uri = "https://management.azure.com/subscriptions/$subId/resourceGroups/$rgName/providers/Microsoft.DocumentDB/databaseAccounts/${accountName}?api-version=2023-04-15"
+$body = '{"properties":{"publicNetworkAccess":"Disabled","ipRules":[]}}'
+
+az rest --method PATCH --uri $uri --body $body -o none
 
 # Clean up temp file
 Remove-Item -Path $ipFile -Force
