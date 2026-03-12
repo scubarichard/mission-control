@@ -20,3 +20,6 @@ Thumbs.db
 
 # PowerShell
 *.psm1.bak
+
+# Temporary Cosmos access state
+.cosmos-access-ip
