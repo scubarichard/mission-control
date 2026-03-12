@@ -42,8 +42,15 @@ Write-Host "Container:       $containerName"
 Write-Host ""
 
 # 1. Create storage account if it doesn't exist
-$existing = az storage account show --name "$storageAccount" --resource-group "$rgName" -o json 2>$null
-if ($LASTEXITCODE -ne 0 -or -not $existing) {
+$storageExists = $false
+try {
+    $existing = az storage account show --name "$storageAccount" --resource-group "$rgName" -o json 2>&1
+    if ($LASTEXITCODE -eq 0) { $storageExists = $true }
+} catch {
+    # Account doesn't exist - will create below
+}
+
+if (-not $storageExists) {
     Write-Host "Creating storage account $storageAccount..." -ForegroundColor Yellow
     az storage account create `
         --name "$storageAccount" `
@@ -65,13 +72,19 @@ $accountKey = az storage account keys list `
     --query "[0].value" -o tsv
 
 # 3. Create blob container with public read access
-$containerExists = az storage container show `
-    --name "$containerName" `
-    --account-name "$storageAccount" `
-    --account-key "$accountKey" `
-    -o json 2>$null
+$containerExists = $false
+try {
+    $containerCheck = az storage container show `
+        --name "$containerName" `
+        --account-name "$storageAccount" `
+        --account-key "$accountKey" `
+        -o json 2>&1
+    if ($LASTEXITCODE -eq 0) { $containerExists = $true }
+} catch {
+    # Container doesn't exist - will create below
+}
 
-if ($LASTEXITCODE -ne 0 -or -not $containerExists) {
+if (-not $containerExists) {
     Write-Host "Creating blob container $containerName..." -ForegroundColor Yellow
     az storage container create `
         --name "$containerName" `
