@@ -103,7 +103,7 @@ foreach ($table in $tables) {
                 $uri = "/subscriptions/$subId/resourceGroups/$rgName/providers/Microsoft.OperationalInsights/workspaces/$workspaceName/tables/${tableName}?api-version=2021-12-01-preview"
                 $body = "{`"properties`":{`"totalRetentionInDays`":$totalRetention}}"
 
-                az rest --method PATCH --uri $uri --body $body -o none 2>&1 | Out-Null
+                az rest --method PATCH --uri $uri --body $body --headers '{"Content-Type": "application/json"}' -o none 2>&1 | Out-Null
 
                 if ($LASTEXITCODE -ne 0) { throw "az rest failed" }
 
