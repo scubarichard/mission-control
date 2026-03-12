@@ -48,4 +48,4 @@ Invoke-RestMethod -Method PATCH -Uri $uri -Headers $headers -Body $body
 Remove-Item -Path $ipFile -Force
 
 Write-Host ""
-Write-Host "Access closed — $myIp removed from ip-range-filter" -ForegroundColor Green
+Write-Host "Access closed - $myIp removed from ip-range-filter" -ForegroundColor Green
