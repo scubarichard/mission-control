@@ -40,9 +40,22 @@ new URL so that `DOMAIN_SERVER` and `DOMAIN_CLIENT` env vars update correctly.
 Without this, SSO redirects will still point to the old Container Apps URL and
 authentication will fail.
 
+### Status
+
+**dax.dakona.com is live and SSO is working.** The Entra app registration has
+redirect URIs for both the raw Container Apps URL and the custom domain.
+
 ### Deployment Commands (dakona-pilot)
 
-When running Deploy-EntraApp.ps1 or Deploy-SSOConfig.ps1, use the custom domain:
+When running Deploy-EntraApp.ps1, pass both the Container Apps URL and custom domain:
+
+```powershell
+./scripts/Deploy-EntraApp.ps1 -ClientName dakona-pilot `
+    -LibreChatUrl "https://ca-dax-dakona-pilot.icyplant-88ae76cd.eastus.azurecontainerapps.io" `
+    -CustomDomainUrl "https://dax.dakona.com"
+```
+
+When running Deploy-SSOConfig.ps1, use the custom domain:
 
 ```powershell
 ./scripts/Deploy-SSOConfig.ps1 -ClientName dakona-pilot `

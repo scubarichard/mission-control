@@ -24,18 +24,25 @@
 .PARAMETER KeyVaultName
     Key Vault name. Defaults to derived name matching key-vault.bicep naming.
 
+.PARAMETER CustomDomainUrl
+    Optional custom domain URL (e.g., https://dax.dakona.com). If provided,
+    a second redirect URI is registered for the custom domain so SSO works
+    on both the raw Container Apps URL and the custom domain.
+
 .PARAMETER SecretExpiryDays
     Client secret validity in days. Defaults to 365.
 
 .EXAMPLE
-    ./Deploy-EntraApp.ps1 -ClientName acme `
-        -LibreChatUrl "https://ca-dax-acme.niceocean-abcd1234.eastus.azurecontainerapps.io"
+    ./Deploy-EntraApp.ps1 -ClientName dakona-pilot `
+        -LibreChatUrl "https://ca-dax-dakona-pilot.icyplant-88ae76cd.eastus.azurecontainerapps.io" `
+        -CustomDomainUrl "https://dax.dakona.com"
 #>
 
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)] [string] $ClientName,
     [Parameter(Mandatory)] [string] $LibreChatUrl,
+    [string] $CustomDomainUrl = "",
     [string] $AppDisplayName = "DAX - Dakona AI Workspace",
     [string] $KeyVaultName = "",
     [int]    $SecretExpiryDays = 365
@@ -51,12 +58,22 @@ if (-not $KeyVaultName) {
 }
 
 $redirectUri = "$($LibreChatUrl.TrimEnd('/'))/oauth/openid/callback"
+$redirectUris = @($redirectUri)
+
+if ($CustomDomainUrl) {
+    $customRedirectUri = "$($CustomDomainUrl.TrimEnd('/'))/oauth/openid/callback"
+    if ($customRedirectUri -ne $redirectUri) {
+        $redirectUris += $customRedirectUri
+    }
+}
 
 Write-Host "=== DAX Entra ID App Registration ===" -ForegroundColor Cyan
-Write-Host "Client:       $ClientName"
-Write-Host "App Name:     $AppDisplayName"
-Write-Host "Redirect URI: $redirectUri"
-Write-Host "Key Vault:    $KeyVaultName"
+Write-Host "Client:        $ClientName"
+Write-Host "App Name:      $AppDisplayName"
+foreach ($uri in $redirectUris) {
+    Write-Host "Redirect URI:  $uri"
+}
+Write-Host "Key Vault:     $KeyVaultName"
 
 # ============================================================================
 # 1. Create the App Registration
@@ -87,7 +104,7 @@ $requiredResourceAccess | ConvertTo-Json -Depth 5 | Set-Content $jsonPath
 $app = az ad app create `
     --display-name "$AppDisplayName" `
     --sign-in-audience "AzureADMyOrg" `
-    --web-redirect-uris "$redirectUri" `
+    --web-redirect-uris $redirectUris `
     --enable-id-token-issuance true `
     --required-resource-accesses "@$jsonPath" `
     | ConvertFrom-Json
@@ -188,13 +205,16 @@ Write-Host "  Container App updated with Entra secrets." -ForegroundColor Green
 
 Write-Host "`n=== Entra App Registration Complete ===" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Client ID:    $clientId"
-Write-Host "Key Vault:    $KeyVaultName"
-Write-Host "Redirect URI: $redirectUri"
+Write-Host "Client ID:     $clientId"
+Write-Host "Key Vault:     $KeyVaultName"
+foreach ($uri in $redirectUris) {
+    Write-Host "Redirect URI:  $uri"
+}
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  1. Grant admin consent for the API permissions in the Azure portal:"
 Write-Host "     Entra ID > App registrations > $AppDisplayName > API permissions > Grant admin consent"
+$ssoUrl = if ($CustomDomainUrl) { $CustomDomainUrl.TrimEnd('/') } else { $LibreChatUrl.TrimEnd('/') }
 Write-Host "  2. Run Deploy-SSOConfig.ps1 to set OpenID Connect env vars on the Container App:"
-Write-Host "     ./scripts/Deploy-SSOConfig.ps1 -ClientName `"$ClientName`" -ClientTenantId `"<tenant-id>`" -LibreChatUrl `"$($LibreChatUrl.TrimEnd('/'))`""
+Write-Host "     ./scripts/Deploy-SSOConfig.ps1 -ClientName `"$ClientName`" -ClientTenantId `"<tenant-id>`" -LibreChatUrl `"$ssoUrl`""
 Write-Host ""
