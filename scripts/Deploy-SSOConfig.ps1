@@ -156,12 +156,23 @@ $template = @{
                     name = 'write-config'
                     image = 'mcr.microsoft.com/cbl-mariner/base/core:2.0'
                     command = @( '/bin/sh', '-c', @'
+echo "=== Init container starting ==="
+echo "Writing librechat.yaml..."
 echo "$CONFIG_YAML_B64" | base64 -d > /config/librechat.yaml
-mkdir -p /branding
-wget -q -O /branding/favicon-32x32.png "$FAVICON_URL" && echo "favicon-32x32.png downloaded" || echo "favicon-32 download failed"
-cp /branding/favicon-32x32.png /branding/favicon-16x16.png 2>/dev/null
-cp /branding/favicon-32x32.png /branding/apple-touch-icon-180x180.png 2>/dev/null
-echo "Branding assets ready"
+echo "Config written: $(wc -c < /config/librechat.yaml) bytes"
+echo "Downloading favicon from: $FAVICON_URL"
+wget -O /branding/favicon-32x32.png "$FAVICON_URL" 2>&1 || echo "ERROR: wget failed for favicon"
+ls -la /branding/ 2>&1
+if [ -f /branding/favicon-32x32.png ]; then
+  echo "favicon-32x32.png downloaded: $(wc -c < /branding/favicon-32x32.png) bytes"
+  cp /branding/favicon-32x32.png /branding/favicon-16x16.png
+  cp /branding/favicon-32x32.png /branding/apple-touch-icon-180x180.png
+  echo "Favicon copies created"
+else
+  echo "ERROR: /branding/favicon-32x32.png not found after download"
+fi
+echo "=== Init container done ==="
+ls -la /branding/
 '@ )
                     env = @(
                         @{ name = 'CONFIG_YAML_B64'; value = $yamlBase64 }
@@ -181,7 +192,7 @@ echo "Branding assets ready"
                 @{
                     name = 'librechat'
                     image = $containerImage
-                    command = @( '/bin/sh', '-c', 'cp -f /branding/*.png /app/client/public/assets/ 2>/dev/null; exec npm start' )
+                    command = @( '/bin/sh', '-c', 'cp -f /branding/*.png /app/client/public/assets/ 2>/dev/null; exec node /app/api/server/index.js' )
                     resources = @{
                         cpu = $containerCpu
                         memory = $containerMemory
