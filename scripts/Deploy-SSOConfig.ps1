@@ -158,16 +158,13 @@ $template = @{
                     command = @( '/bin/sh', '-c', @'
 echo "$CONFIG_YAML_B64" | base64 -d > /config/librechat.yaml
 mkdir -p /branding
-wget -q -O /branding/logo.svg "$LOGIN_LOGO_URL" && echo "logo.svg downloaded" || echo "logo.svg download failed"
 wget -q -O /branding/favicon-32x32.png "$FAVICON_URL" && echo "favicon-32x32.png downloaded" || echo "favicon-32 download failed"
 cp /branding/favicon-32x32.png /branding/favicon-16x16.png 2>/dev/null
 cp /branding/favicon-32x32.png /branding/apple-touch-icon-180x180.png 2>/dev/null
 echo "Branding assets ready"
-ls -la /branding/
 '@ )
                     env = @(
                         @{ name = 'CONFIG_YAML_B64'; value = $yamlBase64 }
-                        @{ name = 'LOGIN_LOGO_URL'; value = 'https://stdaxassets.blob.core.windows.net/branding/Dax-Frontpage.png' }
                         @{ name = 'FAVICON_URL'; value = 'https://stdaxassets.blob.core.windows.net/branding/lexi_avatar_384.png' }
                     )
                     resources = @{
@@ -184,7 +181,7 @@ ls -la /branding/
                 @{
                     name = 'librechat'
                     image = $containerImage
-                    command = @( '/bin/sh', '-c', 'echo "Copying branding assets..."; ls -la /branding/; cp -fv /branding/* /app/client/public/assets/ 2>/dev/null; echo "Assets after copy:"; ls -la /app/client/public/assets/logo* /app/client/public/assets/favicon* /app/client/public/assets/apple-touch* 2>/dev/null; exec npm start' )
+                    command = @( '/bin/sh', '-c', 'cp -f /branding/*.png /app/client/public/assets/ 2>/dev/null; exec npm start' )
                     resources = @{
                         cpu = $containerCpu
                         memory = $containerMemory
@@ -199,6 +196,7 @@ ls -la /branding/
                         @{ name = 'CONFIG_PATH'; value = '/config/librechat.yaml' }
                         @{ name = 'AZURE_API_VERSION'; value = '2024-08-01-preview' }
                         @{ name = 'APP_TITLE'; value = 'DAX' }
+                        @{ name = 'APP_LOGO'; value = 'https://stdaxassets.blob.core.windows.net/branding/Dax-Frontpage.png' }
                         @{ name = 'ALLOW_EMAIL_LOGIN'; value = 'false' }
                         @{ name = 'ALLOW_REGISTRATION'; value = 'false' }
                         @{ name = 'DOMAIN_CLIENT'; value = $domainClient }
@@ -283,10 +281,10 @@ Write-Host "  Token:          $entraBase/oauth2/v2.0/token"
 Write-Host "  UserInfo:       https://graph.microsoft.com/oidc/userinfo"
 Write-Host "  Callback:       $callbackUrl"
 Write-Host ""
-Write-Host "Plain-text env vars:  18 (main) + 3 (init)"
+Write-Host "Plain-text env vars:  19 (main) + 2 (init)"
 Write-Host "Secret-backed refs:    6"
-Write-Host "Branding: Dax-Frontpage.png -> /app/client/public/assets/logo.svg"
-Write-Host "          lexi_avatar_384.png -> /app/client/public/assets/favicon-*.png + apple-touch-icon-180x180.png"
+Write-Host "Branding: APP_LOGO -> Dax-Frontpage.png (served via /api/config)"
+Write-Host "          lexi_avatar_384.png -> favicon-*.png + apple-touch-icon-180x180.png (in assets/)"
 Write-Host ""
 Write-Host "Only the 'Login with Microsoft' button should appear on the login page."
 Write-Host "(Email/password login is disabled via ALLOW_EMAIL_LOGIN=false)"
