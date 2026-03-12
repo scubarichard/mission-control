@@ -81,22 +81,44 @@ foreach ($table in $tables) {
     }
 
     try {
-        az monitor log-analytics workspace table update `
+        $output = az monitor log-analytics workspace table update `
             --workspace-name "$workspaceName" `
             --resource-group "$rgName" `
             --name "$tableName" `
             --retention-time $table.retentionInDays `
             --total-retention-time $totalRetention `
-            -o none 2>&1 | Out-Null
+            -o none 2>&1
 
-        if ($LASTEXITCODE -ne 0) { throw "az command failed" }
+        if ($LASTEXITCODE -ne 0) { throw $output }
 
         Write-Host "  SET  $totalRetention days:     $tableName" -ForegroundColor Green
         $updated++
     }
     catch {
-        Write-Host "  FAIL:                  $tableName - $_" -ForegroundColor Red
-        $failed++
+        $errMsg = "$_"
+        if ($errMsg -match 'Classic') {
+            # Classic schema tables require the legacy REST API instead of DCR-based table update
+            try {
+                $subId = (az account show --query id -o tsv)
+                $uri = "/subscriptions/$subId/resourceGroups/$rgName/providers/Microsoft.OperationalInsights/workspaces/$workspaceName/tables/${tableName}?api-version=2021-12-01-preview"
+                $body = "{`"properties`":{`"totalRetentionInDays`":$totalRetention}}"
+
+                az rest --method PATCH --uri $uri --body $body -o none 2>&1 | Out-Null
+
+                if ($LASTEXITCODE -ne 0) { throw "az rest failed" }
+
+                Write-Host "  SET  $totalRetention days:     $tableName (via legacy API)" -ForegroundColor Green
+                $updated++
+            }
+            catch {
+                Write-Host "  FAIL (legacy API):     $tableName - $_" -ForegroundColor Red
+                $failed++
+            }
+        }
+        else {
+            Write-Host "  FAIL:                  $tableName - $errMsg" -ForegroundColor Red
+            $failed++
+        }
     }
 }
 
