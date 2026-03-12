@@ -156,16 +156,14 @@ $template = @{
                     name = 'write-config'
                     image = 'mcr.microsoft.com/cbl-mariner/base/core:2.0'
                     command = @( '/bin/sh', '-c', @'
-set -e
 echo "$CONFIG_YAML_B64" | base64 -d > /config/librechat.yaml
-mkdir -p /branding/assets /branding/public
-wget -q -O /branding/assets/logo.png "$LOGIN_LOGO_URL" && echo "Login logo (png) downloaded"
-cp /branding/assets/logo.png /branding/assets/logo.svg 2>/dev/null; echo "Login logo (svg fallback) copied"
-wget -q -O /branding/public/favicon.ico "$FAVICON_URL" && echo "favicon.ico downloaded"
-cp /branding/public/favicon.ico /branding/public/apple-touch-icon.png; echo "apple-touch-icon copied"
-cp /branding/public/favicon.ico /branding/public/favicon-32x32.png; echo "favicon-32x32 copied"
-cp /branding/public/favicon.ico /branding/public/favicon-16x16.png; echo "favicon-16x16 copied"
+mkdir -p /branding
+wget -q -O /branding/logo.svg "$LOGIN_LOGO_URL" && echo "logo.svg downloaded" || echo "logo.svg download failed"
+wget -q -O /branding/favicon-32x32.png "$FAVICON_URL" && echo "favicon-32x32.png downloaded" || echo "favicon-32 download failed"
+cp /branding/favicon-32x32.png /branding/favicon-16x16.png 2>/dev/null
+cp /branding/favicon-32x32.png /branding/apple-touch-icon-180x180.png 2>/dev/null
 echo "Branding assets ready"
+ls -la /branding/
 '@ )
                     env = @(
                         @{ name = 'CONFIG_YAML_B64'; value = $yamlBase64 }
@@ -186,7 +184,7 @@ echo "Branding assets ready"
                 @{
                     name = 'librechat'
                     image = $containerImage
-                    command = @( '/bin/sh', '-c', 'cp -f /branding/assets/* /app/client/public/assets/ 2>/dev/null; cp -f /branding/public/* /app/client/public/ 2>/dev/null; exec npm start' )
+                    command = @( '/bin/sh', '-c', 'echo "Copying branding assets..."; ls -la /branding/; cp -fv /branding/* /app/client/public/assets/ 2>/dev/null; echo "Assets after copy:"; ls -la /app/client/public/assets/logo* /app/client/public/assets/favicon* /app/client/public/assets/apple-touch* 2>/dev/null; exec npm start' )
                     resources = @{
                         cpu = $containerCpu
                         memory = $containerMemory
@@ -287,8 +285,8 @@ Write-Host "  Callback:       $callbackUrl"
 Write-Host ""
 Write-Host "Plain-text env vars:  18 (main) + 3 (init)"
 Write-Host "Secret-backed refs:    6"
-Write-Host "Branding: Dax-Frontpage.png -> /app/client/public/assets/logo.png"
-Write-Host "          lexi_avatar_384.png -> /app/client/public/favicon.ico + apple-touch-icon.png"
+Write-Host "Branding: Dax-Frontpage.png -> /app/client/public/assets/logo.svg"
+Write-Host "          lexi_avatar_384.png -> /app/client/public/assets/favicon-*.png + apple-touch-icon-180x180.png"
 Write-Host ""
 Write-Host "Only the 'Login with Microsoft' button should appear on the login page."
 Write-Host "(Email/password login is disabled via ALLOW_EMAIL_LOGIN=false)"
