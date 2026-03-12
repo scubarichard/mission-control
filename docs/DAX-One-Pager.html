@@ -12,8 +12,8 @@
     --navy: #0a1628;
     --navy-light: #0f2140;
     --navy-mid: #152d50;
-    --accent: #3b82f6;
-    --accent-light: #60a5fa;
+    --accent: #2563eb;
+    --accent-light: #1e40af;
     --gold: #d4a843;
     --white: #ffffff;
     --gray-100: #f1f5f9;
@@ -24,8 +24,8 @@
 
   body {
     font-family: 'Segoe UI', -apple-system, system-ui, sans-serif;
-    color: var(--white);
-    background: var(--navy);
+    color: #1a1a1a;
+    background: var(--white);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
@@ -33,7 +33,7 @@
   .page {
     max-width: 1000px;
     margin: 0 auto;
-    background: var(--navy);
+    background: var(--white);
   }
 
   /* ---- Header ---- */
@@ -63,10 +63,10 @@
     color: var(--white);
     margin-bottom: 0.4rem;
   }
-  .header h1 span.dax { color: var(--accent-light); }
+  .header h1 span.dax { color: #93c5fd; }
   .header .subtitle {
     font-size: 1rem;
-    color: var(--gray-400);
+    color: #cbd5e1;
     font-weight: 400;
     letter-spacing: 0.3px;
   }
@@ -88,19 +88,19 @@
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: var(--accent-light);
+    color: var(--accent);
     margin-bottom: 0.6rem;
     font-weight: 600;
   }
   .section h3 {
     font-size: 1.05rem;
     font-weight: 600;
-    color: var(--white);
+    color: var(--navy);
     margin-bottom: 0.5rem;
   }
   .section p, .section li {
     font-size: 0.85rem;
-    color: var(--gray-200);
+    color: #334155;
     line-height: 1.6;
   }
   .section ul {
@@ -130,8 +130,8 @@
     margin-top: 0.5rem;
   }
   .risk-item {
-    background: rgba(239, 68, 68, 0.08);
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    background: #fef2f2;
+    border: 1px solid #fecaca;
     border-radius: 6px;
     padding: 0.6rem 0.75rem;
     text-align: center;
@@ -139,14 +139,14 @@
   .risk-item .icon { font-size: 1.2rem; margin-bottom: 0.2rem; }
   .risk-item .label {
     font-size: 0.75rem;
-    color: #fca5a5;
+    color: #b91c1c;
     font-weight: 500;
   }
 
   /* ---- Architecture Diagram ---- */
   .arch-diagram {
-    background: var(--navy-light);
-    border: 1px solid var(--navy-mid);
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
     border-radius: 8px;
     padding: 1.25rem 1.5rem;
     margin: 1rem 0;
@@ -159,7 +159,7 @@
     flex-wrap: nowrap;
   }
   .arch-node {
-    background: var(--navy-mid);
+    background: var(--white);
     border: 1px solid var(--accent);
     border-radius: 8px;
     padding: 0.6rem 0.9rem;
@@ -174,12 +174,12 @@
   .arch-node .node-label {
     font-size: 0.7rem;
     font-weight: 600;
-    color: var(--white);
+    color: var(--navy);
     display: block;
   }
   .arch-node .node-sub {
     font-size: 0.6rem;
-    color: var(--gray-400);
+    color: var(--gray-600);
     display: block;
   }
   .arch-arrow {
@@ -191,7 +191,7 @@
   .arch-label {
     text-align: center;
     font-size: 0.65rem;
-    color: var(--gray-400);
+    color: var(--gray-600);
     margin-top: 0.6rem;
     letter-spacing: 0.5px;
   }
@@ -204,7 +204,7 @@
   }
   .check-item {
     font-size: 0.85rem;
-    color: var(--gray-200);
+    color: #334155;
     padding-left: 1.3rem;
     position: relative;
   }
@@ -212,7 +212,7 @@
     content: "\2713";
     position: absolute;
     left: 0;
-    color: #34d399;
+    color: #16a34a;
     font-weight: 700;
     font-size: 0.85rem;
   }
@@ -225,8 +225,8 @@
     margin-top: 0.75rem;
   }
   .price-card {
-    background: var(--navy-light);
-    border: 1px solid var(--navy-mid);
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
     border-radius: 8px;
     padding: 1rem 1.1rem;
     text-align: center;
@@ -252,23 +252,23 @@
   .price-card .tier {
     font-size: 0.95rem;
     font-weight: 700;
-    color: var(--white);
+    color: var(--navy);
     margin-bottom: 0.25rem;
   }
   .price-card .price {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--accent-light);
+    color: var(--accent);
   }
   .price-card .price span {
     font-size: 0.75rem;
     font-weight: 400;
-    color: var(--gray-400);
+    color: var(--gray-600);
   }
   .price-card .features {
     margin-top: 0.5rem;
     font-size: 0.72rem;
-    color: var(--gray-400);
+    color: var(--gray-600);
     line-height: 1.7;
     text-align: left;
     padding-left: 0.5rem;
@@ -284,7 +284,7 @@
     font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: var(--gray-400);
+    color: var(--gray-600);
     margin-bottom: 0.5rem;
   }
   .trust-logos {
@@ -295,12 +295,12 @@
   }
   .trust-item {
     font-size: 0.8rem;
-    color: var(--gray-200);
+    color: var(--navy);
     font-weight: 500;
     padding: 0.3rem 0.8rem;
-    border: 1px solid var(--navy-mid);
+    border: 1px solid var(--gray-200);
     border-radius: 4px;
-    background: var(--navy-light);
+    background: var(--gray-100);
   }
 
   /* ---- Footer ---- */
@@ -327,13 +327,13 @@
     color: var(--gray-400);
   }
   .footer .contact a {
-    color: var(--accent-light);
+    color: #93c5fd;
     text-decoration: none;
   }
 
   /* ---- Print ---- */
   @media print {
-    body { background: var(--navy); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { background: var(--white); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .page { max-width: none; }
   }
 </style>
