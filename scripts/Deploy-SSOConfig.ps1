@@ -27,12 +27,18 @@
     Entra ID tenant ID for the client. Used to construct OpenID Connect URLs.
 
 .PARAMETER LibreChatUrl
-    The FQDN of the deployed LibreChat Container App (e.g., https://ca-dax-acme.<domain>).
+    The FQDN of the deployed LibreChat Container App. Use the custom domain
+    if one has been configured (e.g., https://dax.dakona.com), otherwise use
+    the raw Container Apps URL (e.g., https://ca-dax-acme.<domain>).
+
+    After deployment, a custom domain can be added via:
+      az containerapp hostname add --name <ca-name> --resource-group <rg> --hostname <domain>
+      az containerapp hostname bind --name <ca-name> --resource-group <rg> --hostname <domain> --environment <env> --validation-method CNAME
 
 .EXAMPLE
     ./Deploy-SSOConfig.ps1 -ClientName dakona-pilot `
         -ClientTenantId "d2a3c346-00f3-47dd-a53e-caa3fca74714" `
-        -LibreChatUrl "https://ca-dax-dakona-pilot.icyplant-88ae76cd.eastus.azurecontainerapps.io"
+        -LibreChatUrl "https://dax.dakona.com"
 #>
 
 [CmdletBinding()]

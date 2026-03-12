@@ -38,13 +38,15 @@ docs/               Architecture diagrams & runbooks
 ./scripts/Deploy-Infrastructure.ps1 -ClientName <name>
 
 # 3. Register Entra ID app for SSO (stores secrets in KV + wires into Container App)
+#    Use the custom domain if configured (e.g., https://dax.dakona.com),
+#    otherwise use the raw Container Apps URL.
 ./scripts/Deploy-EntraApp.ps1 -ClientName <name> `
-  -LibreChatUrl "https://ca-dax-<name>.<container-app-domain>"
+  -LibreChatUrl "https://<custom-domain-or-container-app-url>"
 
 # 4. Configure SSO env vars on Container App (after granting admin consent)
 ./scripts/Deploy-SSOConfig.ps1 -ClientName <name> `
   -ClientTenantId <tenant-id> `
-  -LibreChatUrl "https://ca-dax-<name>.<container-app-domain>"
+  -LibreChatUrl "https://<custom-domain-or-container-app-url>"
 
 # 5. Generate session secrets (stores in KV + wires into Container App)
 ./scripts/Deploy-LibreChatSecrets.ps1 -ClientName <name>
