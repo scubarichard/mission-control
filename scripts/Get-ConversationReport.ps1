@@ -141,6 +141,22 @@ if dates:
 def esc(text):
     return html.escape(str(text)) if text else ""
 
+def md_to_html(text):
+    """Convert basic markdown to HTML: escape first, then apply formatting."""
+    import re
+    s = html.escape(str(text)) if text else ""
+    # Bold: **text** or __text__
+    s = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', s)
+    s = re.sub(r'__(.+?)__', r'<strong>\1</strong>', s)
+    # Italic: *text* or _text_ (but not inside bold tags)
+    s = re.sub(r'(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)', r'<em>\1</em>', s)
+    s = re.sub(r'(?<!_)_(?!_)(.+?)(?<!_)_(?!_)', r'<em>\1</em>', s)
+    # Inline code: `text`
+    s = re.sub(r'`([^`]+?)`', r'<code>\1</code>', s)
+    # Newlines to <br>
+    s = s.replace('\n', '<br>\n')
+    return s
+
 def fmt_time(dt):
     if isinstance(dt, datetime):
         return dt.strftime("%Y-%m-%d %H:%M:%S")
@@ -223,7 +239,7 @@ for i, c in enumerate(conversations, 1):
             sender = m.get("sender", "unknown")
             css = "user" if sender == "user" else "assistant"
             ts = fmt_time(m.get("createdAt"))
-            text = esc(get_message_text(m))
+            text = md_to_html(get_message_text(m))
             lines.append(f'<div class="msg {css}">')
             lines.append(f'<div class="meta"><span class="sender">{esc(sender)}</span> &mdash; {esc(ts)}</div>')
             lines.append(f'<div class="text">{text}</div>')
