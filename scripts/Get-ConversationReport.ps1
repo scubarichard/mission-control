@@ -66,6 +66,53 @@ db = client["librechat"]
 conversations = list(db.conversations.find().sort("createdAt", -1))
 messages = list(db.messages.find().sort("createdAt", 1))
 
+# Build user lookup: _id -> name/email
+user_lookup = {}
+for u in db.users.find():
+    uid = str(u.get("_id", ""))
+    name = u.get("name") or u.get("email") or u.get("username") or uid
+    user_lookup[uid] = name
+
+def resolve_user(uid):
+    return user_lookup.get(str(uid), str(uid))
+
+# Debug: print raw fields of one assistant message to diagnose text field
+sample = db.messages.find_one({"sender": {"$ne": "user"}})
+if sample:
+    debug_fields = {k: type(v).__name__ for k, v in sample.items() if k != "_id"}
+    print(f"DEBUG assistant message fields: {debug_fields}")
+    for field in ("text", "content", "response", "message", "answer"):
+        val = sample.get(field)
+        if val:
+            preview = str(val)[:200]
+            print(f"DEBUG field '{field}': {preview}")
+
+def get_message_text(m):
+    """Extract message text, checking multiple possible field names."""
+    # Try direct text field first
+    text = m.get("text")
+    if text:
+        return str(text)
+    # LibreChat may store assistant responses in content (string or list)
+    content = m.get("content")
+    if isinstance(content, str) and content:
+        return content
+    if isinstance(content, list):
+        parts = []
+        for part in content:
+            if isinstance(part, dict):
+                parts.append(part.get("text", part.get("value", str(part))))
+            elif isinstance(part, str):
+                parts.append(part)
+        if parts:
+            return "\n".join(parts)
+    # Check other possible fields
+    for field in ("response", "message", "answer"):
+        val = m.get(field)
+        if val:
+            return str(val)
+    return ""
+
 # Index messages by conversationId
 msg_by_convo = {}
 for m in messages:
@@ -78,7 +125,7 @@ total_msgs = len(messages)
 users = set()
 dates = []
 for c in conversations:
-    u = c.get("user", "unknown")
+    u = resolve_user(c.get("user", "unknown"))
     users.add(u)
     created = c.get("createdAt")
     if created:
@@ -147,7 +194,7 @@ lines.append('<tr><th>#</th><th>User</th><th>Title</th><th>Date</th><th>Messages
 
 for i, c in enumerate(conversations, 1):
     cid = str(c.get("conversationId", c.get("_id", "")))
-    user = esc(c.get("user", "unknown"))
+    user = esc(resolve_user(c.get("user", "unknown")))
     title = esc(c.get("title", "(untitled)"))
     created = fmt_time(c.get("createdAt"))
     msg_count = len(msg_by_convo.get(cid, []))
@@ -162,7 +209,7 @@ lines.append('<h2>Message Threads</h2>')
 for i, c in enumerate(conversations, 1):
     cid = str(c.get("conversationId", c.get("_id", "")))
     title = esc(c.get("title", "(untitled)"))
-    user = esc(c.get("user", "unknown"))
+    user = esc(resolve_user(c.get("user", "unknown")))
     anchor = f"convo-{i}"
 
     lines.append(f'<h3 id="{anchor}">#{i} &mdash; {title}</h3>')
@@ -176,7 +223,7 @@ for i, c in enumerate(conversations, 1):
             sender = m.get("sender", "unknown")
             css = "user" if sender == "user" else "assistant"
             ts = fmt_time(m.get("createdAt"))
-            text = esc(m.get("text", ""))
+            text = esc(get_message_text(m))
             lines.append(f'<div class="msg {css}">')
             lines.append(f'<div class="meta"><span class="sender">{esc(sender)}</span> &mdash; {esc(ts)}</div>')
             lines.append(f'<div class="text">{text}</div>')
