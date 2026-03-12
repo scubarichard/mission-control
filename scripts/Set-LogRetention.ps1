@@ -51,6 +51,10 @@ $tablesJson = az monitor log-analytics workspace table list `
 
 $tables = $tablesJson | ConvertFrom-Json
 
+# Get bearer token and subscription ID once for Classic table fallback
+$token = (az account get-access-token --query accessToken -o tsv)
+$subId = (az account show --query id -o tsv)
+
 $updated  = 0
 $skipped  = 0
 $failed   = 0
@@ -99,13 +103,11 @@ foreach ($table in $tables) {
         if ($errMsg -match 'Classic') {
             # Classic schema tables require the legacy REST API instead of DCR-based table update
             try {
-                $subId = (az account show --query id -o tsv)
-                $uri = "/subscriptions/$subId/resourceGroups/$rgName/providers/Microsoft.OperationalInsights/workspaces/$workspaceName/tables/${tableName}?api-version=2021-12-01-preview"
-                $body = "{`"properties`":{`"totalRetentionInDays`":$totalRetention}}"
+                $headers = @{ "Authorization" = "Bearer $token"; "Content-Type" = "application/json" }
+                $body = '{"properties":{"totalRetentionInDays":' + $totalRetention + '}}'
+                $uri = "https://management.azure.com/subscriptions/$subId/resourceGroups/$rgName/providers/Microsoft.OperationalInsights/workspaces/$workspaceName/tables/${tableName}?api-version=2021-12-01-preview"
 
-                $restOutput = az rest --method PATCH --uri $uri --body $body --headers '{"Content-Type": "application/json"}' 2>&1
-
-                if ($LASTEXITCODE -ne 0) { throw $restOutput }
+                Invoke-RestMethod -Method PATCH -Uri $uri -Headers $headers -Body $body
 
                 Write-Host "  SET  $totalRetention days:     $tableName (via legacy API)" -ForegroundColor Green
                 $updated++
