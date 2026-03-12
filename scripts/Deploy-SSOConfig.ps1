@@ -146,14 +146,19 @@ $template = @{
                     name = 'config-vol'
                     storageType = 'EmptyDir'
                 }
+                @{
+                    name = 'assets-vol'
+                    storageType = 'EmptyDir'
+                }
             )
             initContainers = @(
                 @{
                     name = 'write-config'
                     image = 'mcr.microsoft.com/cbl-mariner/base/core:2.0'
-                    command = @( '/bin/sh', '-c', 'echo "$CONFIG_YAML_B64" | base64 -d > /config/librechat.yaml' )
+                    command = @( '/bin/sh', '-c', 'echo "$CONFIG_YAML_B64" | base64 -d > /config/librechat.yaml && wget -O /assets/logo.svg "$LOGO_URL" || echo "Logo download failed, using default"' )
                     env = @(
                         @{ name = 'CONFIG_YAML_B64'; value = $yamlBase64 }
+                        @{ name = 'LOGO_URL'; value = 'https://stdaxassets.blob.core.windows.net/branding/lexi_avatar_384.png' }
                     )
                     resources = @{
                         cpu = 0.25
@@ -161,6 +166,7 @@ $template = @{
                     }
                     volumeMounts = @(
                         @{ volumeName = 'config-vol'; mountPath = '/config' }
+                        @{ volumeName = 'assets-vol'; mountPath = '/assets' }
                     )
                 }
             )
@@ -174,12 +180,16 @@ $template = @{
                     }
                     volumeMounts = @(
                         @{ volumeName = 'config-vol'; mountPath = '/config' }
+                        @{ volumeName = 'assets-vol'; mountPath = '/app/client/public/assets' }
                     )
                     env = @(
                         @{ name = 'HOST'; value = '0.0.0.0' }
                         @{ name = 'PORT'; value = '3080' }
                         @{ name = 'CONFIG_PATH'; value = '/config/librechat.yaml' }
                         @{ name = 'AZURE_API_VERSION'; value = '2024-08-01-preview' }
+                        @{ name = 'APP_TITLE'; value = 'DAX' }
+                        @{ name = 'ALLOW_EMAIL_LOGIN'; value = 'false' }
+                        @{ name = 'ALLOW_REGISTRATION'; value = 'false' }
                         @{ name = 'DOMAIN_CLIENT'; value = $domainClient }
                         @{ name = 'DOMAIN_SERVER'; value = $domainServer }
                         @{ name = 'OPENID_ISSUER'; value = "$entraBase/v2.0" }
@@ -262,8 +272,10 @@ Write-Host "  Token:          $entraBase/oauth2/v2.0/token"
 Write-Host "  UserInfo:       https://graph.microsoft.com/oidc/userinfo"
 Write-Host "  Callback:       $callbackUrl"
 Write-Host ""
-Write-Host "Plain-text env vars:  15 (main) + 1 (init)"
-Write-Host "Secret-backed refs:    8"
+Write-Host "Plain-text env vars:  18 (main) + 2 (init)"
+Write-Host "Secret-backed refs:    6"
+Write-Host "Logo:    downloaded from Blob Storage into /app/client/public/assets/logo.svg"
 Write-Host ""
-Write-Host "The 'Login with Microsoft' button should now appear on the login page."
+Write-Host "Only the 'Login with Microsoft' button should appear on the login page."
+Write-Host "(Email/password login is disabled via ALLOW_EMAIL_LOGIN=false)"
 Write-Host ""

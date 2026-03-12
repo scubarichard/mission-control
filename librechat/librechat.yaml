@@ -9,7 +9,6 @@ cache: true
 # Env vars used: OPENID_ISSUER, OPENID_CLIENT_ID, OPENID_CLIENT_SECRET,
 #                OPENID_SCOPE, OPENID_CALLBACK_URL, OPENID_BUTTON_LABEL
 registration:
-  enabled: false
   socialLogins: ["openid"]
   allowedDomains: ["dakona.com"] # set to client's email domain per deployment
 
@@ -84,14 +83,13 @@ modelSpecs:
         All conversations are logged and retained per Rule 17a-4.
 
 # ---------- Interface ----------
+# appTitle and logo are set via env vars (APP_TITLE) and volume mount (logo.svg)
+# in Deploy-SSOConfig.ps1, not in this file.
+# Email/password login is disabled via ALLOW_EMAIL_LOGIN=false env var.
 interface:
-  appTitle: "DAX"
-  customLogoUrl: "https://stdaxassets.blob.core.windows.net/branding/lexi_avatar_384.png"
-  loginForm: false       # hide email/password fields — SSO only
   endpointsMenu: false  # hide endpoint picker — single model experience
   modelSelect: false
   presets: false
-  showUploadButton: true
   customWelcome: "Welcome to DAX - your governed AI assistant for registered investment advisors."
 
 # ---------- File Uploads ----------
