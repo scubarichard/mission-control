@@ -33,6 +33,13 @@ az containerapp hostname bind `
     --validation-method CNAME
 ```
 
+### Important: Rerun Deploy-SSOConfig.ps1 after custom domain setup
+
+After binding a custom domain, `Deploy-SSOConfig.ps1` **must be rerun** with the
+new URL so that `DOMAIN_SERVER` and `DOMAIN_CLIENT` env vars update correctly.
+Without this, SSO redirects will still point to the old Container Apps URL and
+authentication will fail.
+
 ### Deployment Commands (dakona-pilot)
 
 When running Deploy-EntraApp.ps1 or Deploy-SSOConfig.ps1, use the custom domain:
