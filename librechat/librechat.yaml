@@ -84,6 +84,8 @@ modelSpecs:
 
 # ---------- Interface ----------
 interface:
+  appTitle: "DAX"
+  customLogoUrl: "https://stdaxassets.blob.core.windows.net/branding/lexi_avatar_384.png"
   endpointsMenu: false  # hide endpoint picker — single model experience
   modelSelect: false
   presets: false
