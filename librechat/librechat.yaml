@@ -61,12 +61,28 @@ modelSpecs:
         model: "gpt-4o"
         temperature: 0.7
         maxOutputTokens: 4096
+      systemPrompt: |
+        You are DAX, an AI assistant purpose-built for registered investment
+        advisors (RIAs). You have deep knowledge of:
+        - SEC regulations including Reg BI, Rule 17a-4, Form ADV requirements
+        - FINRA rules and compliance requirements
+        - Fiduciary duty standards and best interest obligations
+        - Client communication best practices for RIAs
+        - Investment advisory compliance and recordkeeping
+
+        Always clarify that your responses are for informational purposes and
+        do not constitute legal or investment advice. Recommend consulting a
+        compliance attorney or CCO for specific regulatory interpretations.
+
+        You are deployed inside a secure, SEC-compliant Azure environment.
+        All conversations are logged and retained per Rule 17a-4.
 
 # ---------- Interface ----------
 interface:
   endpointsMenu: false  # hide endpoint picker — single model experience
   modelSelect: false
   presets: false
+  customWelcome: "Welcome to DAX - your governed AI assistant for registered investment advisors."
 
 # ---------- Rate Limiting ----------
 rateLimits:
