@@ -147,7 +147,7 @@ $template = @{
                     storageType = 'EmptyDir'
                 }
                 @{
-                    name = 'assets-vol'
+                    name = 'branding-vol'
                     storageType = 'EmptyDir'
                 }
             )
@@ -155,10 +155,22 @@ $template = @{
                 @{
                     name = 'write-config'
                     image = 'mcr.microsoft.com/cbl-mariner/base/core:2.0'
-                    command = @( '/bin/sh', '-c', 'echo "$CONFIG_YAML_B64" | base64 -d > /config/librechat.yaml && wget -O /assets/logo.svg "$LOGO_URL" || echo "Logo download failed, using default"' )
+                    command = @( '/bin/sh', '-c', @'
+set -e
+echo "$CONFIG_YAML_B64" | base64 -d > /config/librechat.yaml
+mkdir -p /branding/assets /branding/public
+wget -q -O /branding/assets/logo.png "$LOGIN_LOGO_URL" && echo "Login logo (png) downloaded"
+cp /branding/assets/logo.png /branding/assets/logo.svg 2>/dev/null; echo "Login logo (svg fallback) copied"
+wget -q -O /branding/public/favicon.ico "$FAVICON_URL" && echo "favicon.ico downloaded"
+cp /branding/public/favicon.ico /branding/public/apple-touch-icon.png; echo "apple-touch-icon copied"
+cp /branding/public/favicon.ico /branding/public/favicon-32x32.png; echo "favicon-32x32 copied"
+cp /branding/public/favicon.ico /branding/public/favicon-16x16.png; echo "favicon-16x16 copied"
+echo "Branding assets ready"
+'@ )
                     env = @(
                         @{ name = 'CONFIG_YAML_B64'; value = $yamlBase64 }
-                        @{ name = 'LOGO_URL'; value = 'https://stdaxassets.blob.core.windows.net/branding/lexi_avatar_384.png' }
+                        @{ name = 'LOGIN_LOGO_URL'; value = 'https://stdaxassets.blob.core.windows.net/branding/Dax-Frontpage.png' }
+                        @{ name = 'FAVICON_URL'; value = 'https://stdaxassets.blob.core.windows.net/branding/lexi_avatar_384.png' }
                     )
                     resources = @{
                         cpu = 0.25
@@ -166,7 +178,7 @@ $template = @{
                     }
                     volumeMounts = @(
                         @{ volumeName = 'config-vol'; mountPath = '/config' }
-                        @{ volumeName = 'assets-vol'; mountPath = '/assets' }
+                        @{ volumeName = 'branding-vol'; mountPath = '/branding' }
                     )
                 }
             )
@@ -174,13 +186,14 @@ $template = @{
                 @{
                     name = 'librechat'
                     image = $containerImage
+                    command = @( '/bin/sh', '-c', 'cp -f /branding/assets/* /app/client/public/assets/ 2>/dev/null; cp -f /branding/public/* /app/client/public/ 2>/dev/null; exec npm start' )
                     resources = @{
                         cpu = $containerCpu
                         memory = $containerMemory
                     }
                     volumeMounts = @(
                         @{ volumeName = 'config-vol'; mountPath = '/config' }
-                        @{ volumeName = 'assets-vol'; mountPath = '/app/client/public/assets' }
+                        @{ volumeName = 'branding-vol'; mountPath = '/branding' }
                     )
                     env = @(
                         @{ name = 'HOST'; value = '0.0.0.0' }
@@ -272,9 +285,10 @@ Write-Host "  Token:          $entraBase/oauth2/v2.0/token"
 Write-Host "  UserInfo:       https://graph.microsoft.com/oidc/userinfo"
 Write-Host "  Callback:       $callbackUrl"
 Write-Host ""
-Write-Host "Plain-text env vars:  18 (main) + 2 (init)"
+Write-Host "Plain-text env vars:  18 (main) + 3 (init)"
 Write-Host "Secret-backed refs:    6"
-Write-Host "Logo:    downloaded from Blob Storage into /app/client/public/assets/logo.svg"
+Write-Host "Branding: Dax-Frontpage.png -> /app/client/public/assets/logo.png"
+Write-Host "          lexi_avatar_384.png -> /app/client/public/favicon.ico + apple-touch-icon.png"
 Write-Host ""
 Write-Host "Only the 'Login with Microsoft' button should appear on the login page."
 Write-Host "(Email/password login is disabled via ALLOW_EMAIL_LOGIN=false)"
