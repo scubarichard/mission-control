@@ -35,23 +35,12 @@ if (-not (Test-Path $ipFile)) {
 $myIp = (Get-Content -Path $ipFile -Raw).Trim()
 Write-Host "Removing IP: $myIp"
 
-# Get current ip-range-filter
-$current = az cosmosdb show `
-    --name "$accountName" `
-    --resource-group "$rgName" `
-    --query ipRules -o json | ConvertFrom-Json
-
-$existingIps = @($current | ForEach-Object { $_.ipAddressOrRange }) | Where-Object { $_ }
-
-# Remove caller IP and 0.0.0.0
-$newIps = @($existingIps) | Where-Object { $_ -ne $myIp -and $_ -ne '0.0.0.0' }
-
-$ipRangeFilter = ($newIps -join ',')
-
+# Disable public network access
 az cosmosdb update `
     --name "$accountName" `
     --resource-group "$rgName" `
-    --ip-range-filter "$ipRangeFilter" `
+    --enable-public-network false `
+    --ip-range-filter "" `
     -o none
 
 # Clean up temp file

@@ -31,25 +31,12 @@ Write-Host "=== Open Cosmos DB Access ===" -ForegroundColor Cyan
 $myIp = (Invoke-RestMethod -Uri 'https://api.ipify.org' -UseBasicParsing).Trim()
 Write-Host "Your public IP: $myIp"
 
-# Get current ip-range-filter
-$current = az cosmosdb show `
-    --name "$accountName" `
-    --resource-group "$rgName" `
-    --query ipRules -o json | ConvertFrom-Json
-
-$existingIps = @($current | ForEach-Object { $_.ipAddressOrRange }) | Where-Object { $_ }
-
-# Build new list: existing + caller IP + 0.0.0.0 (portal access)
-$newIps = @($existingIps)
-if ($myIp -notin $newIps) { $newIps += $myIp }
-if ('0.0.0.0' -notin $newIps) { $newIps += '0.0.0.0' }
-
-$ipRangeFilter = ($newIps -join ',')
-
+# Enable public network access and allow caller IP + portal
 az cosmosdb update `
     --name "$accountName" `
     --resource-group "$rgName" `
-    --ip-range-filter "$ipRangeFilter" `
+    --enable-public-network true `
+    --ip-range-filter "$myIp,0.0.0.0" `
     -o none
 
 # Save IP so Close script knows what to remove
