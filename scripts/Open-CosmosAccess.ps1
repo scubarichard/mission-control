@@ -32,11 +32,13 @@ $myIp = (Invoke-RestMethod -Uri 'https://api.ipify.org' -UseBasicParsing).Trim()
 Write-Host "Your public IP: $myIp"
 
 # Enable public network access and allow caller IP + portal
-$subId = (az account show --query id -o tsv)
-$uri = "https://management.azure.com/subscriptions/$subId/resourceGroups/$rgName/providers/Microsoft.DocumentDB/databaseAccounts/${accountName}?api-version=2023-04-15"
-$body = '{"properties":{"publicNetworkAccess":"Enabled","ipRules":[{"ipAddressOrRange":"' + $myIp + '"},{"ipAddressOrRange":"0.0.0.0"}]}}'
+$subId   = (az account show --query id -o tsv)
+$token   = (az account get-access-token --query accessToken -o tsv)
+$headers = @{ "Authorization" = "Bearer $token"; "Content-Type" = "application/json" }
+$uri     = "https://management.azure.com/subscriptions/$subId/resourceGroups/$rgName/providers/Microsoft.DocumentDB/databaseAccounts/${accountName}?api-version=2023-04-15"
+$body    = '{"properties":{"publicNetworkAccess":"Enabled","ipRules":[{"ipAddressOrRange":"' + $myIp + '"},{"ipAddressOrRange":"0.0.0.0"}]}}'
 
-az rest --method PATCH --uri $uri --body $body -o none
+Invoke-RestMethod -Method PATCH -Uri $uri -Headers $headers -Body $body
 
 # Save IP so Close script knows what to remove
 $myIp | Out-File -FilePath $ipFile -Encoding utf8 -NoNewline

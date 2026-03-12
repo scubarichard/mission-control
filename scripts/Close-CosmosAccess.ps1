@@ -36,11 +36,13 @@ $myIp = (Get-Content -Path $ipFile -Raw).Trim()
 Write-Host "Removing IP: $myIp"
 
 # Disable public network access
-$subId = (az account show --query id -o tsv)
-$uri = "https://management.azure.com/subscriptions/$subId/resourceGroups/$rgName/providers/Microsoft.DocumentDB/databaseAccounts/${accountName}?api-version=2023-04-15"
-$body = '{"properties":{"publicNetworkAccess":"Disabled","ipRules":[]}}'
+$subId   = (az account show --query id -o tsv)
+$token   = (az account get-access-token --query accessToken -o tsv)
+$headers = @{ "Authorization" = "Bearer $token"; "Content-Type" = "application/json" }
+$uri     = "https://management.azure.com/subscriptions/$subId/resourceGroups/$rgName/providers/Microsoft.DocumentDB/databaseAccounts/${accountName}?api-version=2023-04-15"
+$body    = '{"properties":{"publicNetworkAccess":"Disabled","ipRules":[]}}'
 
-az rest --method PATCH --uri $uri --body $body -o none
+Invoke-RestMethod -Method PATCH -Uri $uri -Headers $headers -Body $body
 
 # Clean up temp file
 Remove-Item -Path $ipFile -Force
