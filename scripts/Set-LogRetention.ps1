@@ -103,9 +103,9 @@ foreach ($table in $tables) {
                 $uri = "/subscriptions/$subId/resourceGroups/$rgName/providers/Microsoft.OperationalInsights/workspaces/$workspaceName/tables/${tableName}?api-version=2021-12-01-preview"
                 $body = "{`"properties`":{`"totalRetentionInDays`":$totalRetention}}"
 
-                az rest --method PATCH --uri $uri --body $body --headers '{"Content-Type": "application/json"}' -o none 2>&1 | Out-Null
+                $restOutput = az rest --method PATCH --uri $uri --body $body --headers '{"Content-Type": "application/json"}' 2>&1
 
-                if ($LASTEXITCODE -ne 0) { throw "az rest failed" }
+                if ($LASTEXITCODE -ne 0) { throw $restOutput }
 
                 Write-Host "  SET  $totalRetention days:     $tableName (via legacy API)" -ForegroundColor Green
                 $updated++
