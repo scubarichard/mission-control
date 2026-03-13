@@ -45,6 +45,10 @@ Write-Host "Opening Cosmos DB access..." -ForegroundColor Yellow
 & "$PSScriptRoot/Open-CosmosAccess.ps1" -ClientName $ClientName
 Write-Host ""
 
+# Wait for firewall rule to propagate
+Write-Host "Waiting 60 seconds for firewall rule to propagate..." -ForegroundColor Yellow
+Start-Sleep -Seconds 60
+
 # 2. Get connection string from Key Vault
 Write-Host "Fetching connection string from Key Vault..." -ForegroundColor Yellow
 $connStr = az keyvault secret show --vault-name "$kvName" --name "cosmos-connection-string" --query value -o tsv
