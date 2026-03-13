@@ -101,7 +101,7 @@ Write-Host "`nReading secrets from Key Vault ($kvName)..." -ForegroundColor Yell
 $entraClientId = az keyvault secret show --vault-name "$kvName" --name "entra-client-id" --query "value" -o tsv
 $entraClientSecret = az keyvault secret show --vault-name "$kvName" --name "entra-client-secret" --query "value" -o tsv
 $sessionSecret = az keyvault secret show --vault-name "$kvName" --name "jwt-secret" --query "value" -o tsv
-$ttsApiKey = az keyvault secret show --vault-name "$kvName" --name "open-ai-key" --query "value" -o tsv
+$ttsApiKey = az keyvault secret show --vault-name "$kvName" --name "openai-api-key" --query "value" -o tsv
 
 if (-not $entraClientId -or -not $entraClientSecret) {
     Write-Error "Failed to read Entra credentials from Key Vault. Run Deploy-EntraApp.ps1 first."
@@ -112,14 +112,14 @@ if (-not $sessionSecret) {
     return
 }
 if (-not $ttsApiKey) {
-    Write-Error "Failed to read open-ai-key from Key Vault ($kvName). Add it before deploying TTS."
+    Write-Error "Failed to read openai-api-key from Key Vault ($kvName). Add it before deploying TTS."
     return
 }
 
 Write-Host "  entra-client-id:         $($entraClientId.Substring(0,8))..."
 Write-Host "  entra-client-secret:     ********"
 Write-Host "  openid-session-secret:   (from jwt-secret) ********"
-Write-Host "  open-ai-key (TTS):      ********"
+Write-Host "  openai-api-key (TTS):      ********"
 
 # ============================================================================
 # 3. Build updated container template
