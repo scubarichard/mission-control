@@ -63,6 +63,28 @@ When running Deploy-SSOConfig.ps1, use the custom domain:
     -LibreChatUrl "https://dax.dakona.com"
 ```
 
+## UI Customization State
+
+Current UI polish applied (v1.1.1+):
+
+| Item | Method | Value |
+|------|--------|-------|
+| Login logo | Dockerfile COPY → `logo.svg` | Dakona wordmark (SVG-wrapped PNG) |
+| Favicons | Dockerfile COPY | `lexi_avatar_384.png` → favicon-16/32, apple-touch-icon |
+| App title | Env var `APP_TITLE` | "DAX" |
+| Footer | Env var `CUSTOM_FOOTER` | Hidden (single space) |
+| Welcome message | `librechat.yaml` `customWelcome` | "Governed AI for RIAs" |
+| AI avatar icon | `librechat.yaml` modelSpecs `iconURL` | lexi_avatar_384.png (blob storage) |
+| Endpoint picker | `librechat.yaml` `endpointsMenu` | Hidden |
+| Model selector | `librechat.yaml` `modelSelect` | Hidden |
+| Presets | `librechat.yaml` `presets` | Hidden |
+| Email login | Env var `ALLOW_EMAIL_LOGIN` | Disabled |
+| Registration | Env var `ALLOW_REGISTRATION` | Disabled |
+
+**Note:** `hideFooter` is not a valid key in LibreChat v0.8.3. The footer
+is hidden via the `CUSTOM_FOOTER` environment variable set to a single space.
+`APP_LOGO` is also not a valid key — the logo is baked into the Docker image.
+
 ## TODO / Roadmap
 
 ### Client Onboarding — B2B Guest Access

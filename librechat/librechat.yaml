@@ -55,6 +55,9 @@ modelSpecs:
     - name: "gpt-4o"
       label: "DAX Assistant"
       description: "GPT-4o via Azure OpenAI"
+      iconURL: "https://stdaxassets.blob.core.windows.net/branding/lexi_avatar_384.png"
+      showIconInMenu: true
+      showIconInHeader: true
       default: true
       preset:
         endpoint: "azureOpenAI"
@@ -90,7 +93,7 @@ interface:
   endpointsMenu: false  # hide endpoint picker — single model experience
   modelSelect: false
   presets: false
-  customWelcome: "Welcome to DAX - your governed AI assistant for registered investment advisors."
+  customWelcome: "Governed AI for RIAs"
 
 # ---------- File Uploads ----------
 fileConfig:

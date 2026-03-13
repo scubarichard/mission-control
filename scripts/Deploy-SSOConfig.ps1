@@ -191,6 +191,7 @@ $template = @{
                         @{ name = 'CONFIG_PATH'; value = '/config/librechat.yaml' }
                         @{ name = 'AZURE_API_VERSION'; value = '2024-08-01-preview' }
                         @{ name = 'APP_TITLE'; value = 'DAX' }
+                        @{ name = 'CUSTOM_FOOTER'; value = ' ' }
                         @{ name = 'ALLOW_EMAIL_LOGIN'; value = 'false' }
                         @{ name = 'ALLOW_REGISTRATION'; value = 'false' }
                         @{ name = 'DOMAIN_CLIENT'; value = $domainClient }
@@ -276,7 +277,7 @@ Write-Host "  UserInfo:       https://graph.microsoft.com/oidc/userinfo"
 Write-Host "  Callback:       $callbackUrl"
 Write-Host ""
 Write-Host "Image:   $containerImage (DAX-branded, baked in via Dockerfile)"
-Write-Host "Plain-text env vars:  18 (main) + 1 (init)"
+Write-Host "Plain-text env vars:  19 (main) + 1 (init)"
 Write-Host "Secret-backed refs:    6"
 Write-Host ""
 Write-Host "Only the 'Login with Microsoft' button should appear on the login page."
