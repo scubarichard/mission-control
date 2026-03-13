@@ -3,19 +3,14 @@
     Deletes duplicate/partial user records from Cosmos DB to fix E11000 login errors.
 
 .DESCRIPTION
-    Opens Cosmos DB public access temporarily, uses pymongo via the connection
-    string from Key Vault to delete matching user records, then closes access.
+    Uses the Cosmos DB SQL REST API directly from PowerShell with HMAC-SHA256
+    master key authentication. No Python, no pymongo, no external dependencies.
 
-    Uses the same proven connection pattern as Get-ConversationReport.ps1.
-
-    Unlike previous versions, this script opens access to ALL IPs (not just
-    the caller's IP) to avoid NAT/proxy/VPN firewall mismatches, then locks
-    it back down immediately after.
+    Temporarily opens Cosmos DB public access (required for data plane), runs
+    the query and deletes, then closes access with retry.
 
     After running, affected users can log in fresh via SSO and a new record
     will be created automatically.
-
-    Requires: Python 3 with pymongo installed (pip install pymongo).
 
 .PARAMETER ClientName
     Short client identifier.
@@ -38,110 +33,191 @@ $ErrorActionPreference = 'Stop'
 
 $rgName      = "rg-dax-$ClientName"
 $accountName = "cosmos-dax-$ClientName"
-$kvName      = ("kv-dax-$ClientName" -replace '-', '')
-if ($kvName.Length -gt 24) { $kvName = $kvName.Substring(0, 24) }
+$cosmosHost  = "$accountName.documents.azure.com"
+$dbId        = "librechat"
+$collId      = "users"
 
 Write-Host "=== Clear Duplicate Users ===" -ForegroundColor Cyan
 Write-Host "Client:    $ClientName"
 Write-Host "Account:   $accountName"
-Write-Host "Key Vault: $kvName"
 Write-Host "Emails:    $($Emails -join ', ')"
 Write-Host ""
 
-# 1. Open Cosmos access to ALL IPs (avoids NAT/proxy mismatch)
+# ---------- Helper: Generate Cosmos DB HMAC-SHA256 auth token ----------
+function Get-CosmosAuthToken {
+    param(
+        [string] $Verb,
+        [string] $ResourceType,
+        [string] $ResourceLink,
+        [string] $Date,
+        [string] $MasterKey
+    )
+    $keyBytes = [System.Convert]::FromBase64String($MasterKey)
+    $hmac = New-Object System.Security.Cryptography.HMACSHA256
+    $hmac.Key = $keyBytes
+
+    $payload = "$($Verb.ToLower())`n$($ResourceType.ToLower())`n$ResourceLink`n$($Date.ToLower())`n`n"
+    $payloadBytes = [System.Text.Encoding]::UTF8.GetBytes($payload)
+    $signature = [System.Convert]::ToBase64String($hmac.ComputeHash($payloadBytes))
+
+    return [System.Web.HttpUtility]::UrlEncode("type=master&ver=1.0&sig=$signature")
+}
+
+# ---------- Helper: Build Cosmos request headers ----------
+function Get-CosmosHeaders {
+    param(
+        [string] $Verb,
+        [string] $ResourceType,
+        [string] $ResourceLink,
+        [string] $MasterKey,
+        [hashtable] $Extra = @{}
+    )
+    $date = [DateTime]::UtcNow.ToString("R")
+    $auth = Get-CosmosAuthToken -Verb $Verb -ResourceType $ResourceType `
+        -ResourceLink $ResourceLink -Date $date -MasterKey $MasterKey
+
+    $headers = @{
+        "Authorization"           = $auth
+        "x-ms-date"               = $date
+        "x-ms-version"            = "2018-12-31"
+        "x-ms-documentdb-isquery" = "True"
+    }
+    foreach ($k in $Extra.Keys) { $headers[$k] = $Extra[$k] }
+    return $headers
+}
+
+# ============================================================================
+# 1. Open Cosmos public access temporarily
+# ============================================================================
 Write-Host "Opening Cosmos DB public access..." -ForegroundColor Yellow
 
-$subId   = (az account show --query id -o tsv)
-$token   = (az account get-access-token --query accessToken -o tsv)
-$headers = @{ "Authorization" = "Bearer $token"; "Content-Type" = "application/json" }
-$uri     = "https://management.azure.com/subscriptions/$subId/resourceGroups/$rgName/providers/Microsoft.DocumentDB/databaseAccounts/${accountName}?api-version=2023-04-15"
-$body    = '{"properties":{"publicNetworkAccess":"Enabled","ipRules":[]}}'
+$subId    = (az account show --query id -o tsv)
+$armToken = (az account get-access-token --query accessToken -o tsv)
+$armHeaders = @{ "Authorization" = "Bearer $armToken"; "Content-Type" = "application/json" }
+$armUri   = "https://management.azure.com/subscriptions/$subId/resourceGroups/$rgName/providers/Microsoft.DocumentDB/databaseAccounts/${accountName}?api-version=2023-04-15"
 
-Invoke-RestMethod -Method PATCH -Uri $uri -Headers $headers -Body $body | Out-Null
-Write-Host "  Public access enabled (all IPs)" -ForegroundColor Green
+Invoke-RestMethod -Method PATCH -Uri $armUri -Headers $armHeaders `
+    -Body '{"properties":{"publicNetworkAccess":"Enabled","ipRules":[]}}' | Out-Null
+Write-Host "  Public access enabled" -ForegroundColor Green
 
-# Wait for firewall rule to propagate
 Write-Host "Waiting 90 seconds for propagation..." -ForegroundColor Yellow
 Start-Sleep -Seconds 90
 
-# 2. Get connection string from Key Vault
-Write-Host "Fetching connection string from Key Vault..." -ForegroundColor Yellow
-$connStr = az keyvault secret show --vault-name "$kvName" --name "cosmos-connection-string" --query value -o tsv
-if (-not $connStr) {
-    Write-Error "Failed to retrieve cosmos-connection-string from $kvName"
+# ============================================================================
+# 2. Get Cosmos master key (management plane — no firewall needed)
+# ============================================================================
+Write-Host "Fetching master key..." -ForegroundColor Yellow
+$masterKey = az cosmosdb keys list -n $accountName -g $rgName --type keys --query primaryMasterKey -o tsv
+if (-not $masterKey) {
+    Write-Error "Failed to retrieve master key for $accountName"
     return
 }
+Write-Host "  Key retrieved" -ForegroundColor Green
 
-# 3. Delete user records via Python
-Write-Host "Deleting user records..." -ForegroundColor Yellow
+# ============================================================================
+# 3. Query and delete user documents via Cosmos SQL REST API
+# ============================================================================
+Write-Host "`nProcessing emails..." -ForegroundColor Yellow
 
-$pyFile = [System.IO.Path]::GetTempFileName() -replace '\.tmp$', '.py'
+$baseUri      = "https://$cosmosHost"
+$collLink     = "dbs/$dbId/colls/$collId"
+$docsLink     = "$collLink/docs"
 
-$pyScript = @'
-import sys
-from pymongo import MongoClient
+foreach ($email in $Emails) {
+    $emailLower = $email.ToLower()
+    Write-Host "`n  $email" -ForegroundColor White
 
-conn_str = sys.argv[1]
-emails = sys.argv[2:]
+    # Query for matching documents
+    $queryBody = @{
+        query = "SELECT * FROM c WHERE c.email = @email1 OR c.email = @email2 OR c.username = @email1 OR c.username = @email2"
+        parameters = @(
+            @{ name = "@email1"; value = $emailLower }
+            @{ name = "@email2"; value = $email }
+        )
+    } | ConvertTo-Json -Depth 5
 
-client = MongoClient(conn_str, serverSelectionTimeoutMS=30000)
-db = client["librechat"]
-users = db["users"]
+    $qHeaders = Get-CosmosHeaders -Verb "POST" -ResourceType "docs" `
+        -ResourceLink $collLink -MasterKey $masterKey `
+        -Extra @{
+            "Content-Type"                        = "application/query+json"
+            "x-ms-documentdb-query-enablecrosspartition" = "True"
+        }
 
-for email in emails:
-    email_lower = email.lower()
-    result = users.delete_many({"$or": [
-        {"email": email_lower},
-        {"email": email},
-        {"username": email_lower},
-        {"username": email}
-    ]})
-    status = f"DELETED {result.deleted_count}" if result.deleted_count > 0 else "NOT FOUND"
-    print(f"  {email}: {status}")
+    try {
+        $result = Invoke-RestMethod -Method POST -Uri "$baseUri/$docsLink" `
+            -Headers $qHeaders -Body $queryBody
+    }
+    catch {
+        $status = $_.Exception.Response.StatusCode.value__
+        $detail = $_.ErrorDetails.Message
+        Write-Host "    QUERY FAILED (HTTP $status): $detail" -ForegroundColor Red
+        continue
+    }
 
-client.close()
-'@
+    $docs = $result.Documents
+    if (-not $docs -or $docs.Count -eq 0) {
+        Write-Host "    NOT FOUND" -ForegroundColor Gray
+        continue
+    }
 
-$pyScript | Out-File -FilePath $pyFile -Encoding utf8
+    Write-Host "    Found $($docs.Count) matching record(s)" -ForegroundColor Yellow
 
-try {
-    python $pyFile "$connStr" $Emails
-    if ($LASTEXITCODE -ne 0) { throw "Python script failed" }
-}
-catch {
-    Write-Host "Python script failed: $_" -ForegroundColor Red
-}
-finally {
-    Remove-Item -Path $pyFile -Force -ErrorAction SilentlyContinue
+    # Delete each matching document
+    $deleteCount = 0
+    foreach ($doc in $docs) {
+        $docId   = $doc.id
+        $docRid  = $doc._rid
+        $docLink = "$collLink/docs/$docId"
+
+        $dHeaders = Get-CosmosHeaders -Verb "DELETE" -ResourceType "docs" `
+            -ResourceLink $docLink -MasterKey $masterKey `
+            -Extra @{
+                "x-ms-documentdb-partitionkey" = "[`"$docId`"]"
+            }
+        # Remove query-specific header
+        $dHeaders.Remove("x-ms-documentdb-isquery")
+
+        try {
+            Invoke-RestMethod -Method DELETE -Uri "$baseUri/$docLink" `
+                -Headers $dHeaders | Out-Null
+            $deleteCount++
+        }
+        catch {
+            $status = $_.Exception.Response.StatusCode.value__
+            Write-Host "    DELETE FAILED for $docId (HTTP $status)" -ForegroundColor Red
+        }
+    }
+
+    Write-Host "    DELETED $deleteCount of $($docs.Count)" -ForegroundColor Green
 }
 
 Write-Host ""
 
-# 4. Close Cosmos access — disable public network access entirely
-#    Retry with backoff because the open PATCH may still be propagating
+# ============================================================================
+# 4. Close Cosmos public access (retry with backoff)
+# ============================================================================
 Write-Host "Closing Cosmos DB public access..." -ForegroundColor Yellow
 
-$body = '{"properties":{"publicNetworkAccess":"Disabled","ipRules":[]}}'
 $closed = $false
-
 for ($attempt = 1; $attempt -le 6; $attempt++) {
     Start-Sleep -Seconds (15 * $attempt)
     try {
-        $token   = (az account get-access-token --query accessToken -o tsv)
-        $headers = @{ "Authorization" = "Bearer $token"; "Content-Type" = "application/json" }
-        Invoke-RestMethod -Method PATCH -Uri $uri -Headers $headers -Body $body | Out-Null
+        $armToken = (az account get-access-token --query accessToken -o tsv)
+        $armHeaders = @{ "Authorization" = "Bearer $armToken"; "Content-Type" = "application/json" }
+        Invoke-RestMethod -Method PATCH -Uri $armUri -Headers $armHeaders `
+            -Body '{"properties":{"publicNetworkAccess":"Disabled","ipRules":[]}}' | Out-Null
         $closed = $true
         break
     }
     catch {
-        Write-Host "  Attempt $attempt failed (operation in progress), retrying..." -ForegroundColor Gray
+        Write-Host "  Attempt $attempt/6 — operation in progress, retrying..." -ForegroundColor Gray
     }
 }
 
 if ($closed) {
     Write-Host "  Public access disabled" -ForegroundColor Green
 } else {
-    Write-Host "  WARNING: Could not disable public access. Run manually:" -ForegroundColor Red
+    Write-Host "  WARNING: Could not disable. Run manually:" -ForegroundColor Red
     Write-Host "  az cosmosdb update -n $accountName -g $rgName --public-network-access DISABLED"
 }
 
