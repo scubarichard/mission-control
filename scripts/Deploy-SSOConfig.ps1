@@ -151,7 +151,8 @@ $template = @{
                 @{
                     name = 'write-config'
                     image = 'mcr.microsoft.com/cbl-mariner/base/core:2.0'
-                    command = @( '/bin/sh', '-c', 'echo "$CONFIG_YAML_B64" | base64 -d > /config/librechat.yaml && echo "Config written: $(wc -c < /config/librechat.yaml) bytes" && wget -q -O /config/logo.svg "$LOGO_URL" && echo "Logo downloaded: $(wc -c < /config/logo.svg) bytes" || echo "Logo download failed"' )
+                    command = @( '/bin/sh' )
+                    args = @( '-c', 'echo "$CONFIG_YAML_B64" | base64 -d > /config/librechat.yaml && echo "Config written: $(wc -c < /config/librechat.yaml) bytes" && wget -q -O /config/logo.svg "$LOGO_URL" && echo "Logo downloaded: $(wc -c < /config/logo.svg) bytes" || echo "Logo download failed"' )
                     env = @(
                         @{ name = 'CONFIG_YAML_B64'; value = $yamlBase64 }
                         @{ name = 'LOGO_URL'; value = 'https://stdaxassets.blob.core.windows.net/branding/Dax-Frontpage.png' }
@@ -169,7 +170,8 @@ $template = @{
                 @{
                     name = 'librechat'
                     image = $containerImage
-                    command = @( '/bin/sh', '-c', 'cp -f /config/logo.svg /app/client/dist/assets/logo.svg 2>/dev/null && echo "Logo copied" || echo "Logo copy failed"; exec node /app/api/server/index.js' )
+                    command = @( '/bin/sh' )
+                    args = @( '-c', 'cp -f /config/logo.svg /app/client/dist/assets/logo.svg 2>/dev/null && echo "Logo copied" || echo "Logo copy failed"; exec node /app/api/server/index.js' )
                     resources = @{
                         cpu = $containerCpu
                         memory = $containerMemory
