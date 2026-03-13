@@ -1,3 +1,14 @@
+/* Hero image above "Welcome back" heading */
+.w-authPageWidth::before {
+  content: '';
+  display: block;
+  width: 300px;
+  height: 300px;
+  background: url('/assets/dax-hero.png') no-repeat center;
+  background-size: contain;
+  margin: 0 auto 20px auto;
+}
+
 /* Hide the default icon and label text */
 a[data-testid="openid"] svg,
 a[data-testid="openid"] img,
