@@ -151,9 +151,10 @@ $template = @{
                 @{
                     name = 'write-config'
                     image = 'mcr.microsoft.com/cbl-mariner/base/core:2.0'
-                    command = @( '/bin/sh', '-c', 'echo "$CONFIG_YAML_B64" | base64 -d > /config/librechat.yaml && echo "Config written: $(wc -c < /config/librechat.yaml) bytes"' )
+                    command = @( '/bin/sh', '-c', 'echo "$CONFIG_YAML_B64" | base64 -d > /config/librechat.yaml && echo "Config written: $(wc -c < /config/librechat.yaml) bytes" && wget -q -O /config/logo.svg "$LOGO_URL" && echo "Logo downloaded: $(wc -c < /config/logo.svg) bytes" || echo "Logo download failed"' )
                     env = @(
                         @{ name = 'CONFIG_YAML_B64'; value = $yamlBase64 }
+                        @{ name = 'LOGO_URL'; value = 'https://stdaxassets.blob.core.windows.net/branding/Dax-Frontpage.png' }
                     )
                     resources = @{
                         cpu = 0.25
@@ -168,7 +169,7 @@ $template = @{
                 @{
                     name = 'librechat'
                     image = $containerImage
-                    command = @( 'node', '/app/api/server/index.js' )
+                    command = @( '/bin/sh', '-c', 'cp -f /config/logo.svg /app/client/dist/assets/logo.svg 2>/dev/null && echo "Logo copied" || echo "Logo copy failed"; exec node /app/api/server/index.js' )
                     resources = @{
                         cpu = $containerCpu
                         memory = $containerMemory
@@ -182,7 +183,6 @@ $template = @{
                         @{ name = 'CONFIG_PATH'; value = '/config/librechat.yaml' }
                         @{ name = 'AZURE_API_VERSION'; value = '2024-08-01-preview' }
                         @{ name = 'APP_TITLE'; value = 'DAX' }
-                        @{ name = 'APP_LOGO'; value = 'https://stdaxassets.blob.core.windows.net/branding/Dax-Frontpage.png' }
                         @{ name = 'ALLOW_EMAIL_LOGIN'; value = 'false' }
                         @{ name = 'ALLOW_REGISTRATION'; value = 'false' }
                         @{ name = 'DOMAIN_CLIENT'; value = $domainClient }
@@ -267,9 +267,9 @@ Write-Host "  Token:          $entraBase/oauth2/v2.0/token"
 Write-Host "  UserInfo:       https://graph.microsoft.com/oidc/userinfo"
 Write-Host "  Callback:       $callbackUrl"
 Write-Host ""
-Write-Host "Plain-text env vars:  19 (main) + 1 (init)"
+Write-Host "Plain-text env vars:  18 (main) + 2 (init)"
 Write-Host "Secret-backed refs:    6"
-Write-Host "Branding: APP_LOGO -> Dax-Frontpage.png (served via /api/config)"
+Write-Host "Branding: Dax-Frontpage.png -> /app/client/dist/assets/logo.svg (copied at startup)"
 Write-Host ""
 Write-Host "Only the 'Login with Microsoft' button should appear on the login page."
 Write-Host "(Email/password login is disabled via ALLOW_EMAIL_LOGIN=false)"
