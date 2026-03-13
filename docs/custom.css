@@ -1,3 +1,13 @@
+/* Force dark in light-mode browsers */
+@media (prefers-color-scheme: light) {
+  body, html, #root, .min-h-screen,
+  .w-authPageWidth, .bg-white,
+  [class*="auth"], .card {
+    background-color: #111111 !important;
+    color: #ffffff !important;
+  }
+}
+
 /* Force dark background regardless of browser theme */
 body, html, #root, .min-h-screen {
   background-color: #111111 !important;
@@ -8,6 +18,11 @@ body, html, #root, .min-h-screen {
 .bg-white {
   background-color: #1a1a1a !important;
   color: #ffffff !important;
+}
+
+.w-authPageWidth {
+  border: 1px solid #333333 !important;
+  box-shadow: none !important;
 }
 
 /* Heading and text on login page */

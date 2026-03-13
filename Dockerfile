@@ -15,7 +15,7 @@ COPY docs/lexi_avatar_384.png /app/client/dist/assets/favicon-16x16.png
 COPY docs/lexi_avatar_384.png /app/client/dist/assets/apple-touch-icon-180x180.png
 COPY docs/microsoft-signin.png /app/client/dist/assets/microsoft-signin.png
 COPY docs/custom.css /app/client/dist/assets/custom.css
-RUN sed -i 's|<meta name="theme-color"|<meta name="color-scheme" content="dark" /><meta name="theme-color"|' /app/client/dist/index.html && \
+RUN sed -i 's|<meta name="theme-color"|<meta name="color-scheme" content="dark only" /><meta name="theme-color"|' /app/client/dist/index.html && \
     sed -i 's|</head>|<link rel="stylesheet" href="assets/custom.css" /></head>|' /app/client/dist/index.html
 
 USER node
