@@ -141,19 +141,26 @@ interface:
   presets: false
   customWelcome: "Governed AI for RIAs"
 
-# ---------- Speech (OpenAI TTS + Browser STT) ----------
+# ---------- Speech (OpenAI TTS only) ----------
 speech:
   tts:
     openai:
       apiKey: "${TTS_API_KEY}"
       model: "tts-1"
       voices: ["nova", "shimmer", "alloy"]
+  stt:
+    openai:
+      apiKey: "${TTS_API_KEY}"
+      model: "whisper-1"
   speechTab:
+    conversationMode: false
     textToSpeech:
       engineTTS: "openai"
       voice: "nova"
       automaticPlayback: true
       cacheTTS: true
+    speechToText:
+      engineSTT: "openai"
 
 # ---------- File Uploads ----------
 fileConfig:
