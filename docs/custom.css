@@ -1,10 +1,15 @@
+/* Force dark background regardless of browser theme */
+body, html, #root, .min-h-screen {
+  background-color: #111111 !important;
+}
+
 /* Hero image above "Welcome back" heading */
 .w-authPageWidth::before {
   content: '';
   display: block;
-  width: 390px;
+  width: 500px;
   max-width: 100%;
-  height: 390px;
+  height: 500px;
   background: url('/assets/dax-hero.png') no-repeat center center;
   background-size: contain;
   background-color: transparent;
