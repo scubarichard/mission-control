@@ -3,6 +3,20 @@ body, html, #root, .min-h-screen {
   background-color: #111111 !important;
 }
 
+/* Login card — override white background */
+.w-authPageWidth,
+.bg-white {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
+/* Heading and text on login page */
+.w-authPageWidth h1,
+.w-authPageWidth p,
+.w-authPageWidth label {
+  color: #ffffff !important;
+}
+
 /* Hero image above "Welcome back" heading */
 .w-authPageWidth::before {
   content: '';
