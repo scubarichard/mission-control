@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Wraps Dax-Frontpage.png in a valid SVG file for LibreChat logo.
+    Wraps Dakona_Logo_-_Wordmark.png in a valid SVG file for LibreChat logo.
 
 .DESCRIPTION
     LibreChat expects logo.svg as an SVG file. This script base64-encodes
@@ -13,7 +13,7 @@
 
 $ErrorActionPreference = 'Stop'
 
-$pngPath = "$PSScriptRoot/../docs/Dax-Frontpage.png"
+$pngPath = "$PSScriptRoot/../docs/Dakona_Logo_-_Wordmark.png"
 $svgPath = "$PSScriptRoot/../docs/logo.svg"
 
 if (-not (Test-Path $pngPath)) {
@@ -29,9 +29,9 @@ Write-Host "  Encoded $($pngBytes.Length) bytes -> $($base64.Length) chars base6
 $svg = @"
 <svg xmlns="http://www.w3.org/2000/svg"
      xmlns:xlink="http://www.w3.org/1999/xlink"
-     viewBox="0 0 400 200">
+     viewBox="0 0 300 100">
   <image href="data:image/png;base64,$base64"
-         width="400" height="200"/>
+         width="300" height="100"/>
 </svg>
 "@
 
