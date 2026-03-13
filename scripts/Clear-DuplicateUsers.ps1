@@ -54,17 +54,17 @@ if (-not $connStr) {
     return
 }
 
-# 3. Delete user records via Python
+# 3. Delete user records via Python (write to temp file to avoid quoting issues)
 Write-Host "Deleting user records..." -ForegroundColor Yellow
 
-$emailsJson = ($Emails | ForEach-Object { "`"$_`"" }) -join ','
+$pyFile = [System.IO.Path]::GetTempFileName() -replace '\.tmp$', '.py'
 
-$pyScript = @"
+$pyScript = @'
 import sys
 from pymongo import MongoClient
 
 conn_str = sys.argv[1]
-emails = [$emailsJson]
+emails = sys.argv[2:]
 
 client = MongoClient(conn_str, tls=True, tlsAllowInvalidCertificates=True)
 db = client['librechat']
@@ -72,7 +72,7 @@ users = db['users']
 
 for email in emails:
     email_lower = email.lower()
-    result = users.delete_many({'\$or': [
+    result = users.delete_many({'$or': [
         {'email': email_lower},
         {'email': email},
         {'username': email_lower},
@@ -82,9 +82,11 @@ for email in emails:
     print(f"  {email}: {status}")
 
 client.close()
-"@
+'@
 
-$pyScript | python - "$connStr"
+[System.IO.File]::WriteAllText($pyFile, $pyScript)
+python $pyFile "$connStr" $Emails
+Remove-Item $pyFile -Force
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Python script failed." -ForegroundColor Red
