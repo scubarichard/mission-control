@@ -1,5 +1,12 @@
-.social-button[data-provider="openid"] span { display: none; }
-.social-button[data-provider="openid"]::before {
+/* Hide the default icon and label text */
+a[data-testid="openid"] svg,
+a[data-testid="openid"] img,
+a[data-testid="openid"] p {
+  display: none !important;
+}
+
+/* Replace with official Microsoft sign-in button */
+a[data-testid="openid"]::before {
   content: '';
   display: block;
   width: 215px;
@@ -7,8 +14,11 @@
   background: url('/assets/microsoft-signin.png') no-repeat center;
   background-size: contain;
 }
-.social-button[data-provider="openid"] {
+
+/* Strip default button styling */
+a[data-testid="openid"] {
   background: transparent !important;
   border: none !important;
   padding: 0 !important;
+  justify-content: center !important;
 }
