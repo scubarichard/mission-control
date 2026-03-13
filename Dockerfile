@@ -7,9 +7,9 @@ COPY docs/Dakona_Logo_-_Wordmark.png /tmp/Dakona_Logo_-_Wordmark.png
 
 # Remove black backgrounds and place final assets
 RUN apk add --no-cache imagemagick && \
-    convert /tmp/Dax-Frontpage.png -fuzz 15% -transparent black \
+    convert /tmp/Dax-Frontpage.png -fuzz 25% -transparent black \
       /app/client/dist/assets/dax-hero.png && \
-    convert /tmp/Dakona_Logo_-_Wordmark.png -fuzz 15% -transparent black \
+    convert /tmp/Dakona_Logo_-_Wordmark.png -fuzz 25% -transparent black \
       /tmp/wordmark-transparent.png && \
     BASE64=$(cat /tmp/wordmark-transparent.png | base64 | tr -d '\n') && \
     printf '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 100"><image href="data:image/png;base64,%s" width="300" height="100"/></svg>' "$BASE64" \
