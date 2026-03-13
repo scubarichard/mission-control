@@ -101,6 +101,7 @@ Write-Host "`nReading secrets from Key Vault ($kvName)..." -ForegroundColor Yell
 $entraClientId = az keyvault secret show --vault-name "$kvName" --name "entra-client-id" --query "value" -o tsv
 $entraClientSecret = az keyvault secret show --vault-name "$kvName" --name "entra-client-secret" --query "value" -o tsv
 $sessionSecret = az keyvault secret show --vault-name "$kvName" --name "jwt-secret" --query "value" -o tsv
+$ttsApiKey = az keyvault secret show --vault-name "$kvName" --name "open-ai-key" --query "value" -o tsv
 
 if (-not $entraClientId -or -not $entraClientSecret) {
     Write-Error "Failed to read Entra credentials from Key Vault. Run Deploy-EntraApp.ps1 first."
@@ -110,10 +111,15 @@ if (-not $sessionSecret) {
     Write-Error "Failed to read jwt-secret from Key Vault. Run Deploy-LibreChatSecrets.ps1 first."
     return
 }
+if (-not $ttsApiKey) {
+    Write-Error "Failed to read open-ai-key from Key Vault ($kvName). Add it before deploying TTS."
+    return
+}
 
 Write-Host "  entra-client-id:         $($entraClientId.Substring(0,8))..."
 Write-Host "  entra-client-secret:     ********"
 Write-Host "  openid-session-secret:   (from jwt-secret) ********"
+Write-Host "  open-ai-key (TTS):      ********"
 
 # ============================================================================
 # 3. Build updated container template
@@ -209,6 +215,8 @@ $template = @{
                         @{ name = 'OPENID_CLIENT_ID'; value = $entraClientId }
                         @{ name = 'OPENID_CLIENT_SECRET'; value = $entraClientSecret }
                         @{ name = 'OPENID_SESSION_SECRET'; value = $sessionSecret }
+                        # OpenAI TTS API key (direct OpenAI, not Azure OpenAI)
+                        @{ name = 'TTS_API_KEY'; value = $ttsApiKey }
                         # Secret-backed env vars (refs to Container App secrets from Key Vault)
                         @{ name = 'OPENAI_API_KEY'; secretRef = 'openai-api-key' }
                         @{ name = 'MONGO_URI'; secretRef = 'cosmos-connection-string' }
@@ -277,7 +285,7 @@ Write-Host "  UserInfo:       https://graph.microsoft.com/oidc/userinfo"
 Write-Host "  Callback:       $callbackUrl"
 Write-Host ""
 Write-Host "Image:   $containerImage (DAX-branded, baked in via Dockerfile)"
-Write-Host "Plain-text env vars:  19 (main) + 1 (init)"
+Write-Host "Plain-text env vars:  20 (main) + 1 (init)"
 Write-Host "Secret-backed refs:    6"
 Write-Host ""
 Write-Host "Only the 'Login with Microsoft' button should appear on the login page."

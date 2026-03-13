@@ -140,13 +140,20 @@ interface:
   modelSelect: false
   presets: false
   customWelcome: "Governed AI for RIAs"
-  speech:
-    tts:
-      enabled: true
-      engineTTS: "browser"
-    stt:
-      enabled: true
-      engineSTT: "browser"
+
+# ---------- Speech (OpenAI TTS + Browser STT) ----------
+speech:
+  tts:
+    openai:
+      apiKey: "${TTS_API_KEY}"
+      model: "tts-1"
+      voices: ["nova", "shimmer", "alloy"]
+  speechTab:
+    textToSpeech:
+      engineTTS: "openai"
+      voice: "nova"
+      automaticPlayback: true
+      cacheTTS: true
 
 # ---------- File Uploads ----------
 fileConfig:
