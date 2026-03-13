@@ -7,12 +7,6 @@
   background: url('/assets/dax-hero.png') no-repeat center;
   background-size: contain;
   margin: 0 auto 20px auto;
-  mix-blend-mode: screen;
-}
-
-/* Dakona wordmark logo — transparent background */
-img[src="assets/logo.svg"] {
-  mix-blend-mode: screen;
 }
 
 /* Hide the default icon and label text */
