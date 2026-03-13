@@ -46,8 +46,8 @@ Write-Host "Opening Cosmos DB access..." -ForegroundColor Yellow
 Write-Host ""
 
 # Wait for firewall rule to propagate
-Write-Host "Waiting 60 seconds for firewall rule to propagate..." -ForegroundColor Yellow
-Start-Sleep -Seconds 60
+Write-Host "Waiting 90 seconds for firewall rule to propagate..." -ForegroundColor Yellow
+Start-Sleep -Seconds 90
 
 # 2. Get connection string from Key Vault
 Write-Host "Fetching connection string from Key Vault..." -ForegroundColor Yellow
@@ -70,17 +70,17 @@ from pymongo import MongoClient
 conn_str = sys.argv[1]
 emails = sys.argv[2:]
 
-client = MongoClient(conn_str, tls=True, tlsAllowInvalidCertificates=True)
-db = client['librechat']
-users = db['users']
+client = MongoClient(conn_str, serverSelectionTimeoutMS=10000)
+db = client["librechat"]
+users = db["users"]
 
 for email in emails:
     email_lower = email.lower()
-    result = users.delete_many({'$or': [
-        {'email': email_lower},
-        {'email': email},
-        {'username': email_lower},
-        {'username': email}
+    result = users.delete_many({"$or": [
+        {"email": email_lower},
+        {"email": email},
+        {"username": email_lower},
+        {"username": email}
     ]})
     status = f"DELETED {result.deleted_count}" if result.deleted_count > 0 else "NOT FOUND"
     print(f"  {email}: {status}")
@@ -88,14 +88,19 @@ for email in emails:
 client.close()
 '@
 
-[System.IO.File]::WriteAllText($pyFile, $pyScript)
-python $pyFile "$connStr" $Emails
-Remove-Item $pyFile -Force
+$pyScript | Out-File -FilePath $pyFile -Encoding utf8
 
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Python script failed." -ForegroundColor Red
+try {
+    python $pyFile "$connStr" $Emails
+    if ($LASTEXITCODE -ne 0) { throw "Python script failed" }
+}
+catch {
+    Write-Host "Python script failed: $_" -ForegroundColor Red
     & "$PSScriptRoot/Close-CosmosAccess.ps1" -ClientName $ClientName
     return
+}
+finally {
+    Remove-Item -Path $pyFile -Force -ErrorAction SilentlyContinue
 }
 
 Write-Host ""
