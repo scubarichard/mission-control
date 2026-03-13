@@ -118,14 +118,32 @@ finally {
 Write-Host ""
 
 # 4. Close Cosmos access — disable public network access entirely
+#    Retry with backoff because the open PATCH may still be propagating
 Write-Host "Closing Cosmos DB public access..." -ForegroundColor Yellow
 
-$token   = (az account get-access-token --query accessToken -o tsv)
-$headers = @{ "Authorization" = "Bearer $token"; "Content-Type" = "application/json" }
-$body    = '{"properties":{"publicNetworkAccess":"Disabled","ipRules":[]}}'
+$body = '{"properties":{"publicNetworkAccess":"Disabled","ipRules":[]}}'
+$closed = $false
 
-Invoke-RestMethod -Method PATCH -Uri $uri -Headers $headers -Body $body | Out-Null
-Write-Host "  Public access disabled" -ForegroundColor Green
+for ($attempt = 1; $attempt -le 6; $attempt++) {
+    Start-Sleep -Seconds (15 * $attempt)
+    try {
+        $token   = (az account get-access-token --query accessToken -o tsv)
+        $headers = @{ "Authorization" = "Bearer $token"; "Content-Type" = "application/json" }
+        Invoke-RestMethod -Method PATCH -Uri $uri -Headers $headers -Body $body | Out-Null
+        $closed = $true
+        break
+    }
+    catch {
+        Write-Host "  Attempt $attempt failed (operation in progress), retrying..." -ForegroundColor Gray
+    }
+}
+
+if ($closed) {
+    Write-Host "  Public access disabled" -ForegroundColor Green
+} else {
+    Write-Host "  WARNING: Could not disable public access. Run manually:" -ForegroundColor Red
+    Write-Host "  az cosmosdb update -n $accountName -g $rgName --public-network-access DISABLED"
+}
 
 Write-Host ""
 Write-Host "=== Done ===" -ForegroundColor Cyan
