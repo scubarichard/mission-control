@@ -62,3 +62,23 @@ When running Deploy-SSOConfig.ps1, use the custom domain:
     -ClientTenantId "d2a3c346-00f3-47dd-a53e-caa3fca74714" `
     -LibreChatUrl "https://dax.dakona.com"
 ```
+
+## TODO / Roadmap
+
+### Client Onboarding — B2B Guest Access
+
+For non-Dakona clients, users authenticate via Azure AD B2B:
+- No changes required on client's existing tenant
+- No new passwords for their staff
+- Client IT/MSP has nothing to configure
+
+Deployment steps (on DAX tenant side):
+1. Add client domain to `librechat.yaml` `allowedDomains`
+2. Run `az ad invitation create` for each user
+3. Users receive email, click accept, log in with existing Microsoft creds
+
+**Script needed:** `scripts/Invite-ClientUsers.ps1`
+- Takes `-ClientName`, `-UserEmails` params
+- Sends B2B invitations from DAX tenant
+- Adds domain to `allowedDomains` in yaml
+- Redeploys SSO config
