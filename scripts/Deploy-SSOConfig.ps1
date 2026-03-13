@@ -127,11 +127,20 @@ $containerImage = "acrdaxdakona.azurecr.io/librechat-dax:latest"
 $containerCpu = $currentContainer.resources.cpu
 $containerMemory = $currentContainer.resources.memory
 $currentConfig = $currentApp.properties.configuration
+$identityId = az identity show -n "id-dax-$ClientName" -g "$rgName" --query "id" -o tsv
+
+Write-Host "  Container image: $containerImage" -ForegroundColor White
 
 $template = @{
     properties = @{
         configuration = @{
             ingress = $currentConfig.ingress
+            registries = @(
+                @{
+                    server   = 'acrdaxdakona.azurecr.io'
+                    identity = $identityId
+                }
+            )
             secrets = @($currentConfig.secrets | ForEach-Object {
                 # Preserve each secret's KV ref and identity binding
                 $secret = @{ name = $_.name }
