@@ -78,3 +78,10 @@ a[data-testid="openid"] {
   padding: 0 !important;
   justify-content: center !important;
 }
+
+/* Hide model name in chat header */
+[class*="model-name"],
+[class*="modelName"],
+[data-testid*="model"] {
+  display: none !important;
+}
