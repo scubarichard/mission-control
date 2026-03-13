@@ -210,7 +210,7 @@ for ($attempt = 1; $attempt -le 6; $attempt++) {
         break
     }
     catch {
-        Write-Host "  Attempt $attempt/6 — operation in progress, retrying..." -ForegroundColor Gray
+        Write-Host "  Attempt $attempt/6 - operation in progress, retrying..." -ForegroundColor Gray
     }
 }
 
