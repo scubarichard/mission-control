@@ -146,37 +146,14 @@ $template = @{
                     name = 'config-vol'
                     storageType = 'EmptyDir'
                 }
-                @{
-                    name = 'branding-vol'
-                    storageType = 'EmptyDir'
-                }
             )
             initContainers = @(
                 @{
                     name = 'write-config'
                     image = 'mcr.microsoft.com/cbl-mariner/base/core:2.0'
-                    command = @( '/bin/sh', '-c', @'
-echo "=== Init container starting ==="
-echo "Writing librechat.yaml..."
-echo "$CONFIG_YAML_B64" | base64 -d > /config/librechat.yaml
-echo "Config written: $(wc -c < /config/librechat.yaml) bytes"
-echo "Downloading favicon from: $FAVICON_URL"
-wget -O /branding/favicon-32x32.png "$FAVICON_URL" 2>&1 || echo "ERROR: wget failed for favicon"
-ls -la /branding/ 2>&1
-if [ -f /branding/favicon-32x32.png ]; then
-  echo "favicon-32x32.png downloaded: $(wc -c < /branding/favicon-32x32.png) bytes"
-  cp /branding/favicon-32x32.png /branding/favicon-16x16.png
-  cp /branding/favicon-32x32.png /branding/apple-touch-icon-180x180.png
-  echo "Favicon copies created"
-else
-  echo "ERROR: /branding/favicon-32x32.png not found after download"
-fi
-echo "=== Init container done ==="
-ls -la /branding/
-'@ )
+                    command = @( '/bin/sh', '-c', 'echo "$CONFIG_YAML_B64" | base64 -d > /config/librechat.yaml && echo "Config written: $(wc -c < /config/librechat.yaml) bytes"' )
                     env = @(
                         @{ name = 'CONFIG_YAML_B64'; value = $yamlBase64 }
-                        @{ name = 'FAVICON_URL'; value = 'https://stdaxassets.blob.core.windows.net/branding/lexi_avatar_384.png' }
                     )
                     resources = @{
                         cpu = 0.25
@@ -184,7 +161,6 @@ ls -la /branding/
                     }
                     volumeMounts = @(
                         @{ volumeName = 'config-vol'; mountPath = '/config' }
-                        @{ volumeName = 'branding-vol'; mountPath = '/branding' }
                     )
                 }
             )
@@ -192,14 +168,13 @@ ls -la /branding/
                 @{
                     name = 'librechat'
                     image = $containerImage
-                    command = @( '/bin/sh', '-c', 'cp -f /branding/*.png /app/client/public/assets/ 2>/dev/null; exec node /app/api/server/index.js' )
+                    command = @( 'node', '/app/api/server/index.js' )
                     resources = @{
                         cpu = $containerCpu
                         memory = $containerMemory
                     }
                     volumeMounts = @(
                         @{ volumeName = 'config-vol'; mountPath = '/config' }
-                        @{ volumeName = 'branding-vol'; mountPath = '/branding' }
                     )
                     env = @(
                         @{ name = 'HOST'; value = '0.0.0.0' }
@@ -292,10 +267,9 @@ Write-Host "  Token:          $entraBase/oauth2/v2.0/token"
 Write-Host "  UserInfo:       https://graph.microsoft.com/oidc/userinfo"
 Write-Host "  Callback:       $callbackUrl"
 Write-Host ""
-Write-Host "Plain-text env vars:  19 (main) + 2 (init)"
+Write-Host "Plain-text env vars:  19 (main) + 1 (init)"
 Write-Host "Secret-backed refs:    6"
 Write-Host "Branding: APP_LOGO -> Dax-Frontpage.png (served via /api/config)"
-Write-Host "          lexi_avatar_384.png -> favicon-*.png + apple-touch-icon-180x180.png (in assets/)"
 Write-Host ""
 Write-Host "Only the 'Login with Microsoft' button should appear on the login page."
 Write-Host "(Email/password login is disabled via ALLOW_EMAIL_LOGIN=false)"
