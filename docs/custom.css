@@ -28,6 +28,15 @@ a[data-testid="openid"]::before {
   background-size: contain;
 }
 
+/* User avatar — Dakona blue background */
+.h-8.w-8.flex-shrink-0 .relative {
+  background-color: #0066FF;
+  border-radius: 9999px;
+}
+.h-8.w-8.flex-shrink-0 img.rounded-full {
+  mix-blend-mode: lighten;
+}
+
 /* Strip default button styling */
 a[data-testid="openid"] {
   background: transparent !important;
