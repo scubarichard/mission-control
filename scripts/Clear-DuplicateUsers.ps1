@@ -3,14 +3,13 @@
     Deletes duplicate/partial user records from Cosmos DB to fix E11000 login errors.
 
 .DESCRIPTION
-    Opens Cosmos DB network access, connects via pymongo, deletes all user
-    records matching the specified emails from the librechat.users collection,
-    then closes Cosmos access.
+    Uses Azure CLI Cosmos DB MongoDB commands (control plane) to find and delete
+    user records matching the specified emails from the librechat.users collection.
+
+    No firewall changes needed — uses Azure control plane, not data plane.
 
     After running, affected users can log in fresh via SSO and a new record
     will be created automatically.
-
-    Requires: Python 3 with pymongo installed (pip install pymongo).
 
 .PARAMETER ClientName
     Short client identifier.
@@ -31,83 +30,70 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$kvName = ("kv-dax-$ClientName" -replace '-', '')
-if ($kvName.Length -gt 24) { $kvName = $kvName.Substring(0, 24) }
+$rgName      = "rg-dax-$ClientName"
+$accountName = "cosmos-dax-$ClientName"
+$dbName      = "librechat"
+$collName    = "users"
 
 Write-Host "=== Clear Duplicate Users ===" -ForegroundColor Cyan
 Write-Host "Client:    $ClientName"
-Write-Host "Key Vault: $kvName"
+Write-Host "Account:   $accountName"
 Write-Host "Emails:    $($Emails -join ', ')"
 Write-Host ""
 
-# 1. Open Cosmos access
-Write-Host "Opening Cosmos DB access..." -ForegroundColor Yellow
-& "$PSScriptRoot/Open-CosmosAccess.ps1" -ClientName $ClientName
-Write-Host ""
+foreach ($email in $Emails) {
+    $emailLower = $email.ToLower()
+    Write-Host "Processing: $email" -ForegroundColor Yellow
 
-# Wait for firewall rule to propagate
-Write-Host "Waiting 90 seconds for firewall rule to propagate..." -ForegroundColor Yellow
-Start-Sleep -Seconds 90
+    # Query for matching documents by email or username (case-insensitive)
+    $filter = "{`"`$or`": [{`"email`": `"$emailLower`"}, {`"email`": `"$email`"}, {`"username`": `"$emailLower`"}, {`"username`": `"$email`"}]}"
 
-# 2. Get connection string from Key Vault
-Write-Host "Fetching connection string from Key Vault..." -ForegroundColor Yellow
-$connStr = az keyvault secret show --vault-name "$kvName" --name "cosmos-connection-string" --query value -o tsv
-if (-not $connStr) {
-    Write-Error "Failed to retrieve cosmos-connection-string from $kvName"
-    & "$PSScriptRoot/Close-CosmosAccess.ps1" -ClientName $ClientName
-    return
+    $docs = az cosmosdb mongodb collection list-documents `
+        --account-name $accountName `
+        --resource-group $rgName `
+        --database-name $dbName `
+        --collection-name $collName `
+        --filter "$filter" `
+        -o json 2>&1
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  ERROR querying: $docs" -ForegroundColor Red
+        continue
+    }
+
+    $parsed = $docs | ConvertFrom-Json
+    if (-not $parsed -or $parsed.Count -eq 0) {
+        Write-Host "  NOT FOUND" -ForegroundColor Gray
+        continue
+    }
+
+    $deleteCount = 0
+    foreach ($doc in $parsed) {
+        $docId = $doc._id
+        # Handle ObjectId format — extract $oid if present
+        if ($docId -is [PSCustomObject] -and $docId.'$oid') {
+            $docId = $docId.'$oid'
+        }
+
+        Write-Host "  Deleting document _id=$docId ..." -ForegroundColor White
+
+        az cosmosdb mongodb collection delete-document `
+            --account-name $accountName `
+            --resource-group $rgName `
+            --database-name $dbName `
+            --collection-name $collName `
+            --document-id "$docId" `
+            -o none 2>&1
+
+        if ($LASTEXITCODE -eq 0) {
+            $deleteCount++
+        } else {
+            Write-Host "  WARNING: Failed to delete _id=$docId" -ForegroundColor Red
+        }
+    }
+
+    Write-Host "  DELETED $deleteCount of $($parsed.Count) matching records" -ForegroundColor Green
 }
-
-# 3. Delete user records via Python (write to temp file to avoid quoting issues)
-Write-Host "Deleting user records..." -ForegroundColor Yellow
-
-$pyFile = [System.IO.Path]::GetTempFileName() -replace '\.tmp$', '.py'
-
-$pyScript = @'
-import sys
-from pymongo import MongoClient
-
-conn_str = sys.argv[1]
-emails = sys.argv[2:]
-
-client = MongoClient(conn_str, serverSelectionTimeoutMS=10000)
-db = client["librechat"]
-users = db["users"]
-
-for email in emails:
-    email_lower = email.lower()
-    result = users.delete_many({"$or": [
-        {"email": email_lower},
-        {"email": email},
-        {"username": email_lower},
-        {"username": email}
-    ]})
-    status = f"DELETED {result.deleted_count}" if result.deleted_count > 0 else "NOT FOUND"
-    print(f"  {email}: {status}")
-
-client.close()
-'@
-
-$pyScript | Out-File -FilePath $pyFile -Encoding utf8
-
-try {
-    python $pyFile "$connStr" $Emails
-    if ($LASTEXITCODE -ne 0) { throw "Python script failed" }
-}
-catch {
-    Write-Host "Python script failed: $_" -ForegroundColor Red
-    & "$PSScriptRoot/Close-CosmosAccess.ps1" -ClientName $ClientName
-    return
-}
-finally {
-    Remove-Item -Path $pyFile -Force -ErrorAction SilentlyContinue
-}
-
-Write-Host ""
-
-# 4. Close Cosmos access
-Write-Host "Closing Cosmos DB access..." -ForegroundColor Yellow
-& "$PSScriptRoot/Close-CosmosAccess.ps1" -ClientName $ClientName
 
 Write-Host ""
 Write-Host "=== Done ===" -ForegroundColor Cyan
