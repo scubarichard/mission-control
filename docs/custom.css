@@ -1,0 +1,14 @@
+.social-button[data-provider="openid"] span { display: none; }
+.social-button[data-provider="openid"]::before {
+  content: '';
+  display: block;
+  width: 215px;
+  height: 41px;
+  background: url('/assets/microsoft-signin.png') no-repeat center;
+  background-size: contain;
+}
+.social-button[data-provider="openid"] {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
