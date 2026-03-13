@@ -1,92 +1,80 @@
 /**
- * Drop unique indexes on social provider ID fields from the users collection.
+ * Check if the users collection has problematic unique indexes on social
+ * provider ID fields. If so, drop the entire collection so LibreChat
+ * recreates it using the patched schema (without unique constraints).
  *
- * Cosmos DB MongoDB API treats null as a unique value, so unique+sparse indexes
- * on googleId, facebookId, etc. block all users after the first from logging in
- * (E11000 duplicate key error).
- *
- * This script runs at container startup (before LibreChat) and drops the
- * problematic indexes. Mongoose will NOT recreate them because we patch the
- * schema via the companion sed command in the Dockerfile.
+ * Cosmos DB does not allow modifying unique indexes on non-empty collections,
+ * so dropping the collection is the only way to fix existing deployments.
  *
  * Usage: node drop-unique-indexes.js
  * Requires MONGO_URI environment variable.
  */
 
-const FIELDS_TO_FIX = [
-  'googleId',
-  'facebookId',
-  'openidId',
-  'samlId',
-  'ldapId',
-  'githubId',
-  'discordId',
-  'appleId',
+const PROBLEM_FIELDS = [
+  'googleId', 'facebookId', 'openidId', 'samlId',
+  'ldapId', 'githubId', 'discordId', 'appleId',
 ];
 
 async function main() {
   const uri = process.env.MONGO_URI;
   if (!uri) {
-    console.error('[drop-unique-indexes] MONGO_URI not set, skipping');
-    process.exit(0);
+    console.log('[DAX] MONGO_URI not set, skipping index check');
+    return;
   }
 
-  let MongoClient;
+  const mongoose = require('mongoose');
   try {
-    ({ MongoClient } = require('mongodb'));
-  } catch {
-    // Fall back to mongoose's built-in connection
-    const mongoose = require('mongoose');
     await mongoose.connect(uri);
-    const db = mongoose.connection.db;
-    await dropIndexes(db);
+  } catch (err) {
+    console.error('[DAX] Cannot connect to DB, skipping index check:', err.message);
+    return;
+  }
+
+  const db = mongoose.connection.db;
+  const collections = await db.listCollections({ name: 'users' }).toArray();
+  if (collections.length === 0) {
+    console.log('[DAX] No users collection yet - will be created with patched schema');
     await mongoose.disconnect();
     return;
   }
 
-  const client = new MongoClient(uri);
-  try {
-    await client.connect();
-    const db = client.db('librechat');
-    await dropIndexes(db);
-  } finally {
-    await client.close();
-  }
-}
-
-async function dropIndexes(db) {
-  const collection = db.collection('users');
+  const usersCol = db.collection('users');
   let indexes;
   try {
-    indexes = await collection.indexes();
+    indexes = await usersCol.indexes();
   } catch (err) {
-    console.error('[drop-unique-indexes] Failed to list indexes:', err.message);
+    console.error('[DAX] Cannot list indexes:', err.message);
+    await mongoose.disconnect();
     return;
   }
 
-  let dropped = 0;
-  for (const idx of indexes) {
-    if (idx.name === '_id_') continue;
+  // Check if any problematic unique indexes exist
+  const badIndexes = indexes.filter(idx => {
     const keys = Object.keys(idx.key || {});
-    if (keys.length === 1 && FIELDS_TO_FIX.includes(keys[0]) && idx.unique) {
-      try {
-        await collection.dropIndex(idx.name);
-        console.log(`[drop-unique-indexes] Dropped index: ${idx.name}`);
-        dropped++;
-      } catch (err) {
-        console.error(`[drop-unique-indexes] Failed to drop ${idx.name}:`, err.message);
-      }
-    }
+    return keys.length === 1 && PROBLEM_FIELDS.includes(keys[0]) && idx.unique;
+  });
+
+  if (badIndexes.length === 0) {
+    console.log('[DAX] No problematic unique indexes found - schema is clean');
+    await mongoose.disconnect();
+    return;
   }
 
-  if (dropped === 0) {
-    console.log('[drop-unique-indexes] No problematic indexes found (already clean)');
-  } else {
-    console.log(`[drop-unique-indexes] Dropped ${dropped} unique index(es)`);
+  console.log(`[DAX] Found ${badIndexes.length} problematic unique index(es):`);
+  badIndexes.forEach(idx => console.log(`  - ${idx.name}`));
+  console.log('[DAX] Dropping users collection so it will be recreated with patched schema...');
+
+  try {
+    await usersCol.drop();
+    console.log('[DAX] Users collection dropped - will be recreated on first login');
+  } catch (err) {
+    console.error('[DAX] Failed to drop users collection:', err.message);
+    console.error('[DAX] Users may still get E11000 errors until collection is manually dropped');
   }
+
+  await mongoose.disconnect();
 }
 
-main().catch((err) => {
-  console.error('[drop-unique-indexes] Error:', err.message);
-  process.exit(0); // Don't block startup on failure
+main().catch(err => {
+  console.error('[DAX] Startup check error:', err.message);
 });

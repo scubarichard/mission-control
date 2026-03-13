@@ -24,20 +24,25 @@ RUN sed -i 's|<meta name="theme-color"|<meta name="color-scheme" content="dark o
 # ---------- Fix Cosmos DB unique index bug ----------
 # Cosmos DB MongoDB API treats null as a unique value, so unique+sparse indexes
 # on social provider ID fields (googleId, facebookId, etc.) block multi-user login.
-# Two-part fix:
-#   1. Patch compiled schema to remove unique:true so mongoose won't recreate indexes
-#   2. Startup script drops existing problematic indexes from the database
+# The compiled bundle is pretty-printed (not minified), so the pattern is:
+#       unique: true,
+#       sparse: true,
+# We delete the "unique: true," lines entirely, leaving only "sparse: true,".
+# After fixing the schema, the existing users collection must be deleted so
+# LibreChat recreates it without the unique indexes.
 COPY patches/drop-unique-indexes.js /app/patches/drop-unique-indexes.js
 COPY patches/entrypoint.sh /app/patches/entrypoint.sh
 RUN chmod +x /app/patches/entrypoint.sh && \
-    find /app/node_modules/@librechat/data-schemas/dist -name '*.cjs' -exec \
-      sed -i 's/unique:!0,sparse:!0/sparse:!0/g' {} \; && \
-    find /app/node_modules/@librechat/data-schemas/dist -name '*.js' -exec \
-      sed -i 's/unique:!0,sparse:!0/sparse:!0/g' {} \; && \
-    find /app/node_modules/@librechat/data-schemas/dist -name '*.cjs' -exec \
-      sed -i 's/unique: true, sparse: true/sparse: true/g' {} \; && \
-    find /app/node_modules/@librechat/data-schemas/dist -name '*.js' -exec \
-      sed -i 's/unique: true, sparse: true/sparse: true/g' {} \;
+    sed -i -e '/^        unique: true,$/{N; /\n        sparse: true,/{s/unique: true,\n/\n/;}}' \
+      /app/node_modules/@librechat/data-schemas/dist/index.cjs && \
+    sed -i -e '/^        unique: true,$/{N; /\n        sparse: true,/{s/unique: true,\n/\n/;}}' \
+      /app/node_modules/@librechat/data-schemas/dist/index.es.js && \
+    echo "=== Verifying patch ===" && \
+    grep -c 'unique: true' /app/node_modules/@librechat/data-schemas/dist/index.cjs && \
+    echo "googleId block:" && \
+    grep -A2 'googleId' /app/node_modules/@librechat/data-schemas/dist/index.cjs && \
+    echo "email block (should still have unique):" && \
+    grep -A3 'email:' /app/node_modules/@librechat/data-schemas/dist/index.cjs | head -8
 
 USER node
 ENTRYPOINT ["/app/patches/entrypoint.sh"]
