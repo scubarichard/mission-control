@@ -1,0 +1,124 @@
+{
+  "name": "DAX Document Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-document",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "d1e2f3a4-b5c6-7890-d1e2-f3a4b5c67890",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://login.microsoftonline.com/' + ($env.GRAPH_TENANT_ID || '') + '/oauth2/v2.0/token' }}",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "client_id", "value": "={{ $env.GRAPH_CLIENT_ID }}" },
+            { "name": "client_secret", "value": "={{ $env.GRAPH_CLIENT_SECRET }}" },
+            { "name": "scope", "value": "https://graph.microsoft.com/.default" },
+            { "name": "grant_type", "value": "client_credentials" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a2b3c4d5-e6f7-8901-a2b3-c4d5e6f78901",
+      "name": "Get OAuth Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = require('docx');\n\nconst webhook = $('Webhook').first().json;\nconst title = webhook.body.title || 'Untitled Document';\nconst content = webhook.body.content || '';\nconst templateType = webhook.body.templateType || 'report';\n\nconst children = [];\n\n// Title\nchildren.push(new Paragraph({\n  text: title,\n  heading: HeadingLevel.HEADING_1,\n  alignment: AlignmentType.CENTER,\n  spacing: { after: 400 }\n}));\n\n// Generated date\nchildren.push(new Paragraph({\n  children: [new TextRun({\n    text: 'Generated: ' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),\n    italics: true,\n    size: 20,\n    color: '666666'\n  })],\n  alignment: AlignmentType.CENTER,\n  spacing: { after: 400 }\n}));\n\n// Separator\nchildren.push(new Paragraph({\n  border: { bottom: { style: 'single', size: 6, color: '999999' } },\n  spacing: { after: 400 }\n}));\n\n// Content — supports basic markdown: ## headings, - bullets, plain text\nfor (const line of content.split('\\n')) {\n  if (line.startsWith('## ')) {\n    children.push(new Paragraph({ text: line.slice(3), heading: HeadingLevel.HEADING_2, spacing: { before: 300, after: 200 } }));\n  } else if (line.startsWith('### ')) {\n    children.push(new Paragraph({ text: line.slice(4), heading: HeadingLevel.HEADING_3, spacing: { before: 200, after: 100 } }));\n  } else if (line.startsWith('- ')) {\n    children.push(new Paragraph({ text: line.slice(2), bullet: { level: 0 } }));\n  } else if (line.trim()) {\n    children.push(new Paragraph({ text: line, spacing: { after: 100 } }));\n  } else {\n    children.push(new Paragraph({ text: '' }));\n  }\n}\n\nconst doc = new Document({\n  creator: 'DAX - Dakona AI Workspace',\n  title: title,\n  sections: [{ children }]\n});\n\nconst buffer = await Packer.toBuffer(doc);\nconst fileName = title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\\s+/g, '-') + '.docx';\n\nreturn [{\n  json: {\n    title,\n    fileName,\n    fileSize: buffer.length,\n    folderPath: webhook.body.folderPath || 'General'\n  },\n  binary: {\n    data: {\n      data: buffer.toString('base64'),\n      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',\n      fileName\n    }\n  }\n}];"
+      },
+      "id": "b3c4d5e6-f7a8-9012-b3c4-d5e6f7a89012",
+      "name": "Generate Document",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [690, 300]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/sites/' + ($env.GRAPH_SITE_ID || '') + '/drive/root:/' + $json.folderPath + '/' + $json.fileName + ':/content' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $('Get OAuth Token').first().json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "c4d5e6f7-a8b9-0123-c4d5-e6f7a8b90123",
+      "name": "Upload to SharePoint",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [910, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, webUrl: $json.webUrl, fileName: $json.name, driveItemId: $json.id, size: $json.size } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "e5f6a7b8-c9d0-1234-e5f6-a7b8c9d01234",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1130, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          { "node": "Get OAuth Token", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Get OAuth Token": {
+      "main": [
+        [
+          { "node": "Generate Document", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Generate Document": {
+      "main": [
+        [
+          { "node": "Upload to SharePoint", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Upload to SharePoint": {
+      "main": [
+        [
+          { "node": "Respond to Webhook", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

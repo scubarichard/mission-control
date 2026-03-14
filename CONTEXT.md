@@ -162,6 +162,41 @@ story for conversation audit is:
 - The open PATCH holds an exclusive lock — close may need retry after 2-3 minutes
 - `Clear-DuplicateUsers.ps1` uses Cosmos REST API (no pymongo dependency)
 
+## Document Generation (Graph API)
+
+DAX Document Generator is an Entra app + n8n workflow for creating Word
+documents and uploading them to SharePoint via Microsoft Graph.
+
+### Entra App: "DAX Document Generator"
+- **Permissions:** Sites.ReadWrite.All, Files.ReadWrite.All (application)
+- **Auth flow:** Client credentials (app-only, no user sign-in)
+- **Key Vault secrets:** `docgen-client-id`, `docgen-client-secret`
+- **Script:** `Deploy-DocGenApp.ps1 -ClientName <name>`
+
+### n8n Workflow: document-generator.json
+- **Webhook:** POST /webhook/generate-document
+- **Input:** `{ title, content, templateType, folderPath }`
+- **Output:** SharePoint URL of the uploaded .docx
+- **Requires:** `docx` npm package in n8n (`NODE_FUNCTION_ALLOW_EXTERNAL=docx`)
+
+### n8n Environment Variables
+| Variable | Description |
+|----------|-------------|
+| `GRAPH_TENANT_ID` | Client's Entra tenant ID |
+| `GRAPH_CLIENT_ID` | From KV `docgen-client-id` |
+| `GRAPH_CLIENT_SECRET` | From KV `docgen-client-secret` |
+| `GRAPH_SITE_ID` | SharePoint site ID (from Graph API) |
+
+### Dakona Pilot Setup
+```powershell
+az login --tenant d2a3c346-00f3-47dd-a53e-caa3fca74714
+./scripts/Deploy-DocGenApp.ps1 -ClientName dakona-pilot
+```
+
+See `docs/graph-document-generation.md` for full replication guide.
+
+---
+
 ## TODO / Roadmap
 
 ### Client Onboarding — B2B Guest Access
