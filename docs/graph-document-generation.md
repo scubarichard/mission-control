@@ -55,18 +55,21 @@ or Azure CLI:
 # Format: https://graph.microsoft.com/v1.0/sites/{domain}:/sites/{site-path}
 # Example for Dakona's default team site:
 curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://graph.microsoft.com/v1.0/sites/dakona.sharepoint.com:/sites/DAX" \
+  "https://graph.microsoft.com/v1.0/sites/dakonallc.sharepoint.com:/sites/DAX" \
   | jq '.id'
 
 # Or for the root site:
 curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://graph.microsoft.com/v1.0/sites/dakona.sharepoint.com" \
+  "https://graph.microsoft.com/v1.0/sites/dakonallc.sharepoint.com" \
   | jq '.id'
 ```
 
-The site ID looks like: `dakona.sharepoint.com,<guid>,<guid>`
+The site ID looks like: `dakonallc.sharepoint.com,<guid>,<guid>`
 
-Save this — you'll need it for n8n configuration.
+**Dakona pilot site ID (verified):**
+```
+dakonallc.sharepoint.com,68764500-f333-44cc-8017-30489a6a9053,71b1b423-6196-4e05-b004-7298445afb6f
+```
 
 ---
 
@@ -100,7 +103,7 @@ Set these on the n8n Container App:
 | `GRAPH_TENANT_ID` | `d2a3c346-00f3-47dd-a53e-caa3fca74714` | Client's Entra tenant ID |
 | `GRAPH_CLIENT_ID` | From Key Vault | `docgen-client-id` secret |
 | `GRAPH_CLIENT_SECRET` | From Key Vault | `docgen-client-secret` secret |
-| `GRAPH_SITE_ID` | From step 2 | SharePoint site ID |
+| `GRAPH_SITE_ID` | See step 2 (Dakona pilot: `dakonallc.sharepoint.com,68764500-f333-44cc-8017-30489a6a9053,71b1b423-6196-4e05-b004-7298445afb6f`) | SharePoint site ID |
 | `NODE_FUNCTION_ALLOW_EXTERNAL` | `docx` | Required for Code node |
 
 ### Import the Workflow
@@ -131,7 +134,7 @@ curl -X POST https://<n8n-url>/webhook/generate-document \
 ```json
 {
   "success": true,
-  "webUrl": "https://dakona.sharepoint.com/sites/DAX/Shared Documents/General/DAX-Test-Report.docx",
+  "webUrl": "https://dakonallc.sharepoint.com/sites/DAX/Shared Documents/General/DAX-Test-Report.docx",
   "fileName": "DAX-Test-Report.docx",
   "driveItemId": "...",
   "size": 12345

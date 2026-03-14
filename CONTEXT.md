@@ -193,6 +193,10 @@ az login --tenant d2a3c346-00f3-47dd-a53e-caa3fca74714
 ./scripts/Deploy-DocGenApp.ps1 -ClientName dakona-pilot
 ```
 
+**SharePoint:** `dakonallc.sharepoint.com`
+**Site ID:** `dakonallc.sharepoint.com,68764500-f333-44cc-8017-30489a6a9053,71b1b423-6196-4e05-b004-7298445afb6f`
+**Template folder:** `DAX Templates/` (contains ICP-Quarterly-Review-TEMPLATE.docx)
+
 See `docs/graph-document-generation.md` for full replication guide.
 
 ---
