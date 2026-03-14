@@ -55,7 +55,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{ 'Bearer ' + $('Get OAuth Token').first().json.access_token }}"
+              "value": "=Bearer {{ $('Get OAuth Token').first().json.access_token }}"
             }
           ]
         },
