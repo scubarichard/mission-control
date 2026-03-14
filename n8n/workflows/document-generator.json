@@ -38,18 +38,45 @@
     },
     {
       "parameters": {
-        "jsCode": "const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = require('docx');\n\nconst webhook = $('Webhook').first().json;\nconst title = webhook.body.title || 'Untitled Document';\nconst content = webhook.body.content || '';\nconst templateType = webhook.body.templateType || 'report';\n\nconst children = [];\n\n// Title\nchildren.push(new Paragraph({\n  text: title,\n  heading: HeadingLevel.HEADING_1,\n  alignment: AlignmentType.CENTER,\n  spacing: { after: 400 }\n}));\n\n// Generated date\nchildren.push(new Paragraph({\n  children: [new TextRun({\n    text: 'Generated: ' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),\n    italics: true,\n    size: 20,\n    color: '666666'\n  })],\n  alignment: AlignmentType.CENTER,\n  spacing: { after: 400 }\n}));\n\n// Separator\nchildren.push(new Paragraph({\n  border: { bottom: { style: 'single', size: 6, color: '999999' } },\n  spacing: { after: 400 }\n}));\n\n// Content — supports basic markdown: ## headings, - bullets, plain text\nfor (const line of content.split('\\n')) {\n  if (line.startsWith('## ')) {\n    children.push(new Paragraph({ text: line.slice(3), heading: HeadingLevel.HEADING_2, spacing: { before: 300, after: 200 } }));\n  } else if (line.startsWith('### ')) {\n    children.push(new Paragraph({ text: line.slice(4), heading: HeadingLevel.HEADING_3, spacing: { before: 200, after: 100 } }));\n  } else if (line.startsWith('- ')) {\n    children.push(new Paragraph({ text: line.slice(2), bullet: { level: 0 } }));\n  } else if (line.trim()) {\n    children.push(new Paragraph({ text: line, spacing: { after: 100 } }));\n  } else {\n    children.push(new Paragraph({ text: '' }));\n  }\n}\n\nconst doc = new Document({\n  creator: 'DAX - Dakona AI Workspace',\n  title: title,\n  sections: [{ children }]\n});\n\nconst buffer = await Packer.toBuffer(doc);\nconst fileName = title.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\\s+/g, '-') + '.docx';\n\nreturn [{\n  json: {\n    title,\n    fileName,\n    fileSize: buffer.length,\n    folderPath: webhook.body.folderPath || 'General'\n  },\n  binary: {\n    data: {\n      data: buffer.toString('base64'),\n      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',\n      fileName\n    }\n  }\n}];"
+        "method": "GET",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/sites/' + ($env.GRAPH_SITE_ID || '') + '/drive/root:/DAX Templates/ICP-Quarterly-Review-TEMPLATE.docx:/content' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get OAuth Token').first().json.access_token }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
       },
-      "id": "b3c4d5e6-f7a8-9012-b3c4-d5e6f7a89012",
-      "name": "Generate Document",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "id": "f1a2b3c4-d5e6-7890-f1a2-b3c4d5e67890",
+      "name": "Download Template",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [690, 300]
     },
     {
       "parameters": {
+        "jsCode": "const { execFileSync } = require('child_process');\nconst fs = require('fs');\nconst path = require('path');\n\n// Get template binary from Download Template node\nconst templateBinary = $('Download Template').first().binary.data;\nconst templateBuffer = Buffer.from(templateBinary.data, 'base64');\nconst data = $('Webhook').first().json.body;\n\n// Set up working directory\nconst workDir = '/tmp/docx-' + Date.now();\nconst templatePath = path.join(workDir, 'template.docx');\nconst extractDir = path.join(workDir, 'extracted');\nconst outputPath = path.join(workDir, 'report.docx');\n\nfs.mkdirSync(extractDir, { recursive: true });\nfs.writeFileSync(templatePath, templateBuffer);\n\n// Unzip the docx (it's a zip of XML files)\nexecFileSync('unzip', ['-o', templatePath, '-d', extractDir]);\n\n// Read word/document.xml and replace all {{placeholder}} tokens\nconst docXmlPath = path.join(extractDir, 'word', 'document.xml');\nlet xml = fs.readFileSync(docXmlPath, 'utf8');\n\nconst fields = {\n  clientName: data.clientName,\n  firmName: data.firmName,\n  reportPeriod: data.reportPeriod,\n  reportDate: data.reportDate,\n  advisorName: data.advisorName,\n  meetingDate: data.meetingDate,\n  meetingLocation: data.meetingLocation,\n  attendees: data.attendees,\n  meetingDuration: data.meetingDuration,\n  discussionPoint1: data.discussionPoint1,\n  discussionPoint2: data.discussionPoint2,\n  discussionPoint3: data.discussionPoint3,\n  advisorNotes: data.advisorNotes,\n  portfolioValue: data.portfolioValue,\n  ytdReturn: data.ytdReturn,\n  benchmarkReturn: data.benchmarkReturn,\n  vsBenchmark: data.vsBenchmark,\n  goal1: data.goal1,\n  goal2: data.goal2,\n  goal3: data.goal3,\n  goalsProgressNotes: data.goalsProgressNotes,\n  action1: data.action1,\n  action1Owner: data.action1Owner,\n  action1Due: data.action1Due,\n  action2: data.action2,\n  action2Owner: data.action2Owner,\n  action2Due: data.action2Due,\n  action3: data.action3,\n  action3Owner: data.action3Owner,\n  action3Due: data.action3Due,\n  nextMeetingDate: data.nextMeetingDate,\n  nextMeetingAgenda: data.nextMeetingAgenda\n};\n\nfor (const [key, val] of Object.entries(fields)) {\n  // XML-escape replacement values to prevent injection\n  const safe = (val || '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;');\n  xml = xml.split('{{' + key + '}}').join(safe);\n}\n\nfs.writeFileSync(docXmlPath, xml);\n\n// Rezip into a valid docx\nexecFileSync('zip', ['-r', '-q', outputPath, '.'], { cwd: extractDir });\n\n// Read the filled document\nconst outputBuffer = fs.readFileSync(outputPath);\n\n// Clean up temp files\nfs.rmSync(workDir, { recursive: true, force: true });\n\n// Prepare output for Upload node\nconst clientName = data.clientName || 'Unknown';\nconst reportPeriod = data.reportPeriod || 'Report';\nconst fileName = reportPeriod + '.docx';\n\nreturn [{\n  json: {\n    clientName,\n    reportPeriod,\n    fileName,\n    uploadPath: 'DAX Reports/' + clientName + '/' + fileName,\n    fileSize: outputBuffer.length\n  },\n  binary: {\n    data: {\n      data: outputBuffer.toString('base64'),\n      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',\n      fileName\n    }\n  }\n}];"
+      },
+      "id": "b3c4d5e6-f7a8-9012-b3c4-d5e6f7a89012",
+      "name": "Fill Placeholders",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [910, 300]
+    },
+    {
+      "parameters": {
         "method": "PUT",
-        "url": "={{ 'https://graph.microsoft.com/v1.0/sites/' + ($env.GRAPH_SITE_ID || '') + '/drive/root:/' + $json.folderPath + '/' + $json.fileName + ':/content' }}",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/sites/' + ($env.GRAPH_SITE_ID || '') + '/drive/root:/' + $json.uploadPath + ':/content' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -68,7 +95,7 @@
       "name": "Upload to SharePoint",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [910, 300]
+      "position": [1130, 300]
     },
     {
       "parameters": {
@@ -82,7 +109,7 @@
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1130, 300]
+      "position": [1350, 300]
     }
   ],
   "connections": {
@@ -96,11 +123,18 @@
     "Get OAuth Token": {
       "main": [
         [
-          { "node": "Generate Document", "type": "main", "index": 0 }
+          { "node": "Download Template", "type": "main", "index": 0 }
         ]
       ]
     },
-    "Generate Document": {
+    "Download Template": {
+      "main": [
+        [
+          { "node": "Fill Placeholders", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Fill Placeholders": {
       "main": [
         [
           { "node": "Upload to SharePoint", "type": "main", "index": 0 }
