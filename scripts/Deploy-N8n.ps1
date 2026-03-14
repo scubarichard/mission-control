@@ -1,8 +1,11 @@
 <#
 .SYNOPSIS
-    Deploys n8n as an Azure Container App in the client's tenant.
+    Deploys n8n as an Azure Container App inside a CLIENT tenant.
 
 .DESCRIPTION
+    This deploys n8n as an Azure Container App inside a CLIENT tenant.
+    For Dakona internal development, use n8n.dakona.net (VM).
+
     Creates a Container App running n8n alongside the existing DAX
     LibreChat deployment. Uses the same resource group, VNet, managed
     environment, managed identity, and Key Vault.
