@@ -85,6 +85,83 @@ Current UI polish applied (v1.1.1+):
 is hidden via the `CUSTOM_FOOTER` environment variable set to a single space.
 `APP_LOGO` is also not a valid key — the logo is baked into the Docker image.
 
+## Critical Fixes & Lessons Learned (v1.2.0)
+
+### Multi-User Login Fix (CRITICAL)
+
+**Root cause:** Cosmos DB MongoDB API treats null as a unique value for unique
+indexes. LibreChat's User schema creates `unique: true, sparse: true` indexes on
+`googleId`, `facebookId`, `openidId`, `samlId`, `ldapId`, `githubId`, `discordId`,
+`appleId`. On Cosmos DB, only the first user can ever log in — all subsequent
+users get E11000 duplicate key error on the null social ID fields.
+
+**Fix (two-part):**
+1. **Build-time sed patch** in Dockerfile removes `unique: true` from the compiled
+   `@librechat/data-schemas/dist/index.cjs` and `index.es.js` bundles. The bundle
+   is pretty-printed (NOT minified), so the sed uses multi-line matching. Verified
+   locally: removes exactly 8 unique constraints (24 → 16 occurrences), preserving
+   email's unique constraint.
+2. **Runtime entrypoint** (`patches/entrypoint.sh`) runs `drop-unique-indexes.js`
+   before LibreChat starts. If the `users` collection has bad unique indexes, it
+   drops the entire collection (Cosmos does NOT allow modifying unique indexes on
+   non-empty collections). LibreChat recreates it on first login with the patched
+   schema.
+
+**NEVER skip `Deploy-ContainerRegistry.ps1` when the Dockerfile or patches change.**
+The sed patch only takes effect in the Docker image build.
+
+### Entra App User Assignment (CRITICAL for every client deployment)
+
+After deploying the Entra SSO app via `Deploy-EntraApp.ps1`:
+1. Go to **Azure Portal → Enterprise Applications**
+2. Find the DAX app (may need "All Applications" filter)
+3. Go to **Users and groups → Add user/group**
+4. Assign ALL users who should have access
+
+**Without this step, only the deploying admin can log in.** This is not automated
+by any script and must be done manually for each client.
+
+### System Prompt Configuration
+
+The DAX system prompt is set at two levels for reliability:
+- `endpoints.azureOpenAI.systemPrompt` — endpoint-level default
+- `modelSpecs.list[0].preset.promptPrefix` — injected as system message in API calls
+
+`modelSpecs.systemPrompt` (outside the preset) does NOT work in LibreChat — it
+was silently ignored. Only `promptPrefix` inside the preset is sent to the API.
+
+The prompt covers: identity, platform architecture, 4-category help scope
+(Compliance, Operations, IT, General Business), never-do list, compliance
+guardrails, 5-layer SEC compliance explanation, and tone guidelines.
+
+**Deploy via `Deploy-SSOConfig.ps1` only** — no ACR rebuild needed for prompt changes.
+
+### TTS / STT
+
+- OpenAI TTS enabled: `tts-1` model, voices: nova (default), shimmer, alloy
+- OpenAI STT enabled: `whisper-1` model
+- API key from Key Vault secret `openai-api-key`, injected as `TTS_API_KEY` env var
+- `automaticPlayback: true`, `cacheTTS: true` in speechTab config
+- Browser engine removed — OpenAI only
+
+### Purview Correction
+
+Purview Data Map does **NOT** support Cosmos DB MongoDB API. The correct compliance
+story for conversation audit is:
+- Cosmos DB retains all conversations (7-year retention via Log Analytics)
+- `Get-ConversationReport.ps1` generates HTML compliance reports
+- Purview governs M365-side controls only (DLP, Communication Compliance)
+
+### Cosmos DB Access Notes
+
+- **Cloud Shell + Portal Middleware IPs** must be added in Cosmos DB Networking
+  settings before using Mongo Shell from the Azure Portal
+- **Mongo Shell:** always `use librechat` — default database is `test`
+- **Always close firewall after access:** run `Close-CosmosAccess.ps1` or
+  `az cosmosdb update -n cosmos-dax-dakona-pilot -g rg-dax-dakona-pilot --public-network-access DISABLED`
+- The open PATCH holds an exclusive lock — close may need retry after 2-3 minutes
+- `Clear-DuplicateUsers.ps1` uses Cosmos REST API (no pymongo dependency)
+
 ## TODO / Roadmap
 
 ### Client Onboarding — B2B Guest Access
