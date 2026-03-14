@@ -68,9 +68,16 @@
           ]
         },
         "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 10
+            }
+          },
           "response": {
             "response": {
-              "responseFormat": "file"
+              "responseFormat": "file",
+              "fullResponse": false
             }
           }
         }
