@@ -199,6 +199,47 @@ az login --tenant d2a3c346-00f3-47dd-a53e-caa3fca74714
 
 See `docs/graph-document-generation.md` for full replication guide.
 
+## n8n Per-Tenant Deployment
+
+n8n runs as a second Container App in each client's tenant, sharing the
+existing VNet, managed environment, managed identity, and Key Vault.
+
+### Container App: ca-dax-n8n-{clientName}
+- **Image:** n8nio/n8n:latest
+- **Ingress:** Internal only (VNet, not public)
+- **Replicas:** min 1, max 1 (always-on)
+- **CPU/Memory:** 1.0 / 2.0Gi
+- **Identity:** Same user-assigned identity as LibreChat (id-dax-{clientName})
+- **Script:** `Deploy-N8n.ps1 -ClientName <name> -ClientTenantId <id> -GraphSiteId <id>`
+
+### Key Environment Variables
+| Variable | Source |
+|----------|--------|
+| `GRAPH_TENANT_ID` | -ClientTenantId param |
+| `GRAPH_CLIENT_ID` | KV secretref: docgen-client-id |
+| `GRAPH_CLIENT_SECRET` | KV secretref: docgen-client-secret |
+| `GRAPH_SITE_ID` | -GraphSiteId param |
+| `NODE_FUNCTION_ALLOW_BUILTIN` | child_process,fs,path |
+| `N8N_BLOCK_ENV_ACCESS_IN_NODE` | false |
+| `N8N_RUNNERS_ENABLED` | true |
+
+### Deployment Order (updated)
+1. Lighthouse delegation
+2. Bicep infra (Deploy-Infrastructure.ps1)
+3. Deploy-EntraApp.ps1 (SSO)
+4. Deploy-LibreChatSecrets.ps1 (session secrets)
+5. Deploy-SSOConfig.ps1 (OpenID Connect)
+6. Deploy-DocGenApp.ps1 (Graph API app)
+7. **Deploy-N8n.ps1 (n8n workflow engine)**
+8. Deploy-PurviewPolicies.ps1 (DLP + compliance)
+
+### Dakona Pilot n8n
+```powershell
+./scripts/Deploy-N8n.ps1 -ClientName dakona-pilot `
+    -ClientTenantId "d2a3c346-00f3-47dd-a53e-caa3fca74714" `
+    -GraphSiteId "dakonallc.sharepoint.com,68764500-f333-44cc-8017-30489a6a9053,71b1b423-6196-4e05-b004-7298445afb6f"
+```
+
 ---
 
 ## TODO / Roadmap

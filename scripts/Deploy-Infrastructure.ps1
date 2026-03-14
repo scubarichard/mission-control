@@ -40,3 +40,11 @@ az deployment sub create `
     --name "dax-infra-$ClientName-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 
 Write-Host "`nInfrastructure deployment complete." -ForegroundColor Green
+
+Write-Host "`nNext steps:" -ForegroundColor Yellow
+Write-Host "  1. Deploy-EntraApp.ps1       - Register SSO app"
+Write-Host "  2. Deploy-LibreChatSecrets.ps1 - Generate session secrets"
+Write-Host "  3. Deploy-SSOConfig.ps1      - Configure OpenID Connect"
+Write-Host "  4. Deploy-DocGenApp.ps1      - Register Graph API app"
+Write-Host "  5. Deploy-N8n.ps1            - Deploy n8n workflow engine"
+Write-Host "  6. Deploy-PurviewPolicies.ps1 - DLP + compliance policies"
