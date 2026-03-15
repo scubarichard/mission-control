@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "dax-dev": {
+    "dax-dev-local": {
       "command": "node",
       "args": ["P:/_clients/dakona/dax/mcp/server.js"],
       "env": {
@@ -10,6 +10,19 @@
         "AZURE_CONTAINER_APP": "ca-dax-dakona-pilot",
         "N8N_URL": "https://n8n.dakona.net"
       }
+    },
+    "dax-dev-vm": {
+      "command": "ssh",
+      "args": [
+        "-o", "StrictHostKeyChecking=no",
+        "daxadmin@<VM_PRIVATE_IP>",
+        "DAX_REPO_PATH=/opt/dax",
+        "AZURE_SUBSCRIPTION=36676e89-8ccf-4390-8602-e57a913755dc",
+        "AZURE_RG=rg-dax-dakona-pilot",
+        "AZURE_CONTAINER_APP=ca-dax-dakona-pilot",
+        "N8N_URL=https://n8n.dakona.net",
+        "node", "/opt/dax/mcp/server.js"
+      ]
     }
   }
 }
