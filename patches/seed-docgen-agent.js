@@ -95,10 +95,21 @@ async function main() {
 
   const now = new Date();
 
+  // --- Clean up any UI-created actions to avoid domain encoding conflicts ---
+  // UI-created actions use base64 domain encoding (aHR0cHM6Ly) which conflicts
+  // with our seed action that uses --- separator (n8n---dakona---net).
+  const actionsCol = db.collection('actions');
+  const deleteResult = await actionsCol.deleteMany({
+    agent_id: AGENT_ID,
+    action_id: { $ne: ACTION_ID }
+  });
+  if (deleteResult.deletedCount > 0) {
+    console.log('[DAX seed] Removed ' + deleteResult.deletedCount + ' conflicting UI-created action(s)');
+  }
+
   // --- Upsert the action document ---
   // Schema: packages/data-schemas/src/schema/action.ts
   // The agent_id field links this action to our agent (used by loadActionSets)
-  const actionsCol = db.collection('actions');
   const actionDoc = {
     user: firstUser._id,
     action_id: ACTION_ID,
@@ -112,9 +123,6 @@ async function main() {
       },
     },
   };
-  await actionsCol.deleteMany({ agent_id: AGENT_ID, action_id: { $ne: ACTION_ID } });
-  console.log([DAX seed] Cleared conflicting UI actions);
-
   await actionsCol.replaceOne(
     { action_id: ACTION_ID },
     actionDoc,
@@ -179,7 +187,7 @@ async function main() {
   console.log('[DAX seed]   tools: ' + JSON.stringify(toolNames));
   console.log('[DAX seed]   actions: [' + actionRef + ']');
 
-  // --- Read back and verify what's actually persisted in MongoDB ---
+  // --- Read back and verify ---
   const savedAgent = await agentsCol.findOne({ id: AGENT_ID });
   if (savedAgent) {
     console.log('[DAX seed] Agent verified: tools = ' + JSON.stringify(savedAgent.tools));
@@ -193,6 +201,10 @@ async function main() {
   } else {
     console.error('[DAX seed] Action verification FAILED: not found after upsert');
   }
+
+  // Log all actions for this agent
+  const allActions = await actionsCol.find({ agent_id: AGENT_ID }).toArray();
+  console.log('[DAX seed] Total actions for agent: ' + allActions.length);
 
   await mongoose.disconnect();
 }
