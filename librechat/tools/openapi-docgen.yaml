@@ -1,11 +1,11 @@
 openapi: 3.0.0
 info:
-  title: DAX Document Generator
+  title: DAX Document Services
   description: >-
-    Generates ICP quarterly client review documents from a Word template
-    and saves them to SharePoint. Used by DAX agents to create reports
-    on behalf of advisors.
-  version: 1.0.0
+    Document generation and file management for DAX agents.
+    Generates ICP quarterly review documents and saves uploaded
+    source documents to SharePoint client folders.
+  version: 1.1.0
 
 servers:
   - url: https://n8n.dakona.net
@@ -160,6 +160,56 @@ paths:
                   driveItemId:
                     type: string
                     description: Graph API drive item ID
+                  size:
+                    type: integer
+                    description: File size in bytes
+
+  /webhook/save-client-document:
+    post:
+      operationId: saveClientDocument
+      summary: Save an uploaded document to the client's SharePoint folder
+      description: >-
+        Saves a copy of an uploaded document (PDF, Word, text) to the
+        client's SharePoint folder at DAX Reports/{clientName}/. Creates
+        the folder if it doesn't exist. Used to maintain an audit trail
+        of source documents alongside generated reports. Routes through
+        n8n which handles Graph API authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - clientName
+                - fileName
+                - fileContent
+              properties:
+                clientName:
+                  type: string
+                  description: Client name used as the folder name in SharePoint (e.g. John Smith)
+                fileName:
+                  type: string
+                  description: Original filename with extension (e.g. Meeting-Summary.pdf)
+                fileContent:
+                  type: string
+                  description: Base64-encoded file content
+      responses:
+        "200":
+          description: Document saved to SharePoint
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  webUrl:
+                    type: string
+                    description: SharePoint URL of the saved document
+                  fileName:
+                    type: string
+                    description: Filename as stored in SharePoint
                   size:
                     type: integer
                     description: File size in bytes

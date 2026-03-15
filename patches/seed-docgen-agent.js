@@ -57,30 +57,37 @@ async function main() {
   const openapiSpec = fs.readFileSync(SPEC_PATH, 'utf8');
   const now = new Date();
 
-  // Create the action document
+  // Upsert the action document (always update spec so new operations are picked up)
   const actionsCol = db.collection('actions');
-  const actionExists = await actionsCol.findOne({ action_id: ACTION_ID });
-  if (!actionExists) {
-    await actionsCol.insertOne({
-      action_id: ACTION_ID,
-      user: firstUser._id,
-      type: 'action',
-      domain: 'n8n.dakona.net',
-      metadata: {
-        api_key: '',
-        auth_type: 'none',
-        name_for_human: 'DAX Document Generator',
-        name_for_model: 'generateICPReview',
-        description_for_human: 'Generates ICP quarterly review documents and saves to SharePoint',
-        description_for_model: 'Generates a quarterly ICP client review document by filling a Word template with provided data and uploading to SharePoint. Returns the SharePoint URL. Default firm: Impact Capital Partners, default advisor: Brett Stone.',
-        privacy_policy_url: '',
-        legal_info_url: '',
-      },
-      openapi_spec: openapiSpec,
-      createdAt: now,
-      updatedAt: now,
-    });
+  const actionDoc = {
+    action_id: ACTION_ID,
+    user: firstUser._id,
+    type: 'action',
+    domain: 'n8n.dakona.net',
+    metadata: {
+      api_key: '',
+      auth_type: 'none',
+      name_for_human: 'DAX Document Services',
+      name_for_model: 'daxDocumentServices',
+      description_for_human: 'Generates ICP review documents and saves uploaded files to SharePoint',
+      description_for_model: 'Generates ICP quarterly review documents (generateICPReview) and saves uploaded source documents to SharePoint client folders (saveClientDocument). Routes through n8n which handles Graph API auth.',
+      privacy_policy_url: '',
+      legal_info_url: '',
+    },
+    openapi_spec: openapiSpec,
+    updatedAt: now,
+  };
+  const actionResult = await actionsCol.updateOne(
+    { action_id: ACTION_ID },
+    { $set: actionDoc, $setOnInsert: { createdAt: now } },
+    { upsert: true }
+  );
+  if (actionResult.upsertedCount) {
     console.log('[DAX] Created action "' + ACTION_ID + '"');
+  } else if (actionResult.modifiedCount) {
+    console.log('[DAX] Updated action "' + ACTION_ID + '" with latest OpenAPI spec');
+  } else {
+    console.log('[DAX] Action "' + ACTION_ID + '" unchanged');
   }
 
   // Read the system prompt from the YAML-injected config
@@ -98,7 +105,7 @@ async function main() {
     id: AGENT_ID,
     author: firstUser._id,
     name: AGENT_NAME,
-    description: 'Governed AI for RIAs — GPT-4o with document generation',
+    description: 'Governed AI for RIAs — GPT-4o with document generation and SharePoint file management',
     instructions: instructions,
     model: 'gpt-4o',
     provider: 'azureOpenAI',
@@ -112,7 +119,7 @@ async function main() {
     updatedAt: now,
   });
 
-  console.log('[DAX] Created agent "' + AGENT_NAME + '" (id: ' + AGENT_ID + ') with generateICPReview action');
+  console.log('[DAX] Created agent "' + AGENT_NAME + '" (id: ' + AGENT_ID + ') with generateICPReview + saveClientDocument actions');
   await mongoose.disconnect();
 }
 
