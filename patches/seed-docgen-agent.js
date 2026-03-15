@@ -90,24 +90,37 @@ async function main() {
     console.log('[DAX] Action "' + ACTION_ID + '" unchanged');
   }
 
-  // Read the system prompt from the YAML-injected config
+  // Read config from the YAML-injected config file
   let instructions = '';
+  let modelName = 'DAX Assistant'; // Must match the model alias in azureOpenAI groups
   try {
     const yaml = require('js-yaml');
     const config = yaml.load(fs.readFileSync('/config/librechat.yaml', 'utf8'));
     instructions = config?.endpoints?.azureOpenAI?.systemPrompt || '';
+    // Extract the model alias from the azureOpenAI groups config
+    const groups = config?.endpoints?.azureOpenAI?.groups;
+    if (groups && groups[0] && groups[0].models) {
+      const aliases = Object.keys(groups[0].models);
+      if (aliases.length > 0) {
+        modelName = aliases[0];
+        console.log('[DAX] Using model alias from config: ' + modelName);
+      }
+    }
   } catch {
-    console.log('[DAX] Could not read system prompt from config, using empty instructions');
+    console.log('[DAX] Could not read config, using defaults');
   }
 
   // Create the agent document
+  // model must be the LibreChat alias (e.g. "DAX Assistant"), not the
+  // Azure deployment name (e.g. "gpt-4o"), because LibreChat resolves
+  // the alias to the deployment via the azureOpenAI groups config.
   await agentsCol.insertOne({
     id: AGENT_ID,
     author: firstUser._id,
     name: AGENT_NAME,
     description: 'Governed AI for RIAs — GPT-4o with document generation and SharePoint file management',
     instructions: instructions,
-    model: 'gpt-4o',
+    model: modelName,
     provider: 'azureOpenAI',
     tools: ['actions'],
     actions: [ACTION_ID],

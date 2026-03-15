@@ -212,7 +212,7 @@ modelSpecs:
       preset:
         endpoint: "agents"
         agent_id: "agent_dax_main"
-        model: "gpt-4o"
+        model: "DAX Assistant"
         temperature: 0.7
         maxOutputTokens: 4096
         modelLabel: "DAX Assistant"
