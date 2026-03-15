@@ -295,39 +295,15 @@ server.tool(
 // Start
 // ---------------------------------------------------------------------------
 
-console.error(`[MCP] Server starting, PID=${process.pid}, isTTY=${process.stdin.isTTY ?? false}`);
-
-// Catch uncaught errors so they appear in Claude Desktop MCP logs
-process.on("uncaughtException", (err) => {
-  console.error(`[MCP] Error: ${err.message}`);
-  console.error(err.stack);
-  process.exit(1);
-});
-
-process.on("unhandledRejection", (reason) => {
-  console.error(`[MCP] Error: unhandled rejection — ${reason}`);
-  process.exit(1);
-});
+// Catch uncaught errors — exit so Claude Desktop sees a clean disconnect
+process.on("uncaughtException", () => process.exit(1));
+process.on("unhandledRejection", () => process.exit(1));
 
 // Keep the process alive when stdin has no TTY (e.g. SSH from Claude Desktop).
 // Without this, Node sees no pending I/O and exits immediately.
 process.stdin.resume();
+process.stdin.on("error", () => {});
+process.stdin.on("close", () => process.exit(0));
 
-process.stdin.on("error", (err) => {
-  console.error(`[MCP] Error: stdin — ${err.message}`);
-});
-
-process.stdin.on("close", () => {
-  console.error("[MCP] stdin closed — shutting down");
-  process.exit(0);
-});
-
-try {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error(`[MCP] SDK initialized`);
-} catch (err) {
-  console.error(`[MCP] Error: SDK connect failed — ${err.message}`);
-  console.error(err.stack);
-  process.exit(1);
-}
+const transport = new StdioServerTransport();
+await server.connect(transport);
