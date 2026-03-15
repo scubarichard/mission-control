@@ -1,0 +1,164 @@
+{
+  "name": "generate_icp_review",
+  "pluginKey": "generate_icp_review",
+  "description": "Generates a quarterly ICP client review document from a Word template and saves it to SharePoint. Returns the SharePoint URL of the completed document.",
+  "icon": "https://stdaxassets.blob.core.windows.net/branding/lexi_avatar_384.png",
+  "isAuthRequired": "false",
+  "authConfig": [],
+  "schema": {
+    "type": "function",
+    "function": {
+      "name": "generate_icp_review",
+      "description": "Generates a quarterly ICP client review document and saves it to SharePoint. Call this when an advisor asks to generate a client review, quarterly report, or ICP report. Returns the SharePoint URL of the completed document. Default firm is Impact Capital Partners, default advisor is Brett Stone.",
+      "parameters": {
+        "type": "object",
+        "required": ["clientName", "reportPeriod", "portfolioValue", "ytdReturn"],
+        "properties": {
+          "firmName": {
+            "type": "string",
+            "description": "Firm name. Default: Impact Capital Partners",
+            "default": "Impact Capital Partners"
+          },
+          "clientName": {
+            "type": "string",
+            "description": "Client's full name (e.g. John Smith)"
+          },
+          "reportPeriod": {
+            "type": "string",
+            "description": "Reporting period (e.g. Q1 2026)"
+          },
+          "reportDate": {
+            "type": "string",
+            "description": "Report date in YYYY-MM-DD format. Default: today's date"
+          },
+          "advisorName": {
+            "type": "string",
+            "description": "Advisor's full name. Default: Brett Stone",
+            "default": "Brett Stone"
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": "Client account number (e.g. ICP-7842-A)"
+          },
+          "accountType": {
+            "type": "string",
+            "description": "Account type (e.g. Taxable Brokerage, IRA, 401k)"
+          },
+          "riskProfile": {
+            "type": "string",
+            "description": "Client risk profile (e.g. Moderate Growth, Conservative, Aggressive)"
+          },
+          "meetingDate": {
+            "type": "string",
+            "description": "Meeting date in YYYY-MM-DD format"
+          },
+          "meetingLocation": {
+            "type": "string",
+            "description": "Meeting location. Default: Zoom",
+            "default": "Zoom"
+          },
+          "attendees": {
+            "type": "string",
+            "description": "Comma-separated list of attendees"
+          },
+          "meetingDuration": {
+            "type": "string",
+            "description": "Meeting duration (e.g. 60 minutes)"
+          },
+          "discussionPoint1": {
+            "type": "string",
+            "description": "First discussion topic"
+          },
+          "discussionPoint2": {
+            "type": "string",
+            "description": "Second discussion topic"
+          },
+          "discussionPoint3": {
+            "type": "string",
+            "description": "Third discussion topic"
+          },
+          "advisorNotes": {
+            "type": "string",
+            "description": "Advisor's notes about the meeting or client"
+          },
+          "portfolioValue": {
+            "type": "string",
+            "description": "Current portfolio value (e.g. $2,450,000)"
+          },
+          "ytdReturn": {
+            "type": "string",
+            "description": "Year-to-date return (e.g. 8.3%)"
+          },
+          "benchmarkReturn": {
+            "type": "string",
+            "description": "Benchmark return for comparison (e.g. 7.1%)"
+          },
+          "vsBenchmark": {
+            "type": "string",
+            "description": "Performance vs benchmark (e.g. +1.2%)"
+          },
+          "goal1": {
+            "type": "string",
+            "description": "Client's first financial goal"
+          },
+          "goal2": {
+            "type": "string",
+            "description": "Client's second financial goal"
+          },
+          "goal3": {
+            "type": "string",
+            "description": "Client's third financial goal"
+          },
+          "goalsProgressNotes": {
+            "type": "string",
+            "description": "Progress notes on goals"
+          },
+          "action1": {
+            "type": "string",
+            "description": "First action item"
+          },
+          "action1Owner": {
+            "type": "string",
+            "description": "Person responsible for action item 1"
+          },
+          "action1Due": {
+            "type": "string",
+            "description": "Due date for action item 1 (YYYY-MM-DD)"
+          },
+          "action2": {
+            "type": "string",
+            "description": "Second action item"
+          },
+          "action2Owner": {
+            "type": "string",
+            "description": "Person responsible for action item 2"
+          },
+          "action2Due": {
+            "type": "string",
+            "description": "Due date for action item 2 (YYYY-MM-DD)"
+          },
+          "action3": {
+            "type": "string",
+            "description": "Third action item"
+          },
+          "action3Owner": {
+            "type": "string",
+            "description": "Person responsible for action item 3"
+          },
+          "action3Due": {
+            "type": "string",
+            "description": "Due date for action item 3 (YYYY-MM-DD)"
+          },
+          "nextMeetingDate": {
+            "type": "string",
+            "description": "Next meeting date (YYYY-MM-DD)"
+          },
+          "nextMeetingAgenda": {
+            "type": "string",
+            "description": "Agenda items for the next meeting"
+          }
+        }
+      }
+    }
+  }
+}
