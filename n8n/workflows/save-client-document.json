@@ -1,0 +1,167 @@
+{
+  "name": "DAX Save Client Document",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "save-client-document",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-e5f6-7890-a1b2-c3d4e5f67890",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://login.microsoftonline.com/' + ($env.GRAPH_TENANT_ID || '') + '/oauth2/v2.0/token' }}",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "client_id",
+              "value": "={{ $env.GRAPH_CLIENT_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $env.GRAPH_CLIENT_SECRET }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://graph.microsoft.com/.default"
+            },
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-f6a7-8901-b2c3-d4e5f6a78901",
+      "name": "Get OAuth Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Webhook').first().json.body;\nconst fileContent = data.fileContent || '';\nconst fileName = data.fileName || 'uploaded-document';\nconst clientName = data.clientName || 'Unknown';\n\nif (!fileContent) {\n  throw new Error('fileContent (base64) is required');\n}\nif (!clientName || clientName === 'Unknown') {\n  throw new Error('clientName is required');\n}\n\nconsole.log('Preparing file: ' + fileName + ' for client: ' + clientName);\nconsole.log('Base64 length: ' + fileContent.length);\n\nreturn [{\n  binary: {\n    data: {\n      data: fileContent,\n      mimeType: 'application/octet-stream',\n      fileName: fileName,\n    }\n  },\n  json: {\n    clientName: clientName,\n    fileName: fileName,\n  }\n}];"
+      },
+      "id": "c3d4e5f6-a7b8-9012-c3d4-e5f6a7b89012",
+      "name": "Prepare File",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/sites/' + ($env.GRAPH_SITE_ID || '') + '/drive/root:/DAX Reports/' + $json.clientName + '/' + $json.fileName + ':/content' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Get OAuth Token').first().json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "d4e5f6a7-b8c9-0123-d4e5-f6a7b8c90123",
+      "name": "Upload to SharePoint",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        910,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, webUrl: $json.webUrl, fileName: $json.name, size: $json.size } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "e5f6a7b8-c9d0-1234-e5f6-a7b8c9d01235",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1130,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get OAuth Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get OAuth Token": {
+      "main": [
+        [
+          {
+            "node": "Prepare File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare File": {
+      "main": [
+        [
+          {
+            "node": "Upload to SharePoint",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to SharePoint": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
