@@ -5,24 +5,15 @@
  *
  * Uses replaceOne with upsert:true — always overwrites on startup.
  *
- * Schema sources (LibreChat GitHub):
- *   packages/data-schemas/src/schema/agent.ts
- *   packages/data-schemas/src/schema/action.ts
- *   packages/data-provider/src/types/assistants.ts
+ * CRITICAL: Tool name encoding
+ *   LibreChat's ToolService generates tool names at runtime by base64-encoding
+ *   the full action URL (https://domain) and using that as the suffix:
+ *     {operationId}_action_{base64(https://domain)}
+ *   e.g. generateICPReview_action_aHR0cHM6Ly9uOG4uZGFrb25hLm5ldA==
  *
- * Key constants from librechat-data-provider:
- *   actionDelimiter = '_action_'     (between function name and encoded domain)
- *   actionDomainSeparator = '---'    (replaces dots in domain for tool names)
- *
- * Tool name format in agent.tools:
- *   {operationId}_action_{domain with dots replaced by ---}
- *   e.g. generateICPReview_action_n8n---dakona---net
- *
- * Action loading flow (from ToolService.js):
- *   1. Load actions where action.agent_id === agent.id
- *   2. Parse each action's metadata.raw_spec (JSON OpenAPI)
- *   3. For each entry in agent.tools matching _action_ pattern,
- *      find the matching function and create a callable tool
+ *   The '---' separator in actionDomainSeparator is used for display/storage
+ *   only, NOT for the tool name that gets matched at runtime.
+ *   The agent.tools array MUST use the base64 encoding to match ToolService.
  *
  * Requires MONGO_URI environment variable.
  */
@@ -33,17 +24,17 @@ const mongoose = require('mongoose');
 const AGENT_ID = 'agent_dax_main';
 const ACTION_ID = 'action_dax_docgen';
 const ACTION_DOMAIN = 'n8n.dakona.net';
+const ACTION_URL = 'https://' + ACTION_DOMAIN;
 const AGENT_NAME = 'DAX Assistant';
 const SPEC_PATH = '/app/patches/openapi-docgen.yaml';
 const MODEL_NAME = 'gpt-4o';
 
-// LibreChat constants (from librechat-data-provider/src/types/assistants.ts)
 const ACTION_DELIMITER = '_action_';
-const ACTION_DOMAIN_SEPARATOR = '---';
 
-// Encode domain for tool names: n8n.dakona.net -> n8n---dakona---net
-function encodeDomain(domain) {
-  return domain.replace(/\./g, ACTION_DOMAIN_SEPARATOR);
+// Encode domain the same way LibreChat's ToolService does at runtime:
+// base64 of the full URL (https://domain)
+function encodeActionDomain(url) {
+  return Buffer.from(url).toString('base64');
 }
 
 async function main() {
@@ -79,7 +70,6 @@ async function main() {
   console.log('[DAX seed] Using author: ' + (firstUser.email || firstUser.username || firstUser._id));
 
   // Read and convert OpenAPI spec from YAML to JSON
-  // (metadata.raw_spec must be JSON per LibreChat's validateAndParseOpenAPISpec)
   const yamlSpec = fs.readFileSync(SPEC_PATH, 'utf8');
   let jsonSpec;
   try {
@@ -94,22 +84,16 @@ async function main() {
   }
 
   const now = new Date();
-
-  // --- Clean up any UI-created actions to avoid domain encoding conflicts ---
-  // UI-created actions use base64 domain encoding (aHR0cHM6Ly) which conflicts
-  // with our seed action that uses --- separator (n8n---dakona---net).
   const actionsCol = db.collection('actions');
-  const deleteResult = await actionsCol.deleteMany({
-    agent_id: AGENT_ID,
-    action_id: { $ne: ACTION_ID }
-  });
+
+  // --- Clean up ALL existing actions for this agent ---
+  // Ensures no stale UI-created or previous seed actions interfere
+  const deleteResult = await actionsCol.deleteMany({ agent_id: AGENT_ID });
   if (deleteResult.deletedCount > 0) {
-    console.log('[DAX seed] Removed ' + deleteResult.deletedCount + ' conflicting UI-created action(s)');
+    console.log('[DAX seed] Cleared ' + deleteResult.deletedCount + ' existing action(s) for agent');
   }
 
   // --- Upsert the action document ---
-  // Schema: packages/data-schemas/src/schema/action.ts
-  // The agent_id field links this action to our agent (used by loadActionSets)
   const actionDoc = {
     user: firstUser._id,
     action_id: ACTION_ID,
@@ -118,9 +102,7 @@ async function main() {
     metadata: {
       domain: ACTION_DOMAIN,
       raw_spec: jsonSpec,
-      auth: {
-        type: 'none',
-      },
+      auth: { type: 'none' },
     },
   };
   await actionsCol.replaceOne(
@@ -141,22 +123,18 @@ async function main() {
     console.error('[DAX seed] Could not read config:', err.message);
   }
 
-  // --- Build tool names for agent.tools ---
-  // Format: {operationId}_action_{encodedDomain}
-  // ToolService.js uses these to match against parsed OpenAPI operations
-  const encodedDomain = encodeDomain(ACTION_DOMAIN);
+  // --- Build tool names using base64 encoding (matches LibreChat ToolService runtime) ---
+  const encodedDomain = encodeActionDomain(ACTION_URL);
+  console.log('[DAX seed] Encoded domain: ' + encodedDomain + ' (from ' + ACTION_URL + ')');
+
   const toolNames = [
-    'actions',  // capability flag — tells LibreChat this agent uses actions
+    'actions',
     'generateICPReview' + ACTION_DELIMITER + encodedDomain,
     'saveClientDocument' + ACTION_DELIMITER + encodedDomain,
   ];
   console.log('[DAX seed] Tool names: ' + JSON.stringify(toolNames));
 
   // --- Upsert the agent document ---
-  // Schema: packages/data-schemas/src/schema/agent.ts
-  // agent.tools contains the specific action tool names (not just 'actions')
-  // agent.actions is legacy — kept for backward compat but tools is authoritative
-  const actionRef = ACTION_DOMAIN + ACTION_DOMAIN_SEPARATOR + ACTION_ID;
   const agentsCol = db.collection('agents');
   const agentDoc = {
     id: AGENT_ID,
@@ -167,7 +145,7 @@ async function main() {
     model: MODEL_NAME,
     provider: 'azureOpenAI',
     tools: toolNames,
-    actions: [actionRef],
+    actions: [ACTION_ID],
     tool_resources: {},
     isCollaborative: true,
     projectIds: [],
@@ -185,26 +163,20 @@ async function main() {
   console.log('[DAX seed] Agent upserted: ' + AGENT_NAME);
   console.log('[DAX seed]   model: ' + MODEL_NAME + ', provider: azureOpenAI');
   console.log('[DAX seed]   tools: ' + JSON.stringify(toolNames));
-  console.log('[DAX seed]   actions: [' + actionRef + ']');
 
-  // --- Read back and verify ---
+  // --- Verify ---
   const savedAgent = await agentsCol.findOne({ id: AGENT_ID });
   if (savedAgent) {
     console.log('[DAX seed] Agent verified: tools = ' + JSON.stringify(savedAgent.tools));
   } else {
-    console.error('[DAX seed] Agent verification FAILED: not found after upsert');
+    console.error('[DAX seed] Agent verification FAILED');
   }
 
-  const savedAction = await actionsCol.findOne({ action_id: ACTION_ID });
-  if (savedAction) {
-    console.log('[DAX seed] Action verified: metadata.domain = ' + (savedAction.metadata && savedAction.metadata.domain));
-  } else {
-    console.error('[DAX seed] Action verification FAILED: not found after upsert');
-  }
-
-  // Log all actions for this agent
   const allActions = await actionsCol.find({ agent_id: AGENT_ID }).toArray();
   console.log('[DAX seed] Total actions for agent: ' + allActions.length);
+  allActions.forEach(a => {
+    console.log('[DAX seed]   action_id=' + a.action_id + ' domain=' + (a.metadata && a.metadata.domain));
+  });
 
   await mongoose.disconnect();
 }
