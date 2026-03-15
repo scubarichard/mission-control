@@ -14,14 +14,13 @@
     "dax-dev-vm": {
       "command": "ssh",
       "args": [
+        "-T",
+        "-i", "C:/Users/18473/.ssh/id_rsa",
         "-o", "StrictHostKeyChecking=no",
-        "daxadmin@<VM_PRIVATE_IP>",
-        "DAX_REPO_PATH=/opt/dax",
-        "AZURE_SUBSCRIPTION=36676e89-8ccf-4390-8602-e57a913755dc",
-        "AZURE_RG=rg-dax-dakona-pilot",
-        "AZURE_CONTAINER_APP=ca-dax-dakona-pilot",
-        "N8N_URL=https://n8n.dakona.net",
-        "node", "/opt/dax/mcp/server.js"
+        "-o", "BatchMode=yes",
+        "-J", "dkn8n@n8n.dakona.net",
+        "daxadmin@172.16.0.5",
+        "bash -c 'node /opt/dax/mcp/server.js'"
       ]
     }
   }

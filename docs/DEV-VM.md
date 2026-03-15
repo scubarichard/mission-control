@@ -80,21 +80,24 @@ Add to `%APPDATA%\Claude\claude_desktop_config.json`:
     "dax-dev-vm": {
       "command": "ssh",
       "args": [
+        "-T",
+        "-i", "C:/Users/18473/.ssh/id_rsa",
         "-o", "StrictHostKeyChecking=no",
-        "daxadmin@<VM_PRIVATE_IP>",
-        "DAX_REPO_PATH=/opt/dax",
-        "AZURE_SUBSCRIPTION=36676e89-8ccf-4390-8602-e57a913755dc",
-        "AZURE_RG=rg-dax-dakona-pilot",
-        "AZURE_CONTAINER_APP=ca-dax-dakona-pilot",
-        "N8N_URL=https://n8n.dakona.net",
-        "node", "/opt/dax/mcp/server.js"
+        "-o", "BatchMode=yes",
+        "-J", "dkn8n@n8n.dakona.net",
+        "daxadmin@172.16.0.5",
+        "bash -c 'node /opt/dax/mcp/server.js'"
       ]
     }
   }
 }
 ```
 
-Replace `<VM_PRIVATE_IP>` with the actual IP. This uses SSH as the transport — Claude Desktop launches SSH, which runs the MCP server on the VM with stdio piped over the SSH connection.
+This uses SSH as the transport — Claude Desktop launches SSH, which runs the MCP server on the VM with stdio piped over the SSH connection. Key details:
+- `-T` disables pseudo-TTY allocation (required for MCP stdio)
+- `-J` uses the n8n jumpbox as a ProxyJump since the VM has no public IP
+- `bash -c` wraps the remote command so Windows SSH doesn't mangle argument splitting
+- `BatchMode=yes` prevents interactive password prompts that would hang Claude Desktop
 
 ### Option 2: Local (for testing)
 
