@@ -1,14 +1,28 @@
 /**
- * Pre-seed a "DAX Assistant" agent with the generateICPReview action
- * so advisors get document generation in every conversation without
- * manual UI setup.
+ * Pre-seed a "DAX Assistant" agent with the generateICPReview and
+ * saveClientDocument actions so advisors get document generation
+ * in every conversation without manual UI setup.
  *
  * Uses replaceOne with upsert:true — always overwrites on startup.
- * Schema matches LibreChat's actual Mongoose models:
+ *
+ * Schema sources (LibreChat GitHub):
  *   packages/data-schemas/src/schema/agent.ts
  *   packages/data-schemas/src/schema/action.ts
- * Action reference format: domain---action_id
- *   (actionDomainSeparator from librechat-data-provider)
+ *   packages/data-provider/src/types/assistants.ts
+ *
+ * Key constants from librechat-data-provider:
+ *   actionDelimiter = '_action_'     (between function name and encoded domain)
+ *   actionDomainSeparator = '---'    (replaces dots in domain for tool names)
+ *
+ * Tool name format in agent.tools:
+ *   {operationId}_action_{domain with dots replaced by ---}
+ *   e.g. generateICPReview_action_n8n---dakona---net
+ *
+ * Action loading flow (from ToolService.js):
+ *   1. Load actions where action.agent_id === agent.id
+ *   2. Parse each action's metadata.raw_spec (JSON OpenAPI)
+ *   3. For each entry in agent.tools matching _action_ pattern,
+ *      find the matching function and create a callable tool
  *
  * Requires MONGO_URI environment variable.
  */
@@ -23,9 +37,14 @@ const AGENT_NAME = 'DAX Assistant';
 const SPEC_PATH = '/app/patches/openapi-docgen.yaml';
 const MODEL_NAME = 'gpt-4o';
 
-// LibreChat uses '---' as the domain separator in agent action references
-// (actionDomainSeparator from librechat-data-provider/src/types/assistants.ts)
+// LibreChat constants (from librechat-data-provider/src/types/assistants.ts)
+const ACTION_DELIMITER = '_action_';
 const ACTION_DOMAIN_SEPARATOR = '---';
+
+// Encode domain for tool names: n8n.dakona.net -> n8n---dakona---net
+function encodeDomain(domain) {
+  return domain.replace(/\./g, ACTION_DOMAIN_SEPARATOR);
+}
 
 async function main() {
   const uri = process.env.MONGO_URI;
@@ -59,11 +78,26 @@ async function main() {
   }
   console.log('[DAX seed] Using author: ' + (firstUser.email || firstUser.username || firstUser._id));
 
-  const openapiSpec = fs.readFileSync(SPEC_PATH, 'utf8');
+  // Read and convert OpenAPI spec from YAML to JSON
+  // (metadata.raw_spec must be JSON per LibreChat's validateAndParseOpenAPISpec)
+  const yamlSpec = fs.readFileSync(SPEC_PATH, 'utf8');
+  let jsonSpec;
+  try {
+    const yaml = require('js-yaml');
+    const parsed = yaml.load(yamlSpec);
+    jsonSpec = JSON.stringify(parsed);
+    console.log('[DAX seed] OpenAPI spec parsed: ' + jsonSpec.length + ' chars JSON');
+  } catch (err) {
+    console.error('[DAX seed] Failed to parse OpenAPI YAML:', err.message);
+    await mongoose.disconnect();
+    return;
+  }
+
   const now = new Date();
 
   // --- Upsert the action document ---
   // Schema: packages/data-schemas/src/schema/action.ts
+  // The agent_id field links this action to our agent (used by loadActionSets)
   const actionsCol = db.collection('actions');
   const actionDoc = {
     user: firstUser._id,
@@ -72,12 +106,10 @@ async function main() {
     agent_id: AGENT_ID,
     metadata: {
       domain: ACTION_DOMAIN,
-      raw_spec: openapiSpec,
+      raw_spec: jsonSpec,
       auth: {
         type: 'none',
       },
-      api_key: '',
-      privacy_policy_url: '',
     },
   };
   await actionsCol.replaceOne(
@@ -85,7 +117,7 @@ async function main() {
     actionDoc,
     { upsert: true }
   );
-  console.log('[DAX seed] Action upserted: ' + ACTION_ID + ' (domain: ' + ACTION_DOMAIN + ', type: action_prototype)');
+  console.log('[DAX seed] Action upserted: ' + ACTION_ID + ' (domain: ' + ACTION_DOMAIN + ')');
 
   // --- Read the system prompt from config ---
   let instructions = '';
@@ -98,9 +130,21 @@ async function main() {
     console.error('[DAX seed] Could not read config:', err.message);
   }
 
+  // --- Build tool names for agent.tools ---
+  // Format: {operationId}_action_{encodedDomain}
+  // ToolService.js uses these to match against parsed OpenAPI operations
+  const encodedDomain = encodeDomain(ACTION_DOMAIN);
+  const toolNames = [
+    'actions',  // capability flag — tells LibreChat this agent uses actions
+    'generateICPReview' + ACTION_DELIMITER + encodedDomain,
+    'saveClientDocument' + ACTION_DELIMITER + encodedDomain,
+  ];
+  console.log('[DAX seed] Tool names: ' + JSON.stringify(toolNames));
+
   // --- Upsert the agent document ---
   // Schema: packages/data-schemas/src/schema/agent.ts
-  // actions array format: "domain---action_id" (actionDomainSeparator)
+  // agent.tools contains the specific action tool names (not just 'actions')
+  // agent.actions is legacy — kept for backward compat but tools is authoritative
   const actionRef = ACTION_DOMAIN + ACTION_DOMAIN_SEPARATOR + ACTION_ID;
   const agentsCol = db.collection('agents');
   const agentDoc = {
@@ -111,7 +155,7 @@ async function main() {
     instructions: instructions,
     model: MODEL_NAME,
     provider: 'azureOpenAI',
-    tools: ['actions'],
+    tools: toolNames,
     actions: [actionRef],
     tool_resources: {},
     isCollaborative: true,
@@ -127,7 +171,10 @@ async function main() {
     agentDoc,
     { upsert: true }
   );
-  console.log('[DAX seed] Agent upserted: ' + AGENT_NAME + ' (model: ' + MODEL_NAME + ', actions: [' + actionRef + '])');
+  console.log('[DAX seed] Agent upserted: ' + AGENT_NAME);
+  console.log('[DAX seed]   model: ' + MODEL_NAME + ', provider: azureOpenAI');
+  console.log('[DAX seed]   tools: ' + JSON.stringify(toolNames));
+  console.log('[DAX seed]   actions: [' + actionRef + ']');
 
   await mongoose.disconnect();
 }

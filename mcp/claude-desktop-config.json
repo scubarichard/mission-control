@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "dax-dev": {
+      "command": "node",
+      "args": ["P:/_clients/dakona/dax/mcp/server.js"],
+      "env": {
+        "DAX_REPO_PATH": "P:/_clients/dakona/dax",
+        "AZURE_SUBSCRIPTION": "36676e89-8ccf-4390-8602-e57a913755dc",
+        "AZURE_RG": "rg-dax-dakona-pilot",
+        "AZURE_CONTAINER_APP": "ca-dax-dakona-pilot",
+        "N8N_URL": "https://n8n.dakona.net"
+      }
+    }
+  }
+}
