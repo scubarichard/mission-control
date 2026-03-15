@@ -1,0 +1,165 @@
+openapi: 3.0.0
+info:
+  title: DAX Document Generator
+  description: >-
+    Generates ICP quarterly client review documents from a Word template
+    and saves them to SharePoint. Used by DAX agents to create reports
+    on behalf of advisors.
+  version: 1.0.0
+
+servers:
+  - url: https://n8n.dakona.net
+    description: n8n webhook endpoint (production)
+
+paths:
+  /webhook/generate-document:
+    post:
+      operationId: generateICPReview
+      summary: Generate an ICP quarterly review document and save to SharePoint
+      description: >-
+        Creates a quarterly client review document by filling a Word template
+        with the provided data and uploading it to SharePoint. Returns the
+        SharePoint URL of the completed document. Default firm is Impact
+        Capital Partners, default advisor is Brett Stone.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - clientName
+                - reportPeriod
+                - portfolioValue
+                - ytdReturn
+              properties:
+                firmName:
+                  type: string
+                  description: Firm name
+                  default: Impact Capital Partners
+                clientName:
+                  type: string
+                  description: Client's full name (e.g. John Smith)
+                reportPeriod:
+                  type: string
+                  description: Reporting period (e.g. Q1 2026)
+                reportDate:
+                  type: string
+                  description: Report date (YYYY-MM-DD). Defaults to today.
+                advisorName:
+                  type: string
+                  description: Advisor's full name
+                  default: Brett Stone
+                accountNumber:
+                  type: string
+                  description: Client account number (e.g. ICP-7842-A)
+                accountType:
+                  type: string
+                  description: Account type (e.g. Taxable Brokerage, IRA)
+                riskProfile:
+                  type: string
+                  description: Risk profile (e.g. Moderate Growth)
+                meetingDate:
+                  type: string
+                  description: Meeting date (YYYY-MM-DD)
+                meetingLocation:
+                  type: string
+                  description: Meeting location
+                  default: Zoom
+                attendees:
+                  type: string
+                  description: Comma-separated attendee names
+                meetingDuration:
+                  type: string
+                  description: Meeting duration (e.g. 60 minutes)
+                discussionPoint1:
+                  type: string
+                  description: First discussion topic
+                discussionPoint2:
+                  type: string
+                  description: Second discussion topic
+                discussionPoint3:
+                  type: string
+                  description: Third discussion topic
+                advisorNotes:
+                  type: string
+                  description: Advisor notes about the meeting or client
+                portfolioValue:
+                  type: string
+                  description: Current portfolio value (e.g. $2,450,000)
+                ytdReturn:
+                  type: string
+                  description: Year-to-date return (e.g. 8.3%)
+                benchmarkReturn:
+                  type: string
+                  description: Benchmark return (e.g. 7.1%)
+                vsBenchmark:
+                  type: string
+                  description: Performance vs benchmark (e.g. +1.2%)
+                goal1:
+                  type: string
+                  description: Client's first financial goal
+                goal2:
+                  type: string
+                  description: Client's second financial goal
+                goal3:
+                  type: string
+                  description: Client's third financial goal
+                goalsProgressNotes:
+                  type: string
+                  description: Progress notes on goals
+                action1:
+                  type: string
+                  description: First action item
+                action1Owner:
+                  type: string
+                  description: Person responsible for action item 1
+                action1Due:
+                  type: string
+                  description: Due date for action item 1 (YYYY-MM-DD)
+                action2:
+                  type: string
+                  description: Second action item
+                action2Owner:
+                  type: string
+                  description: Person responsible for action item 2
+                action2Due:
+                  type: string
+                  description: Due date for action item 2 (YYYY-MM-DD)
+                action3:
+                  type: string
+                  description: Third action item
+                action3Owner:
+                  type: string
+                  description: Person responsible for action item 3
+                action3Due:
+                  type: string
+                  description: Due date for action item 3 (YYYY-MM-DD)
+                nextMeetingDate:
+                  type: string
+                  description: Next meeting date (YYYY-MM-DD)
+                nextMeetingAgenda:
+                  type: string
+                  description: Agenda items for the next meeting
+      responses:
+        "200":
+          description: Document generated and uploaded to SharePoint
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  webUrl:
+                    type: string
+                    description: SharePoint URL of the generated document
+                  fileName:
+                    type: string
+                    description: Name of the generated file
+                  driveItemId:
+                    type: string
+                    description: Graph API drive item ID
+                  size:
+                    type: integer
+                    description: File size in bytes

@@ -21,27 +21,6 @@ RUN sed -i 's|<meta name="theme-color"|<meta name="color-scheme" content="dark o
     sed -i 's|content="LibreChat[^"]*"|content="DAX - Governed AI for RIAs"|g' /app/client/dist/index.html && \
     sed -i 's|</head>|<meta property="og:title" content="DAX - Governed AI for RIAs" /><meta property="og:description" content="A private, governed AI workspace for SEC-registered RIAs. Built inside your Azure environment. Powered by Microsoft. Managed by Dakona." /><meta property="og:site_name" content="DAX by Dakona" /><meta property="og:type" content="website" /><meta property="og:url" content="https://dax.dakona.com" /></head>|' /app/client/dist/index.html
 
-# ---------- DAX Document Generator Tool (function calling) ----------
-COPY librechat/tools/generate_icp_review.js /app/api/app/clients/tools/generate_icp_review.js
-COPY librechat/tools/generate_icp_review.json /app/api/app/clients/tools/generate_icp_review.json
-# Register the tool in LibreChat's plugin manifest
-RUN node -e " \
-  const fs = require('fs'); \
-  const mp = '/app/api/app/clients/tools/manifest.json'; \
-  const m = JSON.parse(fs.readFileSync(mp, 'utf8')); \
-  if (!m.find(p => p.pluginKey === 'generate_icp_review')) { \
-    m.push({ \
-      name: 'Generate ICP Review', \
-      pluginKey: 'generate_icp_review', \
-      description: 'Generates a quarterly ICP client review document and saves it to SharePoint.', \
-      icon: 'https://stdaxassets.blob.core.windows.net/branding/lexi_avatar_384.png', \
-      isAuthRequired: 'false', \
-      authConfig: [] \
-    }); \
-    fs.writeFileSync(mp, JSON.stringify(m, null, 2)); \
-    console.log('Registered generate_icp_review in manifest (' + m.length + ' plugins total)'); \
-  } else { console.log('generate_icp_review already in manifest'); }"
-
 # ---------- Fix Cosmos DB unique index bug ----------
 # Cosmos DB MongoDB API treats null as a unique value, so unique+sparse indexes
 # on social provider ID fields (googleId, facebookId, etc.) block multi-user login.
