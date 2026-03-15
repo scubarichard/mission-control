@@ -294,5 +294,21 @@ server.tool(
 // ---------------------------------------------------------------------------
 // Start
 // ---------------------------------------------------------------------------
+
+// Keep the process alive when stdin has no TTY (e.g. SSH from Claude Desktop).
+// Without this, Node sees no pending I/O and exits immediately.
+process.stdin.resume();
+
+process.stdin.on("error", (err) => {
+  console.error(`[dax-mcp] stdin error: ${err.message}`);
+});
+
+process.stdin.on("close", () => {
+  console.error("[dax-mcp] stdin closed — shutting down");
+  process.exit(0);
+});
+
 const transport = new StdioServerTransport();
 await server.connect(transport);
+
+console.error(`[dax-mcp] server started (pid=${process.pid}, tty=${process.stdin.isTTY ?? false})`);
