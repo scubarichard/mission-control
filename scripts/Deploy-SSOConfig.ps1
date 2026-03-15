@@ -127,9 +127,20 @@ Write-Host "  openai-api-key (TTS):      ********"
 
 Write-Host "`nBuilding updated container template..." -ForegroundColor Yellow
 
-# Use custom DAX-branded image from ACR; preserve resource settings and configuration
+# Use custom DAX-branded image from ACR; query for latest timestamped tag
 $currentContainer = $currentApp.properties.template.containers[0]
-$containerImage = "acrdaxdakona.azurecr.io/librechat-dax:latest"
+$acrImageName = "acrdaxdakona.azurecr.io/librechat-dax"
+$latestTag = az acr repository show-tags `
+    --name "acrdaxdakona" `
+    --repository "librechat-dax" `
+    --orderby time_desc `
+    --top 1 `
+    --query "[?@ != 'latest'] | [0]" -o tsv 2>$null
+if (-not $latestTag) {
+    $latestTag = "latest"
+    Write-Host "  No timestamped tag found, falling back to :latest" -ForegroundColor DarkYellow
+}
+$containerImage = "${acrImageName}:${latestTag}"
 $containerCpu = $currentContainer.resources.cpu
 $containerMemory = $currentContainer.resources.memory
 $currentConfig = $currentApp.properties.configuration

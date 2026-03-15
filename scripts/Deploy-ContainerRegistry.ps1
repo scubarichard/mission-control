@@ -32,8 +32,9 @@ $ErrorActionPreference = 'Stop'
 $rgName       = "rg-dax-$ClientName"
 $acrName      = "acrdaxdakona"
 $imageName    = "librechat-dax"
-$imageTag     = "latest"
+$imageTag     = (Get-Date -Format "yyyyMMdd-HHmmss")
 $fullImage    = "$acrName.azurecr.io/${imageName}:${imageTag}"
+$latestImage  = "$acrName.azurecr.io/${imageName}:latest"
 $identityName = "id-dax-$ClientName"
 
 Write-Host "=== Deploy Container Registry ===" -ForegroundColor Cyan
@@ -84,6 +85,7 @@ az acr build `
     --registry "$acrName" `
     --resource-group "$rgName" `
     --image "${imageName}:${imageTag}" `
+    --image "${imageName}:latest" `
     --file "$dockerContext/Dockerfile" `
     "$dockerContext"
 
@@ -135,10 +137,9 @@ Write-Host "`n=== Container Registry Ready ===" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "ACR:      $acrName.azurecr.io"
 Write-Host "Image:    $fullImage"
+Write-Host "Also:     $latestImage"
 Write-Host "Identity: $identityName (AcrPull)"
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
-Write-Host "  1. Update Container App to use this image:"
-Write-Host "     az containerapp update -n ca-dax-$ClientName -g $rgName --image $fullImage"
-Write-Host "  2. Or run Deploy-SSOConfig.ps1 which will use this image automatically."
+Write-Host "  Run Deploy-SSOConfig.ps1 — it will auto-detect the latest tag from ACR."
 Write-Host ""
