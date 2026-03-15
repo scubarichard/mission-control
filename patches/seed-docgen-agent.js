@@ -176,6 +176,21 @@ async function main() {
   console.log('[DAX seed]   tools: ' + JSON.stringify(toolNames));
   console.log('[DAX seed]   actions: [' + actionRef + ']');
 
+  // --- Read back and verify what's actually persisted in MongoDB ---
+  const savedAgent = await agentsCol.findOne({ id: AGENT_ID });
+  if (savedAgent) {
+    console.log('[DAX seed] Agent verified: tools = ' + JSON.stringify(savedAgent.tools));
+  } else {
+    console.error('[DAX seed] Agent verification FAILED: not found after upsert');
+  }
+
+  const savedAction = await actionsCol.findOne({ action_id: ACTION_ID });
+  if (savedAction) {
+    console.log('[DAX seed] Action verified: metadata.domain = ' + (savedAction.metadata && savedAction.metadata.domain));
+  } else {
+    console.error('[DAX seed] Action verification FAILED: not found after upsert');
+  }
+
   await mongoose.disconnect();
 }
 
