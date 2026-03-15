@@ -31,6 +31,7 @@ RUN sed -i 's|<meta name="theme-color"|<meta name="color-scheme" content="dark o
 # After fixing the schema, the existing users collection must be deleted so
 # LibreChat recreates it without the unique indexes.
 COPY patches/drop-unique-indexes.js /app/patches/drop-unique-indexes.js
+COPY patches/cosmos-compat.js /app/patches/cosmos-compat.js
 COPY patches/seed-docgen-agent.js /app/patches/seed-docgen-agent.js
 COPY librechat/tools/openapi-docgen.yaml /app/patches/openapi-docgen.yaml
 COPY patches/entrypoint.sh /app/patches/entrypoint.sh
