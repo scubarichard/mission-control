@@ -170,6 +170,8 @@ endpoints:
         models:
           "DAX Assistant":
             deploymentName: "gpt-4o"
+          "gpt-4o":
+            deploymentName: "gpt-4o"
 
   # ---------- Agents (function calling via OpenAPI Actions) ----------
   agents:
@@ -212,7 +214,7 @@ modelSpecs:
       preset:
         endpoint: "agents"
         agent_id: "agent_dax_main"
-        model: "DAX Assistant"
+        model: "gpt-4o"
         temperature: 0.7
         maxOutputTokens: 4096
         modelLabel: "DAX Assistant"

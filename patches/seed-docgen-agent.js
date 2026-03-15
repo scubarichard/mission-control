@@ -92,7 +92,7 @@ async function main() {
 
   // Read config from the YAML-injected config file
   let instructions = '';
-  let modelName = 'DAX Assistant'; // Must match the model alias in azureOpenAI groups
+  let modelName = 'gpt-4o'; // Must match a model key in azureOpenAI groups config
   try {
     const yaml = require('js-yaml');
     const config = yaml.load(fs.readFileSync('/config/librechat.yaml', 'utf8'));
