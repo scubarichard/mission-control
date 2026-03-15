@@ -3,9 +3,12 @@
  * so advisors get document generation in every conversation without
  * manual UI setup.
  *
- * Uses replaceOne with upsert:true — always overwrites the agent
- * document on every startup to ensure model name, instructions,
- * and action config are current.
+ * Uses replaceOne with upsert:true — always overwrites on startup.
+ * Schema matches LibreChat's actual Mongoose models:
+ *   packages/data-schemas/src/schema/agent.ts
+ *   packages/data-schemas/src/schema/action.ts
+ * Action reference format: domain---action_id
+ *   (actionDomainSeparator from librechat-data-provider)
  *
  * Requires MONGO_URI environment variable.
  */
@@ -15,12 +18,14 @@ const mongoose = require('mongoose');
 
 const AGENT_ID = 'agent_dax_main';
 const ACTION_ID = 'action_dax_docgen';
+const ACTION_DOMAIN = 'n8n.dakona.net';
 const AGENT_NAME = 'DAX Assistant';
 const SPEC_PATH = '/app/patches/openapi-docgen.yaml';
-
-// Must match a model key in azureOpenAI groups config in librechat.yaml.
-// The groups config must have "gpt-4o": { deploymentName: "gpt-4o" }.
 const MODEL_NAME = 'gpt-4o';
+
+// LibreChat uses '---' as the domain separator in agent action references
+// (actionDomainSeparator from librechat-data-provider/src/types/assistants.ts)
+const ACTION_DOMAIN_SEPARATOR = '---';
 
 async function main() {
   const uri = process.env.MONGO_URI;
@@ -44,7 +49,7 @@ async function main() {
 
   const db = mongoose.connection.db;
 
-  // Need a user as author — use the first existing user
+  // Need a user as author
   const usersCol = db.collection('users');
   const firstUser = await usersCol.findOne({});
   if (!firstUser) {
@@ -58,32 +63,29 @@ async function main() {
   const now = new Date();
 
   // --- Upsert the action document ---
+  // Schema: packages/data-schemas/src/schema/action.ts
   const actionsCol = db.collection('actions');
   const actionDoc = {
-    action_id: ACTION_ID,
     user: firstUser._id,
-    type: 'action',
-    domain: 'n8n.dakona.net',
+    action_id: ACTION_ID,
+    type: 'action_prototype',
+    agent_id: AGENT_ID,
     metadata: {
+      domain: ACTION_DOMAIN,
+      raw_spec: openapiSpec,
+      auth: {
+        type: 'none',
+      },
       api_key: '',
-      auth_type: 'none',
-      name_for_human: 'DAX Document Services',
-      name_for_model: 'daxDocumentServices',
-      description_for_human: 'Generates ICP review documents and saves uploaded files to SharePoint',
-      description_for_model: 'Generates ICP quarterly review documents (generateICPReview) and saves uploaded source documents to SharePoint client folders (saveClientDocument). Routes through n8n which handles Graph API auth.',
       privacy_policy_url: '',
-      legal_info_url: '',
     },
-    openapi_spec: openapiSpec,
-    updatedAt: now,
-    createdAt: now,
   };
   await actionsCol.replaceOne(
     { action_id: ACTION_ID },
     actionDoc,
     { upsert: true }
   );
-  console.log('[DAX seed] Action "' + ACTION_ID + '" upserted');
+  console.log('[DAX seed] Action upserted: ' + ACTION_ID + ' (domain: ' + ACTION_DOMAIN + ', type: action_prototype)');
 
   // --- Read the system prompt from config ---
   let instructions = '';
@@ -97,6 +99,9 @@ async function main() {
   }
 
   // --- Upsert the agent document ---
+  // Schema: packages/data-schemas/src/schema/agent.ts
+  // actions array format: "domain---action_id" (actionDomainSeparator)
+  const actionRef = ACTION_DOMAIN + ACTION_DOMAIN_SEPARATOR + ACTION_ID;
   const agentsCol = db.collection('agents');
   const agentDoc = {
     id: AGENT_ID,
@@ -107,11 +112,13 @@ async function main() {
     model: MODEL_NAME,
     provider: 'azureOpenAI',
     tools: ['actions'],
-    actions: [ACTION_ID],
+    actions: [actionRef],
     tool_resources: {},
     isCollaborative: true,
     projectIds: [],
-    hide: false,
+    versions: [],
+    category: 'general',
+    mcpServerNames: [],
     createdAt: now,
     updatedAt: now,
   };
@@ -120,7 +127,7 @@ async function main() {
     agentDoc,
     { upsert: true }
   );
-  console.log('[DAX seed] Agent "' + AGENT_NAME + '" upserted (model: ' + MODEL_NAME + ', provider: azureOpenAI)');
+  console.log('[DAX seed] Agent upserted: ' + AGENT_NAME + ' (model: ' + MODEL_NAME + ', actions: [' + actionRef + '])');
 
   await mongoose.disconnect();
 }
