@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Creates an Azure Container Registry, builds the DAX-branded LibreChat
     image, and grants the Container App managed identity pull access.
@@ -141,5 +141,6 @@ Write-Host "Also:     $latestImage"
 Write-Host "Identity: $identityName (AcrPull)"
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
-Write-Host "  Run Deploy-SSOConfig.ps1 — it will auto-detect the latest tag from ACR."
+Write-Host "  Run Deploy-SSOConfig.ps1 ------ it will auto-detect the latest tag from ACR."
 Write-Host ""
+

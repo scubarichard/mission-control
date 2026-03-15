@@ -41,8 +41,8 @@ function run(cmd, { timeout = 120_000, cwd = REPO, shell } = {}) {
 
 /** Resolve a relative path against the repo root. Blocks path traversal. */
 function resolvePath(relPath) {
-  const resolved = join(REPO, relPath);
-  if (!resolved.startsWith(REPO)) {
+  const resolved = path.resolve(REPO, relPath);
+  if (!resolved.startsWith(path.resolve(REPO))) {
     throw new Error("Path traversal outside the repo is not allowed");
   }
   return resolved;
