@@ -3,7 +3,10 @@
  * so advisors get document generation in every conversation without
  * manual UI setup.
  *
- * Runs at container startup (idempotent — skips if agent already exists).
+ * Uses replaceOne with upsert:true — always overwrites the agent
+ * document on every startup to ensure model name, instructions,
+ * and action config are current.
+ *
  * Requires MONGO_URI environment variable.
  */
 
@@ -15,49 +18,46 @@ const ACTION_ID = 'action_dax_docgen';
 const AGENT_NAME = 'DAX Assistant';
 const SPEC_PATH = '/app/patches/openapi-docgen.yaml';
 
+// Must match a model key in azureOpenAI groups config in librechat.yaml.
+// The groups config must have "gpt-4o": { deploymentName: "gpt-4o" }.
+const MODEL_NAME = 'gpt-4o';
+
 async function main() {
   const uri = process.env.MONGO_URI;
   if (!uri) {
-    console.log('[DAX] MONGO_URI not set, skipping agent seed');
+    console.error('[DAX seed] MONGO_URI not set, skipping');
     return;
   }
 
   if (!fs.existsSync(SPEC_PATH)) {
-    console.log('[DAX] OpenAPI spec not found at ' + SPEC_PATH + ', skipping agent seed');
+    console.error('[DAX seed] OpenAPI spec not found at ' + SPEC_PATH);
     return;
   }
 
   try {
     await mongoose.connect(uri);
+    console.log('[DAX seed] Connected to MongoDB');
   } catch (err) {
-    console.error('[DAX] Cannot connect to DB, skipping agent seed:', err.message);
+    console.error('[DAX seed] DB connect failed:', err.message);
     return;
   }
 
   const db = mongoose.connection.db;
 
-  // Check if agent already exists
-  const agentsCol = db.collection('agents');
-  const existing = await agentsCol.findOne({ id: AGENT_ID });
-  if (existing) {
-    console.log('[DAX] Agent "' + AGENT_NAME + '" already exists (id: ' + AGENT_ID + ')');
-    await mongoose.disconnect();
-    return;
-  }
-
   // Need a user as author — use the first existing user
   const usersCol = db.collection('users');
   const firstUser = await usersCol.findOne({});
   if (!firstUser) {
-    console.log('[DAX] No users exist yet — agent will be seeded on next restart after first login');
+    console.error('[DAX seed] No users exist yet — will seed on next restart after first login');
     await mongoose.disconnect();
     return;
   }
+  console.log('[DAX seed] Using author: ' + (firstUser.email || firstUser.username || firstUser._id));
 
   const openapiSpec = fs.readFileSync(SPEC_PATH, 'utf8');
   const now = new Date();
 
-  // Upsert the action document (always update spec so new operations are picked up)
+  // --- Upsert the action document ---
   const actionsCol = db.collection('actions');
   const actionDoc = {
     action_id: ACTION_ID,
@@ -76,51 +76,35 @@ async function main() {
     },
     openapi_spec: openapiSpec,
     updatedAt: now,
+    createdAt: now,
   };
-  const actionResult = await actionsCol.updateOne(
+  await actionsCol.replaceOne(
     { action_id: ACTION_ID },
-    { $set: actionDoc, $setOnInsert: { createdAt: now } },
+    actionDoc,
     { upsert: true }
   );
-  if (actionResult.upsertedCount) {
-    console.log('[DAX] Created action "' + ACTION_ID + '"');
-  } else if (actionResult.modifiedCount) {
-    console.log('[DAX] Updated action "' + ACTION_ID + '" with latest OpenAPI spec');
-  } else {
-    console.log('[DAX] Action "' + ACTION_ID + '" unchanged');
-  }
+  console.log('[DAX seed] Action "' + ACTION_ID + '" upserted');
 
-  // Read config from the YAML-injected config file
+  // --- Read the system prompt from config ---
   let instructions = '';
-  let modelName = 'gpt-4o'; // Must match a model key in azureOpenAI groups config
   try {
     const yaml = require('js-yaml');
     const config = yaml.load(fs.readFileSync('/config/librechat.yaml', 'utf8'));
     instructions = config?.endpoints?.azureOpenAI?.systemPrompt || '';
-    // Extract the model alias from the azureOpenAI groups config
-    const groups = config?.endpoints?.azureOpenAI?.groups;
-    if (groups && groups[0] && groups[0].models) {
-      const aliases = Object.keys(groups[0].models);
-      if (aliases.length > 0) {
-        modelName = aliases[0];
-        console.log('[DAX] Using model alias from config: ' + modelName);
-      }
-    }
-  } catch {
-    console.log('[DAX] Could not read config, using defaults');
+    console.log('[DAX seed] System prompt loaded (' + instructions.length + ' chars)');
+  } catch (err) {
+    console.error('[DAX seed] Could not read config:', err.message);
   }
 
-  // Create the agent document
-  // model must be the LibreChat alias (e.g. "DAX Assistant"), not the
-  // Azure deployment name (e.g. "gpt-4o"), because LibreChat resolves
-  // the alias to the deployment via the azureOpenAI groups config.
-  await agentsCol.insertOne({
+  // --- Upsert the agent document ---
+  const agentsCol = db.collection('agents');
+  const agentDoc = {
     id: AGENT_ID,
     author: firstUser._id,
     name: AGENT_NAME,
     description: 'Governed AI for RIAs — GPT-4o with document generation and SharePoint file management',
     instructions: instructions,
-    model: modelName,
+    model: MODEL_NAME,
     provider: 'azureOpenAI',
     tools: ['actions'],
     actions: [ACTION_ID],
@@ -130,12 +114,18 @@ async function main() {
     hide: false,
     createdAt: now,
     updatedAt: now,
-  });
+  };
+  await agentsCol.replaceOne(
+    { id: AGENT_ID },
+    agentDoc,
+    { upsert: true }
+  );
+  console.log('[DAX seed] Agent "' + AGENT_NAME + '" upserted (model: ' + MODEL_NAME + ', provider: azureOpenAI)');
 
-  console.log('[DAX] Created agent "' + AGENT_NAME + '" (id: ' + AGENT_ID + ') with generateICPReview + saveClientDocument actions');
   await mongoose.disconnect();
 }
 
 main().catch(err => {
-  console.error('[DAX] Agent seed error:', err.message);
+  console.error('[DAX seed] Fatal error:', err.message);
+  console.error(err.stack);
 });
