@@ -112,6 +112,9 @@ async function main() {
       },
     },
   };
+  await actionsCol.deleteMany({ agent_id: AGENT_ID, action_id: { $ne: ACTION_ID } });
+  console.log([DAX seed] Cleared conflicting UI actions);
+
   await actionsCol.replaceOne(
     { action_id: ACTION_ID },
     actionDoc,

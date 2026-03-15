@@ -3,7 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { join, dirname, resolve } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Environment defaults
@@ -41,8 +41,8 @@ function run(cmd, { timeout = 120_000, cwd = REPO, shell } = {}) {
 
 /** Resolve a relative path against the repo root. Blocks path traversal. */
 function resolvePath(relPath) {
-  const resolved = path.resolve(REPO, relPath);
-  if (!resolved.startsWith(path.resolve(REPO))) {
+  const resolved = resolve(join(REPO, relPath));
+  if (!resolved.startsWith(resolve(REPO))) {
     throw new Error("Path traversal outside the repo is not allowed");
   }
   return resolved;
