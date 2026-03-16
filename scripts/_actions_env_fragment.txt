@@ -1,0 +1,6 @@
+                        # OpenAI TTS API key (direct OpenAI, not Azure OpenAI)
+                        @{ name = 'TTS_API_KEY'; value = $ttsApiKey }
+                        # Agent actions - required for LibreChat to execute outbound HTTP from agents
+                        @{ name = 'ACTIONS_ENDPOINT_URL'; value = $domainServer }
+                        @{ name = 'ACTIONS_ALLOWED_DOMAINS'; value = 'n8n.dakona.net' }
+                        # Secret-backed env vars (refs to Container App secrets from Key Vault)

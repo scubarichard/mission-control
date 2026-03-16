@@ -11,9 +11,15 @@
  *     {operationId}_action_{base64(https://domain)}
  *   e.g. generateICPReview_action_aHR0cHM6Ly9uOG4uZGFrb25hLm5ldA==
  *
- *   The '---' separator in actionDomainSeparator is used for display/storage
- *   only, NOT for the tool name that gets matched at runtime.
- *   The agent.tools array MUST use the base64 encoding to match ToolService.
+ * CRITICAL: raw_spec format
+ *   LibreChat's ActionService/ToolService expects raw_spec to be stored as
+ *   the original YAML string (not JSON.stringify'd). It passes raw_spec
+ *   directly to validateAndParseOpenAPISpec which handles YAML parsing.
+ *   Storing as JSON string breaks the parsing pipeline.
+ *
+ * CRITICAL: auth structure
+ *   UI-created actions store auth as { type: 'none' } at top level of metadata.
+ *   ToolService checks metadata.auth.type to determine auth handling.
  *
  * Requires MONGO_URI environment variable.
  */
@@ -69,16 +75,19 @@ async function main() {
   }
   console.log('[DAX seed] Using author: ' + (firstUser.email || firstUser.username || firstUser._id));
 
-  // Read and convert OpenAPI spec from YAML to JSON
+  // Read the raw YAML spec — store as-is, NOT as JSON.stringify
+  // LibreChat's validateAndParseOpenAPISpec handles YAML parsing at runtime
   const yamlSpec = fs.readFileSync(SPEC_PATH, 'utf8');
-  let jsonSpec;
+  console.log('[DAX seed] OpenAPI spec loaded: ' + yamlSpec.length + ' chars YAML');
+
+  // Validate it parses correctly (but don't store the parsed version)
   try {
     const yaml = require('js-yaml');
     const parsed = yaml.load(yamlSpec);
-    jsonSpec = JSON.stringify(parsed);
-    console.log('[DAX seed] OpenAPI spec parsed: ' + jsonSpec.length + ' chars JSON');
+    const paths = Object.keys(parsed.paths || {});
+    console.log('[DAX seed] OpenAPI spec valid — paths: ' + JSON.stringify(paths));
   } catch (err) {
-    console.error('[DAX seed] Failed to parse OpenAPI YAML:', err.message);
+    console.error('[DAX seed] Failed to validate OpenAPI YAML:', err.message);
     await mongoose.disconnect();
     return;
   }
@@ -87,13 +96,16 @@ async function main() {
   const actionsCol = db.collection('actions');
 
   // --- Clean up ALL existing actions for this agent ---
-  // Ensures no stale UI-created or previous seed actions interfere
   const deleteResult = await actionsCol.deleteMany({ agent_id: AGENT_ID });
   if (deleteResult.deletedCount > 0) {
     console.log('[DAX seed] Cleared ' + deleteResult.deletedCount + ' existing action(s) for agent');
   }
 
   // --- Upsert the action document ---
+  // Structure matches what LibreChat UI creates:
+  // - raw_spec is the YAML string (NOT JSON.stringify'd)
+  // - domain is just the hostname (no protocol)
+  // - auth.type = 'none' for no authentication
   const actionDoc = {
     user: firstUser._id,
     action_id: ACTION_ID,
@@ -101,7 +113,7 @@ async function main() {
     agent_id: AGENT_ID,
     metadata: {
       domain: ACTION_DOMAIN,
-      raw_spec: jsonSpec,
+      raw_spec: yamlSpec,
       auth: { type: 'none' },
     },
   };
@@ -172,11 +184,14 @@ async function main() {
     console.error('[DAX seed] Agent verification FAILED');
   }
 
+  const savedAction = await actionsCol.findOne({ action_id: ACTION_ID });
+  if (savedAction) {
+    console.log('[DAX seed] Action verified: domain=' + savedAction.metadata.domain);
+    console.log('[DAX seed]   raw_spec first 80 chars: ' + savedAction.metadata.raw_spec.substring(0, 80).replace(/\n/g, '\\n'));
+  }
+
   const allActions = await actionsCol.find({ agent_id: AGENT_ID }).toArray();
   console.log('[DAX seed] Total actions for agent: ' + allActions.length);
-  allActions.forEach(a => {
-    console.log('[DAX seed]   action_id=' + a.action_id + ' domain=' + (a.metadata && a.metadata.domain));
-  });
 
   await mongoose.disconnect();
 }

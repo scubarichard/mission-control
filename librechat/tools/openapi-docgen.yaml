@@ -5,7 +5,7 @@ info:
     Document generation and file management for DAX agents.
     Generates ICP quarterly review documents and saves uploaded
     source documents to SharePoint client folders.
-  version: 1.1.0
+  version: 1.2.0
 
 servers:
   - url: https://n8n.dakona.net
@@ -15,6 +15,7 @@ paths:
   /webhook/generate-document:
     post:
       operationId: generateICPReview
+      x-strict: true
       summary: Generate an ICP quarterly review document and save to SharePoint
       description: >-
         Creates a quarterly client review document by filling a Word template
@@ -36,10 +37,9 @@ paths:
                 firmName:
                   type: string
                   description: Firm name
-                  default: Impact Capital Partners
                 clientName:
                   type: string
-                  description: Client's full name (e.g. John Smith)
+                  description: Client full name (e.g. John Smith)
                 reportPeriod:
                   type: string
                   description: Reporting period (e.g. Q1 2026)
@@ -48,11 +48,10 @@ paths:
                   description: Report date (YYYY-MM-DD). Defaults to today.
                 advisorName:
                   type: string
-                  description: Advisor's full name
-                  default: Brett Stone
+                  description: Advisor full name
                 accountNumber:
                   type: string
-                  description: Client account number (e.g. ICP-7842-A)
+                  description: Client account number
                 accountType:
                   type: string
                   description: Account type (e.g. Taxable Brokerage, IRA)
@@ -65,7 +64,6 @@ paths:
                 meetingLocation:
                   type: string
                   description: Meeting location
-                  default: Zoom
                 attendees:
                   type: string
                   description: Comma-separated attendee names
@@ -86,7 +84,7 @@ paths:
                   description: Advisor notes about the meeting or client
                 portfolioValue:
                   type: string
-                  description: Current portfolio value (e.g. $2,450,000)
+                  description: Current portfolio value (e.g. 2450000)
                 ytdReturn:
                   type: string
                   description: Year-to-date return (e.g. 8.3%)
@@ -98,13 +96,13 @@ paths:
                   description: Performance vs benchmark (e.g. +1.2%)
                 goal1:
                   type: string
-                  description: Client's first financial goal
+                  description: Client first financial goal
                 goal2:
                   type: string
-                  description: Client's second financial goal
+                  description: Client second financial goal
                 goal3:
                   type: string
-                  description: Client's third financial goal
+                  description: Client third financial goal
                 goalsProgressNotes:
                   type: string
                   description: Progress notes on goals
@@ -113,7 +111,7 @@ paths:
                   description: First action item
                 action1Owner:
                   type: string
-                  description: Person responsible for action item 1
+                  description: Owner of action item 1
                 action1Due:
                   type: string
                   description: Due date for action item 1 (YYYY-MM-DD)
@@ -122,7 +120,7 @@ paths:
                   description: Second action item
                 action2Owner:
                   type: string
-                  description: Person responsible for action item 2
+                  description: Owner of action item 2
                 action2Due:
                   type: string
                   description: Due date for action item 2 (YYYY-MM-DD)
@@ -131,7 +129,7 @@ paths:
                   description: Third action item
                 action3Owner:
                   type: string
-                  description: Person responsible for action item 3
+                  description: Owner of action item 3
                 action3Due:
                   type: string
                   description: Due date for action item 3 (YYYY-MM-DD)
@@ -167,13 +165,10 @@ paths:
   /webhook/save-client-document:
     post:
       operationId: saveClientDocument
-      summary: Save an uploaded document to the client's SharePoint folder
+      x-strict: true
+      summary: Save an uploaded document to the client SharePoint folder
       description: >-
-        Saves a copy of an uploaded document (PDF, Word, text) to the
-        client's SharePoint folder at DAX Reports/{clientName}/. Creates
-        the folder if it doesn't exist. Used to maintain an audit trail
-        of source documents alongside generated reports. Routes through
-        n8n which handles Graph API authentication.
+        Saves a copy of an uploaded document to DAX Reports/{clientName}/ in SharePoint.
       requestBody:
         required: true
         content:
@@ -187,10 +182,10 @@ paths:
               properties:
                 clientName:
                   type: string
-                  description: Client name used as the folder name in SharePoint (e.g. John Smith)
+                  description: Client name (used as folder name in SharePoint)
                 fileName:
                   type: string
-                  description: Original filename with extension (e.g. Meeting-Summary.pdf)
+                  description: Original filename with extension
                 fileContent:
                   type: string
                   description: Base64-encoded file content
@@ -206,10 +201,7 @@ paths:
                     type: boolean
                   webUrl:
                     type: string
-                    description: SharePoint URL of the saved document
                   fileName:
                     type: string
-                    description: Filename as stored in SharePoint
                   size:
                     type: integer
-                    description: File size in bytes

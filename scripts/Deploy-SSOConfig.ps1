@@ -204,6 +204,7 @@ $template = @{
                     )
                     env = @(
                         @{ name = 'HOST'; value = '0.0.0.0' }
+                        @{ name = 'DEBUG'; value = 'librechat:*' }
                         @{ name = 'PORT'; value = '3080' }
                         @{ name = 'CONFIG_PATH'; value = '/config/librechat.yaml' }
                         @{ name = 'AZURE_API_VERSION'; value = '2024-08-01-preview' }
@@ -228,6 +229,9 @@ $template = @{
                         @{ name = 'OPENID_SESSION_SECRET'; value = $sessionSecret }
                         # OpenAI TTS API key (direct OpenAI, not Azure OpenAI)
                         @{ name = 'TTS_API_KEY'; value = $ttsApiKey }
+                        # Agent actions - required for LibreChat to execute outbound HTTP from agents
+                        @{ name = 'ACTIONS_ENDPOINT_URL'; value = $domainServer }
+                        @{ name = 'ACTIONS_ALLOWED_DOMAINS'; value = 'n8n.dakona.net' }
                         # Secret-backed env vars (refs to Container App secrets from Key Vault)
                         @{ name = 'OPENAI_API_KEY'; secretRef = 'openai-api-key' }
                         @{ name = 'MONGO_URI'; secretRef = 'cosmos-connection-string' }
