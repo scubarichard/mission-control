@@ -26,3 +26,14 @@ Thumbs.db
 
 # Generated reports (contain client data)
 reports/
+
+# Node
+node_modules/
+package-lock.json
+
+# Temp/scratch files
+librechat/docgen-section.txt
+scripts/container-diag.js
+scripts/container-diag-runner.js
+scripts/diag-inline.js
+patches/run-diag.sh
