@@ -22,14 +22,6 @@ RUN sed -i 's|<meta name="theme-color"|<meta name="color-scheme" content="dark o
     sed -i 's|</head>|<meta property="og:title" content="DAX - Governed AI for RIAs" /><meta property="og:description" content="A private, governed AI workspace for SEC-registered RIAs. Built inside your Azure environment. Powered by Microsoft. Managed by Dakona." /><meta property="og:site_name" content="DAX by Dakona" /><meta property="og:type" content="website" /><meta property="og:url" content="https://dax.dakona.com" /></head>|' /app/client/dist/index.html
 
 # ---------- Fix Cosmos DB unique index bug ----------
-# Cosmos DB MongoDB API treats null as a unique value, so unique+sparse indexes
-# on social provider ID fields (googleId, facebookId, etc.) block multi-user login.
-# The compiled bundle is pretty-printed (not minified), so the pattern is:
-#       unique: true,
-#       sparse: true,
-# We delete the "unique: true," lines entirely, leaving only "sparse: true,".
-# After fixing the schema, the existing users collection must be deleted so
-# LibreChat recreates it without the unique indexes.
 COPY patches/drop-unique-indexes.js /app/patches/drop-unique-indexes.js
 COPY patches/cosmos-compat.js /app/patches/cosmos-compat.js
 COPY patches/seed-docgen-agent.js /app/patches/seed-docgen-agent.js
@@ -40,12 +32,20 @@ RUN chmod +x /app/patches/entrypoint.sh && \
       /app/node_modules/@librechat/data-schemas/dist/index.cjs && \
     sed -i -e '/^        unique: true,$/{N; /\n        sparse: true,/{s/unique: true,\n/\n/;}}' \
       /app/node_modules/@librechat/data-schemas/dist/index.es.js && \
-    echo "=== Verifying patch ===" && \
-    grep -c 'unique: true' /app/node_modules/@librechat/data-schemas/dist/index.cjs && \
-    echo "googleId block:" && \
-    grep -A2 'googleId' /app/node_modules/@librechat/data-schemas/dist/index.cjs && \
-    echo "email block (should still have unique):" && \
-    grep -A3 'email:' /app/node_modules/@librechat/data-schemas/dist/index.cjs | head -8
+    echo "=== Verifying Cosmos patch ===" && \
+    grep -c 'unique: true' /app/node_modules/@librechat/data-schemas/dist/index.cjs
+
+# ---------- Patch: force tool_choice=required when action tools are bound ----------
+# Graph.cjs line ~790: model.bindTools(tools) -> model.bindTools(tools, { tool_choice: 'required' })
+# This forces GPT-4o to call the function instead of writing text when tools are present.
+# We only patch the initializeModel() return statement (the one NOT inside the fallback block),
+# identified by the surrounding context: "if (!tools || tools.length === 0) {" followed immediately.
+RUN GRAPH=/app/node_modules/@librechat/agents/dist/cjs/graphs/Graph.cjs && \
+    echo "Before patch - bindTools occurrences:" && \
+    grep -n 'bindTools' "$GRAPH" && \
+    sed -i 's/return model\.bindTools(tools);/return model.bindTools(tools, { tool_choice: '"'"'required'"'"' });/g' "$GRAPH" && \
+    echo "After patch - bindTools occurrences:" && \
+    grep -n 'bindTools' "$GRAPH"
 
 USER node
 ENTRYPOINT ["/app/patches/entrypoint.sh"]

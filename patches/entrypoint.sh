@@ -11,5 +11,8 @@ NODE_ENV=production node config/migrate-agent-permissions.js 2>&1 || true
 echo "[DAX] Seeding document generator agent (replaceOne upsert)..."
 NODE_ENV=production node /app/patches/seed-docgen-agent.js 2>&1 || true
 
-echo "[DAX] Starting LibreChat (with Cosmos DB $bitsAllSet compat layer)..."
-exec env NODE_ENV=production node -r /app/patches/cosmos-compat.js api/server/index.js "$@"
+echo "[DAX] Starting LibreChat (with Cosmos DB compat + tool_choice patch)..."
+exec env NODE_ENV=production node \
+    -r /app/patches/cosmos-compat.js \
+    -r /app/patches/force-tool-choice.js \
+    api/server/index.js "$@"
