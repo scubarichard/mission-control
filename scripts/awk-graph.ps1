@@ -1,0 +1,1 @@
+az containerapp exec --name ca-dax-dakona-pilot --resource-group rg-dax-dakona-pilot --command "awk NR>=780&&NR<=860 /app/node_modules/@librechat/agents/dist/cjs/graphs/Graph.cjs" 2>&1 | Select-Object -First 40

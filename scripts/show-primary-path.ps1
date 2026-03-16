@@ -5,9 +5,8 @@ foreach ($line in $r) {
         $lines += $line
     }
 }
-# Find the function that contains the primary attemptInvoke call
-# Look backwards from line 1244 for the function/method definition
-Write-Host "=== Lines 1080-1200 (model setup before primary invoke) ==="
-for ($i = 1080; $i -le 1200; $i++) {
+# Show the area around the primary attemptInvoke call (line 1244) - go back further to see model binding
+Write-Host "=== Lines 1190-1260 (primary invoke path) ==="
+for ($i = 1190; $i -le 1260; $i++) {
     Write-Host "${i}: $($lines[$i])"
 }

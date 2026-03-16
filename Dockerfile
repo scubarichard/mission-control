@@ -27,6 +27,7 @@ COPY patches/cosmos-compat.js /app/patches/cosmos-compat.js
 COPY patches/seed-docgen-agent.js /app/patches/seed-docgen-agent.js
 COPY librechat/tools/openapi-docgen.yaml /app/patches/openapi-docgen.yaml
 COPY patches/entrypoint.sh /app/patches/entrypoint.sh
+COPY patches/patch-tool-choice.js /app/patches/patch-tool-choice.js
 RUN chmod +x /app/patches/entrypoint.sh && \
     sed -i -e '/^        unique: true,$/{N; /\n        sparse: true,/{s/unique: true,\n/\n/;}}' \
       /app/node_modules/@librechat/data-schemas/dist/index.cjs && \
@@ -35,17 +36,11 @@ RUN chmod +x /app/patches/entrypoint.sh && \
     echo "=== Verifying Cosmos patch ===" && \
     grep -c 'unique: true' /app/node_modules/@librechat/data-schemas/dist/index.cjs
 
-# ---------- Patch: force tool_choice=required when action tools are bound ----------
-# Graph.cjs line ~790: model.bindTools(tools) -> model.bindTools(tools, { tool_choice: 'required' })
-# This forces GPT-4o to call the function instead of writing text when tools are present.
-# We only patch the initializeModel() return statement (the one NOT inside the fallback block),
-# identified by the surrounding context: "if (!tools || tools.length === 0) {" followed immediately.
-RUN GRAPH=/app/node_modules/@librechat/agents/dist/cjs/graphs/Graph.cjs && \
-    echo "Before patch - bindTools occurrences:" && \
-    grep -n 'bindTools' "$GRAPH" && \
-    sed -i 's/return model\.bindTools(tools);/return model.bindTools(tools, { tool_choice: '"'"'required'"'"' });/g' "$GRAPH" && \
-    echo "After patch - bindTools occurrences:" && \
-    grep -n 'bindTools' "$GRAPH"
+# ---------- Patch: force tool_choice=required for action tools ----------
+# Patches @librechat/agents Graph.cjs to pass { tool_choice: 'required' } to model.bindTools()
+# when at least one action tool (name contains '_action_') is present in the tool list.
+# This forces GPT-4o to make function calls instead of writing text.
+RUN node /app/patches/patch-tool-choice.js
 
 USER node
 ENTRYPOINT ["/app/patches/entrypoint.sh"]

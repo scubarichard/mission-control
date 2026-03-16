@@ -5,9 +5,11 @@ foreach ($line in $r) {
         $lines += $line
     }
 }
-# Find the function that contains the primary attemptInvoke call
-# Look backwards from line 1244 for the function/method definition
-Write-Host "=== Lines 1080-1200 (model setup before primary invoke) ==="
-for ($i = 1080; $i -le 1200; $i++) {
-    Write-Host "${i}: $($lines[$i])"
+
+# Find non-empty lines near the primary invoke
+Write-Host "=== Non-empty lines from 900 to 1244 ==="
+for ($i = 900; $i -le 1244; $i++) {
+    if ($lines[$i].Trim() -ne "") {
+        Write-Host "${i}: $($lines[$i])"
+    }
 }
