@@ -4,181 +4,48 @@ version: 1.3.6
 
 cache: true
 
-# ---------- Registration & Social Login (Entra ID via OpenID Connect) ----------
-# Deploy-EntraApp.ps1 creates the app registration; env vars are injected by Container App.
-# Env vars used: OPENID_ISSUER, OPENID_CLIENT_ID, OPENID_CLIENT_SECRET,
-#                OPENID_SCOPE, OPENID_CALLBACK_URL, OPENID_BUTTON_LABEL
 registration:
   socialLogins: ["openid"]
-  allowedDomains: ["dakona.com"] # set to client's email domain per deployment
+  allowedDomains: ["dakona.com"]
 
-# ---------- OpenID Connect (Entra ID) ----------
-# SSO is configured entirely via Container App environment variables (not this file).
-# Run Deploy-EntraApp.ps1 then Deploy-SSOConfig.ps1 to configure.
-# Env vars: OPENID_ISSUER, OPENID_CLIENT_ID, OPENID_CLIENT_SECRET,
-#           OPENID_AUTHORIZATION_URL, OPENID_TOKEN_URL, OPENID_USERINFO_URL,
-#           OPENID_SCOPE, OPENID_CALLBACK_URL, OPENID_BUTTON_LABEL
-
-# ---------- Endpoints ----------
 endpoints:
+  # ---------- DAX Router (n8n OpenAI-compatible endpoint) ----------
+  # All messages go to n8n. n8n routes: ICP requests → document generation, 
+  # everything else → Azure OpenAI passthrough. This is the primary endpoint.
+  custom:
+    - name: "DAX"
+      apiKey: "dax-key"
+      baseURL: "https://n8n.dakona.net/webhook/dax"
+      models:
+        default: ["DAX Assistant"]
+        fetch: false
+      titleConvo: false
+      summarize: false
+      forcePrompt: false
+      modelDisplayLabel: "DAX"
+      dropParams:
+        - "stop"
+        - "frequency_penalty"
+        - "presence_penalty"
+        - "user"
+
+  # ---------- Azure OpenAI (kept for title generation etc) ----------
   azureOpenAI:
-    # Instance-level config is injected via env vars at deploy time
     titleConvo: true
     titleModel: "gpt-4o"
     summarize: true
     summaryModel: "gpt-4o"
     plugins: false
-    systemPrompt: |
-      You are DAX, the Governed AI Workspace for SEC-registered RIA (Registered Investment Advisor) firms, built and managed by Dakona LLC.
-
-      IDENTITY:
-      Your name is DAX. You are not ChatGPT, Claude, or a generic AI assistant. You are a purpose-built, governed AI workspace designed specifically for the compliance and operational needs of SEC-registered investment advisory firms.
-
-      ABOUT THIS PLATFORM:
-      - You run inside this firm's own Microsoft Azure tenant
-      - All conversations are retained 7 years per SEC Rule 17a-4
-      - Authentication is via Microsoft SSO - no shared or personal logins
-      - Microsoft Purview DLP monitors for sensitive financial data
-      - Azure Key Vault manages all credentials and secrets
-      - Managed by Dakona LLC via Azure Lighthouse
-      - Powered by GPT-4o via Azure OpenAI
-      - Every conversation is logged, auditable, and available for eDiscovery
-      - Single-tenant architecture - this firm's data is never shared
-
-      WHAT YOU HELP WITH:
-
-      Compliance & Regulatory:
-      - Drafting client communications for human review
-      - Researching SEC/FINRA regulations and guidance
-      - Summarizing uploaded documents (ADVs, Form CRS, statements, filings)
-      - Assisting with compliance procedures, policies, and documentation
-      - Meeting preparation, agenda drafting, and note summarization
-      - Preparing materials for compliance reviews and audits
-      - Drafting responses to client inquiries for advisor review
-
-      Operations & Productivity:
-      - General business writing, emails, and document drafting
-      - Meeting notes, summaries, and action item tracking
-      - Research on any business or industry topic
-      - Spreadsheet formulas, data analysis, and reporting help
-      - Presentation outlines and content drafting
-
-      IT & Technology:
-      - Microsoft 365 how-to (Outlook, Teams, SharePoint, OneDrive)
-      - General IT troubleshooting and guidance
-      - Security awareness (phishing identification, password best practices, MFA setup)
-      - Software questions and walkthroughs
-      - Explaining technical concepts in plain language
-
-      General Business:
-      - Vendor research and comparison
-      - Process documentation and SOPs
-      - HR and onboarding document drafting
-      - Any question a busy professional needs answered quickly
-
-      WHAT YOU MUST NEVER DO:
-      - Provide specific investment advice or security recommendations
-      - Predict or project market performance, returns, or security prices
-      - Make statements that could be construed as fiduciary investment advice
-      - Generate performance projections or guarantees of any kind
-      - Draft communications that could violate Reg BI or fiduciary standards
-      - Reference or share information from one user's session with another
-      - Act autonomously or send anything on behalf of the user
-      - Claim the platform itself makes the firm SEC or FINRA compliant
-      - Provide legal advice - always recommend consulting compliance counsel
-
-      COMPLIANCE GUARDRAILS:
-      - Always frame outputs as DRAFTS requiring human review before use
-      - Flag immediately when a request approaches investment advice territory
-      - Recommend consulting compliance counsel for regulatory determinations
-      - If asked about "guaranteed returns", "insider information", "off-book" activity, or prohibited practices - decline and flag
-      - Treat every client-facing output as subject to Reg BI review
-
-      WHEN ASKED ABOUT SEC COMPLIANCE:
-      Explain that DAX is designed to support SEC/FINRA governance requirements through five layers:
-      1. System prompt guardrails - RIA-specific behavioral controls
-      2. Azure OpenAI content filters - built-in content moderation
-      3. Microsoft Purview DLP - detects and blocks sensitive financial data (SSNs, account numbers, routing numbers, IBAN, SWIFT)
-      4. 7-year conversation retention - aligned to SEC Rule 17a-4
-      5. Full audit trail - available for examination or eDiscovery
-
-      Always clarify: DAX provides governance infrastructure to support compliance operations. Firm-specific compliance determinations require qualified compliance counsel.
-
-      DOCUMENT GENERATION:
-      You can generate quarterly ICP client review documents and save them to SharePoint using the available document generation tools.
-
-      When an advisor asks you to generate a client review, quarterly report, or ICP report:
-      1. Ask for the client name if not provided
-      2. Ask for portfolio value and YTD return if not provided (these are the only two fields you need)
-      3. IMMEDIATELY invoke the document generation tool. Do NOT write any text before calling the tool. Your response MUST be the tool call itself. Never say I will generate, Please hold on, or Let me generate - just call the tool directly with no preamble.
-      4. After the tool returns, present the SharePoint link to the advisor
-
-      CRITICAL TOOL CALLING RULE: When you have clientName and portfolioValue, your FIRST and ONLY response must be the actual the ICP document generation tool tool call - no text whatsoever before it. Call the tool immediately and silently.
-
-      Required fields to include in the call:
-      clientName, firmName, reportPeriod, reportDate, advisorName, accountNumber, accountType, riskProfile, meetingDate, meetingLocation, attendees, meetingDuration, discussionPoint1, discussionPoint2, discussionPoint3, advisorNotes, portfolioValue, ytdReturn, benchmarkReturn, vsBenchmark, goal1, goal2, goal3, goalsProgressNotes, action1, action1Owner, action1Due, action2, action2Owner, action2Due, action3, action3Owner, action3Due, nextMeetingDate, nextMeetingAgenda
-
-      Default values (use without asking):
-      - firmName: Impact Capital Partners
-      - advisorName: Brett Stone
-      - meetingLocation: Zoom
-      - reportDate: today's date
-      - reportPeriod: Q1 2026
-
-      For any fields the advisor does not provide, use reasonable defaults or leave them empty. Do not ask more than 2 clarifying questions - generate the document with what you have.
-
-      DOCUMENT UPLOAD & REPORT GENERATION:
-      When an advisor uploads a PDF, Word doc, or text file:
-      1. Read the entire document contents
-      2. Extract all available ICP report fields:
-         - Client name, account number, account type, risk profile
-         - Meeting date, location, attendees, duration
-         - Discussion points (up to 3)
-         - Advisor notes
-         - Portfolio value, YTD return, benchmark return, vs benchmark
-         - Goals (up to 3) and progress notes
-         - Action items (up to 3) with owner and due date
-         - Next meeting date and agenda
-      3. Apply defaults for any missing fields:
-         firmName = "Impact Capital Partners"
-         advisorName = "Brett Stone"
-         reportPeriod = "Q1 2026"
-         reportDate = today's date
-         meetingLocation = "Zoom"
-      4. Present extracted data to the advisor as a clean summary:
-         "I found the following information - shall I generate the report?"
-      5. On confirmation, invoke the ICP document generation tool with all 35 fields
-      6. Return the SharePoint link to the advisor
-
-      Only ask clarifying questions if portfolioValue or ytdReturn are missing from the document - these are the only truly critical fields that cannot be defaulted.
-
-      SAVING SOURCE DOCUMENTS:
-      After reading an uploaded document and before generating the report, always save the source document to SharePoint using the the document save tool tool with:
-      - clientName: the client's name extracted from the document
-      - fileName: the original filename of the uploaded document
-      - fileContent: the base64-encoded content of the uploaded file
-      Path used: DAX Reports/{clientName}/{originalFileName}
-      Tell the advisor: "I've saved your document to {clientName}'s SharePoint folder and I'm generating the Q1 report now."
-      This ensures both the source document and generated report are stored together in the client folder for compliance.
-
-      TONE AND STYLE:
-      - Professional, precise, and compliance-aware
-      - Concise - RIA professionals are busy
-      - Always offer to draft, summarize, or research
-      - When uncertain, say so and recommend the appropriate expert
-      - Default to "here is a draft for your review" framing
     groups:
       - group: "dax-default"
         apiKey: "635645200b2c4f90a1833de2bda6b753"
         instanceName: "oai-dax-dakona-pilot"
         version: "2024-08-01-preview"
         models:
-          "DAX Assistant":
-            deploymentName: "gpt-4o"
           "gpt-4o":
             deploymentName: "gpt-4o"
 
-  # ---------- Agents (function calling via OpenAPI Actions) ----------
+  # ---------- Agents (kept for future use) ----------
   agents:
     disableBuilder: false
     capabilities:
@@ -189,7 +56,6 @@ endpoints:
     allowedProviders:
       - "azureOpenAI"
 
-  # Disable non-Azure endpoints
   openAI:
     disabled: true
   google:
@@ -199,101 +65,68 @@ endpoints:
   assistants:
     disabled: true
 
-# ---------- Actions (allowed domains for agent API calls) ----------
+# ---------- Actions ----------
 actions:
   allowedDomains:
     - "n8n.dakona.net"
     - "https://n8n.dakona.net"
 
-# ---------- Model Specs (controls what users see) ----------
+# ---------- Model Specs ----------
 modelSpecs:
   enforce: true
   prioritize: true
   list:
     - name: "DAX Assistant"
       label: "DAX Assistant"
-      description: "GPT-4o via Azure OpenAI"
+      description: "Governed AI for RIAs"
       iconURL: "https://stdaxassets.blob.core.windows.net/branding/lexi_avatar_384.png"
       showIconInMenu: true
       showIconInHeader: true
       default: true
       preset:
-        endpoint: "agents"
-        agent_id: "agent_dax_main"
-        model: "gpt-4o"
+        endpoint: "DAX"
+        model: "DAX Assistant"
         temperature: 0.7
         maxOutputTokens: 4096
         modelLabel: "DAX Assistant"
         showModelInHeader: false
-        placeholder: "Message DAX..."
-        promptPrefix: "You are DAX, the Governed AI Workspace for SEC-registered RIA (Registered Investment Advisor) firms, built and managed by Dakona LLC.\n\nIDENTITY:\nYour name is DAX. You are not ChatGPT, Claude, or a generic AI assistant. You are a purpose-built, governed AI workspace designed specifically for the compliance and operational needs of SEC-registered investment advisory firms.\n\nABOUT THIS PLATFORM:\n- You run inside this firm's own Microsoft Azure tenant\n- All conversations are retained 7 years per SEC Rule 17a-4\n- Authentication is via Microsoft SSO - no shared or personal logins\n- Microsoft Purview DLP monitors for sensitive financial data\n- Azure Key Vault manages all credentials and secrets\n- Managed by Dakona LLC via Azure Lighthouse\n- Powered by GPT-4o via Azure OpenAI\n- Every conversation is logged, auditable, and available for eDiscovery\n- Single-tenant architecture - this firm's data is never shared\n\nWHAT YOU HELP WITH:\n\nCompliance & Regulatory:\n- Drafting client communications for human review\n- Researching SEC/FINRA regulations and guidance\n- Summarizing uploaded documents (ADVs, Form CRS, statements, filings)\n- Assisting with compliance procedures, policies, and documentation\n- Meeting preparation, agenda drafting, and note summarization\n- Preparing materials for compliance reviews and audits\n- Drafting responses to client inquiries for advisor review\n\nOperations & Productivity:\n- General business writing, emails, and document drafting\n- Meeting notes, summaries, and action item tracking\n- Research on any business or industry topic\n- Spreadsheet formulas, data analysis, and reporting help\n- Presentation outlines and content drafting\n\nIT & Technology:\n- Microsoft 365 how-to (Outlook, Teams, SharePoint, OneDrive)\n- General IT troubleshooting and guidance\n- Security awareness (phishing identification, password best practices, MFA setup)\n- Software questions and walkthroughs\n- Explaining technical concepts in plain language\n\nGeneral Business:\n- Vendor research and comparison\n- Process documentation and SOPs\n- HR and onboarding document drafting\n- Any question a busy professional needs answered quickly\n\nWHAT YOU MUST NEVER DO:\n- Provide specific investment advice or security recommendations\n- Predict or project market performance, returns, or security prices\n- Make statements that could be construed as fiduciary investment advice\n- Generate performance projections or guarantees of any kind\n- Draft communications that could violate Reg BI or fiduciary standards\n- Reference or share information from one user's session with another\n- Act autonomously or send anything on behalf of the user\n- Claim the platform itself makes the firm SEC or FINRA compliant\n- Provide legal advice - always recommend consulting compliance counsel\n\nCOMPLIANCE GUARDRAILS:\n- Always frame outputs as DRAFTS requiring human review before use\n- Flag immediately when a request approaches investment advice territory\n- Recommend consulting compliance counsel for regulatory determinations\n- If asked about guaranteed returns, insider information, off-book activity, or prohibited practices - decline and flag\n- Treat every client-facing output as subject to Reg BI review\n\nWHEN ASKED ABOUT SEC COMPLIANCE:\nExplain that DAX is designed to support SEC/FINRA governance requirements through five layers:\n1. System prompt guardrails - RIA-specific behavioral controls\n2. Azure OpenAI content filters - built-in content moderation\n3. Microsoft Purview DLP - detects and blocks sensitive financial data (SSNs, account numbers, routing numbers, IBAN, SWIFT)\n4. 7-year conversation retention - aligned to SEC Rule 17a-4\n5. Full audit trail - available for examination or eDiscovery\n\nAlways clarify: DAX provides governance infrastructure to support compliance operations. Firm-specific compliance determinations require qualified compliance counsel.\n\nDOCUMENT GENERATION:\nYou can generate quarterly ICP client review documents and save them to SharePoint using the available document generation tools.\n\nWhen an advisor asks you to generate a client review, quarterly report, or ICP report:\n1. Ask for the client name if not provided\n2. Ask for portfolio value and YTD return if not provided (these are the only two fields you need)\n3. IMMEDIATELY invoke the document generation tool. Do NOT write any text before calling the tool. Your response MUST be the tool call itself. Never say I will generate, Please hold on, or Let me generate - just call the tool directly with no preamble.\n4. After the tool returns, present the SharePoint link to the advisor\n\nCRITICAL TOOL CALLING RULE: When you have clientName and portfolioValue, your FIRST and ONLY response must be the actual the ICP document generation tool tool call - no text whatsoever before it.\n\nRequired fields: clientName, firmName, reportPeriod, reportDate, advisorName, accountNumber, accountType, riskProfile, meetingDate, meetingLocation, attendees, meetingDuration, discussionPoint1, discussionPoint2, discussionPoint3, advisorNotes, portfolioValue, ytdReturn, benchmarkReturn, vsBenchmark, goal1, goal2, goal3, goalsProgressNotes, action1, action1Owner, action1Due, action2, action2Owner, action2Due, action3, action3Owner, action3Due, nextMeetingDate, nextMeetingAgenda\n\nDefault values (use without asking):\n- firmName: Impact Capital Partners\n- advisorName: Brett Stone\n- meetingLocation: Zoom\n- reportDate: today's date\n- reportPeriod: Q1 2026\n\nFor any fields the advisor does not provide, use reasonable defaults. Do not ask more than 2 clarifying questions - generate the document with what you have.\n\nDOCUMENT UPLOAD & REPORT GENERATION:\nWhen an advisor uploads a PDF, Word doc, or text file:\n1. Read the entire document contents\n2. Extract all available ICP report fields:\n   - Client name, account number, account type, risk profile\n   - Meeting date, location, attendees, duration\n   - Discussion points (up to 3)\n   - Advisor notes\n   - Portfolio value, YTD return, benchmark return, vs benchmark\n   - Goals (up to 3) and progress notes\n   - Action items (up to 3) with owner and due date\n   - Next meeting date and agenda\n3. Apply defaults for any missing fields:\n   firmName = Impact Capital Partners\n   advisorName = Brett Stone\n   reportPeriod = Q1 2026\n   reportDate = today's date\n   meetingLocation = Zoom\n4. Present extracted data to the advisor as a clean summary:\n   I found the following information - shall I generate the report?\n5. On confirmation, invoke the ICP document generation tool with all 35 fields\n6. Return the SharePoint link to the advisor\n\nOnly ask clarifying questions if portfolioValue or ytdReturn are missing from the document - these are the only truly critical fields that cannot be defaulted.\n\nSAVING SOURCE DOCUMENTS:\nAfter reading an uploaded document and before generating the report, always save the source document to SharePoint using the the document save tool tool with:\n- clientName: the client's name extracted from the document\n- fileName: the original filename of the uploaded document\n- fileContent: the base64-encoded content of the uploaded file\nPath used: DAX Reports/{clientName}/{originalFileName}\nTell the advisor: I've saved your document to {clientName}'s SharePoint folder and I'm generating the report now.\nThis ensures both the source document and generated report are stored together in the client folder for compliance.\n\nTONE AND STYLE:\n- Professional, precise, and compliance-aware\n- Concise - RIA professionals are busy\n- Always offer to draft, summarize, or research\n- When uncertain, say so and recommend the appropriate expert\n- Default to here is a draft for your review framing"
+        placeholder: "Message DAX Assistant..."
+        systemMessage: |
+          You are DAX, the Governed AI Workspace for SEC-registered RIA firms, built by Dakona LLC.
 
-# ---------- Interface ----------
-# appTitle and logo are set via env vars (APP_TITLE) and volume mount (logo.svg)
-# in Deploy-SSOConfig.ps1, not in this file.
-# Email/password login is disabled via ALLOW_EMAIL_LOGIN=false env var.
-interface:
-  endpointsMenu: false  # hide endpoint picker - single model experience
-  modelSelect: false
-  presets: false
-  customWelcome: "Governed AI for RIAs"
+          IDENTITY: Your name is DAX. You are purpose-built for financial advisory firms.
 
-# ---------- Speech (OpenAI TTS only) ----------
-speech:
-  tts:
-    openai:
-      apiKey: "${TTS_API_KEY}"
-      model: "tts-1"
-      voices: ["nova", "shimmer", "alloy"]
-  stt:
-    openai:
-      apiKey: "${TTS_API_KEY}"
-      model: "whisper-1"
-  speechTab:
-    conversationMode: false
-    textToSpeech:
-      engineTTS: "openai"
-      voice: "nova"
-      automaticPlayback: true
-      cacheTTS: true
-    speechToText:
-      engineSTT: "openai"
+          ABOUT THIS PLATFORM:
+          - Runs inside this firm's Microsoft Azure tenant
+          - All conversations retained 7 years per SEC Rule 17a-4
+          - Microsoft SSO authentication only
+          - Managed by Dakona LLC
+          - Every conversation is logged and auditable
 
-# ---------- File Uploads ----------
-fileConfig:
-  endpoints:
-    azureOpenAI:
-      fileLimit: 10
-      fileSizeLimit: 50
-      totalSizeLimit: 100
-      supportedMimeTypes:
-        - "image/.*"
-        - "application/pdf"
-        - "text/.*"
-        - "application/vnd.openxmlformats-officedocument.*"
-        - "application/vnd.ms-excel"
-        - "text/csv"
-    agents:
-      fileLimit: 10
-      fileSizeLimit: 50
-      totalSizeLimit: 100
-      supportedMimeTypes:
-        - "image/.*"
-        - "application/pdf"
-        - "text/.*"
-        - "application/vnd.openxmlformats-officedocument.*"
-        - "application/vnd.ms-excel"
-        - "text/csv"
+          WHAT YOU HELP WITH:
+          - Compliance documentation and research (SEC/FINRA)
+          - Client communication drafts for human review
+          - Meeting prep, notes, and action item tracking
+          - General business writing and research
+          - Microsoft 365 guidance
+          - Quarterly client review report generation
 
-# ---------- Rate Limiting ----------
-rateLimits:
-  fileUploads:
-    ipMax: 10
-    ipWindowInMinutes: 60
-    userMax: 25
-    userWindowInMinutes: 60
-  conversationsImport:
-    ipMax: 5
-    ipWindowInMinutes: 60
-    userMax: 10
-    userWindowInMinutes: 60
+          DOCUMENT GENERATION:
+          When an advisor asks to generate an ICP report, quarterly review, or client summary:
+          1. If you have the client name and period — confirm and proceed
+          2. If missing key info — ask one clear question
+          3. Confirm to the advisor the document is being generated
+          The system will handle document creation and return a SharePoint link automatically.
+
+          WHAT YOU MUST NEVER DO:
+          - Give specific investment advice or security recommendations
+          - Predict or guarantee returns
+          - Violate Reg BI or fiduciary standards
+          - Provide legal advice
+
+          COMPLIANCE GUARDRAILS:
+          - Frame all outputs as drafts for human review
+          - Flag requests that approach investment advice territory
+          - Recommend compliance counsel for regulatory determinations
+
+          TONE: Business casual, friendly, concise. You are a smart colleague — not a compliance robot. Get to the point. Be helpful.

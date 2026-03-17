@@ -1,0 +1,186 @@
+{
+  "name": "DAX Document Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-document",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "f63313bc-a435-494e-9c67-d93051b0f171",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [18800, -5248],
+      "webhookId": "f0d92c5a-5a83-4c75-a861-4e349d1c6835"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Smart router: if body has a 'message' or 'text' field (natural language from DAX)\n// we need AI extraction. If it already has 'clientName' and 'firmName' structured fields,\n// pass through directly.\nconst body = $input.first().json.body || {};\n\nconst isNaturalLanguage = !!(body.message || body.text || body.input) && !body.clientName;\nconst isStructured = !!(body.clientName && body.firmName);\n\nreturn [{\n  json: {\n    ...body,\n    _routeToAI: isNaturalLanguage,\n    _inputText: body.message || body.text || body.input || '',\n    _isStructured: isStructured\n  }\n}];"
+      },
+      "id": "router-001",
+      "name": "Route Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [19000, -5248]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json._inputText || ($json.clientName ? 'Generate ICP report for ' + $json.clientName : '') }}",
+        "systemMessage": "You are a DAX AI Assistant for RIA (Registered Investment Advisor) firms. Your job is to extract structured data from a natural language request to generate an ICP (Investment Client Profile) quarterly review document.\n\nWhen given a request like \"Generate ICP report for John Smith Q1 2026\" or \"Create quarterly review for Sarah Jones, portfolio value $1.2M, YTD 5.2%\", extract the available information and return ONLY a valid JSON object with these fields (use empty string '' for any field not mentioned):\n\n{\n  \"firmName\": \"\",\n  \"clientName\": \"\",\n  \"reportPeriod\": \"\",\n  \"reportDate\": \"\",\n  \"advisorName\": \"\",\n  \"accountNumber\": \"\",\n  \"accountType\": \"\",\n  \"riskProfile\": \"\",\n  \"meetingDate\": \"\",\n  \"meetingLocation\": \"\",\n  \"attendees\": \"\",\n  \"meetingDuration\": \"\",\n  \"discussionPoint1\": \"\",\n  \"discussionPoint2\": \"\",\n  \"discussionPoint3\": \"\",\n  \"advisorNotes\": \"\",\n  \"portfolioValue\": \"\",\n  \"ytdReturn\": \"\",\n  \"benchmarkReturn\": \"\",\n  \"vsBenchmark\": \"\",\n  \"goal1\": \"\",\n  \"goal2\": \"\",\n  \"goal3\": \"\",\n  \"goalsProgressNotes\": \"\",\n  \"action1\": \"\",\n  \"action1Owner\": \"\",\n  \"action1Due\": \"\",\n  \"action2\": \"\",\n  \"action2Owner\": \"\",\n  \"action2Due\": \"\",\n  \"action3\": \"\",\n  \"action3Owner\": \"\",\n  \"action3Due\": \"\",\n  \"nextMeetingDate\": \"\",\n  \"nextMeetingAgenda\": \"\"\n}\n\nRules:\n- Return ONLY the JSON object, no markdown, no explanation, no code blocks\n- For reportDate use today's date in YYYY-MM-DD format if not provided\n- For reportPeriod infer from context (e.g. 'Q1 2026') or use current quarter\n- For meetingLocation default to 'Zoom' if not specified\n- For meetingDuration default to '60 min' if not specified\n- Never invent financial data (portfolioValue, ytdReturn, benchmarkReturn) - leave empty if not provided",
+        "options": {}
+      },
+      "id": "ai-agent-001",
+      "name": "AI Field Extractor",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [19220, -5100]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {
+          "temperature": 0
+        }
+      },
+      "id": "llm-001",
+      "name": "Azure OpenAI GPT-4o",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [19220, -4900]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge AI-extracted fields with any structured fields already in the webhook body\n// If AI ran, parse its output. If structured input, use directly.\nconst routedData = $('Route Input').first().json;\nconst isStructured = routedData._isStructured;\n\nlet fields = {};\n\nif (isStructured) {\n  // Already structured - pass through directly\n  fields = routedData;\n} else {\n  // Parse AI agent output\n  const agentOutput = $('AI Field Extractor').first().json.output || '';\n  try {\n    // Strip markdown code blocks if present\n    const cleaned = agentOutput.replace(/```json|```/g, '').trim();\n    const jsonMatch = cleaned.match(/\\{[\\s\\S]*\\}/);\n    if (jsonMatch) {\n      fields = JSON.parse(jsonMatch[0]);\n    }\n  } catch(e) {\n    console.log('AI output parse error:', e.message);\n    console.log('Raw AI output:', agentOutput);\n  }\n}\n\n// Apply defaults for missing required fields\nconst today = new Date().toISOString().split('T')[0];\nconst currentQuarter = 'Q' + Math.ceil((new Date().getMonth() + 1) / 3) + ' ' + new Date().getFullYear();\n\nreturn [{\n  json: {\n    firmName: fields.firmName || routedData.firmName || 'Dakona Advisory',\n    clientName: fields.clientName || routedData.clientName || 'Client',\n    reportPeriod: fields.reportPeriod || routedData.reportPeriod || currentQuarter,\n    reportDate: fields.reportDate || routedData.reportDate || today,\n    advisorName: fields.advisorName || routedData.advisorName || 'Your Advisor',\n    accountNumber: fields.accountNumber || routedData.accountNumber || '',\n    accountType: fields.accountType || routedData.accountType || 'Investment Account',\n    riskProfile: fields.riskProfile || routedData.riskProfile || 'Moderate',\n    meetingDate: fields.meetingDate || routedData.meetingDate || today,\n    meetingLocation: fields.meetingLocation || routedData.meetingLocation || 'Zoom',\n    attendees: fields.attendees || routedData.attendees || fields.advisorName || '',\n    meetingDuration: fields.meetingDuration || routedData.meetingDuration || '60 min',\n    discussionPoint1: fields.discussionPoint1 || routedData.discussionPoint1 || '',\n    discussionPoint2: fields.discussionPoint2 || routedData.discussionPoint2 || '',\n    discussionPoint3: fields.discussionPoint3 || routedData.discussionPoint3 || '',\n    advisorNotes: fields.advisorNotes || routedData.advisorNotes || '',\n    portfolioValue: fields.portfolioValue || routedData.portfolioValue || '',\n    ytdReturn: fields.ytdReturn || routedData.ytdReturn || '',\n    benchmarkReturn: fields.benchmarkReturn || routedData.benchmarkReturn || '',\n    vsBenchmark: fields.vsBenchmark || routedData.vsBenchmark || '',\n    goal1: fields.goal1 || routedData.goal1 || '',\n    goal2: fields.goal2 || routedData.goal2 || '',\n    goal3: fields.goal3 || routedData.goal3 || '',\n    goalsProgressNotes: fields.goalsProgressNotes || routedData.goalsProgressNotes || '',\n    action1: fields.action1 || routedData.action1 || '',\n    action1Owner: fields.action1Owner || routedData.action1Owner || '',\n    action1Due: fields.action1Due || routedData.action1Due || '',\n    action2: fields.action2 || routedData.action2 || '',\n    action2Owner: fields.action2Owner || routedData.action2Owner || '',\n    action2Due: fields.action2Due || routedData.action2Due || '',\n    action3: fields.action3 || routedData.action3 || '',\n    action3Owner: fields.action3Owner || routedData.action3Owner || '',\n    action3Due: fields.action3Due || routedData.action3Due || '',\n    nextMeetingDate: fields.nextMeetingDate || routedData.nextMeetingDate || '',\n    nextMeetingAgenda: fields.nextMeetingAgenda || routedData.nextMeetingAgenda || ''\n  }\n}];"
+      },
+      "id": "merge-001",
+      "name": "Merge Fields",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [19440, -5248]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://login.microsoftonline.com/' + ($env.GRAPH_TENANT_ID || '') + '/oauth2/v2.0/token' }}",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "client_id", "value": "={{ $env.GRAPH_CLIENT_ID }}" },
+            { "name": "client_secret", "value": "={{ $env.GRAPH_CLIENT_SECRET }}" },
+            { "name": "scope", "value": "https://graph.microsoft.com/.default" },
+            { "name": "grant_type", "value": "client_credentials" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "981d5783-4eda-4d3c-8742-a5d2533560b1",
+      "name": "Get OAuth Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [19660, -5248]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://graph.microsoft.com/v1.0/sites/' + ($env.GRAPH_SITE_ID || '') + '/drive/root:/DAX Templates/ICP-Quarterly-Review-TEMPLATE.docx' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $('Get OAuth Token').first().json.access_token }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "856f5d52-0d9e-4d07-b1ae-156efce91ce0",
+      "name": "Get Download URL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [19880, -5248]
+    },
+    {
+      "parameters": {
+        "jsCode": "const https = require('https');\nconst { execFileSync } = require('child_process');\nconst fs = require('fs');\nconst path = require('path');\nconst os = require('os');\n\n// Use merged/AI-extracted data from Merge Fields node\nconst data = $('Merge Fields').first().json;\n\n// --- Step 1: Download template via pre-authenticated URL ---\nconst downloadUrl = $('Get Download URL').first().json['@microsoft.graph.downloadUrl'];\nconsole.log('Download URL obtained, fetching template...');\n\nconst templateBuffer = await new Promise((resolve, reject) => {\n  https.get(downloadUrl, (res) => {\n    if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {\n      https.get(res.headers.location, (redirectRes) => {\n        const chunks = [];\n        redirectRes.on('data', chunk => chunks.push(chunk));\n        redirectRes.on('end', () => resolve(Buffer.concat(chunks)));\n        redirectRes.on('error', reject);\n      }).on('error', reject);\n      return;\n    }\n    const chunks = [];\n    res.on('data', chunk => chunks.push(chunk));\n    res.on('end', () => resolve(Buffer.concat(chunks)));\n    res.on('error', reject);\n  }).on('error', reject);\n});\nconsole.log('Template buffer: ' + templateBuffer.length + ' bytes');\n\nif (templateBuffer.length < 1000) {\n  throw new Error('Template too small (' + templateBuffer.length + ' bytes). Expected ~15kB docx file.');\n}\n\n// --- Step 2: Map fields to UPPER_SNAKE template tags ---\nconst templateData = {\n  FIRM_NAME: data.firmName || '',\n  CLIENT_NAME: data.clientName || '',\n  REPORT_PERIOD: data.reportPeriod || '',\n  REPORT_DATE: data.reportDate || '',\n  ADVISOR_NAME: data.advisorName || '',\n  MEETING_DATE: data.meetingDate || '',\n  MEETING_LOCATION: data.meetingLocation || '',\n  ATTENDEES: data.attendees || '',\n  MEETING_DURATION: data.meetingDuration || '',\n  DISCUSSION_POINT_1: data.discussionPoint1 || '',\n  DISCUSSION_POINT_2: data.discussionPoint2 || '',\n  DISCUSSION_POINT_3: data.discussionPoint3 || '',\n  ADVISOR_NOTES: data.advisorNotes || '',\n  PORTFOLIO_VALUE: data.portfolioValue || '',\n  YTD_RETURN: data.ytdReturn || '',\n  BENCHMARK_RETURN: data.benchmarkReturn || '',\n  VS_BENCHMARK: data.vsBenchmark || '',\n  GOAL_1: data.goal1 || '',\n  GOAL_2: data.goal2 || '',\n  GOAL_3: data.goal3 || '',\n  GOALS_PROGRESS_NOTES: data.goalsProgressNotes || '',\n  ACTION_1: data.action1 || '',\n  ACTION_1_OWNER: data.action1Owner || '',\n  ACTION_1_DUE: data.action1Due || '',\n  ACTION_2: data.action2 || '',\n  ACTION_2_OWNER: data.action2Owner || '',\n  ACTION_2_DUE: data.action2Due || '',\n  ACTION_3: data.action3 || '',\n  ACTION_3_OWNER: data.action3Owner || '',\n  ACTION_3_DUE: data.action3Due || '',\n  NEXT_MEETING_DATE: data.nextMeetingDate || '',\n  NEXT_MEETING_AGENDA: data.nextMeetingAgenda || '',\n  ACCOUNT_NUMBER: data.accountNumber || '',\n  ACCOUNT_TYPE: data.accountType || '',\n  RISK_PROFILE: data.riskProfile || '',\n};\n\n// --- Step 3: Write temp files and run docxtemplater ---\nconst ts = Date.now();\nconst tmpDir = os.tmpdir();\nconst tplPath = path.join(tmpDir, 'docgen-tpl-' + ts + '.docx');\nconst dataPath = path.join(tmpDir, 'docgen-data-' + ts + '.json');\nconst scriptPath = path.join(tmpDir, 'docgen-script-' + ts + '.js');\n\nfs.writeFileSync(tplPath, templateBuffer);\nfs.writeFileSync(dataPath, JSON.stringify(templateData));\n\nconst script = `\nconst PizZip = require('pizzip');\nconst Docxtemplater = require('docxtemplater');\nconst InspectModule = require('docxtemplater/js/inspect-module.js');\nconst fs = require('fs');\n\nconst tplBuf = fs.readFileSync(process.argv[2]);\nconst data = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));\n\nconst inspectZip = new PizZip(tplBuf);\nconst iModule = new InspectModule();\ntry {\n  const inspectDoc = new Docxtemplater(inspectZip, {\n    modules: [iModule],\n    delimiters: { start: '{{', end: '}}' },\n  });\n} catch (e) {}\nconst allTags = iModule.getAllTags();\nconst tagNames = Object.keys(allTags);\nconsole.error('TEMPLATE TAGS FOUND (' + tagNames.length + '): ' + tagNames.join(', '));\n\nconst zip = new PizZip(tplBuf);\nconst doc = new Docxtemplater(zip, {\n  delimiters: { start: '{{', end: '}}' },\n  paragraphLoop: true,\n  linebreaks: true,\n  nullGetter(part) {\n    if (!part.module) console.error('UNRESOLVED TAG: ' + part.value);\n    return '';\n  },\n});\n\ndoc.render(data);\nconst buf = doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' });\nprocess.stdout.write(buf.toString('base64'));\n`;\nfs.writeFileSync(scriptPath, script);\n\nlet outputBase64;\ntry {\n  outputBase64 = execFileSync('node', [scriptPath, tplPath, dataPath], {\n    maxBuffer: 50 * 1024 * 1024,\n    encoding: 'utf8',\n    stdio: ['pipe', 'pipe', 'pipe'],\n  });\n} catch (execErr) {\n  if (execErr.stderr) console.log('Helper stderr:\\n' + execErr.stderr.toString());\n  throw new Error('docxtemplater failed: ' + (execErr.stderr ? execErr.stderr.toString() : execErr.message));\n} finally {\n  try { fs.unlinkSync(tplPath); } catch (_) {}\n  try { fs.unlinkSync(dataPath); } catch (_) {}\n  try { fs.unlinkSync(scriptPath); } catch (_) {}\n}\n\nconst fileName = (data.CLIENT_NAME || 'Report').replace(/[^a-zA-Z0-9\\s-]/g, '') + '-' + (data.REPORT_PERIOD || 'Report').replace(/[^a-zA-Z0-9\\s-]/g, '') + '.docx';\n\nreturn [{\n  binary: {\n    data: {\n      data: outputBase64,\n      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',\n      fileName: fileName,\n      fileExtension: 'docx'\n    }\n  },\n  json: { fileName: fileName }\n}];"
+      },
+      "id": "52c2a94c-6c92-453c-9362-bda9e3e3804b",
+      "name": "Fill Placeholders",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [20100, -5248]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/sites/' + ($env.GRAPH_SITE_ID || '') + '/drive/root:/DAX Reports/' + $('Merge Fields').first().json.clientName + '/' + $json.fileName + ':/content' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $('Get OAuth Token').first().json.access_token }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "f816fc57-063b-45f1-bf0e-c0544a95510b",
+      "name": "Upload to SharePoint",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [20320, -5248]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, webUrl: $json.webUrl, fileName: $json.name, driveItemId: $json.id, size: $json.size, clientName: $('Merge Fields').first().json.clientName, reportPeriod: $('Merge Fields').first().json.reportPeriod } }}",
+        "options": { "responseCode": 200 }
+      },
+      "id": "7814813e-4ba2-4134-aa65-4531c515caea",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [20540, -5248]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Route Input", "type": "main", "index": 0 }]]
+    },
+    "Route Input": {
+      "main": [[{ "node": "AI Field Extractor", "type": "main", "index": 0 }]]
+    },
+    "AI Field Extractor": {
+      "main": [[{ "node": "Merge Fields", "type": "main", "index": 0 }]]
+    },
+    "Azure OpenAI GPT-4o": {
+      "ai_languageModel": [[{ "node": "AI Field Extractor", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "Merge Fields": {
+      "main": [[{ "node": "Get OAuth Token", "type": "main", "index": 0 }]]
+    },
+    "Get OAuth Token": {
+      "main": [[{ "node": "Get Download URL", "type": "main", "index": 0 }]]
+    },
+    "Get Download URL": {
+      "main": [[{ "node": "Fill Placeholders", "type": "main", "index": 0 }]]
+    },
+    "Fill Placeholders": {
+      "main": [[{ "node": "Upload to SharePoint", "type": "main", "index": 0 }]]
+    },
+    "Upload to SharePoint": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "id": "MtkxBYcyV1VYt02e",
+  "meta": {
+    "instanceId": "0227594c40cc773f4decab1575b4fcfae10e3d814ece2764be77b5f3533a28da"
+  },
+  "tags": []
+}

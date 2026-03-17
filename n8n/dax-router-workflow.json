@@ -1,0 +1,207 @@
+{
+  "name": "DAX Router - OpenAI Compatible Endpoint",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dax-completions",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "router-webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 460]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the last user message from OpenAI chat format\n// LibreChat sends: { model, messages: [{role, content}], stream, ... }\nconst body = $json.body || $json;\nconst messages = body.messages || [];\n\n// Get the last user message\nconst lastUserMsg = [...messages].reverse().find(m => m.role === 'user');\nconst userText = (typeof lastUserMsg?.content === 'string' \n  ? lastUserMsg.content \n  : lastUserMsg?.content?.[0]?.text || '').toLowerCase().trim();\n\n// Detect ICP / document generation intent\nconst icpKeywords = [\n  'generate icp', 'create icp', 'icp report', 'icp review',\n  'quarterly review', 'quarterly report', 'client review',\n  'generate report', 'create report', 'build report',\n  'generate document', 'create document'\n];\n\nconst isICP = icpKeywords.some(kw => userText.includes(kw));\n\nconsole.log('[DAX-ROUTER] Message:', userText.substring(0, 100));\nconsole.log('[DAX-ROUTER] Route:', isICP ? 'ICP' : 'GENERAL');\n\nreturn [{\n  json: {\n    route: isICP ? 'ICP' : 'GENERAL',\n    userMessage: lastUserMsg?.content || '',\n    userText,\n    originalBody: body,\n    messages\n  }\n}];"
+      },
+      "id": "route-input",
+      "name": "Route Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 460]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.route }}",
+              "rightValue": "ICP",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "route-switch",
+      "name": "Route Switch",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [720, 460]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.userMessage }}",
+        "systemMessage": "You are a data extraction assistant for a financial advisor platform. Extract ICP report fields from the advisor's message.\n\nExtract the following fields if mentioned:\n- clientName: the client's full name\n- reportPeriod: the quarter and year (e.g. Q1 2026)\n- portfolioValue: portfolio value with $ sign\n- ytdReturn: year to date return as percentage\n- advisorName: the advisor's name if mentioned\n- firmName: the firm name if mentioned\n- meetingDate: meeting date if mentioned\n- meetingLocation: location if mentioned (default: Zoom)\n- discussionPoint1, discussionPoint2, discussionPoint3: topics discussed\n- goal1, goal2, goal3: client goals\n- action1, action2, action3: action items\n\nRespond ONLY with a valid JSON object containing the extracted fields. No other text.",
+        "options": {}
+      },
+      "id": "icp-agent",
+      "name": "ICP Field Extractor",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [960, 320]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {
+          "temperature": 0
+        }
+      },
+      "id": "azure-llm",
+      "name": "Azure OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [960, 520]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build n8n document generator payload from extracted fields\nconst agentOutput = $('ICP Field Extractor').first().json.output || '{}';\nconst routeData = $('Route Input').first().json;\n\nlet fields = {};\ntry {\n  const jsonMatch = agentOutput.match(/\\{[\\s\\S]*\\}/);\n  if (jsonMatch) fields = JSON.parse(jsonMatch[0]);\n} catch(e) {\n  console.log('[DAX-ROUTER] Parse error:', e.message);\n}\n\n// Check if we have minimum required fields\nif (!fields.clientName) {\n  // Need to ask for more info - return a clarification response\n  return [{\n    json: {\n      needsClarification: true,\n      message: \"I'd be happy to generate an ICP report! Could you provide the client's name and the report period (e.g. Q1 2026)?\"\n    }\n  }];\n}\n\nconst now = new Date();\nconst reportDate = now.toISOString().split('T')[0];\n\nreturn [{\n  json: {\n    needsClarification: false,\n    firmName: fields.firmName || 'Dakona Advisory',\n    clientName: fields.clientName,\n    reportPeriod: fields.reportPeriod || 'Q1 2026',\n    reportDate: fields.reportDate || reportDate,\n    advisorName: fields.advisorName || 'Your Advisor',\n    accountNumber: fields.accountNumber || 'TBD',\n    accountType: fields.accountType || 'Investment Account',\n    riskProfile: fields.riskProfile || 'Moderate',\n    meetingDate: fields.meetingDate || reportDate,\n    meetingLocation: fields.meetingLocation || 'Zoom',\n    attendees: fields.attendees || fields.advisorName || 'Advisor',\n    meetingDuration: fields.meetingDuration || '60 min',\n    discussionPoint1: fields.discussionPoint1 || '',\n    discussionPoint2: fields.discussionPoint2 || '',\n    discussionPoint3: fields.discussionPoint3 || '',\n    advisorNotes: fields.advisorNotes || '',\n    portfolioValue: fields.portfolioValue || 'TBD',\n    ytdReturn: fields.ytdReturn || 'TBD',\n    benchmarkReturn: fields.benchmarkReturn || 'TBD',\n    vsBenchmark: fields.vsBenchmark || 'TBD',\n    goal1: fields.goal1 || '',\n    goal2: fields.goal2 || '',\n    goal3: fields.goal3 || '',\n    goalsProgressNotes: fields.goalsProgressNotes || '',\n    action1: fields.action1 || '',\n    action1Owner: fields.action1Owner || '',\n    action1Due: fields.action1Due || '',\n    action2: fields.action2 || '',\n    action2Owner: fields.action2Owner || '',\n    action2Due: fields.action2Due || '',\n    action3: fields.action3 || '',\n    action3Owner: fields.action3Owner || '',\n    action3Due: fields.action3Due || '',\n    nextMeetingDate: fields.nextMeetingDate || '',\n    nextMeetingAgenda: fields.nextMeetingAgenda || ''\n  }\n}];"
+      },
+      "id": "build-payload",
+      "name": "Build Document Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8n.dakona.net/webhook/generate-document",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "call-docgen",
+      "name": "Generate Document",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 320]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format response as OpenAI-compatible chat completion\nconst docResult = $('Generate Document').first().json;\nconst payload = $('Build Document Payload').first().json;\n\nconst now = Math.floor(Date.now() / 1000);\n\nlet content;\nif (docResult?.webUrl) {\n  content = `✅ Your ${payload.reportPeriod} ICP report for **${payload.clientName}** is ready!\\n\\n📄 [Open in SharePoint](${docResult.webUrl})\\n\\nThe document has been saved to the ${payload.clientName} folder in SharePoint.`;\n} else {\n  content = `I attempted to generate the ICP report for ${payload.clientName} but encountered an issue. Please try again or contact support.`;\n}\n\n// Write audit log to Cosmos would go here in future\n\nreturn [{\n  json: {\n    id: 'chatcmpl-dax-' + now,\n    object: 'chat.completion',\n    created: now,\n    model: 'gpt-4o',\n    choices: [{\n      index: 0,\n      message: {\n        role: 'assistant',\n        content: content\n      },\n      finish_reason: 'stop'\n    }],\n    usage: {\n      prompt_tokens: 100,\n      completion_tokens: 50,\n      total_tokens: 150\n    }\n  }\n}];"
+      },
+      "id": "format-icp-response",
+      "name": "Format ICP Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1680, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://oai-dax-dakona-pilot.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-08-01-preview' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api-key",
+              "value": "635645200b2c4f90a1833de2bda6b753"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ $('Route Input').first().json.originalBody }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "azure-passthrough",
+      "name": "Azure OpenAI Passthrough",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 620]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-icp",
+      "name": "Respond ICP",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1920, 320]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-general",
+      "name": "Respond General",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1200, 620]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Route Input", "type": "main", "index": 0 }]]
+    },
+    "Route Input": {
+      "main": [[{ "node": "Route Switch", "type": "main", "index": 0 }]]
+    },
+    "Route Switch": {
+      "main": [
+        [{ "node": "ICP Field Extractor", "type": "main", "index": 0 }],
+        [{ "node": "Azure OpenAI Passthrough", "type": "main", "index": 0 }]
+      ]
+    },
+    "Azure OpenAI": {
+      "ai_languageModel": [[{ "node": "ICP Field Extractor", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "ICP Field Extractor": {
+      "main": [[{ "node": "Build Document Payload", "type": "main", "index": 0 }]]
+    },
+    "Build Document Payload": {
+      "main": [[{ "node": "Generate Document", "type": "main", "index": 0 }]]
+    },
+    "Generate Document": {
+      "main": [[{ "node": "Format ICP Response", "type": "main", "index": 0 }]]
+    },
+    "Format ICP Response": {
+      "main": [[{ "node": "Respond ICP", "type": "main", "index": 0 }]]
+    },
+    "Azure OpenAI Passthrough": {
+      "main": [[{ "node": "Respond General", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false
+}
