@@ -1,7 +1,5 @@
 # LibreChat configuration for DAX
-# Docs: https://www.librechat.ai/docs/configuration/librechat_yaml
 version: 1.3.6
-
 cache: true
 
 registration:
@@ -10,8 +8,6 @@ registration:
 
 endpoints:
   # ---------- DAX Router (n8n OpenAI-compatible endpoint) ----------
-  # All messages go to n8n. n8n routes: ICP requests → document generation, 
-  # everything else → Azure OpenAI passthrough. This is the primary endpoint.
   custom:
     - name: "DAX"
       apiKey: "dax-key"
@@ -29,12 +25,10 @@ endpoints:
         - "presence_penalty"
         - "user"
 
-  # ---------- Azure OpenAI (kept for title generation etc) ----------
+  # ---------- Azure OpenAI (passthrough only - n8n calls this directly) ----------
   azureOpenAI:
-    titleConvo: true
-    titleModel: "gpt-4o"
-    summarize: true
-    summaryModel: "gpt-4o"
+    titleConvo: false
+    summarize: false
     plugins: false
     groups:
       - group: "dax-default"
@@ -45,17 +39,9 @@ endpoints:
           "gpt-4o":
             deploymentName: "gpt-4o"
 
-  # ---------- Agents (kept for future use) ----------
+  # Disable all other endpoints
   agents:
-    disableBuilder: false
-    capabilities:
-      - "actions"
-      - "tools"
-      - "execute_code"
-      - "file_search"
-    allowedProviders:
-      - "azureOpenAI"
-
+    disabled: true
   openAI:
     disabled: true
   google:
@@ -91,7 +77,7 @@ modelSpecs:
         modelLabel: "DAX Assistant"
         showModelInHeader: false
         placeholder: "Message DAX Assistant..."
-        systemMessage: |
+        promptPrefix: |
           You are DAX, the Governed AI Workspace for SEC-registered RIA firms, built by Dakona LLC.
 
           IDENTITY: Your name is DAX. You are purpose-built for financial advisory firms.
@@ -130,3 +116,59 @@ modelSpecs:
           - Recommend compliance counsel for regulatory determinations
 
           TONE: Business casual, friendly, concise. You are a smart colleague — not a compliance robot. Get to the point. Be helpful.
+
+# ---------- Interface ----------
+interface:
+  endpointsMenu: false
+  modelSelect: false
+  presets: false
+  customWelcome: "Governed AI for RIAs"
+
+# ---------- Speech ----------
+speech:
+  tts:
+    openai:
+      apiKey: "${TTS_API_KEY}"
+      model: "tts-1"
+      voices: ["nova", "shimmer", "alloy"]
+  stt:
+    openai:
+      apiKey: "${TTS_API_KEY}"
+      model: "whisper-1"
+  speechTab:
+    conversationMode: false
+    textToSpeech:
+      engineTTS: "openai"
+      voice: "nova"
+      automaticPlayback: true
+      cacheTTS: true
+    speechToText:
+      engineSTT: "openai"
+
+# ---------- File Uploads ----------
+fileConfig:
+  endpoints:
+    custom:
+      fileLimit: 10
+      fileSizeLimit: 50
+      totalSizeLimit: 100
+      supportedMimeTypes:
+        - "image/.*"
+        - "application/pdf"
+        - "text/.*"
+        - "application/vnd.openxmlformats-officedocument.*"
+        - "application/vnd.ms-excel"
+        - "text/csv"
+
+# ---------- Rate Limiting ----------
+rateLimits:
+  fileUploads:
+    ipMax: 10
+    ipWindowInMinutes: 60
+    userMax: 25
+    userWindowInMinutes: 60
+  conversationsImport:
+    ipMax: 5
+    ipWindowInMinutes: 60
+    userMax: 10
+    userWindowInMinutes: 60
