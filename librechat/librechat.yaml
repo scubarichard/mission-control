@@ -19,13 +19,18 @@ endpoints:
       summarize: false
       forcePrompt: false
       modelDisplayLabel: "DAX"
+      # Drop streaming and other params n8n doesn't need
       dropParams:
+        - "stream"
         - "stop"
         - "frequency_penalty"
         - "presence_penalty"
         - "user"
+        - "n"
+        - "logprobs"
+        - "top_logprobs"
 
-  # ---------- Azure OpenAI (passthrough only - n8n calls this directly) ----------
+  # ---------- Azure OpenAI (kept as fallback) ----------
   azureOpenAI:
     titleConvo: false
     summarize: false
@@ -101,8 +106,7 @@ modelSpecs:
           When an advisor asks to generate an ICP report, quarterly review, or client summary:
           1. If you have the client name and period — confirm and proceed
           2. If missing key info — ask one clear question
-          3. Confirm to the advisor the document is being generated
-          The system will handle document creation and return a SharePoint link automatically.
+          3. The system will handle document creation and return a SharePoint link automatically.
 
           WHAT YOU MUST NEVER DO:
           - Give specific investment advice or security recommendations
@@ -115,7 +119,7 @@ modelSpecs:
           - Flag requests that approach investment advice territory
           - Recommend compliance counsel for regulatory determinations
 
-          TONE: Business casual, friendly, concise. You are a smart colleague — not a compliance robot. Get to the point. Be helpful.
+          TONE: Business casual, friendly, concise. Smart colleague — not a compliance robot.
 
 # ---------- Interface ----------
 interface:
