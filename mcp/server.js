@@ -4,6 +4,8 @@ import { z } from "zod";
 import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
+import { tmpdir } from "node:os";
+import { randomBytes } from "node:crypto";
 
 const REPO = process.env.DAX_REPO_PATH || "P:/_clients/dakona/dax";
 const AZURE_SUB = process.env.AZURE_SUBSCRIPTION || "";
@@ -12,14 +14,13 @@ const AZURE_CA = process.env.AZURE_CONTAINER_APP || "ca-dax-dakona-pilot";
 const N8N_URL = process.env.N8N_URL || "https://n8n.dakona.net";
 const N8N_API_KEY = process.env.N8N_API_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiYWM0MmE5ODUtMTA5Ni00ODkxLTliYzQtZGQxYTBiNDNiYjFhIiwiaWF0IjoxNzczNzE0OTgwfQ.gBSwNl_frCaOvQylr5DLQubJmRGqcT-LRJpzcTWdCP4";
 
-function run(cmd, { timeout = 120_000, cwd = REPO, shell } = {}) {
+function run(cmd, { timeout = 120_000, cwd = REPO } = {}) {
   try {
-    const out = execSync(cmd, {
+    return execSync(cmd, {
       cwd, timeout, encoding: "utf-8",
       stdio: ["pipe", "pipe", "pipe"],
-      shell: shell || true,
+      shell: true,
     });
-    return out;
   } catch (err) {
     const parts = [];
     if (err.stdout) parts.push(err.stdout);
@@ -29,13 +30,15 @@ function run(cmd, { timeout = 120_000, cwd = REPO, shell } = {}) {
   }
 }
 
-// Run PowerShell using base64-encoded command to avoid ALL quoting issues
+// Write script to a temp .ps1 file and execute with -File — completely avoids all quoting issues
 function runPowerShell(script, { timeout = 120_000, cwd = REPO } = {}) {
+  const tmpFile = join(tmpdir(), `dax-ps-${randomBytes(6).toString("hex")}.ps1`);
   try {
-    // Encode script as UTF-16LE base64 — what PowerShell -EncodedCommand expects
-    const utf16 = Buffer.from(script, "utf16le");
-    const encoded = utf16.toString("base64");
-    const out = execSync(`powershell.exe -NoProfile -NonInteractive -EncodedCommand ${encoded}`, {
+    // Write script as UTF-8 with BOM so PowerShell reads it correctly
+    const bom = Buffer.from([0xEF, 0xBB, 0xBF]);
+    const content = Buffer.concat([bom, Buffer.from(script, "utf-8")]);
+    writeFileSync(tmpFile, content);
+    const out = execSync(`powershell.exe -NoProfile -NonInteractive -File "${tmpFile}"`, {
       cwd, timeout, encoding: "utf-8",
       stdio: ["pipe", "pipe", "pipe"],
     });
@@ -46,6 +49,8 @@ function runPowerShell(script, { timeout = 120_000, cwd = REPO } = {}) {
     if (err.stderr) parts.push(err.stderr);
     if (parts.length === 0) parts.push(err.message);
     return `ERROR: ${parts.join("\n")}`;
+  } finally {
+    try { require("node:fs").unlinkSync(tmpFile); } catch {}
   }
 }
 
@@ -83,7 +88,7 @@ server.tool("write_file", "Write or update a file in the DAX repo, creating dire
   }
 );
 
-server.tool("run_powershell", "Execute a PowerShell command or script and return its output. Supports multi-line scripts, here-strings, and complex quoting without any escaping needed.",
+server.tool("run_powershell", "Execute any PowerShell script — supports multi-line, hashtables, try/catch, here-strings, az CLI, everything. No escaping needed.",
   { command: z.string() },
   async ({ command }) => {
     const out = runPowerShell(command);
@@ -114,8 +119,7 @@ server.tool("azure_container_logs", "Fetch recent logs from the DAX Azure Contai
   { tail: z.number().optional().default(50), filter: z.string().optional() },
   async ({ tail, filter }) => {
     const sub = AZURE_SUB ? `--subscription "${AZURE_SUB}"` : "";
-    const script = `az containerapp logs show -n ${AZURE_CA} -g ${AZURE_RG} ${sub} --tail ${tail} --type console 2>&1`;
-    let out = runPowerShell(script);
+    let out = runPowerShell(`az containerapp logs show -n ${AZURE_CA} -g ${AZURE_RG} ${sub} --tail ${tail} --type console 2>&1`);
     if (filter) out = out.split("\n").filter(l => l.toLowerCase().includes(filter.toLowerCase())).join("\n") || `No lines matched: ${filter}`;
     return { content: [{ type: "text", text: out }] };
   }
@@ -131,8 +135,7 @@ server.tool("azure_revision", "List active revisions of the DAX Azure Container 
 server.tool("deploy_sso_config", "Run Deploy-SSOConfig.ps1 for the dakona-pilot client", {},
   async () => {
     const script = join(REPO, "scripts", "Deploy-SSOConfig.ps1");
-    const psScript = `& "${script}" -ClientName "dakona-pilot" -ClientTenantId "d2a3c346-00f3-47dd-a53e-caa3fca74714" -LibreChatUrl "https://dax.dakona.com"`;
-    return { content: [{ type: "text", text: runPowerShell(psScript, { timeout: 180_000 }) }] };
+    return { content: [{ type: "text", text: runPowerShell(`& "${script}" -ClientName "dakona-pilot" -ClientTenantId "d2a3c346-00f3-47dd-a53e-caa3fca74714" -LibreChatUrl "https://dax.dakona.com"`, { timeout: 180_000 }) }] };
   }
 );
 
@@ -142,10 +145,8 @@ server.tool("n8n_list_workflows", "List all workflows from the n8n instance",
     const base = n8nUrl || N8N_URL;
     const url = `${base.replace(/\/+$/, "")}/api/v1/workflows?limit=50`;
     try {
-      const res = await fetch(url, {
-        headers: { Accept: "application/json", "X-N8N-API-KEY": N8N_API_KEY },
-      });
-      if (!res.ok) return { content: [{ type: "text", text: `ERROR: ${res.status} ${res.statusText} from ${url}` }], isError: true };
+      const res = await fetch(url, { headers: { Accept: "application/json", "X-N8N-API-KEY": N8N_API_KEY } });
+      if (!res.ok) return { content: [{ type: "text", text: `ERROR: ${res.status} ${res.statusText}` }], isError: true };
       const body = await res.json();
       const workflows = (body.data || body).map(w => ({ id: w.id, name: w.name, active: w.active }));
       return { content: [{ type: "text", text: JSON.stringify(workflows, null, 2) }] };
@@ -160,12 +161,9 @@ server.tool("n8n_get_workflow", "Get full details of a specific n8n workflow by 
   async ({ workflowId }) => {
     const url = `${N8N_URL}/api/v1/workflows/${workflowId}`;
     try {
-      const res = await fetch(url, {
-        headers: { Accept: "application/json", "X-N8N-API-KEY": N8N_API_KEY },
-      });
+      const res = await fetch(url, { headers: { Accept: "application/json", "X-N8N-API-KEY": N8N_API_KEY } });
       if (!res.ok) return { content: [{ type: "text", text: `ERROR: ${res.status} ${res.statusText}` }], isError: true };
-      const body = await res.json();
-      return { content: [{ type: "text", text: JSON.stringify(body, null, 2) }] };
+      return { content: [{ type: "text", text: JSON.stringify(await res.json(), null, 2) }] };
     } catch (err) {
       return { content: [{ type: "text", text: `ERROR: ${err.message}` }], isError: true };
     }
@@ -175,16 +173,15 @@ server.tool("n8n_get_workflow", "Get full details of a specific n8n workflow by 
 server.tool("n8n_create_workflow", "Create a new n8n workflow",
   { workflow: z.record(z.any()) },
   async ({ workflow }) => {
-    const url = `${N8N_URL}/api/v1/workflows`;
     try {
-      const res = await fetch(url, {
+      const res = await fetch(`${N8N_URL}/api/v1/workflows`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-N8N-API-KEY": N8N_API_KEY },
         body: JSON.stringify(workflow),
       });
       const body = await res.json();
       if (!res.ok) return { content: [{ type: "text", text: `ERROR: ${res.status} - ${JSON.stringify(body)}` }], isError: true };
-      return { content: [{ type: "text", text: `Created workflow: ${body.id} — ${body.name}` }] };
+      return { content: [{ type: "text", text: `Created: ${body.id} — ${body.name}` }] };
     } catch (err) {
       return { content: [{ type: "text", text: `ERROR: ${err.message}` }], isError: true };
     }
@@ -194,16 +191,15 @@ server.tool("n8n_create_workflow", "Create a new n8n workflow",
 server.tool("n8n_update_workflow", "Update an existing n8n workflow by ID",
   { workflowId: z.string(), workflow: z.record(z.any()) },
   async ({ workflowId, workflow }) => {
-    const url = `${N8N_URL}/api/v1/workflows/${workflowId}`;
     try {
-      const res = await fetch(url, {
+      const res = await fetch(`${N8N_URL}/api/v1/workflows/${workflowId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "X-N8N-API-KEY": N8N_API_KEY },
         body: JSON.stringify(workflow),
       });
       const body = await res.json();
       if (!res.ok) return { content: [{ type: "text", text: `ERROR: ${res.status} - ${JSON.stringify(body)}` }], isError: true };
-      return { content: [{ type: "text", text: `Updated workflow: ${workflowId}` }] };
+      return { content: [{ type: "text", text: `Updated: ${workflowId}` }] };
     } catch (err) {
       return { content: [{ type: "text", text: `ERROR: ${err.message}` }], isError: true };
     }
@@ -213,9 +209,8 @@ server.tool("n8n_update_workflow", "Update an existing n8n workflow by ID",
 server.tool("n8n_activate_workflow", "Activate or deactivate an n8n workflow",
   { workflowId: z.string(), active: z.boolean() },
   async ({ workflowId, active }) => {
-    const url = `${N8N_URL}/api/v1/workflows/${workflowId}/${active ? "activate" : "deactivate"}`;
     try {
-      const res = await fetch(url, {
+      const res = await fetch(`${N8N_URL}/api/v1/workflows/${workflowId}/${active ? "activate" : "deactivate"}`, {
         method: "POST",
         headers: { "X-N8N-API-KEY": N8N_API_KEY },
       });
@@ -233,14 +228,11 @@ server.tool("cosmos_query", "Query a Cosmos DB (MongoDB API) collection.",
   async ({ collection, query, limit }) => {
     let mongoUri = process.env.MONGO_URI;
     if (!mongoUri) {
-      const kvName = "kvdaxdakonapilot";
-      const sub = AZURE_SUB ? `--subscription "${AZURE_SUB}"` : "";
-      mongoUri = runPowerShell(`az keyvault secret show --vault-name ${kvName} --name cosmos-connection-string ${sub} --query value -o tsv`).trim();
+      mongoUri = runPowerShell(`az keyvault secret show --vault-name kvdaxdakonapilot --name cosmos-connection-string --query value -o tsv`).trim();
       if (mongoUri.startsWith("ERROR")) return { content: [{ type: "text", text: "ERROR: Could not retrieve MONGO_URI. " + mongoUri }], isError: true };
     }
-    const evalStr = `db.getCollection('${collection}').find(${JSON.stringify(query)}).limit(${limit}).toArray()`;
-    const psScript = `mongosh "${mongoUri}" --quiet --eval "${evalStr.replace(/"/g, '\\"')}"`;
-    return { content: [{ type: "text", text: runPowerShell(psScript, { timeout: 30_000 }) }] };
+    const script = `mongosh "${mongoUri}" --quiet --eval "db.getCollection('${collection}').find(${JSON.stringify(query)}).limit(${limit}).toArray()"`;
+    return { content: [{ type: "text", text: runPowerShell(script, { timeout: 30_000 }) }] };
   }
 );
 
