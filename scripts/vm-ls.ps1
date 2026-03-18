@@ -1,0 +1,1 @@
+az vm run-command invoke --resource-group DK-N8N_GROUP --name n8n --command-id RunShellScript --scripts "ls /home/dkn8n/" 2>&1
