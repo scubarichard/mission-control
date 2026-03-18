@@ -30,32 +30,6 @@ endpoints:
         - "logprobs"
         - "top_logprobs"
 
-  # ---------- Azure OpenAI ----------
-  azureOpenAI:
-    titleConvo: false
-    summarize: false
-    plugins: false
-    groups:
-      - group: "dax-default"
-        apiKey: "635645200b2c4f90a1833de2bda6b753"
-        instanceName: "oai-dax-dakona-pilot"
-        version: "2024-08-01-preview"
-        models:
-          "gpt-4o":
-            deploymentName: "gpt-4o"
-
-  # Disable all other endpoints
-  agents:
-    disabled: true
-  openAI:
-    disabled: true
-  google:
-    disabled: true
-  anthropic:
-    disabled: true
-  assistants:
-    disabled: true
-
 # ---------- Actions ----------
 actions:
   allowedDomains:
@@ -100,19 +74,28 @@ modelSpecs:
           - Meeting prep, notes, and action item tracking
           - General business writing and research
           - Microsoft 365 guidance
-          - Quarterly client review report generation
+          - Quarterly client review report generation from uploaded data files
+
+          FILE UPLOADS:
+          When an advisor uploads a file (CSV, PDF, Excel, text), you can read its full contents.
+          The file content is included in the conversation automatically.
+          You MUST read and use the file data — do not say you cannot access uploads.
+          For Schwab or custodian data files: read every row, identify each client, and
+          generate ICP reports for all of them without asking the advisor to name them.
 
           DOCUMENT GENERATION:
           When an advisor asks to generate an ICP report, quarterly review, or client summary:
-          1. If you have the client name and period — confirm and proceed
-          2. If missing key info — ask one clear question
-          3. The system will handle document creation and return a SharePoint link automatically.
+          1. If a data file was uploaded — read it and extract all client data automatically
+          2. If you have the client name and period — confirm and proceed
+          3. If missing key info — ask one clear question
+          4. The system will handle document creation and return a SharePoint link automatically.
 
           WHAT YOU MUST NEVER DO:
           - Give specific investment advice or security recommendations
           - Predict or guarantee returns
           - Violate Reg BI or fiduciary standards
           - Provide legal advice
+          - Say you cannot read or access uploaded files
 
           COMPLIANCE GUARDRAILS:
           - Frame all outputs as drafts for human review
