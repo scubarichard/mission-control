@@ -19,9 +19,9 @@ endpoints:
       summarize: false
       forcePrompt: false
       modelDisplayLabel: "DAX"
-      # Drop streaming and other params n8n doesn't need
+      addParams:
+        stream: false
       dropParams:
-        - "stream"
         - "stop"
         - "frequency_penalty"
         - "presence_penalty"
@@ -30,7 +30,7 @@ endpoints:
         - "logprobs"
         - "top_logprobs"
 
-  # ---------- Azure OpenAI (kept as fallback) ----------
+  # ---------- Azure OpenAI ----------
   azureOpenAI:
     titleConvo: false
     summarize: false

@@ -7,16 +7,31 @@ async function main() {
   await client.connect();
   const db = client.db('librechat');
 
-  // Update ALL conversations to use DAX custom endpoint
-  const r1 = await db.collection('conversations').updateMany(
-    { endpoint: { $ne: 'DAX' } },
-    { $set: { endpoint: 'DAX', model: 'DAX Assistant' }, $unset: { agentOptions: '', agent_id: '' } }
+  // 1. Set defaultEndpoint to DAX for ALL users
+  const r1 = await db.collection('users').updateMany(
+    {},
+    { $set: { 
+      defaultEndpoint: 'DAX',
+      'defaultSettings.endpoint': 'DAX',
+      'defaultSettings.model': 'DAX Assistant'
+    }}
   );
-  console.log('All conversations updated to DAX endpoint:', r1.modifiedCount);
+  console.log('Users updated with defaultEndpoint=DAX:', r1.modifiedCount);
 
-  // Check the user model_specs cache collections
-  const collections = await db.listCollections().toArray();
-  console.log('Collections:', collections.map(c => c.name).join(', '));
+  // 2. Update ALL conversations to DAX endpoint
+  const r2 = await db.collection('conversations').updateMany(
+    { endpoint: { $ne: 'DAX' } },
+    { $set: { endpoint: 'DAX', model: 'DAX Assistant' }, $unset: { agentOptions: '', agentId: '' } }
+  );
+  console.log('Conversations updated to DAX:', r2.modifiedCount);
+
+  // 3. Delete any remaining agent records
+  const r3 = await db.collection('agents').deleteMany({});
+  console.log('Agents deleted:', r3.deletedCount);
+
+  // 4. Verify
+  const sample = await db.collection('users').find({}, { projection: { email: 1, defaultEndpoint: 1 } }).limit(3).toArray();
+  console.log('Sample users:', JSON.stringify(sample));
 
   await client.close();
   console.log('DONE');
