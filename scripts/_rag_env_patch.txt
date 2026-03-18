@@ -1,0 +1,6 @@
+                        # Agent actions - required for LibreChat to execute outbound HTTP from agents
+                        @{ name = 'ACTIONS_ENDPOINT_URL'; value = $domainServer }
+                        @{ name = 'ACTIONS_ALLOWED_DOMAINS'; value = 'n8n.dakona.net' }
+                        # RAG API - file upload processing (runs on n8n VM)
+                        @{ name = 'RAG_API_URL'; value = 'http://172.16.0.4:8000' }
+                        @{ name = 'RAG_PORT'; value = '8000' }

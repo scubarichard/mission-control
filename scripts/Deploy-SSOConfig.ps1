@@ -31,10 +31,6 @@
     if one has been configured (e.g., https://dax.dakona.com), otherwise use
     the raw Container Apps URL (e.g., https://ca-dax-acme.<domain>).
 
-    After deployment, a custom domain can be added via:
-      az containerapp hostname add --name <ca-name> --resource-group <rg> --hostname <domain>
-      az containerapp hostname bind --name <ca-name> --resource-group <rg> --hostname <domain> --environment <env> --validation-method CNAME
-
 .EXAMPLE
     ./Deploy-SSOConfig.ps1 -ClientName dakona-pilot `
         -ClientTenantId "d2a3c346-00f3-47dd-a53e-caa3fca74714" `
@@ -52,7 +48,7 @@ $ErrorActionPreference = 'Stop'
 
 $rgName = "rg-dax-$ClientName"
 $caName = "ca-dax-$ClientName"
-$callbackUrl = "/oauth/openid/callback"  # relative path; LibreChat prepends DOMAIN_SERVER
+$callbackUrl = "/oauth/openid/callback"
 $entraBase = "https://login.microsoftonline.com/$ClientTenantId"
 
 Write-Host "=== DAX SSO Configuration ===" -ForegroundColor Cyan
@@ -86,22 +82,20 @@ Write-Host "`nReading current Container App configuration..." -ForegroundColor Y
 
 $currentApp = az containerapp show -n "$caName" -g "$rgName" -o json | ConvertFrom-Json
 
-# Use parameter values directly (not container state, which may be corrupted)
 $domainClient      = $LibreChatUrl.TrimEnd('/')
 $domainServer      = $LibreChatUrl.TrimEnd('/')
 
 Write-Host "  DOMAIN_CLIENT:                  $domainClient"
 
-# Derive Key Vault name (matches key-vault.bicep: strip hyphens, cap at 24)
 $kvRaw = ("kv-dax-$ClientName" -replace '-', '')
 if ($kvRaw.Length -gt 24) { $kvName = $kvRaw.Substring(0, 24) } else { $kvName = $kvRaw }
 
 Write-Host "`nReading secrets from Key Vault ($kvName)..." -ForegroundColor Yellow
 
-$entraClientId = az keyvault secret show --vault-name "$kvName" --name "entra-client-id" --query "value" -o tsv
+$entraClientId     = az keyvault secret show --vault-name "$kvName" --name "entra-client-id"     --query "value" -o tsv
 $entraClientSecret = az keyvault secret show --vault-name "$kvName" --name "entra-client-secret" --query "value" -o tsv
-$sessionSecret = az keyvault secret show --vault-name "$kvName" --name "jwt-secret" --query "value" -o tsv
-$ttsApiKey = az keyvault secret show --vault-name "$kvName" --name "openai-api-key" --query "value" -o tsv
+$sessionSecret     = az keyvault secret show --vault-name "$kvName" --name "jwt-secret"          --query "value" -o tsv
+$ttsApiKey         = az keyvault secret show --vault-name "$kvName" --name "openai-api-key"      --query "value" -o tsv
 
 if (-not $entraClientId -or -not $entraClientSecret) {
     Write-Error "Failed to read Entra credentials from Key Vault. Run Deploy-EntraApp.ps1 first."
@@ -127,7 +121,6 @@ Write-Host "  openai-api-key (TTS):      ********"
 
 Write-Host "`nBuilding updated container template..." -ForegroundColor Yellow
 
-# Use custom DAX-branded image from ACR; query for latest timestamped tag
 $currentContainer = $currentApp.properties.template.containers[0]
 $acrImageName = "acrdaxdakona.azurecr.io/librechat-dax"
 $latestTag = az acr repository show-tags `
@@ -159,7 +152,6 @@ $template = @{
                 }
             )
             secrets = @($currentConfig.secrets | ForEach-Object {
-                # Preserve each secret's KV ref and identity binding
                 $secret = @{ name = $_.name }
                 if ($_.keyVaultUrl) { $secret.keyVaultUrl = $_.keyVaultUrl }
                 if ($_.identity)    { $secret.identity = $_.identity }
@@ -223,19 +215,19 @@ $template = @{
                         @{ name = 'OPENID_BUTTON_LABEL'; value = 'Login with Microsoft' }
                         @{ name = 'ALLOW_SOCIAL_LOGIN'; value = 'true' }
                         @{ name = 'ALLOW_SOCIAL_REGISTRATION'; value = 'true' }
-                        # Entra credentials + session secret resolved from Key Vault at deploy time
                         @{ name = 'OPENID_CLIENT_ID'; value = $entraClientId }
                         @{ name = 'OPENID_CLIENT_SECRET'; value = $entraClientSecret }
                         @{ name = 'OPENID_SESSION_SECRET'; value = $sessionSecret }
-                        # OpenAI TTS API key (direct OpenAI, not Azure OpenAI)
                         @{ name = 'TTS_API_KEY'; value = $ttsApiKey }
-                        # Agent actions - required for LibreChat to execute outbound HTTP from agents
                         @{ name = 'ACTIONS_ENDPOINT_URL'; value = $domainServer }
                         @{ name = 'ACTIONS_ALLOWED_DOMAINS'; value = 'n8n.dakona.net' }
-                        # Secret-backed env vars (refs to Container App secrets from Key Vault)
+                        # RAG API - file upload processing (runs on n8n VM at 172.16.0.4:8000)
+                        @{ name = 'RAG_API_URL'; value = 'http://172.16.0.4:8000' }
+                        @{ name = 'RAG_PORT'; value = '8000' }
+                        @{ name = 'JWT_SECRET'; value = $sessionSecret }
+                        # Secret-backed env vars
                         @{ name = 'OPENAI_API_KEY'; secretRef = 'openai-api-key' }
                         @{ name = 'MONGO_URI'; secretRef = 'cosmos-connection-string' }
-                        @{ name = 'JWT_SECRET'; secretRef = 'jwt-secret' }
                         @{ name = 'JWT_REFRESH_SECRET'; secretRef = 'jwt-refresh-secret' }
                         @{ name = 'CREDS_KEY'; secretRef = 'creds-key' }
                         @{ name = 'CREDS_IV'; secretRef = 'creds-iv' }
@@ -249,10 +241,6 @@ $template = @{
 # ============================================================================
 # 4. Apply template via ARM REST API (PATCH)
 # ============================================================================
-# Using az rest instead of az containerapp update --yaml because:
-# - --yaml expects YAML format with full resource definition, not a JSON fragment
-# - az rest accepts native JSON and handles camelCase field names correctly
-# - Secret refs (secretRef) are preserved without casing issues
 
 Write-Host "`nApplying container template update via ARM API..." -ForegroundColor Yellow
 
@@ -300,8 +288,10 @@ Write-Host "  UserInfo:       https://graph.microsoft.com/oidc/userinfo"
 Write-Host "  Callback:       $callbackUrl"
 Write-Host ""
 Write-Host "Image:   $containerImage (DAX-branded, baked in via Dockerfile)"
-Write-Host "Plain-text env vars:  20 (main) + 1 (init)"
-Write-Host "Secret-backed refs:    6"
+Write-Host "Plain-text env vars:  22 (main) + 1 (init)"
+Write-Host "Secret-backed refs:    5"
+Write-Host ""
+Write-Host "RAG API: http://172.16.0.4:8000 (n8n VM, port 8000)"
 Write-Host ""
 Write-Host "Only the 'Login with Microsoft' button should appear on the login page."
 Write-Host "(Email/password login is disabled via ALLOW_EMAIL_LOGIN=false)"
