@@ -3,12 +3,28 @@
     "dax-dev-local": {
       "command": "node",
       "args": ["P:/_clients/dakona/dax/mcp/server.js"],
+      "alwaysAllow": [
+        "read_file", "write_file", "run_powershell",
+        "git_status", "git_commit_push", "git_diff", "git_log", "git_pull",
+        "search_code", "list_files", "deploy_container_app",
+        "azure_container_logs", "azure_revision", "deploy_sso_config",
+        "n8n_list_workflows", "n8n_get_workflow", "n8n_create_workflow",
+        "n8n_update_workflow", "n8n_activate_workflow", "cosmos_query",
+        "clickup_list_spaces", "clickup_list_tasks", "clickup_get_task",
+        "clickup_create_task", "clickup_update_task", "clickup_add_comment",
+        "make_list_orgs", "make_list_scenarios", "make_get_scenario",
+        "make_run_scenario", "make_scenario_toggle", "make_scenario_logs"
+      ],
       "env": {
         "DAX_REPO_PATH": "P:/_clients/dakona/dax",
         "AZURE_SUBSCRIPTION": "36676e89-8ccf-4390-8602-e57a913755dc",
         "AZURE_RG": "rg-dax-dakona-pilot",
         "AZURE_CONTAINER_APP": "ca-dax-dakona-pilot",
-        "N8N_URL": "https://n8n.dakona.net"
+        "N8N_URL": "https://n8n.dakona.net",
+        "RPE_PIT_TOKEN": "pit-e0fb69ba-1b78-46cd-9541-c196830e0826",
+        "CLICKUP_API_KEY": "pk_106144226_VOUJ8CKLMYGIIB8JQHMQEMS83LWFH8M7",
+        "MAKE_API_KEY": "8ce569c4-a7a9-492b-a461-3aa8317ce6db",
+        "RPE_SLACK_TOKEN": "xoxb-10348572271763-10762740917729-aNGDNEruAK3NXCpiinTdmTIm"
       }
     },
     "dax-dev-vm": {
