@@ -16,11 +16,21 @@ const AZURE_RG = process.env.AZURE_RG || "rg-dax-dakona-pilot";
 const AZURE_CA = process.env.AZURE_CONTAINER_APP || "ca-dax-dakona-pilot";
 const N8N_URL = process.env.N8N_URL || "https://n8n.dakona.net";
 const N8N_API_KEY = process.env.N8N_API_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiYWM0MmE5ODUtMTA5Ni00ODkxLTliYzQtZGQxYTBiNDNiYjFhIiwiaWF0IjoxNzczNzE0OTgwfQ.gBSwNl_frCaOvQylr5DLQubJmRGqcT-LRJpzcTWdCP4";
+
+const VINCE_N8N_URL = process.env.VINCE_N8N_URL || "https://accessmedellin.app.n8n.cloud";
+const VINCE_N8N_API_KEY = process.env.VINCE_N8N_API_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxZDU3NjU5OC0xZDNlLTQzYjQtYmUxOC0yZTFjYmJhOGJlNmEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiZjQxNTAyMzMtMTQyYy00YTVkLTg1OGQtMGMxZGM1NmUzZDkyIiwiaWF0IjoxNzc0MTQ3NDY3fQ.5J8PuJyTmRdM2V2duDB44cdS_kJ9xkI2cd_4utE4rVc";
+const N8N_INSTANCES = {
+  dakona: { url: N8N_URL, apiKey: N8N_API_KEY, label: "Dakona" },
+  vince: { url: VINCE_N8N_URL, apiKey: VINCE_N8N_API_KEY, label: "Vince/Tech Smart" }
+};
+function getN8nInstance(i) { return N8N_INSTANCES[i||"dakona"]||N8N_INSTANCES.dakona; }
 const CLICKUP_API_KEY = process.env.CLICKUP_API_KEY || "pk_106144226_VOUJ8CKLMYGIIB8JQHMQEMS83LWFH8M7";
 const CLICKUP_BASE = "https://api.clickup.com/api/v2";
 const MAKE_API_KEY = process.env.MAKE_API_KEY || "8ce569c4-a7a9-492b-a461-3aa8317ce6db";
 const MAKE_BASE = "https://us2.make.com/api/v2";
 const SLACK_TOKEN = process.env.RPE_SLACK_TOKEN || "";
+const DESKTOP_BRIDGE_URL = process.env.DESKTOP_BRIDGE_URL || "";
+const DESKTOP_BRIDGE_SECRET = process.env.DESKTOP_BRIDGE_SECRET || "";
 
 const PWSH = process.platform === "win32" ? "powershell.exe" : "pwsh";
 
@@ -68,6 +78,29 @@ function resolvePath(relPath) {
   const resolved = resolve(join(REPO, relPath));
   if (!resolved.startsWith(resolve(REPO))) throw new Error("Path traversal outside the repo is not allowed");
   return resolved;
+}
+
+/* ── Desktop Bridge helper ──────────────────────────────────────────── */
+
+async function bridgeCall(tool, params) {
+  if (!DESKTOP_BRIDGE_URL) {
+    return "ERROR: DESKTOP_BRIDGE_URL is not configured. The desktop bridge is not available.";
+  }
+  try {
+    const headers = { "Content-Type": "application/json" };
+    if (DESKTOP_BRIDGE_SECRET) headers["X-Bridge-Secret"] = DESKTOP_BRIDGE_SECRET;
+    const res = await fetch(`${DESKTOP_BRIDGE_URL}/execute/${tool}`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(params),
+      signal: AbortSignal.timeout(180_000),
+    });
+    const body = await res.json();
+    return body.output ?? body.content ?? JSON.stringify(body);
+  } catch (err) {
+    if (err.name === "TimeoutError") return "ERROR: Desktop bridge request timed out (180s)";
+    return `ERROR: Desktop bridge unreachable — ${err.message}`;
+  }
 }
 
 /* ── Tool registration ──────────────────────────────────────────────── */
@@ -254,12 +287,12 @@ function registerTools(server) {
   );
 
   server.tool("n8n_list_workflows", "List all workflows from the n8n instance",
-    { n8nUrl: z.string().optional() },
-    async ({ n8nUrl }) => {
-      const base = n8nUrl || N8N_URL;
-      const url = `${base.replace(/\/+$/, "")}/api/v1/workflows?limit=50`;
+    { instance: z.enum(["dakona", "vince"]).optional().default("dakona") },
+    async ({ instance }) => {
+      const n8n = getN8nInstance(instance);
+      const url = `${n8n.url.replace(/\/+$/, "")}/api/v1/workflows?limit=50`;
       try {
-        const res = await fetch(url, { headers: { Accept: "application/json", "X-N8N-API-KEY": N8N_API_KEY } });
+        const res = await fetch(url, { headers: { Accept: "application/json", "X-N8N-API-KEY": n8n.apiKey } });
         if (!res.ok) return { content: [{ type: "text", text: `ERROR: ${res.status} ${res.statusText}` }], isError: true };
         const body = await res.json();
         const workflows = (body.data || body).map(w => ({ id: w.id, name: w.name, active: w.active }));
@@ -271,11 +304,12 @@ function registerTools(server) {
   );
 
   server.tool("n8n_get_workflow", "Get full details of a specific n8n workflow by ID",
-    { workflowId: z.string() },
-    async ({ workflowId }) => {
-      const url = `${N8N_URL}/api/v1/workflows/${workflowId}`;
+    { workflowId: z.string(), instance: z.enum(["dakona", "vince"]).optional().default("dakona") },
+    async ({ workflowId, instance }) => {
+      const n8n = getN8nInstance(instance);
+      const url = `${n8n.url}/api/v1/workflows/${workflowId}`;
       try {
-        const res = await fetch(url, { headers: { Accept: "application/json", "X-N8N-API-KEY": N8N_API_KEY } });
+        const res = await fetch(url, { headers: { Accept: "application/json", "X-N8N-API-KEY": n8n.apiKey } });
         if (!res.ok) return { content: [{ type: "text", text: `ERROR: ${res.status} ${res.statusText}` }], isError: true };
         return { content: [{ type: "text", text: JSON.stringify(await res.json(), null, 2) }] };
       } catch (err) {
@@ -285,12 +319,13 @@ function registerTools(server) {
   );
 
   server.tool("n8n_create_workflow", "Create a new n8n workflow",
-    { workflow: z.record(z.any()) },
-    async ({ workflow }) => {
+    { workflow: z.record(z.any()), instance: z.enum(["dakona", "vince"]).optional().default("dakona") },
+    async ({ workflow, instance }) => {
+      const n8n = getN8nInstance(instance);
       try {
-        const res = await fetch(`${N8N_URL}/api/v1/workflows`, {
+        const res = await fetch(`${n8n.url}/api/v1/workflows`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", "X-N8N-API-KEY": N8N_API_KEY },
+          headers: { "Content-Type": "application/json", "X-N8N-API-KEY": n8n.apiKey },
           body: JSON.stringify(workflow),
         });
         const body = await res.json();
@@ -303,12 +338,13 @@ function registerTools(server) {
   );
 
   server.tool("n8n_update_workflow", "Update an existing n8n workflow by ID",
-    { workflowId: z.string(), workflow: z.record(z.any()) },
-    async ({ workflowId, workflow }) => {
+    { workflowId: z.string(), workflow: z.record(z.any()), instance: z.enum(["dakona", "vince"]).optional().default("dakona") },
+    async ({ workflowId, workflow, instance }) => {
+      const n8n = getN8nInstance(instance);
       try {
-        const res = await fetch(`${N8N_URL}/api/v1/workflows/${workflowId}`, {
+        const res = await fetch(`${n8n.url}/api/v1/workflows/${workflowId}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json", "X-N8N-API-KEY": N8N_API_KEY },
+          headers: { "Content-Type": "application/json", "X-N8N-API-KEY": n8n.apiKey },
           body: JSON.stringify(workflow),
         });
         const body = await res.json();
@@ -321,12 +357,13 @@ function registerTools(server) {
   );
 
   server.tool("n8n_activate_workflow", "Activate or deactivate an n8n workflow",
-    { workflowId: z.string(), active: z.boolean() },
-    async ({ workflowId, active }) => {
+    { workflowId: z.string(), active: z.boolean(), instance: z.enum(["dakona", "vince"]).optional().default("dakona") },
+    async ({ workflowId, active, instance }) => {
+      const n8n = getN8nInstance(instance);
       try {
-        const res = await fetch(`${N8N_URL}/api/v1/workflows/${workflowId}/${active ? "activate" : "deactivate"}`, {
+        const res = await fetch(`${n8n.url}/api/v1/workflows/${workflowId}/${active ? "activate" : "deactivate"}`, {
           method: "POST",
-          headers: { "X-N8N-API-KEY": N8N_API_KEY },
+          headers: { "X-N8N-API-KEY": n8n.apiKey },
         });
         const body = await res.json();
         if (!res.ok) return { content: [{ type: "text", text: `ERROR: ${res.status} - ${JSON.stringify(body)}` }], isError: true };
@@ -667,6 +704,53 @@ function registerTools(server) {
       } catch (err) {
         return { content: [{ type: "text", text: `ERROR: ${err.message}` }], isError: true };
       }
+    }
+  );
+
+  // ── Desktop Bridge tools (proxy to local Windows via Cloudflare Tunnel) ──
+
+  server.tool("desktop_run_powershell",
+    "Run PowerShell on Richard's local Windows desktop. Use for P:\\ drive access, local tools, or anything requiring the Windows environment.",
+    { command: z.string(), timeout: z.number().optional().describe("Timeout in ms (default 120000)") },
+    async ({ command, timeout }) => {
+      const out = await bridgeCall("run_powershell", { command, timeout });
+      return { content: [{ type: "text", text: out }] };
+    }
+  );
+
+  server.tool("desktop_read_file",
+    "Read a file from Richard's local desktop. Path relative to BRIDGE_BASE_PATH (default P:/_clients/dakona).",
+    { path: z.string() },
+    async ({ path }) => {
+      const out = await bridgeCall("read_file", { path });
+      return { content: [{ type: "text", text: out }] };
+    }
+  );
+
+  server.tool("desktop_write_file",
+    "Write a file to Richard's local desktop.",
+    { path: z.string(), content: z.string() },
+    async ({ path, content }) => {
+      const out = await bridgeCall("write_file", { path, content });
+      return { content: [{ type: "text", text: out }] };
+    }
+  );
+
+  server.tool("desktop_list_files",
+    "List files on Richard's local desktop.",
+    { path: z.string().optional().default("."), depth: z.number().optional().default(2) },
+    async ({ path, depth }) => {
+      const out = await bridgeCall("list_files", { path, depth });
+      return { content: [{ type: "text", text: out }] };
+    }
+  );
+
+  server.tool("desktop_run_claude_code",
+    "Run Claude Code CLI headlessly on Richard's desktop with the given prompt. cwd relative to BRIDGE_BASE_PATH.",
+    { prompt: z.string(), cwd: z.string().optional(), timeout: z.number().optional().describe("Timeout in ms (default 300000)") },
+    async ({ prompt, cwd, timeout }) => {
+      const out = await bridgeCall("run_claude_code", { prompt, cwd, timeout });
+      return { content: [{ type: "text", text: out }] };
     }
   );
 }
