@@ -16,6 +16,14 @@ const AZURE_RG = process.env.AZURE_RG || "rg-dax-dakona-pilot";
 const AZURE_CA = process.env.AZURE_CONTAINER_APP || "ca-dax-dakona-pilot";
 const N8N_URL = process.env.N8N_URL || "https://n8n.dakona.net";
 const N8N_API_KEY = process.env.N8N_API_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiYWM0MmE5ODUtMTA5Ni00ODkxLTliYzQtZGQxYTBiNDNiYjFhIiwiaWF0IjoxNzczNzE0OTgwfQ.gBSwNl_frCaOvQylr5DLQubJmRGqcT-LRJpzcTWdCP4";
+
+const VINCE_N8N_URL = process.env.VINCE_N8N_URL || "https://accessmedellin.app.n8n.cloud";
+const VINCE_N8N_API_KEY = process.env.VINCE_N8N_API_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxZDU3NjU5OC0xZDNlLTQzYjQtYmUxOC0yZTFjYmJhOGJlNmEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiZjQxNTAyMzMtMTQyYy00YTVkLTg1OGQtMGMxZGM1NmUzZDkyIiwiaWF0IjoxNzc0MTQ3NDY3fQ.5J8PuJyTmRdM2V2duDB44cdS_kJ9xkI2cd_4utE4rVc";
+const N8N_INSTANCES = {
+  dakona: { url: N8N_URL, apiKey: N8N_API_KEY, label: "Dakona" },
+  vince: { url: VINCE_N8N_URL, apiKey: VINCE_N8N_API_KEY, label: "Vince/Tech Smart" }
+};
+function getN8nInstance(i) { return N8N_INSTANCES[i||"dakona"]||N8N_INSTANCES.dakona; }
 const CLICKUP_API_KEY = process.env.CLICKUP_API_KEY || "pk_106144226_VOUJ8CKLMYGIIB8JQHMQEMS83LWFH8M7";
 const CLICKUP_BASE = "https://api.clickup.com/api/v2";
 const MAKE_API_KEY = process.env.MAKE_API_KEY || "8ce569c4-a7a9-492b-a461-3aa8317ce6db";
@@ -254,12 +262,12 @@ function registerTools(server) {
   );
 
   server.tool("n8n_list_workflows", "List all workflows from the n8n instance",
-    { n8nUrl: z.string().optional() },
-    async ({ n8nUrl }) => {
-      const base = n8nUrl || N8N_URL;
-      const url = `${base.replace(/\/+$/, "")}/api/v1/workflows?limit=50`;
+    { instance: z.enum(["dakona", "vince"]).optional().default("dakona") },
+    async ({ instance }) => {
+      const n8n = getN8nInstance(instance);
+      const url = `${n8n.url.replace(/\/+$/, "")}/api/v1/workflows?limit=50`;
       try {
-        const res = await fetch(url, { headers: { Accept: "application/json", "X-N8N-API-KEY": N8N_API_KEY } });
+        const res = await fetch(url, { headers: { Accept: "application/json", "X-N8N-API-KEY": n8n.apiKey } });
         if (!res.ok) return { content: [{ type: "text", text: `ERROR: ${res.status} ${res.statusText}` }], isError: true };
         const body = await res.json();
         const workflows = (body.data || body).map(w => ({ id: w.id, name: w.name, active: w.active }));
@@ -271,11 +279,12 @@ function registerTools(server) {
   );
 
   server.tool("n8n_get_workflow", "Get full details of a specific n8n workflow by ID",
-    { workflowId: z.string() },
-    async ({ workflowId }) => {
-      const url = `${N8N_URL}/api/v1/workflows/${workflowId}`;
+    { workflowId: z.string(), instance: z.enum(["dakona", "vince"]).optional().default("dakona") },
+    async ({ workflowId, instance }) => {
+      const n8n = getN8nInstance(instance);
+      const url = `${n8n.url}/api/v1/workflows/${workflowId}`;
       try {
-        const res = await fetch(url, { headers: { Accept: "application/json", "X-N8N-API-KEY": N8N_API_KEY } });
+        const res = await fetch(url, { headers: { Accept: "application/json", "X-N8N-API-KEY": n8n.apiKey } });
         if (!res.ok) return { content: [{ type: "text", text: `ERROR: ${res.status} ${res.statusText}` }], isError: true };
         return { content: [{ type: "text", text: JSON.stringify(await res.json(), null, 2) }] };
       } catch (err) {
@@ -285,12 +294,13 @@ function registerTools(server) {
   );
 
   server.tool("n8n_create_workflow", "Create a new n8n workflow",
-    { workflow: z.record(z.any()) },
-    async ({ workflow }) => {
+    { workflow: z.record(z.any()), instance: z.enum(["dakona", "vince"]).optional().default("dakona") },
+    async ({ workflow, instance }) => {
+      const n8n = getN8nInstance(instance);
       try {
-        const res = await fetch(`${N8N_URL}/api/v1/workflows`, {
+        const res = await fetch(`${n8n.url}/api/v1/workflows`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", "X-N8N-API-KEY": N8N_API_KEY },
+          headers: { "Content-Type": "application/json", "X-N8N-API-KEY": n8n.apiKey },
           body: JSON.stringify(workflow),
         });
         const body = await res.json();
@@ -303,12 +313,13 @@ function registerTools(server) {
   );
 
   server.tool("n8n_update_workflow", "Update an existing n8n workflow by ID",
-    { workflowId: z.string(), workflow: z.record(z.any()) },
-    async ({ workflowId, workflow }) => {
+    { workflowId: z.string(), workflow: z.record(z.any()), instance: z.enum(["dakona", "vince"]).optional().default("dakona") },
+    async ({ workflowId, workflow, instance }) => {
+      const n8n = getN8nInstance(instance);
       try {
-        const res = await fetch(`${N8N_URL}/api/v1/workflows/${workflowId}`, {
+        const res = await fetch(`${n8n.url}/api/v1/workflows/${workflowId}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json", "X-N8N-API-KEY": N8N_API_KEY },
+          headers: { "Content-Type": "application/json", "X-N8N-API-KEY": n8n.apiKey },
           body: JSON.stringify(workflow),
         });
         const body = await res.json();
@@ -321,12 +332,13 @@ function registerTools(server) {
   );
 
   server.tool("n8n_activate_workflow", "Activate or deactivate an n8n workflow",
-    { workflowId: z.string(), active: z.boolean() },
-    async ({ workflowId, active }) => {
+    { workflowId: z.string(), active: z.boolean(), instance: z.enum(["dakona", "vince"]).optional().default("dakona") },
+    async ({ workflowId, active, instance }) => {
+      const n8n = getN8nInstance(instance);
       try {
-        const res = await fetch(`${N8N_URL}/api/v1/workflows/${workflowId}/${active ? "activate" : "deactivate"}`, {
+        const res = await fetch(`${n8n.url}/api/v1/workflows/${workflowId}/${active ? "activate" : "deactivate"}`, {
           method: "POST",
-          headers: { "X-N8N-API-KEY": N8N_API_KEY },
+          headers: { "X-N8N-API-KEY": n8n.apiKey },
         });
         const body = await res.json();
         if (!res.ok) return { content: [{ type: "text", text: `ERROR: ${res.status} - ${JSON.stringify(body)}` }], isError: true };
