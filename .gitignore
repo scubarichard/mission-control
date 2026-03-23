@@ -31,6 +31,9 @@ reports/
 node_modules/
 package-lock.json
 
+# Runtime logs
+*.log
+
 # Temp/scratch files
 librechat/docgen-section.txt
 scripts/container-diag.js

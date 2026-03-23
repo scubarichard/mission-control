@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "dax-dev-local": {
+    "dax-dev": {
       "command": "node",
       "args": ["P:/_clients/dakona/dax/mcp/server.js"],
       "alwaysAllow": [
@@ -17,27 +17,23 @@
       ],
       "env": {
         "DAX_REPO_PATH": "P:/_clients/dakona/dax",
-        "AZURE_SUBSCRIPTION": "36676e89-8ccf-4390-8602-e57a913755dc",
         "AZURE_RG": "rg-dax-dakona-pilot",
+        "AZURE_SUBSCRIPTION": "36676e89-8ccf-4390-8602-e57a913755dc",
         "AZURE_CONTAINER_APP": "ca-dax-dakona-pilot",
         "N8N_URL": "https://n8n.dakona.net",
-        "RPE_PIT_TOKEN": "pit-e0fb69ba-1b78-46cd-9541-c196830e0826",
         "CLICKUP_API_KEY": "pk_106144226_VOUJ8CKLMYGIIB8JQHMQEMS83LWFH8M7",
-        "MAKE_API_KEY": "8ce569c4-a7a9-492b-a461-3aa8317ce6db",
-        "RPE_SLACK_TOKEN": "xoxb-10348572271763-10762740917729-aNGDNEruAK3NXCpiinTdmTIm"
+        "MONGO_URI": "mongodb://cosmos-dax-dakona-pilot:uH4yWzAqgQXyy9JQghlPUp2MhbwZ1KoSbCm8oxxGoMB4Ve3lKJ34iNjYSdKPTvTqBLFUbTGqo2L4ACDbNY3Utg==@cosmos-dax-dakona-pilot.mongo.cosmos.azure.com:10255/librechat?ssl=true&replicaSet=globaldb&retrywrites=false&maxIdleTimeMS=120000&appName=@cosmos-dax-dakona-pilot@",
+        "DESKTOP_BRIDGE_URL": "https://d11dfcb8-d6da-4d61-a7e4-947c8716a685.cfargotunnel.com",
+        "DESKTOP_BRIDGE_SECRET": "QuCpV4XodOJMyIP8JQf0dLeQhdeXHtghZ4pcgFFg",
+        "AIRTABLE_API_KEY": "patkX3PmrObHeTNmn.78ae1da8f8cfd536c7d0f1403777be3e0be1110945dd82fa421b1932483ce9fa",
+        "RPE_SLACK_TOKEN": "xoxb-10348572271763-10762740917729-aNGDNEruAK3NXCpiinTdmTIm",
+        "RPE_PIT_TOKEN": "pit-e0fb69ba-1b78-46cd-9541-c196830e0826",
+        "MAKE_API_KEY": "8ce569c4-a7a9-492b-a461-3aa8317ce6db"
       }
     },
-    "dax-dev-vm": {
-      "command": "ssh",
-      "args": [
-        "-T",
-        "-i", "C:/Users/18473/.ssh/id_rsa",
-        "-o", "StrictHostKeyChecking=no",
-        "-o", "BatchMode=yes",
-        "-J", "dkn8n@n8n.dakona.net",
-        "daxadmin@172.16.0.5",
-        "bash -c 'node /opt/dax/mcp/server.js'"
-      ]
+    "mcp.dakona.net": {
+      "type": "streamable-http",
+      "url": "https://mcp.dakona.net/mcp?token=opt-mcp-66f520750d034ff0ba4f5106d377bb4d"
     }
   }
 }

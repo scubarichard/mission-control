@@ -45,27 +45,34 @@ Write-Host "Key Vault: $kvName"
 # 1. Create Bing Search resource
 # ============================================================================
 
+Write-Host "`nRegistering Microsoft.Bing provider..." -ForegroundColor Yellow
+az provider register --namespace Microsoft.Bing --wait | Out-Null
+Write-Host "  Registered." -ForegroundColor Green
+
 Write-Host "`nCreating Bing Search resource..." -ForegroundColor Yellow
 
-$existing = az resource show `
-    --resource-group $rgName `
-    --resource-type "Microsoft.Bing/accounts" `
-    --name $bingName `
-    --query "id" -o tsv 2>$null
+$existing = $null
+try {
+    $existing = az resource show `
+        --resource-group $rgName `
+        --resource-type "Microsoft.Bing/accounts" `
+        --name $bingName `
+        --query "id" -o tsv 2>$null
+} catch { }
 
 if ($existing) {
     Write-Host "  Bing Search resource already exists." -ForegroundColor DarkGray
 } else {
-    az resource create `
-        --resource-group $rgName `
-        --resource-type "Microsoft.Bing/accounts" `
-        --name $bingName `
-        --location "global" `
-        --kind "Bing.Search.v7" `
-        --properties '{}' `
-        --sku "S1" `
+    $bodyFile = [System.IO.Path]::GetTempFileName()
+    @{location="global"; kind="Bing.Search.v7"; sku=@{name="S1"}} | ConvertTo-Json -Compress | Set-Content -Path $bodyFile -Encoding utf8
+    az rest --method PUT `
+        --url "https://management.azure.com/subscriptions/$subId/resourceGroups/$rgName/providers/Microsoft.Bing/accounts/${bingName}?api-version=2020-06-10" `
+        --headers "Content-Type=application/json" `
+        --body "@$bodyFile" `
         | Out-Null
+    Remove-Item $bodyFile -ErrorAction SilentlyContinue
 
+    if ($LASTEXITCODE -ne 0) { Write-Error "Failed to create Bing Search resource." }
     Write-Host "  Created: $bingName (S1 pay-per-use)" -ForegroundColor Green
 }
 
@@ -106,14 +113,13 @@ Write-Host "  Stored as 'bing-search-key'" -ForegroundColor Green
 
 Write-Host "`nUpdating DAX Router workflow in n8n..." -ForegroundColor Yellow
 
-$env:BING_API_KEY = $bingKey
 node "$PSScriptRoot/update-router-websearch.js"
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "  Workflow updated successfully." -ForegroundColor Green
 } else {
     Write-Host "  Workflow update failed. Run manually:" -ForegroundColor Red
-    Write-Host "  BING_API_KEY=$($bingKey.Substring(0,8))... node scripts/update-router-websearch.js"
+    Write-Host "  node scripts/update-router-websearch.js"
 }
 
 # ============================================================================
@@ -122,12 +128,11 @@ if ($LASTEXITCODE -eq 0) {
 
 Write-Host "`n=== Web Search Deployment Complete ===" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Bing Search:  $bingName"
+Write-Host "Bing Search:  $bingName (provisioned, key in KV for future Bing Grounding)"
 Write-Host "SKU:          S1 (pay-per-use, ~`$3/1000 queries)"
 Write-Host "Key Vault:    $kvName/bing-search-key"
-Write-Host "Endpoint:     https://api.bing.microsoft.com/v7.0"
 Write-Host ""
-Write-Host "DAX Router now searches the web for all general queries."
-Write-Host "Market data, news, SEC filings, and general knowledge"
-Write-Host "are grounded in live Bing results before Azure OpenAI responds."
+Write-Host "DAX Router market data flow:"
+Write-Host "  Detect Tickers -> Fetch Quote (Yahoo Finance) -> Build Context -> Azure OpenAI"
+Write-Host "Market queries get live price data injected into the LLM context."
 Write-Host ""
