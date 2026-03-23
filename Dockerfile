@@ -1,4 +1,4 @@
-FROM ghcr.io/danny-avila/librechat:latest
+FROM ghcr.io/danny-avila/librechat:v0.8.4
 USER root
 
 # Remove black background from hero image with ImageMagick

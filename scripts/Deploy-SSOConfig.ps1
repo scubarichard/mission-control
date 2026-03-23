@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Configures LibreChat OpenID Connect SSO and injects librechat.yaml config
     via Container App environment variables and an init container.
@@ -14,7 +14,7 @@
     5. Restarts the active revision
 
     WARNING: Never use 'az containerapp update --set-env-vars' on this
-    container — it corrupts the template by stripping plain-text env var
+    container â€” it corrupts the template by stripping plain-text env var
     values. Always use this script to update env vars.
 
     Requires: Deploy-EntraApp.ps1 and Deploy-LibreChatSecrets.ps1 must have
@@ -271,8 +271,27 @@ az containerapp revision restart `
 
 Write-Host "  Revision restarted." -ForegroundColor Green
 
+
 # ============================================================================
-# 6. Summary
+# 6. Verify service principal permissions survive the restart
+# ============================================================================
+
+Write-Host "`nVerifying service principal permissions..." -ForegroundColor Yellow
+
+$spId = "218064ac-bee2-4246-9709-ae7518ae71cb"
+$subscriptionId = az account show --query "id" -o tsv
+$spAssignments = az role assignment list --assignee $spId --resource-group $rgName --subscription $subscriptionId --query "[?roleDefinitionName=='Contributor']" -o json | ConvertFrom-Json
+
+if ($spAssignments.Count -eq 0) {
+    Write-Warning "⚠️  Service principal lost Contributor role on $rgName — restoring now..."
+    az role assignment create --assignee $spId --role "Contributor" --resource-group $rgName --subscription $subscriptionId | Out-Null
+    Write-Host "  ✅ Contributor role restored on $rgName" -ForegroundColor Green
+} else {
+    Write-Host "  ✅ Service principal has Contributor role on $rgName" -ForegroundColor Green
+}
+
+# ============================================================================
+# 7. Summary
 # ============================================================================
 
 Write-Host "`n=== SSO Configuration Complete ===" -ForegroundColor Cyan
@@ -296,3 +315,4 @@ Write-Host ""
 Write-Host "Only the 'Login with Microsoft' button should appear on the login page."
 Write-Host "(Email/password login is disabled via ALLOW_EMAIL_LOGIN=false)"
 Write-Host ""
+
