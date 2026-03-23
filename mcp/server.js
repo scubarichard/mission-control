@@ -1,7 +1,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
+import { v4 as uuidv4 } from "uuid";
 import { execSync } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync, unlinkSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
@@ -785,19 +787,21 @@ if (MODE === "sse") {
       res.setHeader("Access-Control-Allow-Origin", origin || "*");
     }
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-api-key, mcp-session-id");
-    res.setHeader("Access-Control-Expose-Headers", "Content-Type, mcp-session-id");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-api-key, Mcp-Session-Id");
+    res.setHeader("Access-Control-Expose-Headers", "Content-Type, Mcp-Session-Id");
     res.setHeader("Access-Control-Allow-Credentials", "true");
     if (req.method === "OPTIONS") return res.sendStatus(204);
     next();
   });
 
   // Optional bearer-token auth (skip for /health)
+  // Accepts token via Authorization header OR ?token= query param
   if (AUTH_TOKEN) {
     app.use((req, res, next) => {
       if (req.path === "/health") return next();
-      const token = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
-      if (token !== AUTH_TOKEN) {
+      const hToken = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
+      const qToken = req.query.token || "";
+      if (hToken !== AUTH_TOKEN && qToken !== AUTH_TOKEN) {
         return res.status(401).json({ error: "Unauthorized" });
       }
       next();
@@ -811,12 +815,72 @@ if (MODE === "sse") {
     res.json({
       status: "ok",
       server: "dax-dev",
-      transport: "sse",
+      transport: "streamable-http+sse",
       activeSessions: sessions.size,
+      streamableSessions: Object.keys(transports).length,
       uptimeSeconds: Math.floor(process.uptime()),
     });
   });
 
+  /* ── Streamable HTTP transport (modern) ─────────────────────────── */
+  // claude.ai connects here via POST /mcp with Mcp-Session-Id header
+  const transports = {};
+
+  app.post("/mcp", async (req, res) => {
+    try {
+      const body = req.body;
+      const isInitRequest = body && body.method === "initialize";
+      const clientSessionId = req.headers["mcp-session-id"];
+
+      if (isInitRequest) {
+        const transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: () => uuidv4(),
+          onsessioninitialized: (sessionId) => {
+            transports[sessionId] = transport;
+            console.log(`[MCP] New streamable-http session: ${sessionId}`);
+          },
+        });
+        transport.onclose = () => {
+          const sid = transport.sessionId;
+          if (sid) delete transports[sid];
+          console.log(`[MCP] Session closed: ${sid}`);
+        };
+
+        const mcpServer = new McpServer({ name: "dax-dev", version: "1.0.0" });
+        registerTools(mcpServer);
+        await mcpServer.connect(transport);
+        await transport.handleRequest(req, res, body);
+      } else if (clientSessionId && transports[clientSessionId]) {
+        await transports[clientSessionId].handleRequest(req, res, body);
+      } else {
+        res.status(400).json({
+          jsonrpc: "2.0",
+          error: { code: -32003, message: "No valid session ID for non-initialize request" },
+          id: body?.id ?? null,
+        });
+      }
+    } catch (err) {
+      console.error(`[MCP] Error in /mcp handler:`, err);
+      if (!res.headersSent) {
+        res.status(500).json({ jsonrpc: "2.0", error: { code: -32603, message: err.message }, id: null });
+      }
+    }
+  });
+
+  app.delete("/mcp", async (req, res) => {
+    const sessionId = req.headers["mcp-session-id"];
+    const transport = transports[sessionId];
+    if (transport) {
+      try { await transport.close(); } catch {}
+      delete transports[sessionId];
+      console.log(`[MCP] Session deleted via DELETE: ${sessionId}`);
+      res.status(204).end();
+    } else {
+      res.status(404).json({ error: "Session not found" });
+    }
+  });
+
+  /* ── Legacy SSE transport (fallback) ────────────────────────────── */
   // SSE endpoint — client connects here to establish the event stream
   app.get("/sse", async (req, res) => {
     console.log(`[SSE] New connection from ${req.ip}`);
@@ -857,30 +921,30 @@ if (MODE === "sse") {
     await transport.handlePostMessage(req, res, req.body);
   });
 
-  // Graceful shutdown
-  process.on("SIGINT", async () => {
-    console.log("[SSE] Shutting down...");
+  // Graceful shutdown — clean up both transport types
+  async function shutdown(signal) {
+    console.log(`[MCP] ${signal} received, shutting down...`);
     for (const [sid, transport] of sessions) {
       try { await transport.close(); } catch {}
       sessions.delete(sid);
     }
-    process.exit(0);
-  });
-  process.on("SIGTERM", async () => {
-    console.log("[SSE] SIGTERM received, shutting down...");
-    for (const [sid, transport] of sessions) {
-      try { await transport.close(); } catch {}
-      sessions.delete(sid);
+    for (const sid of Object.keys(transports)) {
+      try { await transports[sid].close(); } catch {}
+      delete transports[sid];
     }
     process.exit(0);
-  });
+  }
+  process.on("SIGINT", () => shutdown("SIGINT"));
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`DAX MCP server (SSE) listening on http://0.0.0.0:${PORT}`);
-    console.log(`  GET  /sse      — SSE stream for claude.ai`);
-    console.log(`  POST /messages — JSON-RPC tool calls`);
-    console.log(`  GET  /health   — health check`);
-    console.log(`  Keepalive: every ${KEEPALIVE_INTERVAL_MS / 1000}s`);
+    console.log(`DAX MCP server listening on http://0.0.0.0:${PORT}`);
+    console.log(`  POST /mcp      — Streamable HTTP (claude.ai)`);
+    console.log(`  DELETE /mcp    — Session cleanup`);
+    console.log(`  GET  /sse      — Legacy SSE stream`);
+    console.log(`  POST /messages — Legacy JSON-RPC`);
+    console.log(`  GET  /health   — Health check`);
+    console.log(`  Keepalive: every ${KEEPALIVE_INTERVAL_MS / 1000}s (SSE)`);
     if (AUTH_TOKEN) console.log(`  Auth: Bearer token required`);
     else console.log(`  Auth: NONE (set MCP_AUTH_TOKEN to enable)`);
   });
