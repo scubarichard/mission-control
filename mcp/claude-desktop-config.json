@@ -28,7 +28,8 @@
         "AIRTABLE_API_KEY": "patkX3PmrObHeTNmn.78ae1da8f8cfd536c7d0f1403777be3e0be1110945dd82fa421b1932483ce9fa",
         "RPE_SLACK_TOKEN": "xoxb-10348572271763-10762740917729-aNGDNEruAK3NXCpiinTdmTIm",
         "RPE_PIT_TOKEN": "pit-e0fb69ba-1b78-46cd-9541-c196830e0826",
-        "MAKE_API_KEY": "8ce569c4-a7a9-492b-a461-3aa8317ce6db"
+        "MAKE_API_KEY": "8ce569c4-a7a9-492b-a461-3aa8317ce6db",
+        "WEALTHBOX_API_KEY": "2565bf3734934e0facbe77c7c2accd40"
       }
     },
     "mcp.dakona.net": {
