@@ -163,19 +163,18 @@ const doc = new Document({
       spacer(),
 
       // ══ CLIENT GOALS ═══════════════════════════════════════════════
+      // Uses docxtemplater loop: {{#goals}}...{{/goals}} — empty items suppressed
       sectionHeading("Client Goals"),
       new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
         rows: [
           new TableRow({ children: [hCell("#", 600), hCell("Goal", 9400)] }),
-          new TableRow({ children: [dCell("1", 600, LIGHT_GRAY), dCell("{{GOAL_1}}", 9400, LIGHT_GRAY)] }),
-          new TableRow({ children: [dCell("2", 600), dCell("{{GOAL_2}}", 9400)] }),
-          new TableRow({ children: [dCell("3", 600, LIGHT_GRAY), dCell("{{GOAL_3}}", 9400, LIGHT_GRAY)] }),
+          new TableRow({ children: [dCell("{{#goals}}{{num}}", 600, LIGHT_GRAY), dCell("{{text}}{{/goals}}", 9400, LIGHT_GRAY)] }),
         ]
       }),
       new Paragraph({ spacing: { before: 80 }, children: [
-        new TextRun({ text: "Progress Notes: ", bold: true, size: 20, color: MED_TEXT, font: "Calibri" }),
-        new TextRun({ text: "{{GOALS_PROGRESS_NOTES}}", size: 20, color: DARK_TEXT, font: "Calibri" })
+        new TextRun({ text: "{{#GOALS_PROGRESS_NOTES}}Progress Notes: ", bold: true, size: 20, color: MED_TEXT, font: "Calibri" }),
+        new TextRun({ text: "{{GOALS_PROGRESS_NOTES}}{{/GOALS_PROGRESS_NOTES}}", size: 20, color: DARK_TEXT, font: "Calibri" })
       ]}),
 
       spacer(),
@@ -191,27 +190,24 @@ const doc = new Document({
         ]
       }),
       new Paragraph({ spacing: { before: 120 }, children: [
-        new TextRun({ text: "Key Discussion Points:", bold: true, size: 20, color: MED_TEXT, font: "Calibri" })
+        new TextRun({ text: "{{#discussions}}Key Discussion Points:", bold: true, size: 20, color: MED_TEXT, font: "Calibri" })
       ]}),
-      new Paragraph({ spacing: { after: 30 }, indent: { left: 360 }, children: [new TextRun({ text: "1. {{DISCUSSION_POINT_1}}", size: 20, font: "Calibri" })] }),
-      new Paragraph({ spacing: { after: 30 }, indent: { left: 360 }, children: [new TextRun({ text: "2. {{DISCUSSION_POINT_2}}", size: 20, font: "Calibri" })] }),
-      new Paragraph({ spacing: { after: 30 }, indent: { left: 360 }, children: [new TextRun({ text: "3. {{DISCUSSION_POINT_3}}", size: 20, font: "Calibri" })] }),
+      new Paragraph({ spacing: { after: 30 }, indent: { left: 360 }, children: [new TextRun({ text: "{{num}}. {{text}}{{/discussions}}", size: 20, font: "Calibri" })] }),
       new Paragraph({ spacing: { before: 80, after: 80 }, children: [
-        new TextRun({ text: "Advisor Notes: ", bold: true, size: 20, color: MED_TEXT, font: "Calibri" }),
-        new TextRun({ text: "{{ADVISOR_NOTES}}", size: 20, color: DARK_TEXT, font: "Calibri" })
+        new TextRun({ text: "{{#ADVISOR_NOTES}}Advisor Notes: ", bold: true, size: 20, color: MED_TEXT, font: "Calibri" }),
+        new TextRun({ text: "{{ADVISOR_NOTES}}{{/ADVISOR_NOTES}}", size: 20, color: DARK_TEXT, font: "Calibri" })
       ]}),
 
       spacer(),
 
       // ══ ACTION ITEMS ═══════════════════════════════════════════════
+      // Uses docxtemplater loop: {{#actions}}...{{/actions}} — empty items suppressed
       sectionHeading("Action Items"),
       new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
         rows: [
           new TableRow({ children: [hCell("#", 500), hCell("Action", 5000), hCell("Owner", 2200), hCell("Due Date", 2300)] }),
-          new TableRow({ children: [dCell("1", 500, LIGHT_GRAY), dCell("{{ACTION_1}}", 5000, LIGHT_GRAY), dCell("{{ACTION_1_OWNER}}", 2200, LIGHT_GRAY), dCell("{{ACTION_1_DUE}}", 2300, LIGHT_GRAY)] }),
-          new TableRow({ children: [dCell("2", 500), dCell("{{ACTION_2}}", 5000), dCell("{{ACTION_2_OWNER}}", 2200), dCell("{{ACTION_2_DUE}}", 2300)] }),
-          new TableRow({ children: [dCell("3", 500, LIGHT_GRAY), dCell("{{ACTION_3}}", 5000, LIGHT_GRAY), dCell("{{ACTION_3_OWNER}}", 2200, LIGHT_GRAY), dCell("{{ACTION_3_DUE}}", 2300, LIGHT_GRAY)] }),
+          new TableRow({ children: [dCell("{{#actions}}{{num}}", 500, LIGHT_GRAY), dCell("{{text}}", 5000, LIGHT_GRAY), dCell("{{owner}}", 2200, LIGHT_GRAY), dCell("{{due}}{{/actions}}", 2300, LIGHT_GRAY)] }),
         ]
       }),
 
@@ -219,8 +215,14 @@ const doc = new Document({
 
       // ══ NEXT STEPS ═════════════════════════════════════════════════
       sectionHeading("Next Steps"),
-      labelValue("Next Meeting", "NEXT_MEETING_DATE"),
-      labelValue("Agenda", "NEXT_MEETING_AGENDA"),
+      new Paragraph({ spacing: { after: 40 }, children: [
+        new TextRun({ text: "Next Meeting: ", bold: true, size: 20, color: MED_TEXT, font: "Calibri" }),
+        new TextRun({ text: "{{NEXT_MEETING_DATE}}", size: 20, color: DARK_TEXT, font: "Calibri" })
+      ]}),
+      new Paragraph({ spacing: { after: 40 }, children: [
+        new TextRun({ text: "Agenda: ", bold: true, size: 20, color: MED_TEXT, font: "Calibri" }),
+        new TextRun({ text: "{{NEXT_MEETING_AGENDA}}", size: 20, color: DARK_TEXT, font: "Calibri" })
+      ]}),
 
       spacer(200),
 
