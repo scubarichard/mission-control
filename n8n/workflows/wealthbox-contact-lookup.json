@@ -1,0 +1,154 @@
+{
+  "name": "DAX Wealthbox Contact Lookup",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wealthbox-lookup",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wb-webhook-001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.crmworkspace.com/v1/contacts?custom_field[364403]={{ $json.body.accountNumber }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "ACCESS_TOKEN",
+              "value": ""
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "wb-find-001",
+      "name": "Find Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        300
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.crmworkspace.com/v1/notes?contact_id={{ $json.contacts[0].id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "ACCESS_TOKEN",
+              "value": ""
+            }
+          ]
+        },
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "wb-notes-001",
+      "name": "Get Notes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        700,
+        300
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const contact = $('Find Contact').first().json.contacts?.[0];\nif (!contact) {\n  console.log('[WB] No contact found for account:', $('Webhook').first().json.body?.accountNumber);\n  return [{ json: { error: 'Contact not found', clientName: '', accountNumber: $('Webhook').first().json.body?.accountNumber || '' } }];\n}\n\nconst notesData = $('Get Notes').first().json.status_updates || [];\nconsole.log('[WB] Contact:', contact.name, '| Notes:', notesData.length);\n\n// Find most recent meeting note\nconst meetingNote = notesData.find(n => n.tags?.some(t => t.name === 'Meeting'));\nconst noteContent = meetingNote?.content || '';\n\n// Parse goals — look for numbered items or lines with 'goal' keyword\nconst goalLines = noteContent.split(/[.!]/).filter(s => /goal|objective|target|plan/i.test(s)).slice(0, 3);\n\n// Parse action items — look for patterns like action:, numbered items after action\nconst actionLines = noteContent.split(/[.!]/).filter(s => /action|follow.?up|next step|todo|schedule|review|rebalance|update/i.test(s)).slice(0, 3);\n\n// Parse next meeting\nconst nextMeetingMatch = noteContent.match(/[Nn]ext meeting[:s]+([ws,]+d{4})/);\n\n// Get custom fields\nconst getField = (name) => {\n  const f = contact.custom_fields?.find(cf => cf.name === name);\n  return f?.value || '';\n};\n\nreturn [{ json: {\n  clientName: contact.name || '',\n  accountNumber: getField('account_number'),\n  riskProfile: contact.risk_tolerance || 'Moderate',\n  investmentObjective: contact.investment_objective || 'Growth',\n  timeHorizon: contact.time_horizon || 'Long-Term',\n  backgroundInfo: (contact.background_info || '').substring(0, 500),\n  goal1: goalLines[0]?.trim() || '',\n  goal2: goalLines[1]?.trim() || '',\n  goal3: goalLines[2]?.trim() || '',\n  goalsProgressNotes: noteContent.substring(0, 300),\n  discussionPoint1: actionLines[0]?.trim() || '',\n  discussionPoint2: actionLines[1]?.trim() || '',\n  discussionPoint3: actionLines[2]?.trim() || '',\n  advisorNotes: noteContent.substring(0, 500),\n  action1: actionLines[0]?.trim() || '',\n  action1Owner: 'Advisor',\n  action1Due: '',\n  action2: actionLines[1]?.trim() || '',\n  action2Owner: 'Advisor',\n  action2Due: '',\n  action3: actionLines[2]?.trim() || '',\n  action3Owner: 'Advisor',\n  action3Due: '',\n  nextMeetingDate: nextMeetingMatch?.[1]?.trim() || '',\n  nextMeetingAgenda: 'Portfolio review and strategy update'\n}}];"
+      },
+      "id": "wb-parse-001",
+      "name": "Parse Contact Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        940,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "wb-respond-001",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1180,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Find Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Contact": {
+      "main": [
+        [
+          {
+            "node": "Get Notes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Notes": {
+      "main": [
+        [
+          {
+            "node": "Parse Contact Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Contact Data": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
