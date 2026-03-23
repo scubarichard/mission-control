@@ -137,7 +137,18 @@
       "name": "Azure OpenAI Passthrough",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [960, 620]
+      "position": [960, 620],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ensure response is always a valid OpenAI chat completion\nconst input = $json;\nconst now = Math.floor(Date.now() / 1000);\n\n// If Azure returned a valid chat completion, pass it through\nif (input?.choices?.[0]?.message?.role) {\n  return [{ json: input }];\n}\n\n// Azure error or malformed response — wrap in valid chat completion\nlet errorMsg = 'I ran into an issue processing your request. Please try again.';\nif (input?.error?.message) {\n  errorMsg = 'I ran into a temporary issue: ' + input.error.message;\n  console.log('[DAX-ROUTER] Azure error:', input.error.message);\n} else if (typeof input?.error === 'string') {\n  errorMsg = 'I ran into a temporary issue: ' + input.error;\n  console.log('[DAX-ROUTER] Azure error:', input.error);\n} else {\n  console.log('[DAX-ROUTER] Unexpected response format:', JSON.stringify(input).substring(0, 500));\n}\n\nreturn [{\n  json: {\n    id: 'chatcmpl-dax-err-' + now,\n    object: 'chat.completion',\n    created: now,\n    model: 'gpt-4o',\n    choices: [{\n      index: 0,\n      message: {\n        role: 'assistant',\n        content: errorMsg\n      },\n      finish_reason: 'stop'\n    }],\n    usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 }\n  }\n}];"
+      },
+      "id": "format-general-response",
+      "name": "Format General Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 620]
     },
     {
       "parameters": {
@@ -165,7 +176,7 @@
       "name": "Respond General",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1200, 620]
+      "position": [1440, 620]
     }
   ],
   "connections": {
@@ -197,6 +208,9 @@
       "main": [[{ "node": "Respond ICP", "type": "main", "index": 0 }]]
     },
     "Azure OpenAI Passthrough": {
+      "main": [[{ "node": "Format General Response", "type": "main", "index": 0 }]]
+    },
+    "Format General Response": {
       "main": [[{ "node": "Respond General", "type": "main", "index": 0 }]]
     }
   },

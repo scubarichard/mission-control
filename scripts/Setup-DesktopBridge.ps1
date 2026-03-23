@@ -11,7 +11,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$RepoRoot   = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$RepoRoot   = Split-Path -Parent $PSScriptRoot
 $BridgeDir  = Join-Path $RepoRoot "scripts\desktop-bridge"
 $EnvFile    = Join-Path $BridgeDir ".env"
 $TunnelName = "dax-desktop"
@@ -23,7 +23,8 @@ Write-Host "`n=== DAX Desktop Bridge Setup ===" -ForegroundColor Cyan
 Write-Host "`n[1/6] Installing Node dependencies..." -ForegroundColor Yellow
 Push-Location $BridgeDir
 try {
-    npm install --production 2>&1 | Out-Host
+    $npmOut = cmd /c "npm install --omit=dev 2>&1"
+    $npmOut | Write-Host
     if ($LASTEXITCODE -ne 0) { throw "npm install failed" }
 } finally {
     Pop-Location
@@ -67,13 +68,17 @@ if (Test-Path $CfExe) {
 # ── 4. Create or reuse Cloudflare Tunnel ────────────────────────────
 Write-Host "`n[4/6] Setting up Cloudflare Tunnel '$TunnelName'..." -ForegroundColor Yellow
 
+# Cloudflared writes logs to stderr even on success, so temporarily allow stderr
+$ErrorActionPreference = "Continue"
+
 # Check if already logged in
-$tunnelList = & $CfExe tunnel list --output json 2>&1
-if ($LASTEXITCODE -ne 0 -or $tunnelList -match "error") {
+$tunnelList = cmd /c "`"$CfExe`" tunnel list --output json 2>&1"
+if ($LASTEXITCODE -ne 0) {
     Write-Host "  You need to log in to Cloudflare first." -ForegroundColor Red
     Write-Host "  Running: cloudflared tunnel login" -ForegroundColor White
     & $CfExe tunnel login
-    $tunnelList = & $CfExe tunnel list --output json 2>&1
+    if ($LASTEXITCODE -ne 0) { throw "cloudflared login failed" }
+    $tunnelList = cmd /c "`"$CfExe`" tunnel list --output json 2>&1"
 }
 
 $existing = $tunnelList | ConvertFrom-Json | Where-Object { $_.name -eq $TunnelName }
@@ -81,11 +86,15 @@ if ($existing) {
     $TunnelId = $existing.id
     Write-Host "  Reusing existing tunnel: $TunnelId" -ForegroundColor DarkGray
 } else {
-    $createOut = & $CfExe tunnel create $TunnelName 2>&1
+    $createOut = cmd /c "`"$CfExe`" tunnel create $TunnelName 2>&1"
     Write-Host "  $createOut"
-    $TunnelId = (& $CfExe tunnel list --output json | ConvertFrom-Json | Where-Object { $_.name -eq $TunnelName }).id
+    $tunnelList = cmd /c "`"$CfExe`" tunnel list --output json 2>&1"
+    $TunnelId = ($tunnelList | ConvertFrom-Json | Where-Object { $_.name -eq $TunnelName }).id
+    if (-not $TunnelId) { throw "Failed to create tunnel" }
     Write-Host "  Created tunnel: $TunnelId" -ForegroundColor Green
 }
+
+$ErrorActionPreference = "Stop"
 
 # ── 5. Write cloudflared config ─────────────────────────────────────
 Write-Host "`n[5/6] Writing cloudflared config..." -ForegroundColor Yellow
