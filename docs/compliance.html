@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAX Compliance Portal | Dakona LLC</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e0e0e0; min-height: 100vh; }
+    .header { background: #1B3A5C; padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #2E6DA4; }
+    .header h1 { font-size: 20px; font-weight: 700; color: #fff; }
+    .header span { font-size: 13px; color: #90b4d4; }
+    .header-badge { background: #2E6DA4; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 24px 32px; background: #161b27; border-bottom: 1px solid #2a2f3e; }
+    .stat-card { background: #1e2435; border-radius: 8px; padding: 16px; border: 1px solid #2a2f3e; }
+    .stat-card .label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .stat-card .value { font-size: 28px; font-weight: 700; color: #fff; }
+    .stat-card .sub { font-size: 12px; color: #6b7280; margin-top: 4px; }
+    .toolbar { padding: 20px 32px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; background: #161b27; }
+    .search-box { flex: 1; min-width: 200px; background: #1e2435; border: 1px solid #2a2f3e; border-radius: 8px; padding: 10px 16px; color: #e0e0e0; font-size: 14px; outline: none; }
+    .search-box:focus { border-color: #2E6DA4; }
+    .filter-select { background: #1e2435; border: 1px solid #2a2f3e; border-radius: 8px; padding: 10px 16px; color: #e0e0e0; font-size: 14px; outline: none; cursor: pointer; }
+    .btn { padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+    .btn-primary { background: #2E6DA4; color: #fff; }
+    .btn-primary:hover { background: #3a82c0; }
+    .btn-export { background: #1e2435; color: #e0e0e0; border: 1px solid #2a2f3e; }
+    .btn-export:hover { border-color: #2E6DA4; color: #2E6DA4; }
+    .content { padding: 24px 32px; }
+    .table-wrapper { background: #1e2435; border-radius: 8px; border: 1px solid #2a2f3e; overflow: hidden; }
+    .table-header { display: grid; grid-template-columns: 160px 180px 200px 1fr 120px; padding: 12px 20px; background: #161b27; border-bottom: 1px solid #2a2f3e; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; font-weight: 600; }
+    .table-row { display: grid; grid-template-columns: 160px 180px 200px 1fr 120px; padding: 14px 20px; border-bottom: 1px solid #2a2f3e; font-size: 13px; align-items: center; transition: background 0.15s; cursor: pointer; }
+    .table-row:last-child { border-bottom: none; }
+    .table-row:hover { background: #252d40; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-report { background: #1e3a5f; color: #60a5fa; }
+    .badge-prep { background: #1e3d2f; color: #34d399; }
+    .badge-lookup { background: #3d2a1e; color: #fb923c; }
+    .badge-search { background: #2d1e3d; color: #c084fc; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #6b7280; }
+    .empty-state h3 { font-size: 18px; margin-bottom: 8px; color: #9ca3af; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: #1e2435; border: 1px solid #2a2f3e; border-radius: 12px; padding: 32px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; }
+    .modal h2 { font-size: 18px; margin-bottom: 20px; color: #fff; }
+    .modal-field { margin-bottom: 16px; }
+    .modal-field label { font-size: 11px; text-transform: uppercase; color: #6b7280; display: block; margin-bottom: 4px; }
+    .modal-field .val { font-size: 14px; color: #e0e0e0; white-space: pre-wrap; }
+    .modal-close { float: right; background: none; border: none; color: #6b7280; font-size: 20px; cursor: pointer; }
+    .loading { text-align: center; padding: 60px; color: #6b7280; }
+    .spinner { width: 32px; height: 32px; border: 3px solid #2a2f3e; border-top-color: #2E6DA4; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .footer { padding: 16px 32px; border-top: 1px solid #2a2f3e; font-size: 12px; color: #6b7280; display: flex; justify-content: space-between; }
+  </style>
+</head>
+<body>
+<div class="header">
+  <div><h1>DAX Compliance Portal</h1><span>Governed AI for RIAs | Dakona LLC</span></div>
+  <div style="display:flex;gap:12px;align-items:center">
+    <span class="header-badge">SEC Rule 204-2</span>
+  </div>
+</div>
+<div class="stats-bar">
+  <div class="stat-card"><div class="label">Total Actions</div><div class="value" id="stat-total">—</div><div class="sub">All time</div></div>
+  <div class="stat-card"><div class="label">Reports Generated</div><div class="value" id="stat-reports">—</div><div class="sub">Quarterly reviews</div></div>
+  <div class="stat-card"><div class="label">Client Lookups</div><div class="value" id="stat-lookups">—</div><div class="sub">Profile accesses</div></div>
+  <div class="stat-card"><div class="label">Meeting Preps</div><div class="value" id="stat-preps">—</div><div class="sub">Briefs generated</div></div>
+</div>
+<div class="toolbar">
+  <input type="text" class="search-box" id="search-input" placeholder="Search by client name, action, or advisor..." oninput="filterRecords()">
+  <select class="filter-select" id="action-filter" onchange="filterRecords()">
+    <option value="">All Actions</option>
+    <option value="Quarterly Review">Quarterly Reports</option>
+    <option value="Meeting Prep">Meeting Prep</option>
+    <option value="Client Profile">Client Lookups</option>
+    <option value="Client List">Client Searches</option>
+  </select>
+  <select class="filter-select" id="date-filter" onchange="filterRecords()">
+    <option value="">All Time</option>
+    <option value="today">Today</option>
+    <option value="week">This Week</option>
+    <option value="month">This Month</option>
+  </select>
+  <button class="btn btn-primary" onclick="loadRecords()">Refresh</button>
+  <button class="btn btn-export" onclick="exportCSV()">Export CSV</button>
+</div>
+<div class="content">
+  <div class="table-wrapper">
+    <div class="table-header"><div>Date & Time</div><div>Client</div><div>Action</div><div>Details</div><div>Advisor</div></div>
+    <div id="records-container"><div class="loading"><div class="spinner"></div>Loading compliance records...</div></div>
+  </div>
+</div>
+<div class="footer">
+  <span>DAX v0.4.5 | Dakona LLC | SEC Rule 204-2 | 7-year retention</span>
+  <span id="record-count">Loading...</span>
+</div>
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('modal-overlay').classList.remove('active')">x</button>
+    <h2 id="modal-title">Action Details</h2>
+    <div id="modal-content"></div>
+  </div>
+</div>
+<script>
+var allRecords = [];
+var WB_KEY = '';
+function setKey() { WB_KEY = prompt('Enter Wealthbox API key:'); if (WB_KEY) loadRecords(); }
+
+async function loadRecords() {
+  if (!WB_KEY) { WB_KEY = new URLSearchParams(window.location.search).get('key') || ''; }
+  if (!WB_KEY) { document.getElementById('records-container').innerHTML = '<div class="empty-state"><h3>API Key Required</h3><p><button class="btn btn-primary" onclick="setKey()">Enter Wealthbox API Key</button></p></div>'; return; }
+  document.getElementById('records-container').innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
+  try {
+    var all = [];
+    for (var page = 1; page <= 5; page++) {
+      var r = await fetch('https://api.crmworkspace.com/v1/notes?per_page=100&page=' + page, { headers: { 'ACCESS_TOKEN': WB_KEY } });
+      var d = await r.json();
+      var notes = d.status_updates || [];
+      all = all.concat(notes.filter(function(n) { return (n.content || '').indexOf('[DAX]') >= 0; }));
+      if (notes.length < 100) break;
+    }
+    allRecords = all.map(function(n) {
+      var content = n.content || '';
+      var action = 'Unknown';
+      if (content.indexOf('Quarterly Review') >= 0) action = 'Quarterly Review Generated';
+      else if (content.indexOf('Meeting Prep') >= 0) action = 'Meeting Prep Brief';
+      else if (content.indexOf('Client Profile') >= 0) action = 'Client Profile Accessed';
+      else if (content.indexOf('Client List') >= 0) action = 'Client List Searched';
+      var advisorMatch = content.match(/Advisor: (.+)/);
+      var client = (n.linked_to && n.linked_to[0]) ? n.linked_to[0].name : 'Unknown';
+      return { id: n.id, date: n.created_at, client: client, action: action, advisor: advisorMatch ? advisorMatch[1].trim() : 'Brett Stone', details: content.substring(0, 200), raw: content };
+    }).sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+    updateStats(allRecords);
+    renderRecords(allRecords);
+  } catch(e) {
+    document.getElementById('records-container').innerHTML = '<div class="empty-state"><h3>Error loading records</h3><p>' + e.message + '</p></div>';
+  }
+}
+
+function updateStats(records) {
+  document.getElementById('stat-total').textContent = records.length;
+  document.getElementById('stat-reports').textContent = records.filter(function(r) { return r.action.indexOf('Quarterly') >= 0; }).length;
+  document.getElementById('stat-lookups').textContent = records.filter(function(r) { return r.action.indexOf('Profile') >= 0; }).length;
+  document.getElementById('stat-preps').textContent = records.filter(function(r) { return r.action.indexOf('Meeting') >= 0; }).length;
+}
+
+function filterRecords() {
+  var search = document.getElementById('search-input').value.toLowerCase();
+  var actionFilter = document.getElementById('action-filter').value;
+  var dateFilter = document.getElementById('date-filter').value;
+  var now = new Date();
+  var filtered = allRecords.filter(function(r) {
+    if (search && (r.client + ' ' + r.action + ' ' + r.advisor + ' ' + r.details).toLowerCase().indexOf(search) < 0) return false;
+    if (actionFilter && r.action.indexOf(actionFilter) < 0) return false;
+    if (dateFilter) {
+      var d = new Date(r.date);
+      if (dateFilter === 'today' && d.toDateString() !== now.toDateString()) return false;
+      if (dateFilter === 'week' && d < new Date(now - 7*24*60*60*1000)) return false;
+      if (dateFilter === 'month' && (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear())) return false;
+    }
+    return true;
+  });
+  renderRecords(filtered);
+}
+
+function renderRecords(records) {
+  document.getElementById('record-count').textContent = records.length + ' records';
+  if (records.length === 0) { document.getElementById('records-container').innerHTML = '<div class="empty-state"><h3>No records found</h3></div>'; return; }
+  var badgeMap = { 'Quarterly': 'badge-report', 'Meeting': 'badge-prep', 'Profile': 'badge-lookup', 'List': 'badge-search' };
+  document.getElementById('records-container').innerHTML = records.map(function(r, i) {
+    var badge = 'badge-lookup';
+    for (var k in badgeMap) { if (r.action.indexOf(k) >= 0) { badge = badgeMap[k]; break; } }
+    var date = new Date(r.date).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+    return '<div class="table-row" onclick="showDetail(' + i + ')"><div style="color:#6b7280;font-size:12px">' + date + '</div><div style="font-weight:600">' + r.client + '</div><div><span class="badge ' + badge + '">' + r.action + '</span></div><div style="color:#9ca3af;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + r.details.substring(0, 80) + '</div><div style="color:#6b7280;font-size:12px">' + r.advisor + '</div></div>';
+  }).join('');
+}
+
+function showDetail(i) {
+  var r = allRecords[i]; if (!r) return;
+  document.getElementById('modal-title').textContent = r.action;
+  document.getElementById('modal-content').innerHTML = '<div class="modal-field"><label>Client</label><div class="val">' + r.client + '</div></div><div class="modal-field"><label>Date</label><div class="val">' + new Date(r.date).toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' }) + '</div></div><div class="modal-field"><label>Advisor</label><div class="val">' + r.advisor + '</div></div><div class="modal-field"><label>Full Note</label><div class="val">' + r.raw.replace(/</g, '&lt;').replace(/\n/g, '<br>') + '</div></div>';
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+function exportCSV() {
+  var rows = [['Date', 'Client', 'Action', 'Advisor', 'Details']];
+  allRecords.forEach(function(r) { rows.push([new Date(r.date).toLocaleString(), r.client, r.action, r.advisor, r.details.replace(/,/g, ';')]); });
+  var csv = rows.map(function(r) { return r.join(','); }).join('\n');
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'DAX_Compliance_' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+}
+
+loadRecords();
+</script>
+</body>
+</html>
