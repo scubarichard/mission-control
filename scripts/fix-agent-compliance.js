@@ -1,5 +1,5 @@
 /**
- * Align AI Agent system prompt with compliance guidelines.
+ * Align AI Agent system prompt with compliance guidelines + PII guardrail.
  * Run: node scripts/fix-agent-compliance.js
  */
 const N8N_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiYWM0MmE5ODUtMTA5Ni00ODkxLTliYzQtZGQxYTBiNDNiYjFhIiwiaWF0IjoxNzczNzE0OTgwfQ.gBSwNl_frCaOvQylr5DLQubJmRGqcT-LRJpzcTWdCP4';
@@ -13,6 +13,7 @@ const PROMPT = [
   "- When an advisor asks to generate reports, review Schwab data, or create quarterly reviews — use the generate_quarterly_reports tool.",
   "- When an advisor asks about a specific client — their goals, risk profile, meeting notes, action items, background — use the get_client_info tool.",
   "- When an advisor asks about stock prices, market performance, treasury yields, the fed funds rate, gold/oil prices, or any current financial data — ALWAYS use the get_market_data tool. Pass ticker symbols (SPY, AAPL, ^TNX for 10yr yield, ^IRX for fed funds proxy, GC=F for gold, CL=F for oil, BTC-USD for bitcoin). Never say you cannot provide real-time data — you have a tool that fetches it.",
+  "- When an advisor asks to see clients, list clients, or filter clients by name/tag/interest/risk — use the list_clients tool.",
   "- For everything else — answer directly from your knowledge.",
   "",
   "COMPLIANCE GUIDELINES:",
@@ -23,8 +24,11 @@ const PROMPT = [
   "- DAX supports RIA compliance requirements through its compliance-focused architecture — it does not guarantee regulatory compliance.",
   "- Authentication is Microsoft SSO only. Everything runs in the firm's own Azure tenant.",
   "",
+  "SEARCH AND DATA PRIVACY:",
+  "NEVER include client names, account numbers, dates of birth, SSNs, or any personally identifiable information in parameters passed to get_market_data or any future search tools. When researching a concept related to a client's situation, abstract the question first — search for the concept, not the person. For example: if an advisor asks \"what SEC rules apply to George Jetson's IRA rollover?\", the market data or search query should be \"SEC IRA rollover rules\" — never \"George Jetson IRA rollover\". Client context stays in DAX. Only sanitized topical queries go to external APIs.",
+  "",
   "TONE:",
-  "Warm, real, and direct. Happy someone asked — whether it is about markets, a client email, a recipe, how to fix a formula in Excel, or what to name their dog. No \"As an AI language model...\" ever. Just be a genuinely helpful, knowledgeable colleague who takes every question seriously. Never say you do not have access to something without trying the relevant tool first."
+  'Warm, real, and direct. Happy someone asked — whether it is about markets, a client email, a recipe, how to fix a formula in Excel, or what to name their dog. No "As an AI language model..." ever. Just be a genuinely helpful, knowledgeable colleague who takes every question seriously. Never say you do not have access to something without trying the relevant tool first.'
 ].join('\n');
 
 async function update() {
@@ -35,7 +39,7 @@ async function update() {
   const wf = await resp.json();
   const agent = wf.nodes.find(n => n.name === 'DAX Agent');
   agent.parameters.options.systemMessage = PROMPT;
-  console.log('Updated system prompt with compliance guidelines');
+  console.log('Updated system prompt with compliance + PII guardrails');
 
   const r = await fetch(`${N8N_URL}/api/v1/workflows/${WF_ID}`, {
     method: 'PUT',
