@@ -43,5 +43,10 @@ RUN chmod +x /app/patches/entrypoint.sh && \
 # This forces GPT-4o to make function calls instead of writing text.
 RUN node /app/patches/patch-tool-choice.js
 
+# ---------- Compliance Portal route ----------
+COPY patches/compliance-route.js /app/patches/compliance-route.js
+# Insert compliance routes BEFORE the catch-all route (module.exports = app)
+RUN sed -i 's|module.exports = app;|// DAX Compliance Portal\nrequire("/app/patches/compliance-route.js")(app);\n\nmodule.exports = app;|' /app/api/server/index.js
+
 USER node
 ENTRYPOINT ["/app/patches/entrypoint.sh"]

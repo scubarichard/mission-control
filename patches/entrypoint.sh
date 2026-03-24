@@ -14,4 +14,5 @@ NODE_ENV=production node /app/patches/seed-docgen-agent.js 2>&1 || true
 echo "[DAX] Starting LibreChat..."
 exec env NODE_ENV=production node \
     -r /app/patches/cosmos-compat.js \
+    -r /app/patches/compliance-route.js \
     api/server/index.js "$@"

@@ -102,23 +102,24 @@
 </div>
 <script>
 var allRecords = [];
-var WB_KEY = '';
-function setKey() { WB_KEY = prompt('Enter Wealthbox API key:'); if (WB_KEY) loadRecords(); }
 
 async function loadRecords() {
-  if (!WB_KEY) { WB_KEY = new URLSearchParams(window.location.search).get('key') || ''; }
-  if (!WB_KEY) { document.getElementById('records-container').innerHTML = '<div class="empty-state"><h3>API Key Required</h3><p><button class="btn btn-primary" onclick="setKey()">Enter Wealthbox API Key</button></p></div>'; return; }
   document.getElementById('records-container').innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
   try {
+    var key = sessionStorage.getItem('dax_compliance_key') || new URLSearchParams(window.location.search).get('key') || '';
+    if (!key) { document.getElementById('records-container').innerHTML = '<div class="empty-state"><h3>Access Required</h3><p>Use: /compliance.html?key=&lt;api_key&gt;</p></div>'; return; }
+    sessionStorage.setItem('dax_compliance_key', key);
+    if (window.location.search) history.replaceState({}, '', window.location.pathname);
     var all = [];
-    for (var page = 1; page <= 5; page++) {
-      var r = await fetch('https://api.crmworkspace.com/v1/notes?per_page=100&page=' + page, { headers: { 'ACCESS_TOKEN': WB_KEY } });
-      var d = await r.json();
-      var notes = d.status_updates || [];
-      all = all.concat(notes.filter(function(n) { return (n.content || '').indexOf('[DAX]') >= 0; }));
-      if (notes.length < 100) break;
+    for (var pg = 1; pg <= 5; pg++) {
+      var r = await fetch('https://api.crmworkspace.com/v1/notes?per_page=100&page=' + pg, { headers: { 'ACCESS_TOKEN': key } });
+      if (!r.ok) throw new Error('API error: ' + r.status);
+      var pageData = await r.json();
+      var notes = (pageData.status_updates || []).filter(function(n) { return (n.content || '').indexOf('[DAX]') >= 0; });
+      all = all.concat(notes);
+      if ((pageData.status_updates || []).length < 100) break;
     }
-    allRecords = all.map(function(n) {
+    var data = { records: all.map(function(n) {
       var content = n.content || '';
       var action = 'Unknown';
       if (content.indexOf('Quarterly Review') >= 0) action = 'Quarterly Review Generated';
@@ -128,7 +129,9 @@ async function loadRecords() {
       var advisorMatch = content.match(/Advisor: (.+)/);
       var client = (n.linked_to && n.linked_to[0]) ? n.linked_to[0].name : 'Unknown';
       return { id: n.id, date: n.created_at, client: client, action: action, advisor: advisorMatch ? advisorMatch[1].trim() : 'Brett Stone', details: content.substring(0, 200), raw: content };
-    }).sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+    }).sort(function(a, b) { return new Date(b.date) - new Date(a.date); }) };
+    var data = await r.json();
+    allRecords = data.records || [];
     updateStats(allRecords);
     renderRecords(allRecords);
   } catch(e) {
