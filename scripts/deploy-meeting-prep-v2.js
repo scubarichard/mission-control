@@ -1,0 +1,211 @@
+/**
+ * Deploy clean Meeting Prep Tool — no optional chaining, no URL, no template literals.
+ * Run: node scripts/deploy-meeting-prep-v2.js
+ */
+const N8N_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiYWM0MmE5ODUtMTA5Ni00ODkxLTliYzQtZGQxYTBiNDNiYjFhIiwiaWF0IjoxNzczNzE0OTgwfQ.gBSwNl_frCaOvQylr5DLQubJmRGqcT-LRJpzcTWdCP4';
+const N8N_URL = 'https://n8n.dakona.net';
+const WF_ID = '3tniyxZREqfnAbfo';
+
+const GRAPH_TENANT = 'd2a3c346-00f3-47dd-a53e-caa3fca74714';
+const GRAPH_CLIENT_ID = '218064ac-bee2-4246-9709-ae7518ae71cb';
+const GRAPH_CLIENT_SECRET = '6LR8Q~ZCn5FTBlg894LtCGlXZ9GV3NAhS4BY9bla';
+
+// Build the code as an array of lines — clean, no escaping issues
+const lines = [
+  'var https = require("https");',
+  'var input = $input.all()[0].json || {};',
+  '',
+  '// Extract client name from user text',
+  'var userText = input.userText || input.query || input.clientName || "";',
+  'var clientName = userText',
+  '  .replace(/prep me for my meeting with/i, "")',
+  '  .replace(/get me ready for/i, "")',
+  '  .replace(/meeting prep for/i, "")',
+  '  .replace(/prep me for/i, "")',
+  '  .replace(/meeting prep/i, "")',
+  '  .replace(/prep for/i, "")',
+  '  .replace(/prep/i, "")',
+  '  .trim();',
+  'if (!clientName) clientName = userText.trim();',
+  'if (!clientName) return "Please specify a client name.";',
+  '',
+  '// HTTP helper — no URL constructor',
+  'function get(hostname, path, hdrs) {',
+  '  return new Promise(function(resolve) {',
+  '    https.get({ hostname: hostname, path: path, headers: hdrs || {} }, function(res) {',
+  '      var d = ""; res.on("data", function(c) { d += c; });',
+  '      res.on("end", function() { try { resolve(JSON.parse(d)); } catch(e) { resolve({}); } });',
+  '    }).on("error", function() { resolve({}); });',
+  '  });',
+  '}',
+  '',
+  'function post(hostname, path, body, hdrs) {',
+  '  return new Promise(function(resolve) {',
+  '    var data = JSON.stringify(body);',
+  '    var req = https.request({ hostname: hostname, path: path, method: "POST",',
+  '      headers: Object.assign({ "Content-Type": "application/json", "Content-Length": Buffer.byteLength(data) }, hdrs || {})',
+  '    }, function(res) {',
+  '      var d = ""; res.on("data", function(c) { d += c; });',
+  '      res.on("end", function() { try { resolve(JSON.parse(d)); } catch(e) { resolve({}); } });',
+  '    });',
+  '    req.on("error", function() { resolve({}); });',
+  '    req.write(data); req.end();',
+  '  });',
+  '}',
+  '',
+  '// 1. Wealthbox contacts',
+  'var wbData = await get("api.crmworkspace.com", "/v1/contacts?per_page=250", { "ACCESS_TOKEN": "' + '2565bf3734934e0facbe77c7c2accd40' + '" });',
+  'var contacts = wbData.contacts || [];',
+  'var contact = null;',
+  'var lcName = clientName.toLowerCase();',
+  'for (var i = 0; i < contacts.length; i++) {',
+  '  if (contacts[i].name && contacts[i].name.toLowerCase().indexOf(lcName) >= 0) { contact = contacts[i]; break; }',
+  '}',
+  'if (!contact) return "Client \\"" + clientName + "\\" not found in Wealthbox.";',
+  '',
+  'var risk = contact.risk_tolerance || "Not specified";',
+  'var obj = contact.investment_objective || "Not specified";',
+  'var hor = contact.time_horizon || "Not specified";',
+  'var bg = contact.background_info || "";',
+  'var tagList = (contact.tags || []).map(function(t) { return typeof t === "object" ? t.name : String(t); });',
+  'var acct = "";',
+  'var cf = contact.custom_fields || [];',
+  'for (var j = 0; j < cf.length; j++) { if (cf[j].name === "account_number") { acct = cf[j].value; break; } }',
+  '',
+  '// 2. Wealthbox notes',
+  'var notesData = await get("api.crmworkspace.com", "/v1/notes?contact_id=" + contact.id + "&per_page=5", { "ACCESS_TOKEN": "' + '2565bf3734934e0facbe77c7c2accd40' + '" });',
+  'var notes = notesData.status_updates || [];',
+  'var noteContent = "";',
+  'for (var k = 0; k < notes.length; k++) {',
+  '  var nTags = notes[k].tags || [];',
+  '  for (var l = 0; l < nTags.length; l++) {',
+  '    if ((nTags[l].name || nTags[l]) === "Meeting") { noteContent = notes[k].content || ""; break; }',
+  '  }',
+  '  if (noteContent) break;',
+  '}',
+  'if (!noteContent && notes.length > 0) noteContent = notes[0].content || "";',
+  '',
+  '// Parse action items',
+  'var actions = [];',
+  'var re = /\\((\\d+)\\)\\s+([^,.(]+)/g;',
+  'var m;',
+  'while ((m = re.exec(noteContent)) !== null && actions.length < 3) { actions.push(m[2].trim()); }',
+  '',
+  '// 3. SPY benchmark',
+  'var spyData = await get("query1.finance.yahoo.com", "/v8/finance/chart/SPY?interval=1d&range=1d", {});',
+  'var spyInfo = "N/A";',
+  'var c = spyData.chart;',
+  'if (c && c.result && c.result[0] && c.result[0].meta) {',
+  '  var sm = c.result[0].meta;',
+  '  var chg = ((sm.regularMarketPrice - sm.previousClose) / sm.previousClose * 100).toFixed(2);',
+  '  spyInfo = "$" + sm.regularMarketPrice.toFixed(2) + " (" + (chg >= 0 ? "+" : "") + chg + "% today)";',
+  '}',
+  '',
+  '// 4. Exchange calendar',
+  'var tokenBody = "client_id=' + GRAPH_CLIENT_ID + '&client_secret=' + GRAPH_CLIENT_SECRET + '&scope=https://graph.microsoft.com/.default&grant_type=client_credentials";',
+  'var tokenRes = await new Promise(function(resolve) {',
+  '  var req = https.request({ hostname: "login.microsoftonline.com", path: "/' + GRAPH_TENANT + '/oauth2/v2.0/token", method: "POST",',
+  '    headers: { "Content-Type": "application/x-www-form-urlencoded", "Content-Length": Buffer.byteLength(tokenBody) }',
+  '  }, function(res) {',
+  '    var d = ""; res.on("data", function(c2) { d += c2; });',
+  '    res.on("end", function() { try { resolve(JSON.parse(d)); } catch(e) { resolve({}); } });',
+  '  });',
+  '  req.on("error", function() { resolve({}); });',
+  '  req.write(tokenBody); req.end();',
+  '});',
+  'var gToken = tokenRes.access_token || "";',
+  'var calInfo = "None found on calendar";',
+  'if (gToken) {',
+  '  var now = new Date().toISOString();',
+  '  var calData = await get("graph.microsoft.com", "/v1.0/users/richard@dakona.com/events?$top=20&$select=subject,start,bodyPreview&$orderby=start/dateTime&$filter=start/dateTime%20ge%20%27" + encodeURIComponent(now) + "%27", { "Authorization": "Bearer " + gToken });',
+  '  var events = calData.value || [];',
+  '  var fn = clientName.split(" ")[0].toLowerCase();',
+  '  for (var e = 0; e < events.length; e++) {',
+  '    if ((events[e].subject || "").toLowerCase().indexOf(fn) >= 0) {',
+  '      calInfo = events[e].subject + " — " + events[e].start.dateTime.substring(0, 16).replace("T", " ");',
+  '      break;',
+  '    }',
+  '  }',
+  '}',
+  '',
+  '// 5. Talking points',
+  'var tp = ["Review portfolio performance vs " + obj + " objective"];',
+  'if (actions.length > 0) tp.push("Follow up on " + actions.length + " outstanding action items");',
+  'if (tagList.indexOf("ESG Investing") >= 0) tp.push("ESG interest — discuss sustainable options");',
+  'if (tagList.indexOf("College Planning") >= 0) tp.push("College planning — review 529 status");',
+  'if (tagList.indexOf("Estate Planning") >= 0) tp.push("Estate planning — trust/beneficiary review");',
+  'if (tagList.indexOf("Retirement Planning") >= 0) tp.push("Retirement — review timeline/savings");',
+  'if (tagList.indexOf("Golf") >= 0) tp.push("Personal: client enjoys golf");',
+  'if (tagList.indexOf("Philanthropy") >= 0) tp.push("Philanthropy — charitable giving strategies");',
+  '',
+  '// 6. Audit log to Wealthbox',
+  'var ts = new Date().toLocaleString("en-US", { timeZone: "America/Chicago" });',
+  'await post("api.crmworkspace.com", "/v1/notes", {',
+  '  content: "[DAX] Meeting Prep Brief Accessed\\nDate: " + ts + "\\nAdvisor: Brett Stone\\nGenerated by DAX v0.3.0",',
+  '  linked_to: [{ id: contact.id, type: "Contact" }],',
+  '  tags: [{ name: "DAX" }, { name: "Automated" }]',
+  '}, { "ACCESS_TOKEN": "' + '2565bf3734934e0facbe77c7c2accd40' + '" });',
+  '',
+  '// 7. Build brief',
+  'var brief = [',
+  '  "MEETING PREP BRIEF — " + contact.name.toUpperCase(),',
+  '  new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" }),',
+  '  "",',
+  '  "CLIENT SNAPSHOT",',
+  '  "Name: " + contact.name,',
+  '  "Account: " + (acct || "N/A"),',
+  '  "Risk: " + risk + " | Objective: " + obj + " | Horizon: " + hor,',
+  '  "Interests: " + (tagList.join(", ") || "None"),',
+  '  bg ? "Background: " + bg.substring(0, 250) : "",',
+  '  "",',
+  '  "MARKET CONTEXT",',
+  '  "SPY: " + spyInfo,',
+  '  "",',
+  '  "LAST MEETING NOTES",',
+  '  noteContent ? noteContent.substring(0, 400) : "No recent notes",',
+  '  "",',
+  '  "ACTION ITEMS",',
+  '  actions.length > 0 ? actions.map(function(a, i) { return (i+1) + ". " + a; }).join("\\n") : "None",',
+  '  "",',
+  '  "NEXT MEETING",',
+  '  calInfo,',
+  '  "",',
+  '  "TALKING POINTS",',
+  '  tp.map(function(p, i) { return (i+1) + ". " + p; }).join("\\n"),',
+  '  "",',
+  '  "— Generated by DAX | Dakona LLC —"',
+  '].filter(function(l) { return l !== undefined; }).join("\\n");',
+  '',
+  'return brief;',
+];
+
+// Replace placeholders
+const code = lines.join('\n')
+  .replace(/\$\{GRAPH_TENANT\}/g, GRAPH_TENANT)
+  .replace(/\$\{GRAPH_CLIENT_ID\}/g, GRAPH_CLIENT_ID)
+  .replace(/\$\{GRAPH_CLIENT_SECRET\}/g, GRAPH_CLIENT_SECRET);
+
+async function deploy() {
+  console.log('Fetching...');
+  const resp = await fetch(`${N8N_URL}/api/v1/workflows/${WF_ID}`, {
+    headers: { 'X-N8N-API-KEY': N8N_KEY }
+  });
+  const wf = await resp.json();
+  const prep = wf.nodes.find(n => n.name === 'Meeting Prep Tool');
+  prep.parameters.jsCode = code;
+  console.log('Deployed clean meeting prep (' + code.split('\n').length + ' lines)');
+
+  const r = await fetch(`${N8N_URL}/api/v1/workflows/${WF_ID}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'X-N8N-API-KEY': N8N_KEY },
+    body: JSON.stringify({ name: wf.name, nodes: wf.nodes, connections: wf.connections, settings: wf.settings })
+  });
+  const result = await r.json();
+  if (!result.id) { console.error('FAILED:', JSON.stringify(result).substring(0, 500)); process.exit(1); }
+  await fetch(`${N8N_URL}/api/v1/workflows/${WF_ID}/activate`, {
+    method: 'POST', headers: { 'X-N8N-API-KEY': N8N_KEY }
+  });
+  console.log('Activated');
+}
+
+deploy().catch(e => { console.error('ERROR:', e.message); process.exit(1); });
