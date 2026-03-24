@@ -15,10 +15,7 @@ endpoints:
       models:
         default: ["DAX Assistant"]
         fetch: false
-      titleConvo: true
-      titleMethod: "completion"
-      titleModel: "gpt-4o"
-      titleEndpoint: "AzureTitle"
+      titleConvo: false
       summarize: false
       forcePrompt: false
       modelDisplayLabel: "DAX"
@@ -33,17 +30,6 @@ endpoints:
         - "logprobs"
         - "top_logprobs"
 
-    - name: "AzureTitle"
-      apiKey: "635645200b2c4f90a183bf3bd3d5c291"
-      baseURL: "https://oai-dax-dakona-pilot.openai.azure.com/openai/deployments/gpt-4o"
-      models:
-        default: ["gpt-4o"]
-        fetch: false
-      modelDisplayLabel: "AzureTitle"
-      addParams:
-        api-version: "2024-08-01-preview"
-      headers:
-        api-key: "635645200b2c4f90a183bf3bd3d5c291"
 
 # ---------- Actions ----------
 actions:
