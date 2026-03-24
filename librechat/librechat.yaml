@@ -15,8 +15,7 @@ endpoints:
       models:
         default: ["DAX Assistant"]
         fetch: false
-      titleConvo: true
-      titleModel: "DAX Assistant"
+      titleConvo: false
       summarize: false
       forcePrompt: false
       modelDisplayLabel: "DAX"
