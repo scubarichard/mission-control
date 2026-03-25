@@ -41,6 +41,14 @@ const tests = [
   { tier: 'T5', category: 'Demo Path', prompt: 'Tell me about Demo Advisor', expect: 'not found helpful suggestions', priority: 'Critical' },
   { tier: 'T5', category: 'Demo Path', prompt: 'Show me my clients who golf', expect: 'Fred George Homer Bruce Wayne', priority: 'Critical' },
   { tier: 'T5', category: 'Demo Path', prompt: 'Prep me for my meeting with George Jetson', expect: 'full brief portfolio notes actions', priority: 'Critical' },
+
+  // TIER 6 — DEMO SCRIPT (run before every prospect demo)
+  { tier: 'T6', category: 'Demo Script', prompt: 'What is driving markets this morning?', expect: 'headline source timestamp real news', priority: 'Critical' },
+  { tier: 'T6', category: 'Demo Script', prompt: 'Show me my clients who are interested in ESG investing', expect: 'client names ESG wealthbox', priority: 'Critical' },
+  { tier: 'T6', category: 'Demo Script', prompt: 'Which of my clients have college planning as a goal?', expect: 'client names college planning', priority: 'Critical' },
+  { tier: 'T6', category: 'Demo Script', prompt: 'Prep me for my meeting with George Jetson', expect: 'profile portfolio notes actions talking points', priority: 'Critical' },
+  { tier: 'T6', category: 'Demo Script', prompt: 'Should I put George Jetson into QQQ?', expect: 'cannot recommend advisor judgment', priority: 'Critical' },
+  { tier: 'T6', category: 'Demo Script', prompt: 'Generate Q1 reviews from my Schwab file', expect: 'generating reports SharePoint', priority: 'Critical' },
 ];
 
 async function postToDAX(message) {
@@ -128,22 +136,34 @@ function passFailCheck(response, expect) {
   if (expect.includes('compliance') && (r.includes('compliance-focused') || r.includes('does not guarantee') || r.includes('each firm'))) return 'PASS';
   if (expect.includes('finds') && r.length > 50 && !r.includes('not found')) return 'PASS';
   if (expect.includes('asks which') && (r.includes('which') || r.includes('multiple') || r.includes('did you mean'))) return 'PASS';
+  if (expect.includes('headline') && expect.includes('news') && r.length > 200 && (r.includes('market') || r.includes('news') || r.includes('headline'))) return 'PASS';
+  if (expect.includes('cannot recommend') && (r.includes('cannot') || r.includes("can't") || r.includes('not able') || r.includes('fiduciary') || r.includes('advisor') || r.includes('judgment') || r.includes('responsibility'))) return 'PASS';
+  if (expect.includes('generating reports') && (r.includes('generat') || r.includes('report') || r.includes('sharepoint') || r.includes('review'))) return 'PASS';
+  if (expect.includes('college planning') && (r.includes('college') || r.includes('529') || r.includes('education'))) return 'PASS';
 
   if (score >= 0.25) return 'PARTIAL';
   return 'FAIL';
 }
 
+const tier6Only = process.argv.includes('--tier6-only');
+const testsToRun = tier6Only ? tests.filter(t => t.tier === 'T6') : tests;
+
 async function runTests() {
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('PRE-DEMO CHECKLIST:');
+  console.log('Run with: node scripts/run-tests.js --tier6-only');
+  console.log('All T6 must PASS before showing DAX to any prospect');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
   console.log('DAX Automated Test Suite');
-  console.log('Running ' + tests.length + ' tests...\n');
+  console.log('Running ' + testsToRun.length + ' tests...\n');
 
   const resultObjects = [];
   const csvRows = ['Tier,Category,Prompt,Expected,Actual Response,Pass/Fail,Priority'];
 
   let pass = 0, fail = 0, partial = 0;
 
-  for (let i = 0; i < tests.length; i++) {
-    const test = tests[i];
+  for (let i = 0; i < testsToRun.length; i++) {
+    const test = testsToRun[i];
     process.stdout.write('[' + test.tier + '] ' + test.category + ': "' + test.prompt.substring(0, 50) + '"... ');
 
     let result = await postToDAX(test.prompt);
@@ -185,7 +205,7 @@ async function runTests() {
     csvRows.push(row.join(','));
 
     // Delay between tests — Azure OpenAI rate limits at ~10 RPM on pilot tier
-    if (i < tests.length - 1) await new Promise(r => setTimeout(r, 12000));
+    if (i < testsToRun.length - 1) await new Promise(r => setTimeout(r, 12000));
   }
 
   // Write CSV
@@ -195,10 +215,17 @@ async function runTests() {
   console.log('PASS:    ' + pass);
   console.log('PARTIAL: ' + partial);
   console.log('FAIL:    ' + fail);
-  console.log('Total:   ' + tests.length);
-  console.log('Score:   ' + Math.round((pass + partial * 0.5) / tests.length * 100) + '%');
+  console.log('Total:   ' + testsToRun.length);
+  console.log('Score:   ' + Math.round((pass + partial * 0.5) / testsToRun.length * 100) + '%');
   console.log('========================================');
   console.log('\nResults saved to docs/DAX-Test-Results.csv');
+
+  // Tier 6 Demo Script summary
+  const t6Tests = resultObjects.filter(r => r.tier === 'T6');
+  if (t6Tests.length > 0) {
+    const t6Pass = t6Tests.filter(r => r.verdict === 'PASS').length;
+    console.log('\nTIER 6 DEMO SCRIPT: ' + t6Pass + '/' + t6Tests.length + ' — ' + (t6Pass === t6Tests.length ? 'DEMO READY' : 'NOT READY'));
+  }
 
   // Flag critical failures
   const criticalFails = resultObjects.filter(r => r.priority === 'Critical' && r.verdict !== 'PASS');
