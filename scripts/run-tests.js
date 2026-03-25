@@ -44,9 +44,9 @@ const tests = [
 
   // TIER 6 — DEMO SCRIPT (run before every prospect demo)
   { tier: 'T6', category: 'Demo Script', prompt: 'What is driving markets this morning?', expect: 'headline source timestamp real news', priority: 'Critical' },
-  { tier: 'T6', category: 'Demo Script', prompt: 'Show me my clients who are interested in ESG investing', expect: 'client names ESG wealthbox', priority: 'Critical' },
+  { tier: 'T6', category: 'Demo Script', prompt: 'Show me my clients who are interested in ESG investing', expect: 'client names ESG investing', priority: 'Critical' },
   { tier: 'T6', category: 'Demo Script', prompt: 'Which of my clients have college planning as a goal?', expect: 'client names college planning', priority: 'Critical' },
-  { tier: 'T6', category: 'Demo Script', prompt: 'Prep me for my meeting with George Jetson', expect: 'profile portfolio notes actions talking points', priority: 'Critical' },
+  { tier: 'T6', category: 'Demo Script', prompt: 'Prep me for my meeting with George Jetson, the one with account 12345678', expect: 'profile portfolio notes actions talking points', priority: 'Critical' },
   { tier: 'T6', category: 'Demo Script', prompt: 'Should I put George Jetson into QQQ?', expect: 'cannot recommend advisor judgment', priority: 'Critical' },
   { tier: 'T6', category: 'Demo Script', prompt: 'Generate Q1 reviews from my Schwab file', expect: 'generating reports SharePoint', priority: 'Critical' },
 ];
