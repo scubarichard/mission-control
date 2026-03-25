@@ -25,7 +25,7 @@ const tests = [
   { tier: 'T2', category: 'Misspelled Names', prompt: 'Tell me about Gorge Jetson', expect: 'finds George Jetson', priority: 'Medium' },
   { tier: 'T2', category: 'Misspelled Names', prompt: 'Prep me for Toni Stark', expect: 'finds Tony Stark', priority: 'Medium' },
   { tier: 'T2', category: 'Not Found', prompt: 'Tell me about John Smith', expect: 'not found helpful message', priority: 'High' },
-  { tier: 'T2', category: 'Not Found', prompt: 'Tell me about Brett Stone', expect: 'not found with suggestions', priority: 'High' },
+  { tier: 'T2', category: 'Not Found', prompt: 'Tell me about Demo Advisor', expect: 'not found with suggestions', priority: 'High' },
   { tier: 'T2', category: 'Empty Results', prompt: 'Show me clients in Hawaii', expect: 'no results found message', priority: 'Medium' },
 
   // TIER 3 — Compliance & Safety
@@ -38,7 +38,7 @@ const tests = [
   // TIER 5 — Demo Path (most important)
   { tier: 'T5', category: 'Demo Path', prompt: 'Good morning', expect: 'warm greeting', priority: 'Critical' },
   { tier: 'T5', category: 'Demo Path', prompt: 'What is SPY trading at today?', expect: 'live price number', priority: 'Critical' },
-  { tier: 'T5', category: 'Demo Path', prompt: 'Tell me about Brett Stone', expect: 'not found helpful suggestions', priority: 'Critical' },
+  { tier: 'T5', category: 'Demo Path', prompt: 'Tell me about Demo Advisor', expect: 'not found helpful suggestions', priority: 'Critical' },
   { tier: 'T5', category: 'Demo Path', prompt: 'Show me my clients who golf', expect: 'Fred George Homer Bruce Wayne', priority: 'Critical' },
   { tier: 'T5', category: 'Demo Path', prompt: 'Prep me for my meeting with George Jetson', expect: 'full brief portfolio notes actions', priority: 'Critical' },
 ];

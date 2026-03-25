@@ -9,15 +9,15 @@
     "type": "function",
     "function": {
       "name": "generate_icp_review",
-      "description": "Generates a quarterly ICP client review document and saves it to SharePoint. Call this when an advisor asks to generate a client review, quarterly report, or ICP report. Returns the SharePoint URL of the completed document. Default firm is Impact Capital Partners, default advisor is Brett Stone.",
+      "description": "Generates a quarterly ICP client review document and saves it to SharePoint. Call this when an advisor asks to generate a client review, quarterly report, or ICP report. Returns the SharePoint URL of the completed document. Default firm is Demo Firm, default advisor is Demo Advisor.",
       "parameters": {
         "type": "object",
         "required": ["clientName", "reportPeriod", "portfolioValue", "ytdReturn"],
         "properties": {
           "firmName": {
             "type": "string",
-            "description": "Firm name. Default: Impact Capital Partners",
-            "default": "Impact Capital Partners"
+            "description": "Firm name. Default: Demo Firm",
+            "default": "Demo Firm"
           },
           "clientName": {
             "type": "string",
@@ -33,8 +33,8 @@
           },
           "advisorName": {
             "type": "string",
-            "description": "Advisor's full name. Default: Brett Stone",
-            "default": "Brett Stone"
+            "description": "Advisor's full name. Default: Demo Advisor",
+            "default": "Demo Advisor"
           },
           "accountNumber": {
             "type": "string",

@@ -21,7 +21,7 @@ auditLog(contactId, "Action Label", "Summary text", {});
 
 function auditLog(contactId, action, summary, details) {
   var d = JSON.stringify({
-    content: "[DAX] " + action + "\nDate: " + timestamp + "\nAdvisor: Brett Stone\n" + summary,
+    content: "[DAX] " + action + "\nDate: " + timestamp + "\nAdvisor: Demo Advisor\n" + summary,
     linked_to: [{ id: contactId, type: "Contact" }],
     tags: [{ name: "DAX" }, { name: "Automated" }]
   });

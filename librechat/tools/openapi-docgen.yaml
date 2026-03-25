@@ -21,7 +21,7 @@ paths:
         Creates a quarterly client review document by filling a Word template
         with the provided data and uploading it to SharePoint. Returns the
         SharePoint URL of the completed document. Default firm is Impact
-        Capital Partners, default advisor is Brett Stone.
+        Capital Partners, default advisor is Demo Advisor.
       requestBody:
         required: true
         content:

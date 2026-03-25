@@ -49,9 +49,9 @@ var isDraft = userText.indexOf("send") < 0;
 if (!toEmail && !isDraft) return "Please provide the recipient email address.";
 
 // Build email
-var body = "Dear Client,\\n\\nThis is a follow-up from your advisor at Dakona.\\n\\nBest regards,\\nBrett Stone";
-if (userText.indexOf("review") >= 0) body = "Dear Client,\\n\\nYour quarterly review is ready. Please see the attached report for a summary of your portfolio performance.\\n\\nPlease let me know if you have any questions or would like to schedule a follow-up meeting.\\n\\nBest regards,\\nBrett Stone";
-if (userText.indexOf("meeting") >= 0 || userText.indexOf("schedule") >= 0) body = "Dear Client,\\n\\nI would like to schedule a meeting to discuss your portfolio and financial goals. Please let me know your availability.\\n\\nBest regards,\\nBrett Stone";
+var body = "Dear Client,\\n\\nThis is a follow-up from your advisor at Dakona.\\n\\nBest regards,\\nDemo Advisor";
+if (userText.indexOf("review") >= 0) body = "Dear Client,\\n\\nYour quarterly review is ready. Please see the attached report for a summary of your portfolio performance.\\n\\nPlease let me know if you have any questions or would like to schedule a follow-up meeting.\\n\\nBest regards,\\nDemo Advisor";
+if (userText.indexOf("meeting") >= 0 || userText.indexOf("schedule") >= 0) body = "Dear Client,\\n\\nI would like to schedule a meeting to discuss your portfolio and financial goals. Please let me know your availability.\\n\\nBest regards,\\nDemo Advisor";
 
 if (isDraft || !toEmail) {
   // Save as draft

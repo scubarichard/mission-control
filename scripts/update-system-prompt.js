@@ -15,8 +15,8 @@ const oldBlock = `      When an advisor asks you to generate a client review, qu
       4. Present the SharePoint link to the advisor when the document is ready
 
       Default values (do not ask for these unless the advisor wants to change them):
-      - firmName: Impact Capital Partners
-      - advisorName: Brett Stone
+      - firmName: Demo Firm
+      - advisorName: Demo Advisor
       - meetingLocation: Zoom
       - reportDate: today's date
       - reportPeriod: Q1 2026
@@ -35,8 +35,8 @@ const newBlock = `      When an advisor asks you to generate a client review, qu
       clientName, firmName, reportPeriod, reportDate, advisorName, accountNumber, accountType, riskProfile, meetingDate, meetingLocation, attendees, meetingDuration, discussionPoint1, discussionPoint2, discussionPoint3, advisorNotes, portfolioValue, ytdReturn, benchmarkReturn, vsBenchmark, goal1, goal2, goal3, goalsProgressNotes, action1, action1Owner, action1Due, action2, action2Owner, action2Due, action3, action3Owner, action3Due, nextMeetingDate, nextMeetingAgenda
 
       Default values (use without asking):
-      - firmName: Impact Capital Partners
-      - advisorName: Brett Stone
+      - firmName: Demo Firm
+      - advisorName: Demo Advisor
       - meetingLocation: Zoom
       - reportDate: today's date
       - reportPeriod: Q1 2026

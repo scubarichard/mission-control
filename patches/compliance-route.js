@@ -57,7 +57,7 @@ module.exports = function(app) {
         var client = (n.linked_to && n.linked_to[0]) ? n.linked_to[0].name : 'Unknown';
         return {
           id: n.id, date: n.created_at, client: client, action: action,
-          advisor: advisorMatch ? advisorMatch[1].trim() : 'Brett Stone',
+          advisor: advisorMatch ? advisorMatch[1].trim() : 'Demo Advisor',
           details: content.substring(0, 200), raw: content
         };
       }).sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
@@ -125,7 +125,7 @@ module.exports = function(app) {
           timestamp: n.created_at,
           severity: severity,
           status: status,
-          advisorName: advMatch ? advMatch[1].trim() : 'Brett Stone',
+          advisorName: advMatch ? advMatch[1].trim() : 'Demo Advisor',
           clientName: client,
           conversationId: convMatch ? convMatch[1].trim() : '',
           triggers: triggers,

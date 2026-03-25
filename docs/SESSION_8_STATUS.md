@@ -99,4 +99,4 @@ The Schwab Processor only has a webhook trigger. A separate scheduled workflow t
 
 1. **Wire Schwab trigger in DAX Router** — detect "schwab" / "all clients" / "generate all" → call Schwab webhook → stream 5 links back via SSE
 2. **Test full DAX chat flow** — advisor types "Generate ICP reports from Schwab file" → 5 SharePoint links appear in chat
-3. **Demo readiness check** — single client ICP + bulk Schwab both working, ready to show Brett Stone
+3. **Demo readiness check** — single client ICP + bulk Schwab both working, ready to show Demo Advisor

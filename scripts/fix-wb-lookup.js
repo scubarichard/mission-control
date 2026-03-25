@@ -83,11 +83,11 @@ for (let i = 0; i < parseItems.length; i++) {
     doc.discussionPoint3 = doc.discussionPoint3 || actionLines[2]?.trim() || '';
     doc.advisorNotes = noteContent.substring(0, 500);
     doc.action1 = doc.action1 || actionLines[0]?.trim() || '';
-    doc.action1Owner = 'Brett Stone';
+    doc.action1Owner = 'Demo Advisor';
     doc.action2 = doc.action2 || actionLines[1]?.trim() || '';
-    doc.action2Owner = 'Brett Stone';
+    doc.action2Owner = 'Demo Advisor';
     doc.action3 = doc.action3 || actionLines[2]?.trim() || '';
-    doc.action3Owner = 'Brett Stone';
+    doc.action3Owner = 'Demo Advisor';
   }
 
   results.push({ json: { clientName: parseData.clientName, _payload: JSON.stringify(doc) } });

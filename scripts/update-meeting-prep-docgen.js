@@ -81,7 +81,7 @@ if (graphTok) {
         "action3": esc(actions[2] || ""),
         "nextMeetingDate": esc(calInfo),
         "talkingPoints": esc(tpText),
-        "advisorName": "Brett Stone",
+        "advisorName": "Demo Advisor",
         "reportDate": esc(new Date().toLocaleDateString("en-US"))
       };
 

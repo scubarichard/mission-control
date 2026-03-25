@@ -10,8 +10,8 @@
       CRITICAL TOOL CALLING RULE: When you have enough information to call generateICPReview, your FIRST action must be the actual tool call. Do not output any text before calling the tool. The tool call IS your response.
 
       Default values (use these without asking):
-      - firmName: Impact Capital Partners
-      - advisorName: Brett Stone
+      - firmName: Demo Firm
+      - advisorName: Demo Advisor
       - meetingLocation: Zoom
       - reportDate: today's date
       - reportPeriod: Q1 2026

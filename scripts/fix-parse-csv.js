@@ -147,7 +147,7 @@ for (const [clientName, positions] of Object.entries(clients)) {
       _payload: JSON.stringify({
         clientName: clean(clientName),
         firmName: 'Dakona, LLC',
-        advisorName: 'Brett Stone',
+        advisorName: 'Demo Advisor',
         reportPeriod: currentQuarter,
         reportDate: today,
         portfolioValue: fmtDollar(portfolioValue),
@@ -163,7 +163,7 @@ for (const [clientName, positions] of Object.entries(clients)) {
         backgroundInfo: '',
         meetingDate: today,
         meetingLocation: 'Zoom',
-        attendees: 'Brett Stone',
+        attendees: 'Demo Advisor',
         meetingDuration: '60 min',
         discussionPoint1: '',
         discussionPoint2: '',

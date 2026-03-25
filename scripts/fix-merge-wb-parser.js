@@ -94,7 +94,7 @@ for (let i = 0; i < parseItems.length; i++) {
         const dueMatch = text.match(/(?:by|before|due)\\s+([A-Z][a-z]+ \\d+(?:,?\\s*\\d{4})?|year end|end of [A-Za-z]+)/i);
         numberedActions.push({
           action: dueMatch ? text.replace(dueMatch[0], '').trim() : text,
-          owner: 'Brett Stone',
+          owner: 'Demo Advisor',
           due: dueMatch ? dueMatch[1] : ''
         });
       }
@@ -105,18 +105,18 @@ for (let i = 0; i < parseItems.length; i++) {
           /action|follow.?up|next step|schedule|review|rebalance|update|consider|evaluate|discuss/i.test(s)
         ).slice(0, 3);
         for (const s of actionSentences) {
-          numberedActions.push({ action: s.trim(), owner: 'Brett Stone', due: '' });
+          numberedActions.push({ action: s.trim(), owner: 'Demo Advisor', due: '' });
         }
       }
 
       doc.action1 = doc.action1 || numberedActions[0]?.action || '';
-      doc.action1Owner = numberedActions[0]?.owner || 'Brett Stone';
+      doc.action1Owner = numberedActions[0]?.owner || 'Demo Advisor';
       doc.action1Due = numberedActions[0]?.due || '';
       doc.action2 = doc.action2 || numberedActions[1]?.action || '';
-      doc.action2Owner = numberedActions[1]?.owner || 'Brett Stone';
+      doc.action2Owner = numberedActions[1]?.owner || 'Demo Advisor';
       doc.action2Due = numberedActions[1]?.due || '';
       doc.action3 = doc.action3 || numberedActions[2]?.action || '';
-      doc.action3Owner = numberedActions[2]?.owner || 'Brett Stone';
+      doc.action3Owner = numberedActions[2]?.owner || 'Demo Advisor';
       doc.action3Due = numberedActions[2]?.due || '';
 
       // Discussion points — first 3 distinct sentences from note

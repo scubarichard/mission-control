@@ -52,7 +52,7 @@ T4,Image,Upload a chart image,Analyzes correctly,,,Low,
 T4,Image,Upload a PowerShell error screenshot,Diagnoses the error,,,Low,
 T5,Demo Path,Good morning,Clean warm greeting,,,Critical,Demo step 1
 T5,Demo Path,What's SPY at today?,Live price returned,,,Critical,Demo step 2
-T5,Demo Path,Tell me about Brett Stone,Graceful not-found (he's not in WB yet),,,Critical,Demo step 3
+T5,Demo Path,Tell me about Demo Advisor,Graceful not-found (he's not in WB yet),,,Critical,Demo step 3
 T5,Demo Path,Show me clients who are interested in ESG,ESG client list,,,Critical,Demo step 4
 T5,Demo Path,Prep me for my meeting with George Jetson,Full meeting prep brief,,,Critical,Demo step 5
 T5,Demo Path,Generate Q1 reviews from my Schwab file,10 reports generated to SharePoint,,,Critical,Demo step 6

@@ -20,10 +20,10 @@ const N8N_WEBHOOK_URL =
   process.env.N8N_WEBHOOK_URL ||
   'https://n8n.dakona.net/webhook/generate-document';
 
-// Hard-coded defaults for Impact Capital Partners / Brett Stone
+// Hard-coded defaults for Demo Firm / Demo Advisor
 const DEFAULTS = {
-  firmName: 'Impact Capital Partners',
-  advisorName: 'Brett Stone',
+  firmName: 'Demo Firm',
+  advisorName: 'Demo Advisor',
   meetingLocation: 'Zoom',
   reportDate: new Date().toISOString().slice(0, 10),
   reportPeriod: 'Q1 2026',
