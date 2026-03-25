@@ -1,6 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
 import { v4 as uuidv4 } from "uuid";
@@ -774,10 +773,9 @@ if (MODE === "sse") {
   const express = (await import("express")).default;
   const PORT = parseInt(process.env.PORT || "3001", 10);
   const AUTH_TOKEN = process.env.MCP_AUTH_TOKEN || "";
-  const KEEPALIVE_INTERVAL_MS = 25_000; // Azure idle timeout is 230s; ping well under that
+  const KEEPALIVE_INTERVAL = 4 * 60 * 1000; // 4 minutes — prevent Azure Container Apps idle timeout
 
   const app = express();
-  const sessions = new Map();
 
   // CORS — claude.ai requires cross-origin access to the SSE and messages endpoints
   app.use((req, res, next) => {
@@ -818,15 +816,15 @@ if (MODE === "sse") {
 
   app.use(express.json());
 
-  // Health check — useful for Azure probes and manual testing
+  // Health check — used by Azure probes, keepalive ping, and manual testing
   app.get("/health", (_req, res) => {
     res.json({
       status: "ok",
       server: "dax-dev",
-      transport: "streamable-http+sse",
-      activeSessions: sessions.size,
-      streamableSessions: Object.keys(transports).length,
-      uptimeSeconds: Math.floor(process.uptime()),
+      transport: "streamable-http",
+      activeSessions: Object.keys(transports).length,
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
     });
   });
 
@@ -875,6 +873,16 @@ if (MODE === "sse") {
     }
   });
 
+  // GET /mcp — SSE stream for server-to-client notifications (Streamable HTTP protocol)
+  app.get("/mcp", async (req, res) => {
+    const sessionId = req.headers["mcp-session-id"];
+    if (!sessionId || !transports[sessionId]) {
+      res.status(400).json({ error: "Invalid or missing session ID" });
+      return;
+    }
+    await transports[sessionId].handleRequest(req, res);
+  });
+
   app.delete("/mcp", async (req, res) => {
     const sessionId = req.headers["mcp-session-id"];
     const transport = transports[sessionId];
@@ -888,54 +896,21 @@ if (MODE === "sse") {
     }
   });
 
-  /* ── Legacy SSE transport (fallback) ────────────────────────────── */
-  // SSE endpoint — client connects here to establish the event stream
-  app.get("/sse", async (req, res) => {
-    console.log(`[SSE] New connection from ${req.ip}`);
-
-    const transport = new SSEServerTransport("/messages", res);
-    sessions.set(transport.sessionId, transport);
-
-    // Keepalive: send SSE comment every 25s to prevent Azure/proxy idle timeout
-    const ping = setInterval(() => {
+  // Self-ping keepalive — prevent Azure Container Apps from idling (5 min timeout)
+  function startKeepalive() {
+    setInterval(async () => {
       try {
-        res.write(": keepalive\n\n");
-      } catch {
-        clearInterval(ping);
+        const response = await fetch(`http://localhost:${PORT}/health`);
+        console.log(`[Keepalive] ping: ${response.status} at ${new Date().toISOString()}`);
+      } catch (e) {
+        console.log(`[Keepalive] failed: ${e.message}`);
       }
-    }, KEEPALIVE_INTERVAL_MS);
+    }, KEEPALIVE_INTERVAL);
+  }
 
-    // Create a fresh MCP server for this session
-    const mcpServer = new McpServer({ name: "dax-dev", version: "1.0.0" });
-    registerTools(mcpServer);
-
-    // Cleanup on disconnect
-    res.on("close", () => {
-      console.log(`[SSE] Connection closed: ${transport.sessionId}`);
-      clearInterval(ping);
-      sessions.delete(transport.sessionId);
-    });
-
-    await mcpServer.connect(transport);
-  });
-
-  // Messages endpoint — client POSTs JSON-RPC tool calls here
-  app.post("/messages", async (req, res) => {
-    const sessionId = req.query.sessionId;
-    const transport = sessions.get(sessionId);
-    if (!transport) {
-      return res.status(404).json({ error: "Session not found", sessionId });
-    }
-    await transport.handlePostMessage(req, res, req.body);
-  });
-
-  // Graceful shutdown — clean up both transport types
+  // Graceful shutdown
   async function shutdown(signal) {
     console.log(`[MCP] ${signal} received, shutting down...`);
-    for (const [sid, transport] of sessions) {
-      try { await transport.close(); } catch {}
-      sessions.delete(sid);
-    }
     for (const sid of Object.keys(transports)) {
       try { await transports[sid].close(); } catch {}
       delete transports[sid];
@@ -947,14 +922,14 @@ if (MODE === "sse") {
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`DAX MCP server listening on http://0.0.0.0:${PORT}`);
-    console.log(`  POST /mcp      — Streamable HTTP (claude.ai)`);
+    console.log(`  POST   /mcp    — Streamable HTTP (initialize + tool calls)`);
+    console.log(`  GET    /mcp    — SSE stream (server notifications)`);
     console.log(`  DELETE /mcp    — Session cleanup`);
-    console.log(`  GET  /sse      — Legacy SSE stream`);
-    console.log(`  POST /messages — Legacy JSON-RPC`);
-    console.log(`  GET  /health   — Health check`);
-    console.log(`  Keepalive: every ${KEEPALIVE_INTERVAL_MS / 1000}s (SSE)`);
+    console.log(`  GET    /health — Health check`);
+    console.log(`  Keepalive: self-ping every ${KEEPALIVE_INTERVAL / 1000}s`);
     if (AUTH_TOKEN) console.log(`  Auth: Bearer token required`);
     else console.log(`  Auth: NONE (set MCP_AUTH_TOKEN to enable)`);
+    startKeepalive();
   });
 
 } else {

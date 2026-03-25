@@ -23,6 +23,7 @@ RUN npm ci --omit=dev
 COPY server.js .
 
 ENV MCP_TRANSPORT=sse
+# Note: MCP_TRANSPORT=sse enables HTTP server mode (Streamable HTTP on /mcp)
 ENV PORT=3001
 ENV DAX_REPO_PATH=/repo
 
