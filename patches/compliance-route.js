@@ -13,6 +13,9 @@ module.exports = function(app) {
 
   // Data API — fetches DAX audit records from Wealthbox
   app.get('/compliance/data', function(req, res) {
+    var token = req.query.token || req.headers['x-compliance-token'] || '';
+    if (token !== 'dax-compliance-2026') return res.status(401).json({ error: 'Unauthorized' });
+
     var WB_TOKEN = process.env.WEALTHBOX_API_TOKEN || '';
     if (!WB_TOKEN) return res.status(500).json({ error: 'Not configured' });
 
