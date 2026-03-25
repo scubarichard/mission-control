@@ -26,6 +26,8 @@ const N8N_INSTANCES = {
   vince: { url: VINCE_N8N_URL, apiKey: VINCE_N8N_API_KEY, label: "Vince/Tech Smart" }
 };
 function getN8nInstance(i) { return N8N_INSTANCES[i||"dakona"]||N8N_INSTANCES.dakona; }
+const FMP_API_KEY = process.env.FMP_API_KEY || "d65SRP1CgzVzaMfhwEniVWMLF7pWNwIn";
+const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY || "d7223bpr01qjeeefjd60d7223bpr01qjeeefjd6g";
 const CLICKUP_API_KEY = process.env.CLICKUP_API_KEY || "pk_106144226_VOUJ8CKLMYGIIB8JQHMQEMS83LWFH8M7";
 const CLICKUP_BASE = "https://api.clickup.com/api/v2";
 const MAKE_API_KEY = process.env.MAKE_API_KEY || "8ce569c4-a7a9-492b-a461-3aa8317ce6db";
