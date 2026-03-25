@@ -50,6 +50,21 @@
     .spinner { width: 32px; height: 32px; border: 3px solid #2a2f3e; border-top-color: #2E6DA4; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .footer { padding: 16px 32px; border-top: 1px solid #2a2f3e; font-size: 12px; color: #6b7280; display: flex; justify-content: space-between; }
+    .tab-nav { display: flex; gap: 0; background: #161b27; border-bottom: 1px solid #2a2f3e; padding: 0 32px; }
+    .tab-btn { background: none; border: none; color: #6b7280; padding: 14px 24px; font-size: 14px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+    .tab-btn:hover { color: #e0e0e0; }
+    .tab-btn.active { color: #2E6DA4; border-bottom-color: #2E6DA4; }
+    .badge-red { background: #dc2626; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 6px; }
+    .badge-critical { background: #7f1d1d; color: #fca5a5; }
+    .badge-high { background: #78350f; color: #fbbf24; }
+    .badge-medium { background: #1e3a5f; color: #60a5fa; }
+    .badge-cleared { background: #1e3d2f; color: #34d399; }
+    .badge-escalated { background: #4c1d95; color: #c4b5fd; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .flag-grid { display: grid; grid-template-columns: 140px 150px 100px 1fr 120px 100px; }
+    .trigger-tag { display: inline-block; background: #1e2435; border: 1px solid #2a2f3e; padding: 4px 12px; border-radius: 20px; font-size: 12px; margin: 4px; }
+    .trigger-tag .remove { margin-left: 8px; color: #dc2626; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -59,6 +74,12 @@
     <span class="header-badge">SEC Rule 204-2</span>
   </div>
 </div>
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('audit')">Audit Log</button>
+  <button class="tab-btn" onclick="switchTab('flags')">Review Queue <span id="pending-count" class="badge-red" style="display:none"></span></button>
+  <button class="tab-btn" onclick="switchTab('settings')">Flag Settings</button>
+</div>
+<div id="tab-audit" class="tab-content active">
 <div class="stats-bar">
   <div class="stat-card"><div class="label">Total Actions</div><div class="value" id="stat-total">—</div><div class="sub">All time</div></div>
   <div class="stat-card"><div class="label">Reports Generated</div><div class="value" id="stat-reports">—</div><div class="sub">Quarterly reviews</div></div>
@@ -87,6 +108,59 @@
   <div class="table-wrapper">
     <div class="table-header"><div>Date & Time</div><div>Client</div><div>Action</div><div>Details</div><div>Advisor</div></div>
     <div id="records-container"><div class="loading"><div class="spinner"></div>Loading compliance records...</div></div>
+  </div>
+</div>
+</div>
+<div id="tab-flags" class="tab-content">
+  <div class="stats-bar" style="grid-template-columns: repeat(3, 1fr)">
+    <div class="stat-card"><div class="label">Pending Review</div><div class="value" id="stat-pending">-</div><div class="sub">Awaiting CCO action</div></div>
+    <div class="stat-card"><div class="label">Cleared</div><div class="value" id="stat-cleared">-</div><div class="sub">Reviewed and cleared</div></div>
+    <div class="stat-card"><div class="label">Escalated</div><div class="value" id="stat-escalated">-</div><div class="sub">Requires action</div></div>
+  </div>
+  <div class="toolbar">
+    <select class="filter-select" id="flag-status-filter" onchange="loadFlags()">
+      <option value="PENDING">Pending Review</option>
+      <option value="CLEARED">Cleared</option>
+      <option value="ESCALATED">Escalated</option>
+      <option value="all">All Flags</option>
+    </select>
+    <select class="filter-select" id="flag-severity-filter" onchange="filterFlags()">
+      <option value="">All Severities</option>
+      <option value="CRITICAL">Critical</option>
+      <option value="HIGH">High</option>
+      <option value="MEDIUM">Medium</option>
+    </select>
+    <button class="btn btn-primary" onclick="loadFlags()">Refresh</button>
+  </div>
+  <div class="content">
+    <div class="table-wrapper">
+      <div class="table-header flag-grid"><div>Date</div><div>Client</div><div>Severity</div><div>Triggers</div><div>Advisor</div><div>Action</div></div>
+      <div id="flags-container"><div class="empty-state"><h3>Select Review Queue tab to load flags</h3></div></div>
+    </div>
+  </div>
+</div>
+<div id="tab-settings" class="tab-content">
+  <div class="content">
+    <h3 style="margin-bottom:16px;color:#fff">Custom Review Triggers</h3>
+    <p style="color:#6b7280;margin-bottom:20px;font-size:14px">These phrases are scanned in every DAX conversation. Add phrases specific to your firm's compliance requirements.</p>
+    <div class="table-wrapper" style="margin-bottom:24px">
+      <div style="padding:12px 20px;background:#161b27;font-size:11px;text-transform:uppercase;color:#6b7280;font-weight:600">Default Triggers (CCO Best Practices — Always Active)</div>
+      <div style="padding:16px 20px;font-size:13px;color:#9ca3af;line-height:2">guarantee | guaranteed return | risk-free | I recommend | should I buy | should I sell | will go up | will go down | best investment | insider | complaint | lawsuit | legal action | withdraw all | switch everything | move everything | market timing | beat the market | outperform | promise</div>
+    </div>
+    <div class="table-wrapper">
+      <div style="padding:12px 20px;background:#161b27;font-size:11px;text-transform:uppercase;color:#6b7280;font-weight:600">Custom Triggers (Your Firm)</div>
+      <div id="custom-triggers-list" style="padding:16px 20px;min-height:40px"><span style="color:#6b7280">No custom triggers configured</span></div>
+      <div style="padding:16px 20px;border-top:1px solid #2a2f3e;display:flex;gap:12px;align-items:center">
+        <input type="text" id="new-phrase" placeholder="Enter trigger phrase..." class="search-box" style="flex:1">
+        <select id="new-severity" class="filter-select">
+          <option value="MEDIUM">Medium</option>
+          <option value="HIGH">High</option>
+          <option value="CRITICAL">Critical</option>
+        </select>
+        <input type="text" id="new-reason" placeholder="Reason..." class="search-box" style="flex:1">
+        <button class="btn btn-primary" onclick="addCustomTrigger()">Add</button>
+      </div>
+    </div>
   </div>
 </div>
 <div class="footer">
@@ -176,7 +250,121 @@ function exportCSV() {
   a.click();
 }
 
+var allFlags = [];
+var apiKey = '';
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelectorAll('.tab-btn')[tab === 'audit' ? 0 : tab === 'flags' ? 1 : 2].classList.add('active');
+  if (tab === 'flags') loadFlags();
+  if (tab === 'settings') loadCustomTriggers();
+}
+
+async function loadFlags() {
+  var key = sessionStorage.getItem('dax_compliance_key') || '';
+  if (!key) return;
+  apiKey = key;
+  document.getElementById('flags-container').innerHTML = '<div class="loading"><div class="spinner"></div>Loading review queue...</div>';
+  try {
+    var status = document.getElementById('flag-status-filter').value;
+    var r = await fetch('/compliance/flags?token=' + encodeURIComponent(key) + '&status=' + status);
+    if (!r.ok) throw new Error('API error: ' + r.status);
+    var data = await r.json();
+    allFlags = data.flags || [];
+    updateFlagStats(data);
+    filterFlags();
+  } catch(e) {
+    document.getElementById('flags-container').innerHTML = '<div class="empty-state"><h3>Error loading flags</h3><p>' + e.message + '</p></div>';
+  }
+}
+
+function updateFlagStats(data) {
+  var pending = (data.flags || []).filter(function(f) { return f.status === 'PENDING'; }).length;
+  var cleared = (data.flags || []).filter(function(f) { return f.status === 'CLEARED'; }).length;
+  var escalated = (data.flags || []).filter(function(f) { return f.status === 'ESCALATED'; }).length;
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-cleared').textContent = cleared;
+  document.getElementById('stat-escalated').textContent = escalated;
+  var badge = document.getElementById('pending-count');
+  if (pending > 0) { badge.textContent = pending; badge.style.display = 'inline'; }
+  else { badge.style.display = 'none'; }
+}
+
+function filterFlags() {
+  var severity = document.getElementById('flag-severity-filter').value;
+  var filtered = severity ? allFlags.filter(function(f) { return f.severity === severity; }) : allFlags;
+  renderFlags(filtered);
+}
+
+function renderFlags(flags) {
+  if (flags.length === 0) { document.getElementById('flags-container').innerHTML = '<div class="empty-state"><h3>No flags found</h3></div>'; return; }
+  document.getElementById('flags-container').innerHTML = flags.map(function(f) {
+    var date = new Date(f.timestamp || f.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+    var sevClass = f.severity === 'CRITICAL' ? 'badge-critical' : f.severity === 'HIGH' ? 'badge-high' : 'badge-medium';
+    var triggers = (f.triggers || []).map(function(t) { return t.phrase; }).join(', ');
+    return '<div class="table-row flag-grid" onclick="showFlagDetail(\'' + f.id + '\')"><div style="color:#6b7280;font-size:12px">' + date + '</div><div style="font-weight:600">' + (f.clientName || 'Unknown') + '</div><div><span class="badge ' + sevClass + '">' + f.severity + '</span></div><div style="color:#9ca3af;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + triggers + '</div><div style="color:#6b7280;font-size:12px">' + (f.advisorName || 'Unknown') + '</div><div><span class="badge badge-' + (f.status || 'medium').toLowerCase() + '">' + (f.status || 'PENDING') + '</span></div></div>';
+  }).join('');
+}
+
+function showFlagDetail(flagId) {
+  var f = allFlags.find(function(x) { return x.id === flagId; });
+  if (!f) return;
+  document.getElementById('modal-title').textContent = 'Compliance Flag — ' + f.severity;
+  var triggers = (f.triggers || []).map(function(t) { return '[' + t.severity + '] "' + t.phrase + '" — ' + t.reason; }).join('<br>');
+  document.getElementById('modal-content').innerHTML = '<div class="modal-field"><label>Status</label><select id="flag-status-select" class="filter-select" style="width:100%"><option value="PENDING"' + (f.status === 'PENDING' ? ' selected' : '') + '>Pending Review</option><option value="CLEARED"' + (f.status === 'CLEARED' ? ' selected' : '') + '>Cleared — No Action Required</option><option value="ESCALATED"' + (f.status === 'ESCALATED' ? ' selected' : '') + '>Escalated — Action Required</option></select></div><div class="modal-field"><label>Client</label><div class="val">' + (f.clientName || 'Unknown') + '</div></div><div class="modal-field"><label>Advisor</label><div class="val">' + (f.advisorName || 'Unknown') + '</div></div><div class="modal-field"><label>Date</label><div class="val">' + new Date(f.timestamp || f.createdAt).toLocaleString() + '</div></div><div class="modal-field"><label>Triggers Fired</label><div class="val">' + triggers + '</div></div><div class="modal-field"><label>User Message</label><div class="val" style="font-style:italic">"' + (f.userMessage || '').replace(/</g, '&lt;') + '"</div></div><div class="modal-field"><label>DAX Response</label><div class="val" style="font-style:italic">"' + (f.daxResponse || '').replace(/</g, '&lt;') + '"</div></div><div class="modal-field"><label>Reviewer Notes</label><textarea id="reviewer-note" rows="3" style="width:100%;background:#161b27;color:#e0e0e0;border:1px solid #2a2f3e;padding:8px;border-radius:4px;font-family:inherit">' + (f.reviewerNote || '') + '</textarea></div><div style="display:flex;gap:12px;margin-top:16px"><button class="btn btn-primary" onclick="updateFlag(\'' + flagId + '\')">Save Review</button><button class="btn btn-export" onclick="document.getElementById(\'modal-overlay\').classList.remove(\'active\')">Cancel</button></div>';
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+async function updateFlag(flagId) {
+  var status = document.getElementById('flag-status-select').value;
+  var note = document.getElementById('reviewer-note').value;
+  var key = sessionStorage.getItem('dax_compliance_key') || '';
+  await fetch('/compliance/flag-update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: key, flagId: flagId, status: status, reviewerNote: note, reviewedBy: 'CCO' }) });
+  document.getElementById('modal-overlay').classList.remove('active');
+  loadFlags();
+}
+
+async function loadCustomTriggers() {
+  var key = sessionStorage.getItem('dax_compliance_key') || '';
+  if (!key) return;
+  try {
+    var r = await fetch('/compliance/triggers?token=' + encodeURIComponent(key));
+    if (!r.ok) return;
+    var data = await r.json();
+    var triggers = data.triggers || [];
+    if (triggers.length === 0) { document.getElementById('custom-triggers-list').innerHTML = '<span style="color:#6b7280">No custom triggers configured</span>'; return; }
+    document.getElementById('custom-triggers-list').innerHTML = triggers.map(function(t) {
+      return '<span class="trigger-tag">' + t.phrase + ' <span class="badge badge-' + t.severity.toLowerCase() + '" style="font-size:10px">' + t.severity + '</span><span class="remove" onclick="removeCustomTrigger(\'' + t.phrase.replace(/'/g, "\\'") + '\')">&times;</span></span>';
+    }).join('');
+  } catch(e) {}
+}
+
+async function addCustomTrigger() {
+  var phrase = document.getElementById('new-phrase').value.trim();
+  var severity = document.getElementById('new-severity').value;
+  var reason = document.getElementById('new-reason').value.trim() || 'Custom firm trigger';
+  if (!phrase) return;
+  var key = sessionStorage.getItem('dax_compliance_key') || '';
+  await fetch('/compliance/triggers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: key, action: 'add', phrase: phrase, severity: severity, reason: reason }) });
+  document.getElementById('new-phrase').value = '';
+  document.getElementById('new-reason').value = '';
+  loadCustomTriggers();
+}
+
+async function removeCustomTrigger(phrase) {
+  var key = sessionStorage.getItem('dax_compliance_key') || '';
+  await fetch('/compliance/triggers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: key, action: 'remove', phrase: phrase }) });
+  loadCustomTriggers();
+}
+
 loadRecords();
+// Check for pending flags on load
+setTimeout(function() {
+  var key = sessionStorage.getItem('dax_compliance_key');
+  if (key) { apiKey = key; fetch('/compliance/flags?token=' + encodeURIComponent(key) + '&status=PENDING').then(function(r) { return r.json(); }).then(function(d) { var c = (d.flags || []).length; var badge = document.getElementById('pending-count'); if (c > 0) { badge.textContent = c; badge.style.display = 'inline'; } }).catch(function(){}); }
+}, 1000);
 </script>
 </body>
 </html>
