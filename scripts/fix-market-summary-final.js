@@ -38,18 +38,18 @@ const TOOL_CODE = [
   '  });',
   '}',
   '',
-  '// 2. FMP quotes',
-  'var prices = [];',
-  'var symbols = ["SPY", "QQQ", "IWM", "TLT"];',
+  '// 2. Finnhub quotes — full major indices',
+  'var symbols = ["SPY", "DIA", "QQQ", "IWM", "TLT", "GLD", "VIXY"];',
+  'var labelMap = { SPY: "S&P 500", DIA: "Dow Jones", QQQ: "Nasdaq 100", IWM: "Russell 2000", TLT: "20yr Treasury", GLD: "Gold", VIXY: "VIX (VIXY)" };',
+  'var quoteLines = [];',
   'for (var i = 0; i < symbols.length; i++) {',
-  '  var qd = await httpGet("financialmodelingprep.com", "/stable/quote?symbol=" + symbols[i] + "&apikey=' + FMP_KEY + '");',
-  '  if (qd && Array.isArray(qd) && qd.length > 0) prices.push(qd[0]);',
+  '  var qd = await httpGet("finnhub.io", "/api/v1/quote?symbol=" + symbols[i] + "&token=' + FINNHUB_KEY + '");',
+  '  if (qd && qd.c > 0) {',
+  '    var pct = qd.pc > 0 ? ((qd.c - qd.pc) / qd.pc * 100) : 0;',
+  '    quoteLines.push((labelMap[symbols[i]] || symbols[i]) + ": $" + qd.c.toFixed(2) + " (" + (pct >= 0 ? "+" : "") + pct.toFixed(2) + "%)");',
+  '  }',
   '}',
-  '',
-  'var snapshot = prices.map(function(q) {',
-  '  var pct = q.changesPercentage || 0;',
-  '  return q.symbol + ": $" + (q.price || 0).toFixed(2) + " (" + (pct >= 0 ? "+" : "") + pct.toFixed(2) + "%)";',
-  '}).join(" | ");',
+  'var snapshot = quoteLines.join("\\n");',
   '',
   '// 3. Format',
   'var today = new Date().toLocaleDateString("en-US", { timeZone: "America/Chicago", weekday: "long", month: "long", day: "numeric", year: "numeric" });',
@@ -74,6 +74,26 @@ async function main() {
 
   tool.parameters.jsCode = TOOL_CODE;
   console.log('Updated tool code (' + TOOL_CODE.length + ' chars)');
+
+  // Update system prompt — index defaults
+  const agent = router.nodes.find(n => n.name === 'DAX Agent');
+  if (agent) {
+    let sp = agent.parameters.options.systemMessage || '';
+    const indexBlock = 'MARKET QUERIES — INDEX DEFAULTS:\nWhen asked about "the market", "markets today", "how are markets doing" with no specific ticker — always call get_market_summary which returns ALL major indices.\nNever respond to a general market question with only SPY.\nDefault index set: S&P 500, Dow, Nasdaq, Russell 2000, Treasuries, Gold, VIX, US Dollar';
+    if (sp.indexOf('INDEX DEFAULTS') < 0) {
+      // Insert after the MARKET COMMENTARY block
+      if (sp.indexOf('CRITICAL — MARKET COMMENTARY') >= 0) {
+        sp = sp.replace(
+          /NEVER say things like "the Fed is watching inflation" without calling the tool first\./,
+          'NEVER say things like "the Fed is watching inflation" without calling the tool first.\n\n' + indexBlock
+        );
+      } else {
+        sp += '\n\n' + indexBlock;
+      }
+      agent.parameters.options.systemMessage = sp;
+      console.log('Updated system prompt with index defaults');
+    }
+  }
 
   const r = await fetch(N8N_URL + '/api/v1/workflows/' + WF_ID, {
     method: 'PUT',
