@@ -17,24 +17,30 @@ const AZURE_SUB = process.env.AZURE_SUBSCRIPTION || "";
 const AZURE_RG = process.env.AZURE_RG || "rg-dax-dakona-pilot";
 const AZURE_CA = process.env.AZURE_CONTAINER_APP || "ca-dax-dakona-pilot";
 const N8N_URL = process.env.N8N_URL || "https://n8n.dakona.net";
-const N8N_API_KEY = process.env.N8N_API_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiYWM0MmE5ODUtMTA5Ni00ODkxLTliYzQtZGQxYTBiNDNiYjFhIiwiaWF0IjoxNzczNzE0OTgwfQ.gBSwNl_frCaOvQylr5DLQubJmRGqcT-LRJpzcTWdCP4";
+const N8N_API_KEY = process.env.N8N_API_KEY || "";
 
 const VINCE_N8N_URL = process.env.VINCE_N8N_URL || "https://accessmedellin.app.n8n.cloud";
-const VINCE_N8N_API_KEY = process.env.VINCE_N8N_API_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxZDU3NjU5OC0xZDNlLTQzYjQtYmUxOC0yZTFjYmJhOGJlNmEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiZjQxNTAyMzMtMTQyYy00YTVkLTg1OGQtMGMxZGM1NmUzZDkyIiwiaWF0IjoxNzc0MTQ3NDY3fQ.5J8PuJyTmRdM2V2duDB44cdS_kJ9xkI2cd_4utE4rVc";
+const VINCE_N8N_API_KEY = process.env.VINCE_N8N_API_KEY || "";
 const N8N_INSTANCES = {
   dakona: { url: N8N_URL, apiKey: N8N_API_KEY, label: "Dakona" },
   vince: { url: VINCE_N8N_URL, apiKey: VINCE_N8N_API_KEY, label: "Vince/Tech Smart" }
 };
 function getN8nInstance(i) { return N8N_INSTANCES[i||"dakona"]||N8N_INSTANCES.dakona; }
-const FMP_API_KEY = process.env.FMP_API_KEY || "d65SRP1CgzVzaMfhwEniVWMLF7pWNwIn";
-const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY || "d7223bpr01qjeeefjd60d7223bpr01qjeeefjd6g";
-const CLICKUP_API_KEY = process.env.CLICKUP_API_KEY || "pk_106144226_VOUJ8CKLMYGIIB8JQHMQEMS83LWFH8M7";
+const FMP_API_KEY = process.env.FMP_API_KEY || "";
+const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY || "";
+const CLICKUP_API_KEY = process.env.CLICKUP_API_KEY || "";
 const CLICKUP_BASE = "https://api.clickup.com/api/v2";
-const MAKE_API_KEY = process.env.MAKE_API_KEY || "8ce569c4-a7a9-492b-a461-3aa8317ce6db";
+const MAKE_API_KEY = process.env.MAKE_API_KEY || "";
 const MAKE_BASE = "https://us2.make.com/api/v2";
 const SLACK_TOKEN = process.env.RPE_SLACK_TOKEN || "";
 const DESKTOP_BRIDGE_URL = process.env.DESKTOP_BRIDGE_URL || "";
 const DESKTOP_BRIDGE_SECRET = process.env.DESKTOP_BRIDGE_SECRET || "";
+
+/* ── Startup checks ───────────────────────────────────────────────── */
+const REQUIRED_ENV_VARS = ['N8N_API_KEY', 'FMP_API_KEY', 'FINNHUB_API_KEY'];
+for (const v of REQUIRED_ENV_VARS) {
+  if (!process.env[v]) console.warn(`WARNING: ${v} not set in environment`);
+}
 
 const PWSH = process.platform === "win32" ? "powershell.exe" : "pwsh";
 
