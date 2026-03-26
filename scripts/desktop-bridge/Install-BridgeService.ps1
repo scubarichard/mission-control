@@ -4,13 +4,13 @@
 # ============================================================
 
 $ErrorActionPreference = "Stop"
-$BridgeDir = "P:\_clients\dakona\dax\scripts\desktop-bridge"
+$BridgeDir   = "P:\_clients\dakona\dax\scripts\desktop-bridge"
 $ServiceName = "DAX-Desktop-Bridge"
 
 Write-Host "=== DAX Desktop Bridge Service Installer ===" -ForegroundColor Cyan
 
 # Step 1: Check Node.js
-Write-Host "`n[1/5] Checking Node.js..." -ForegroundColor Yellow
+Write-Host "`n[1/6] Checking Node.js..." -ForegroundColor Yellow
 try {
     $nodeVersion = node --version
     Write-Host "  Node.js found: $nodeVersion" -ForegroundColor Green
@@ -20,14 +20,14 @@ try {
 }
 
 # Step 2: Install npm dependencies
-Write-Host "`n[2/5] Installing npm dependencies..." -ForegroundColor Yellow
+Write-Host "`n[2/6] Installing npm dependencies..." -ForegroundColor Yellow
 Push-Location $BridgeDir
 npm install --silent
 Pop-Location
 Write-Host "  Done" -ForegroundColor Green
 
 # Step 3: Create .env if missing
-Write-Host "`n[3/5] Checking .env config..." -ForegroundColor Yellow
+Write-Host "`n[3/6] Checking .env config..." -ForegroundColor Yellow
 $envFile = Join-Path $BridgeDir ".env"
 if (-not (Test-Path $envFile)) {
     $bytes = New-Object Byte[] 24
@@ -45,7 +45,7 @@ BRIDGE_LOG=$BridgeDir\bridge.log
 }
 
 # Step 4: Install NSSM
-Write-Host "`n[4/5] Installing NSSM..." -ForegroundColor Yellow
+Write-Host "`n[4/6] Installing NSSM..." -ForegroundColor Yellow
 $nssmPath = "C:\Windows\System32\nssm.exe"
 if (-not (Test-Path $nssmPath)) {
     $zip = "$env:TEMP\nssm.zip"
@@ -57,8 +57,19 @@ if (-not (Test-Path $nssmPath)) {
     Write-Host "  NSSM already present" -ForegroundColor Green
 }
 
-# Step 5: Register and start service
-Write-Host "`n[5/5] Registering Windows service..." -ForegroundColor Yellow
+# Step 5: Get current user credentials
+# CRITICAL: Service must run as YOU (not SYSTEM) so it can access the P: mapped drive
+Write-Host "`n[5/6] Configuring service account..." -ForegroundColor Yellow
+$currentUser = "$env:USERDOMAIN\$env:USERNAME"
+Write-Host "  Service will run as: $currentUser" -ForegroundColor Gray
+Write-Host "  (Required for P: drive access - SYSTEM cannot see mapped drives)" -ForegroundColor Gray
+$password = Read-Host "  Enter your Windows password for $currentUser" -AsSecureString
+$plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+    [Runtime.InteropServices.Marshal]::SecureStringToBSTR($password)
+)
+
+# Step 6: Register and start service
+Write-Host "`n[6/6] Registering Windows service..." -ForegroundColor Yellow
 $nodePath = (Get-Command node).Source
 
 # Remove existing service if present
@@ -78,8 +89,14 @@ nssm set $ServiceName AppStderr "$BridgeDir\bridge-error.log"
 nssm set $ServiceName AppRotateFiles 1
 nssm set $ServiceName AppRotateBytes 1048576
 
+# Run as current user so P: drive is accessible
+nssm set $ServiceName ObjectName $currentUser $plainPassword
+
+# Clear password from memory
+$plainPassword = $null
+
 nssm start $ServiceName
-Start-Sleep -Seconds 3
+Start-Sleep -Seconds 5
 
 # Verify
 try {
@@ -88,10 +105,15 @@ try {
     Write-Host "Bridge running: $($health | ConvertTo-Json -Compress)" -ForegroundColor Green
     Write-Host "Starts automatically on every boot." -ForegroundColor Cyan
 } catch {
-    Write-Host "`n=== Check logs ===" -ForegroundColor Yellow
-    Write-Host "Service installed but health check failed."
-    $logPath = "$BridgeDir\bridge.log"
-    Write-Host "Log: $logPath"
+    $logPath = "$BridgeDir\bridge-error.log"
+    Write-Host "`n=== Health check failed - checking logs ===" -ForegroundColor Yellow
+    if (Test-Path $logPath) {
+        Get-Content $logPath -Tail 20
+    } else {
+        Write-Host "No error log found. Try running manually to debug:" -ForegroundColor Yellow
+        Write-Host "  cd $BridgeDir" -ForegroundColor White
+        Write-Host "  node bridge.js" -ForegroundColor White
+    }
 }
 
 $logPath = "$BridgeDir\bridge.log"
