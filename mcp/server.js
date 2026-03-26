@@ -9,39 +9,31 @@ import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";
 
-/* ── Config ─────────────────────────────────────────────────────────── */
+import {
+  creds,
+  loadFromKeyVault,
+  startCredentialRefresh,
+  getCredentialStatus,
+} from "./lib/kv-credentials.js";
 
-const REPO = process.env.DAX_REPO_PATH || "P:/_clients/dakona/dax";
+/* ── Static config (never rotated) ─────────────────────────────────── */
+
+const REPO     = process.env.DAX_REPO_PATH || "P:/_clients/dakona/dax";
 const AZURE_SUB = process.env.AZURE_SUBSCRIPTION || "";
-const AZURE_RG = process.env.AZURE_RG || "rg-dax-dakona-pilot";
-const AZURE_CA = process.env.AZURE_CONTAINER_APP || "ca-dax-dakona-pilot";
-const N8N_URL = process.env.N8N_URL || "https://n8n.dakona.net";
-const N8N_API_KEY = process.env.N8N_API_KEY || "";
-
-const VINCE_N8N_URL = process.env.VINCE_N8N_URL || "https://accessmedellin.app.n8n.cloud";
-const VINCE_N8N_API_KEY = process.env.VINCE_N8N_API_KEY || "";
-const N8N_INSTANCES = {
-  dakona: { url: N8N_URL, apiKey: N8N_API_KEY, label: "Dakona" },
-  vince: { url: VINCE_N8N_URL, apiKey: VINCE_N8N_API_KEY, label: "Vince/Tech Smart" }
-};
-function getN8nInstance(i) { return N8N_INSTANCES[i||"dakona"]||N8N_INSTANCES.dakona; }
-const FMP_API_KEY = process.env.FMP_API_KEY || "";
-const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY || "";
-const CLICKUP_API_KEY = process.env.CLICKUP_API_KEY || "";
+const AZURE_RG  = process.env.AZURE_RG || "rg-dax-dakona-pilot";
+const AZURE_CA  = process.env.AZURE_CONTAINER_APP || "ca-dax-dakona-pilot";
 const CLICKUP_BASE = "https://api.clickup.com/api/v2";
-const MAKE_API_KEY = process.env.MAKE_API_KEY || "";
-const MAKE_BASE = "https://us2.make.com/api/v2";
-const SLACK_TOKEN = process.env.RPE_SLACK_TOKEN || "";
-const DESKTOP_BRIDGE_URL = process.env.DESKTOP_BRIDGE_URL || "";
-const DESKTOP_BRIDGE_SECRET = process.env.DESKTOP_BRIDGE_SECRET || "";
-
-/* ── Startup checks ───────────────────────────────────────────────── */
-const REQUIRED_ENV_VARS = ['N8N_API_KEY', 'FMP_API_KEY', 'FINNHUB_API_KEY'];
-for (const v of REQUIRED_ENV_VARS) {
-  if (!process.env[v]) console.warn(`WARNING: ${v} not set in environment`);
-}
-
+const MAKE_BASE    = "https://us2.make.com/api/v2";
 const PWSH = process.platform === "win32" ? "powershell.exe" : "pwsh";
+
+// n8n instances — URLs are static; API keys come from creds (auto-refreshed)
+function getN8nInstance(i) {
+  const instances = {
+    dakona: { url: creds.N8N_URL,       apiKey: creds.N8N_API_KEY,       label: "Dakona" },
+    vince:  { url: creds.VINCE_N8N_URL, apiKey: creds.VINCE_N8N_API_KEY, label: "Vince/Tech Smart" },
+  };
+  return instances[i || "dakona"] || instances.dakona;
+}
 
 /* ── Helpers ────────────────────────────────────────────────────────── */
 
@@ -92,13 +84,13 @@ function resolvePath(relPath) {
 /* ── Desktop Bridge helper ──────────────────────────────────────────── */
 
 async function bridgeCall(tool, params) {
-  if (!DESKTOP_BRIDGE_URL) {
+  if (!creds.DESKTOP_BRIDGE_URL) {
     return "ERROR: DESKTOP_BRIDGE_URL is not configured. The desktop bridge is not available.";
   }
   try {
     const headers = { "Content-Type": "application/json" };
-    if (DESKTOP_BRIDGE_SECRET) headers["X-Bridge-Secret"] = DESKTOP_BRIDGE_SECRET;
-    const res = await fetch(`${DESKTOP_BRIDGE_URL}/execute/${tool}`, {
+    if (creds.DESKTOP_BRIDGE_SECRET) headers["X-Bridge-Secret"] = creds.DESKTOP_BRIDGE_SECRET;
+    const res = await fetch(`${creds.DESKTOP_BRIDGE_URL}/execute/${tool}`, {
       method: "POST",
       headers,
       body: JSON.stringify(params),
@@ -168,8 +160,8 @@ function registerTools(server) {
     }
   );
 
-  server.tool("search_code", "Search the DAX repo for a pattern (regex supported). Returns matching lines with file paths and line numbers.",
-    { pattern: z.string(), glob: z.string().optional().describe("File glob filter, e.g. '*.js' or '*.ps1'"), maxResults: z.number().optional().default(50) },
+  server.tool("search_code", "Search the DAX repo for a pattern (regex supported).",
+    { pattern: z.string(), glob: z.string().optional(), maxResults: z.number().optional().default(50) },
     async ({ pattern, glob, maxResults }) => {
       try {
         const globArg = glob ? `-- "${glob}"` : "";
@@ -184,7 +176,7 @@ function registerTools(server) {
   );
 
   server.tool("list_files", "List files and directories in the DAX repo. Supports glob patterns.",
-    { path: z.string().optional().default("."), pattern: z.string().optional().describe("Glob pattern like '**/*.js' or 'scripts/*.ps1'") },
+    { path: z.string().optional().default("."), pattern: z.string().optional() },
     async ({ path, pattern }) => {
       try {
         if (pattern) {
@@ -207,7 +199,7 @@ function registerTools(server) {
   );
 
   server.tool("git_diff", "Show git diff of uncommitted changes, or diff between branches/commits",
-    { ref: z.string().optional().describe("Branch, commit, or range like 'main..HEAD'. Omit for working tree diff.") },
+    { ref: z.string().optional() },
     async ({ ref }) => {
       try {
         const cmd = ref ? `git diff ${ref}` : "git diff";
@@ -219,7 +211,7 @@ function registerTools(server) {
   );
 
   server.tool("git_log", "Show recent git commit history",
-    { count: z.number().optional().default(10), path: z.string().optional().describe("Filter to commits touching this file/directory") },
+    { count: z.number().optional().default(10), path: z.string().optional() },
     async ({ count, path }) => {
       try {
         const pathArg = path ? `-- "${path}"` : "";
@@ -230,8 +222,7 @@ function registerTools(server) {
     }
   );
 
-  server.tool("git_pull", "Pull latest changes from the remote",
-    {},
+  server.tool("git_pull", "Pull latest changes from the remote", {},
     async () => {
       try {
         return { content: [{ type: "text", text: run("git pull --ff-only") }] };
@@ -241,7 +232,7 @@ function registerTools(server) {
     }
   );
 
-  server.tool("deploy_container_app", "Build and deploy a container app image via ACR. Defaults to rebuilding the MCP server itself.",
+  server.tool("deploy_container_app", "Build and deploy a container app image via ACR.",
     {
       imageName: z.string().optional().default("mcp-server"),
       dockerContext: z.string().optional().default("mcp"),
@@ -252,18 +243,15 @@ function registerTools(server) {
         const sub = AZURE_SUB ? `--subscription "${AZURE_SUB}"` : "";
         const acr = "acrdaxdakona";
         const contextPath = resolve(join(REPO, dockerContext));
-
         const buildOut = run(
           `az acr build --registry ${acr} -g ${AZURE_RG} ${sub} --image ${imageName}:latest --file ${contextPath}/Dockerfile ${contextPath}`,
           { timeout: 300_000 }
         );
         if (buildOut.includes("ERROR")) return { content: [{ type: "text", text: buildOut }], isError: true };
-
         const updateOut = run(
           `az containerapp update -n ${containerApp} -g ${AZURE_RG} ${sub} --image ${acr}.azurecr.io/${imageName}:latest`,
           { timeout: 120_000 }
         );
-
         return { content: [{ type: "text", text: `Deployed ${imageName}:latest to ${containerApp}\n\n${updateOut}` }] };
       } catch (err) {
         return { content: [{ type: "text", text: `ERROR: ${err.message}` }], isError: true };
@@ -295,6 +283,8 @@ function registerTools(server) {
     }
   );
 
+  // ── n8n tools ──────────────────────────────────────────────────────
+
   server.tool("n8n_list_workflows", "List all workflows from the n8n instance",
     { instance: z.enum(["dakona", "vince"]).optional().default("dakona") },
     async ({ instance }) => {
@@ -316,9 +306,10 @@ function registerTools(server) {
     { workflowId: z.string(), instance: z.enum(["dakona", "vince"]).optional().default("dakona") },
     async ({ workflowId, instance }) => {
       const n8n = getN8nInstance(instance);
-      const url = `${n8n.url}/api/v1/workflows/${workflowId}`;
       try {
-        const res = await fetch(url, { headers: { Accept: "application/json", "X-N8N-API-KEY": n8n.apiKey } });
+        const res = await fetch(`${n8n.url}/api/v1/workflows/${workflowId}`, {
+          headers: { Accept: "application/json", "X-N8N-API-KEY": n8n.apiKey }
+        });
         if (!res.ok) return { content: [{ type: "text", text: `ERROR: ${res.status} ${res.statusText}` }], isError: true };
         return { content: [{ type: "text", text: JSON.stringify(await res.json(), null, 2) }] };
       } catch (err) {
@@ -371,8 +362,7 @@ function registerTools(server) {
       const n8n = getN8nInstance(instance);
       try {
         const res = await fetch(`${n8n.url}/api/v1/workflows/${workflowId}/${active ? "activate" : "deactivate"}`, {
-          method: "POST",
-          headers: { "X-N8N-API-KEY": n8n.apiKey },
+          method: "POST", headers: { "X-N8N-API-KEY": n8n.apiKey },
         });
         const body = await res.json();
         if (!res.ok) return { content: [{ type: "text", text: `ERROR: ${res.status} - ${JSON.stringify(body)}` }], isError: true };
@@ -386,7 +376,7 @@ function registerTools(server) {
   server.tool("cosmos_query", "Query a Cosmos DB (MongoDB API) collection.",
     { collection: z.string(), query: z.record(z.any()), limit: z.number().optional().default(10) },
     async ({ collection, query, limit }) => {
-      let mongoUri = process.env.MONGO_URI;
+      let mongoUri = creds.MONGO_URI;
       if (!mongoUri) {
         mongoUri = runPowerShell(`az keyvault secret show --vault-name kvdaxdakonapilot --name cosmos-connection-string --query value -o tsv`).trim();
         if (mongoUri.startsWith("ERROR")) return { content: [{ type: "text", text: "ERROR: Could not retrieve MONGO_URI. " + mongoUri }], isError: true };
@@ -401,7 +391,7 @@ function registerTools(server) {
   async function clickupApi(path, { method = "GET", body } = {}) {
     const opts = {
       method,
-      headers: { Authorization: CLICKUP_API_KEY, "Content-Type": "application/json" },
+      headers: { Authorization: creds.CLICKUP_API_KEY, "Content-Type": "application/json" },
     };
     if (body) opts.body = JSON.stringify(body);
     const res = await fetch(`${CLICKUP_BASE}${path}`, opts);
@@ -410,18 +400,14 @@ function registerTools(server) {
     return data;
   }
 
-  server.tool("clickup_list_spaces", "List all ClickUp workspaces and their spaces",
-    {},
+  server.tool("clickup_list_spaces", "List all ClickUp workspaces and their spaces", {},
     async () => {
       try {
         const teams = await clickupApi("/team");
         const results = [];
         for (const team of teams.teams) {
           const spaces = await clickupApi(`/team/${team.id}/space?archived=false`);
-          results.push({
-            workspace: { id: team.id, name: team.name },
-            spaces: spaces.spaces.map(s => ({ id: s.id, name: s.name })),
-          });
+          results.push({ workspace: { id: team.id, name: team.name }, spaces: spaces.spaces.map(s => ({ id: s.id, name: s.name })) });
         }
         return { content: [{ type: "text", text: JSON.stringify(results, null, 2) }] };
       } catch (err) {
@@ -431,15 +417,11 @@ function registerTools(server) {
   );
 
   server.tool("clickup_list_folders", "List all folders in a ClickUp space",
-    { spaceId: z.string().describe("ClickUp space ID") },
+    { spaceId: z.string() },
     async ({ spaceId }) => {
       try {
         const data = await clickupApi(`/space/${spaceId}/folder?archived=false`);
-        const folders = data.folders.map(f => ({
-          id: f.id,
-          name: f.name,
-          lists: f.lists?.map(l => ({ id: l.id, name: l.name })) || [],
-        }));
+        const folders = data.folders.map(f => ({ id: f.id, name: f.name, lists: f.lists?.map(l => ({ id: l.id, name: l.name })) || [] }));
         return { content: [{ type: "text", text: JSON.stringify(folders, null, 2) }] };
       } catch (err) {
         return { content: [{ type: "text", text: `ERROR: ${err.message}` }], isError: true };
@@ -448,18 +430,10 @@ function registerTools(server) {
   );
 
   server.tool("clickup_create_list", "Create a new list in a ClickUp folder or space",
-    {
-      name: z.string().describe("Name of the list"),
-      folderId: z.string().optional().describe("Folder ID to create list in (use this OR spaceId)"),
-      spaceId: z.string().optional().describe("Space ID to create folderless list in (use this OR folderId)"),
-      content: z.string().optional().describe("Description/content for the list"),
-      status: z.string().optional().describe("Status to use (default uses space/folder default statuses)"),
-    },
+    { name: z.string(), folderId: z.string().optional(), spaceId: z.string().optional(), content: z.string().optional(), status: z.string().optional() },
     async ({ name, folderId, spaceId, content, status }) => {
       try {
-        if (!folderId && !spaceId) {
-          throw new Error("Either folderId or spaceId is required");
-        }
+        if (!folderId && !spaceId) throw new Error("Either folderId or spaceId is required");
         const endpoint = folderId ? `/folder/${folderId}/list` : `/space/${spaceId}/list`;
         const body = { name };
         if (content) body.content = content;
@@ -472,23 +446,14 @@ function registerTools(server) {
     }
   );
 
-  server.tool("clickup_list_tasks", "List tasks in a ClickUp list (or search by space/folder)",
-    {
-      listId: z.string().describe("ClickUp list ID"),
-      includeSubtasks: z.boolean().optional().default(false),
-      statuses: z.array(z.string()).optional().describe("Filter by status names"),
-      page: z.number().optional().default(0),
-    },
+  server.tool("clickup_list_tasks", "List tasks in a ClickUp list",
+    { listId: z.string(), includeSubtasks: z.boolean().optional().default(false), statuses: z.array(z.string()).optional(), page: z.number().optional().default(0) },
     async ({ listId, includeSubtasks, statuses, page }) => {
       try {
         let url = `/list/${listId}/task?page=${page}&subtasks=${includeSubtasks}`;
         if (statuses?.length) url += statuses.map(s => `&statuses[]=${encodeURIComponent(s)}`).join("");
         const data = await clickupApi(url);
-        const tasks = data.tasks.map(t => ({
-          id: t.id, name: t.name, status: t.status?.status,
-          assignees: t.assignees?.map(a => a.username), due_date: t.due_date,
-          priority: t.priority?.priority, url: t.url,
-        }));
+        const tasks = data.tasks.map(t => ({ id: t.id, name: t.name, status: t.status?.status, assignees: t.assignees?.map(a => a.username), due_date: t.due_date, priority: t.priority?.priority, url: t.url }));
         return { content: [{ type: "text", text: JSON.stringify(tasks, null, 2) }] };
       } catch (err) {
         return { content: [{ type: "text", text: `ERROR: ${err.message}` }], isError: true };
@@ -500,8 +465,7 @@ function registerTools(server) {
     { taskId: z.string() },
     async ({ taskId }) => {
       try {
-        const t = await clickupApi(`/task/${taskId}`);
-        return { content: [{ type: "text", text: JSON.stringify(t, null, 2) }] };
+        return { content: [{ type: "text", text: JSON.stringify(await clickupApi(`/task/${taskId}`), null, 2) }] };
       } catch (err) {
         return { content: [{ type: "text", text: `ERROR: ${err.message}` }], isError: true };
       }
@@ -509,16 +473,7 @@ function registerTools(server) {
   );
 
   server.tool("clickup_create_task", "Create a new task in a ClickUp list",
-    {
-      listId: z.string().describe("ClickUp list ID"),
-      name: z.string(),
-      description: z.string().optional(),
-      status: z.string().optional(),
-      priority: z.number().optional().describe("1=urgent, 2=high, 3=normal, 4=low"),
-      assignees: z.array(z.number()).optional().describe("Array of ClickUp user IDs"),
-      due_date: z.string().optional().describe("Due date as ISO string or Unix ms timestamp"),
-      tags: z.array(z.string()).optional(),
-    },
+    { listId: z.string(), name: z.string(), description: z.string().optional(), status: z.string().optional(), priority: z.number().optional(), assignees: z.array(z.number()).optional(), due_date: z.string().optional(), tags: z.array(z.string()).optional() },
     async ({ listId, name, description, status, priority, assignees, due_date, tags }) => {
       try {
         const body = { name };
@@ -537,18 +492,7 @@ function registerTools(server) {
   );
 
   server.tool("clickup_update_task", "Update an existing ClickUp task",
-    {
-      taskId: z.string(),
-      name: z.string().optional(),
-      description: z.string().optional(),
-      status: z.string().optional(),
-      priority: z.number().optional().describe("1=urgent, 2=high, 3=normal, 4=low"),
-      assignees: z.object({
-        add: z.array(z.number()).optional(),
-        rem: z.array(z.number()).optional(),
-      }).optional(),
-      due_date: z.string().optional().describe("Due date as ISO string or Unix ms timestamp"),
-    },
+    { taskId: z.string(), name: z.string().optional(), description: z.string().optional(), status: z.string().optional(), priority: z.number().optional(), assignees: z.object({ add: z.array(z.number()).optional(), rem: z.array(z.number()).optional() }).optional(), due_date: z.string().optional() },
     async ({ taskId, name, description, status, priority, assignees, due_date }) => {
       try {
         const body = {};
@@ -570,10 +514,7 @@ function registerTools(server) {
     { taskId: z.string(), text: z.string() },
     async ({ taskId, text }) => {
       try {
-        const comment = await clickupApi(`/task/${taskId}/comment`, {
-          method: "POST",
-          body: { comment_text: text },
-        });
+        await clickupApi(`/task/${taskId}/comment`, { method: "POST", body: { comment_text: text } });
         return { content: [{ type: "text", text: `Comment added to ${taskId}` }] };
       } catch (err) {
         return { content: [{ type: "text", text: `ERROR: ${err.message}` }], isError: true };
@@ -586,7 +527,7 @@ function registerTools(server) {
   async function makeApi(path, { method = "GET", body } = {}) {
     const opts = {
       method,
-      headers: { Authorization: `Token ${MAKE_API_KEY}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Token ${creds.MAKE_API_KEY}`, "Content-Type": "application/json" },
     };
     if (body) opts.body = JSON.stringify(body);
     const res = await fetch(`${MAKE_BASE}${path}`, opts);
@@ -595,13 +536,11 @@ function registerTools(server) {
     return data;
   }
 
-  server.tool("make_list_orgs", "List Make.com organizations",
-    {},
+  server.tool("make_list_orgs", "List Make.com organizations", {},
     async () => {
       try {
         const data = await makeApi("/organizations");
-        const orgs = data.organizations.map(o => ({ id: o.id, name: o.name, zone: o.zone }));
-        return { content: [{ type: "text", text: JSON.stringify(orgs, null, 2) }] };
+        return { content: [{ type: "text", text: JSON.stringify(data.organizations.map(o => ({ id: o.id, name: o.name, zone: o.zone })), null, 2) }] };
       } catch (err) {
         return { content: [{ type: "text", text: `ERROR: ${err.message}` }], isError: true };
       }
@@ -613,11 +552,7 @@ function registerTools(server) {
     async ({ organizationId }) => {
       try {
         const data = await makeApi(`/scenarios?organizationId=${organizationId}`);
-        const scenarios = data.scenarios.map(s => ({
-          id: s.id, name: s.name, active: s.islinked,
-          teamId: s.teamId, folderId: s.folderId,
-          nextExec: s.nextExec, scheduling: s.scheduling?.type,
-        }));
+        const scenarios = data.scenarios.map(s => ({ id: s.id, name: s.name, active: s.islinked, teamId: s.teamId, nextExec: s.nextExec, scheduling: s.scheduling?.type }));
         return { content: [{ type: "text", text: JSON.stringify(scenarios, null, 2) }] };
       } catch (err) {
         return { content: [{ type: "text", text: `ERROR: ${err.message}` }], isError: true };
@@ -653,8 +588,7 @@ function registerTools(server) {
     { scenarioId: z.number(), activate: z.boolean() },
     async ({ scenarioId, activate }) => {
       try {
-        const endpoint = activate ? "start" : "stop";
-        const data = await makeApi(`/scenarios/${scenarioId}/${endpoint}`, { method: "POST", body: {} });
+        await makeApi(`/scenarios/${scenarioId}/${activate ? "start" : "stop"}`, { method: "POST", body: {} });
         return { content: [{ type: "text", text: `Scenario ${scenarioId} ${activate ? "activated" : "deactivated"}` }] };
       } catch (err) {
         return { content: [{ type: "text", text: `ERROR: ${err.message}` }], isError: true };
@@ -667,10 +601,7 @@ function registerTools(server) {
     async ({ scenarioId, limit }) => {
       try {
         const data = await makeApi(`/scenarios/${scenarioId}/logs?pg%5Blimit%5D=${limit}&pg%5BsortDir%5D=desc`);
-        const logs = (data.scenarioLogs || []).map(l => ({
-          id: l.id, status: l.status, duration: l.duration,
-          operations: l.operations, timestamp: l.timestamp,
-        }));
+        const logs = (data.scenarioLogs || []).map(l => ({ id: l.id, status: l.status, duration: l.duration, operations: l.operations, timestamp: l.timestamp }));
         return { content: [{ type: "text", text: JSON.stringify(logs, null, 2) }] };
       } catch (err) {
         return { content: [{ type: "text", text: `ERROR: ${err.message}` }], isError: true };
@@ -683,7 +614,7 @@ function registerTools(server) {
   async function slackApi(method, body) {
     const res = await fetch(`https://slack.com/api/${method}`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${SLACK_TOKEN}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${creds.SLACK_TOKEN}`, "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
     const data = await res.json();
@@ -692,12 +623,11 @@ function registerTools(server) {
   }
 
   server.tool("slack_list_channels", "List Slack channels in the RPE workspace",
-    { limit: z.number().optional().default(100), types: z.string().optional().default("public_channel,private_channel").describe("Channel types: public_channel, private_channel, mpim, im") },
+    { limit: z.number().optional().default(100), types: z.string().optional().default("public_channel,private_channel") },
     async ({ limit, types }) => {
       try {
         const data = await slackApi("conversations.list", { limit, types, exclude_archived: true });
-        const channels = data.channels.map(c => ({ id: c.id, name: c.name, topic: c.topic?.value, is_private: c.is_private }));
-        return { content: [{ type: "text", text: JSON.stringify(channels, null, 2) }] };
+        return { content: [{ type: "text", text: JSON.stringify(data.channels.map(c => ({ id: c.id, name: c.name, topic: c.topic?.value, is_private: c.is_private })), null, 2) }] };
       } catch (err) {
         return { content: [{ type: "text", text: `ERROR: ${err.message}` }], isError: true };
       }
@@ -705,7 +635,7 @@ function registerTools(server) {
   );
 
   server.tool("slack_post_message", "Post a message to a Slack channel in the RPE workspace",
-    { channel: z.string().describe("Channel ID or name (e.g. #general or C0123456)"), text: z.string() },
+    { channel: z.string(), text: z.string() },
     async ({ channel, text }) => {
       try {
         const data = await slackApi("chat.postMessage", { channel, text });
@@ -716,51 +646,31 @@ function registerTools(server) {
     }
   );
 
-  // ── Desktop Bridge tools (proxy to local Windows via Cloudflare Tunnel) ──
+  // ── Desktop Bridge tools ───────────────────────────────────────────
 
-  server.tool("desktop_run_powershell",
-    "Run PowerShell on Richard's local Windows desktop. Use for P:\\ drive access, local tools, or anything requiring the Windows environment.",
-    { command: z.string(), timeout: z.number().optional().describe("Timeout in ms (default 120000)") },
-    async ({ command, timeout }) => {
-      const out = await bridgeCall("run_powershell", { command, timeout });
-      return { content: [{ type: "text", text: out }] };
-    }
+  server.tool("desktop_run_powershell", "Run PowerShell on Richard's local Windows desktop.",
+    { command: z.string(), timeout: z.number().optional() },
+    async ({ command, timeout }) => ({ content: [{ type: "text", text: await bridgeCall("run_powershell", { command, timeout }) }] })
   );
 
-  server.tool("desktop_read_file",
-    "Read a file from Richard's local desktop. Path relative to BRIDGE_BASE_PATH (default P:/_clients/dakona).",
+  server.tool("desktop_read_file", "Read a file from Richard's local desktop.",
     { path: z.string() },
-    async ({ path }) => {
-      const out = await bridgeCall("read_file", { path });
-      return { content: [{ type: "text", text: out }] };
-    }
+    async ({ path }) => ({ content: [{ type: "text", text: await bridgeCall("read_file", { path }) }] })
   );
 
-  server.tool("desktop_write_file",
-    "Write a file to Richard's local desktop.",
+  server.tool("desktop_write_file", "Write a file to Richard's local desktop.",
     { path: z.string(), content: z.string() },
-    async ({ path, content }) => {
-      const out = await bridgeCall("write_file", { path, content });
-      return { content: [{ type: "text", text: out }] };
-    }
+    async ({ path, content }) => ({ content: [{ type: "text", text: await bridgeCall("write_file", { path, content }) }] })
   );
 
-  server.tool("desktop_list_files",
-    "List files on Richard's local desktop.",
+  server.tool("desktop_list_files", "List files on Richard's local desktop.",
     { path: z.string().optional().default("."), depth: z.number().optional().default(2) },
-    async ({ path, depth }) => {
-      const out = await bridgeCall("list_files", { path, depth });
-      return { content: [{ type: "text", text: out }] };
-    }
+    async ({ path, depth }) => ({ content: [{ type: "text", text: await bridgeCall("list_files", { path, depth }) }] })
   );
 
-  server.tool("desktop_run_claude_code",
-    "Run Claude Code CLI headlessly on Richard's desktop with the given prompt. cwd relative to BRIDGE_BASE_PATH.",
-    { prompt: z.string(), cwd: z.string().optional(), timeout: z.number().optional().describe("Timeout in ms (default 300000)") },
-    async ({ prompt, cwd, timeout }) => {
-      const out = await bridgeCall("run_claude_code", { prompt, cwd, timeout });
-      return { content: [{ type: "text", text: out }] };
-    }
+  server.tool("desktop_run_claude_code", "Run Claude Code CLI headlessly on Richard's desktop.",
+    { prompt: z.string(), cwd: z.string().optional(), timeout: z.number().optional() },
+    async ({ prompt, cwd, timeout }) => ({ content: [{ type: "text", text: await bridgeCall("run_claude_code", { prompt, cwd, timeout }) }] })
   );
 }
 
@@ -770,28 +680,27 @@ const MODE = process.env.MCP_TRANSPORT || (process.argv.includes("--sse") ? "sse
 
 if (MODE === "sse") {
   /* ── HTTP/SSE mode for claude.ai remote MCP ─────────────────────── */
+
+  // Load credentials from Key Vault before starting (non-fatal if unavailable)
+  await loadFromKeyVault().catch(err => console.warn("[KV] Initial load failed:", err.message));
+  startCredentialRefresh();
+
   const express = (await import("express")).default;
   const PORT = parseInt(process.env.PORT || "3001", 10);
-  const AUTH_TOKEN = process.env.MCP_AUTH_TOKEN || "";
-  const KEEPALIVE_INTERVAL = 4 * 60 * 1000; // 4 minutes — prevent Azure Container Apps idle timeout
+  const KEEPALIVE_INTERVAL = 4 * 60 * 1000;
 
   const app = express();
 
-  // CORS — claude.ai requires cross-origin access to the SSE and messages endpoints
+  // CORS
   app.use((req, res, next) => {
     const origin = req.headers.origin;
-    // Allow claude.ai and any subdomain, plus anything in CORS_ORIGINS env var
     const allowed = [
       "https://claude.ai",
       /^https:\/\/.*\.claude\.ai$/,
       ...(process.env.CORS_ORIGINS || "").split(",").filter(Boolean),
     ];
-    const isAllowed = !origin || allowed.some(o =>
-      typeof o === "string" ? o === origin : o.test(origin)
-    );
-    if (isAllowed) {
-      res.setHeader("Access-Control-Allow-Origin", origin || "*");
-    }
+    const isAllowed = !origin || allowed.some(o => typeof o === "string" ? o === origin : o.test(origin));
+    if (isAllowed) res.setHeader("Access-Control-Allow-Origin", origin || "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-api-key, Mcp-Session-Id");
     res.setHeader("Access-Control-Expose-Headers", "Content-Type, Mcp-Session-Id");
@@ -800,23 +709,23 @@ if (MODE === "sse") {
     next();
   });
 
-  // Optional bearer-token auth (skip for /health)
-  // Accepts token via Authorization header OR ?token= query param
-  if (AUTH_TOKEN) {
-    app.use((req, res, next) => {
-      if (req.path === "/health") return next();
-      const hToken = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
-      const qToken = req.query.token || "";
-      if (hToken !== AUTH_TOKEN && qToken !== AUTH_TOKEN) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-      next();
-    });
-  }
+  // Auth — permanent gateway token from env var, never auto-rotated
+  // Claude.ai URL stays the same forever; internal credentials rotate via KV
+  app.use((req, res, next) => {
+    if (req.path === "/health") return next();
+    const gatewayToken = creds.GATEWAY_TOKEN;
+    if (!gatewayToken) return next(); // no auth configured
+    const hToken = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
+    const qToken = req.query.token || "";
+    if (hToken !== gatewayToken && qToken !== gatewayToken) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    next();
+  });
 
   app.use(express.json());
 
-  // Health check — used by Azure probes, keepalive ping, and manual testing
+  // Health check — includes credential refresh status
   app.get("/health", (_req, res) => {
     res.json({
       status: "ok",
@@ -825,11 +734,10 @@ if (MODE === "sse") {
       activeSessions: Object.keys(transports).length,
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
+      credentials: getCredentialStatus(),
     });
   });
 
-  /* ── Streamable HTTP transport (modern) ─────────────────────────── */
-  // claude.ai connects here via POST /mcp with Mcp-Session-Id header
   const transports = {};
 
   app.post("/mcp", async (req, res) => {
@@ -843,15 +751,13 @@ if (MODE === "sse") {
           sessionIdGenerator: () => uuidv4(),
           onsessioninitialized: (sessionId) => {
             transports[sessionId] = transport;
-            console.log(`[MCP] New streamable-http session: ${sessionId}`);
+            console.log(`[MCP] New session: ${sessionId}`);
           },
         });
         transport.onclose = () => {
           const sid = transport.sessionId;
           if (sid) delete transports[sid];
-          console.log(`[MCP] Session closed: ${sid}`);
         };
-
         const mcpServer = new McpServer({ name: "dax-dev", version: "1.0.0" });
         registerTools(mcpServer);
         await mcpServer.connect(transport);
@@ -859,27 +765,17 @@ if (MODE === "sse") {
       } else if (clientSessionId && transports[clientSessionId]) {
         await transports[clientSessionId].handleRequest(req, res, body);
       } else {
-        res.status(400).json({
-          jsonrpc: "2.0",
-          error: { code: -32003, message: "No valid session ID for non-initialize request" },
-          id: body?.id ?? null,
-        });
+        res.status(400).json({ jsonrpc: "2.0", error: { code: -32003, message: "No valid session ID" }, id: body?.id ?? null });
       }
     } catch (err) {
-      console.error(`[MCP] Error in /mcp handler:`, err);
-      if (!res.headersSent) {
-        res.status(500).json({ jsonrpc: "2.0", error: { code: -32603, message: err.message }, id: null });
-      }
+      console.error("[MCP] Error:", err);
+      if (!res.headersSent) res.status(500).json({ jsonrpc: "2.0", error: { code: -32603, message: err.message }, id: null });
     }
   });
 
-  // GET /mcp — SSE stream for server-to-client notifications (Streamable HTTP protocol)
   app.get("/mcp", async (req, res) => {
     const sessionId = req.headers["mcp-session-id"];
-    if (!sessionId || !transports[sessionId]) {
-      res.status(400).json({ error: "Invalid or missing session ID" });
-      return;
-    }
+    if (!sessionId || !transports[sessionId]) { res.status(400).json({ error: "Invalid session ID" }); return; }
     await transports[sessionId].handleRequest(req, res);
   });
 
@@ -889,57 +785,48 @@ if (MODE === "sse") {
     if (transport) {
       try { await transport.close(); } catch {}
       delete transports[sessionId];
-      console.log(`[MCP] Session deleted via DELETE: ${sessionId}`);
       res.status(204).end();
     } else {
       res.status(404).json({ error: "Session not found" });
     }
   });
 
-  // Self-ping keepalive — prevent Azure Container Apps from idling (5 min timeout)
   function startKeepalive() {
     setInterval(async () => {
       try {
         const response = await fetch(`http://localhost:${PORT}/health`);
-        console.log(`[Keepalive] ping: ${response.status} at ${new Date().toISOString()}`);
+        console.log(`[Keepalive] ${response.status} at ${new Date().toISOString()}`);
       } catch (e) {
         console.log(`[Keepalive] failed: ${e.message}`);
       }
     }, KEEPALIVE_INTERVAL);
   }
 
-  // Graceful shutdown
   async function shutdown(signal) {
-    console.log(`[MCP] ${signal} received, shutting down...`);
+    console.log(`[MCP] ${signal} — shutting down`);
     for (const sid of Object.keys(transports)) {
       try { await transports[sid].close(); } catch {}
       delete transports[sid];
     }
     process.exit(0);
   }
-  process.on("SIGINT", () => shutdown("SIGINT"));
+  process.on("SIGINT",  () => shutdown("SIGINT"));
   process.on("SIGTERM", () => shutdown("SIGTERM"));
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`DAX MCP server listening on http://0.0.0.0:${PORT}`);
-    console.log(`  POST   /mcp    — Streamable HTTP (initialize + tool calls)`);
-    console.log(`  GET    /mcp    — SSE stream (server notifications)`);
-    console.log(`  DELETE /mcp    — Session cleanup`);
-    console.log(`  GET    /health — Health check`);
-    console.log(`  Keepalive: self-ping every ${KEEPALIVE_INTERVAL / 1000}s`);
-    if (AUTH_TOKEN) console.log(`  Auth: Bearer token required`);
-    else console.log(`  Auth: NONE (set MCP_AUTH_TOKEN to enable)`);
+    console.log(`DAX MCP server on http://0.0.0.0:${PORT}`);
+    console.log(`  Credential source: Key Vault (${KV_NAME || "kvdaxdakonapilot"}), refresh every 6h`);
+    console.log(`  Gateway token:     ${creds.GATEWAY_TOKEN ? "configured (permanent)" : "NONE"}`);
     startKeepalive();
   });
 
 } else {
-  /* ── Stdio mode for Claude Desktop ──────────────────────────────── */
-  process.on("uncaughtException", () => process.exit(1));
+  /* ── Stdio mode ──────────────────────────────────────────────────── */
+  process.on("uncaughtException",  () => process.exit(1));
   process.on("unhandledRejection", () => process.exit(1));
   process.stdin.resume();
   process.stdin.on("error", () => {});
   process.stdin.on("close", () => process.exit(0));
-
   const server = new McpServer({ name: "dax-dev", version: "1.0.0" });
   registerTools(server);
   const transport = new StdioServerTransport();
