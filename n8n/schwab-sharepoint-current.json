@@ -1,0 +1,1027 @@
+{
+    "updatedAt": "2026-03-26T16:05:22.622Z",
+    "createdAt": "2026-03-18T17:13:21.061Z",
+    "id": "8y1fZmL1anhRDY0K",
+    "name": "DAX Schwab SharePoint Processor",
+    "description": null,
+    "active": true,
+    "isArchived": false,
+    "nodes": [
+        {
+            "id": "a1b2c3d4-0001-0001-0001-000000000001",
+            "name": "Webhook Trigger",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2,
+            "position": [
+                240,
+                300
+            ],
+            "webhookId": "schwab-proc-webhook-0001",
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "schwab-processor",
+                "responseMode": "responseNode",
+                "options": {}
+            }
+        },
+        {
+            "id": "a1b2c3d4-0001-0001-0001-000000000003",
+            "name": "Get OAuth Token",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                480,
+                300
+            ],
+            "parameters": {
+                "method": "POST",
+                "url": "https://login.microsoftonline.com/d2a3c346-00f3-47dd-a53e-caa3fca74714/oauth2/v2.0/token",
+                "sendBody": true,
+                "contentType": "form-urlencoded",
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "client_id",
+                            "value": "218064ac-bee2-4246-9709-ae7518ae71cb"
+                        },
+                        {
+                            "name": "client_secret",
+                            "value": "6LR8Q~ZCn5FTBlg894LtCGlXZ9GV3NAhS4BY9bla"
+                        },
+                        {
+                            "name": "scope",
+                            "value": "https://graph.microsoft.com/.default"
+                        },
+                        {
+                            "name": "grant_type",
+                            "value": "client_credentials"
+                        }
+                    ]
+                },
+                "options": {}
+            }
+        },
+        {
+            "id": "a1b2c3d4-0001-0001-0001-000000000004",
+            "name": "List Schwab Exports",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                720,
+                300
+            ],
+            "parameters": {
+                "url": "https://graph.microsoft.com/v1.0/sites/dakonallc.sharepoint.com,68764500-f333-44cc-8017-30489a6a9053,71b1b423-6196-4e05-b004-7298445afb6f/drive/root:/Schwab Exports:/children",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Authorization",
+                            "value": "=Bearer {{ $('Get OAuth Token').first().json.access_token }}"
+                        }
+                    ]
+                },
+                "options": {}
+            }
+        },
+        {
+            "id": "a1b2c3d4-0001-0001-0001-000000000010",
+            "name": "Respond to Webhook",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                1200,
+                300
+            ],
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ $json }}",
+                "options": {
+                    "responseCode": 200
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "const items = $('List Schwab Exports').first().json.value || [];\nconst csvFiles = items.filter(f => f.name && f.name.toLowerCase().endsWith('.csv'));\nif (csvFiles.length === 0) {\n  return [{ json: { error: 'No CSV files found in Schwab Exports folder', downloadUrl: '', fileName: '' } }];\n}\nconst file = csvFiles[0];\nconsole.log('CSV file:', file.name, '|', file.size, 'bytes');\nreturn [{ json: {\n  downloadUrl: file['@microsoft.graph.downloadUrl'],\n  fileName: file.name,\n  fileCount: csvFiles.length\n}}];"
+            },
+            "id": "extract-csv-001",
+            "name": "Extract CSV URL",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                860,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "={{ $json.downloadUrl }}",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "User-Agent",
+                            "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                        }
+                    ]
+                },
+                "options": {
+                    "response": {
+                        "response": {
+                            "responseFormat": "text"
+                        }
+                    },
+                    "timeout": 30000
+                }
+            },
+            "id": "download-csv-001",
+            "name": "Download CSV",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                1100,
+                300
+            ],
+            "continueOnFail": true
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "https://query1.finance.yahoo.com/v8/finance/chart/SPY?interval=1mo&range=ytd",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "User-Agent",
+                            "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                        },
+                        {
+                            "name": "Accept",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "options": {
+                    "timeout": 10000
+                }
+            },
+            "id": "fetch-spy-001",
+            "name": "Fetch SPY YTD",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                1340,
+                300
+            ],
+            "continueOnFail": true
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "https://query1.finance.yahoo.com/v8/finance/chart/AGG?interval=1mo&range=ytd",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "User-Agent",
+                            "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                        },
+                        {
+                            "name": "Accept",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "options": {
+                    "timeout": 10000
+                }
+            },
+            "id": "fetch-agg-001",
+            "name": "Fetch AGG YTD",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                1580,
+                300
+            ],
+            "continueOnFail": true
+        },
+        {
+            "parameters": {
+                "mode": "runOnceForAllItems",
+                "jsCode": "// Proper CSV parser \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d handles quoted fields with embedded commas\nfunction parseCSVLine(line) {\n  const fields = [];\n  let current = '';\n  let inQuotes = false;\n  for (let i = 0; i < line.length; i++) {\n    const c = line[i];\n    if (c === '\"') {\n      if (inQuotes && line[i+1] === '\"') { current += '\"'; i++; }\n      else { inQuotes = !inQuotes; }\n    } else if (c === ',' && !inQuotes) {\n      fields.push(current.trim());\n      current = '';\n    } else {\n      current += c;\n    }\n  }\n  fields.push(current.trim());\n  return fields;\n}\n\n// Strip \"$102,485.00\" \u00c3\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 102485.00, \"-$1,656.00\" \u00c3\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 -1656.00, \"31.1%\" \u00c3\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 31.1\nfunction parseMoney(val) {\n  if (!val) return 0;\n  const neg = String(val).includes('-') || String(val).startsWith('(');\n  const s = String(val).replace(/[\\$,%()\\s]/g, '');\n  const n = parseFloat(s);\n  if (isNaN(n)) return 0;\n  return neg && n > 0 ? -n : n;\n}\n\nconst csvRaw = $('Download CSV').first().json.data || $('Download CSV').first().json.body || '';\nconst spyData = $('Fetch SPY YTD').first().json;\nconst aggData = $('Fetch AGG YTD').first().json;\n\nfunction extractYTD(data) {\n  const result = data?.chart?.result?.[0];\n  if (!result) return null;\n  const closes = result?.indicators?.quote?.[0]?.close || [];\n  const current = result?.meta?.regularMarketPrice;\n  const first = closes.find(c => c != null);\n  if (!first || !current) return null;\n  return parseFloat(((current - first) / first * 100).toFixed(2));\n}\nconst spyYTD = extractYTD(spyData);\nconst aggYTD = extractYTD(aggData);\nconsole.log('SPY YTD:', spyYTD, '% | AGG YTD:', aggYTD, '%');\n\nconst benchmarkYTD = {\n  'S&P 500': spyYTD,\n  'Bloomberg Aggregate': aggYTD,\n  'Bloomberg Agg': aggYTD,\n  'Nasdaq': spyYTD,\n  '60/40 Blended': (spyYTD !== null && aggYTD !== null) ? parseFloat((0.6 * spyYTD + 0.4 * aggYTD).toFixed(2)) : null,\n};\n\nconst today = new Date().toISOString().split('T')[0];\nconst currentQuarter = 'Q' + Math.ceil((new Date().getMonth() + 1) / 3) + ' ' + new Date().getFullYear();\nconst clean = v => String(v || '').trim();\nconst fmtDollar = v => '$' + Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });\nconst fmtPct = v => (Number(v || 0) >= 0 ? '+' : '') + Number(v || 0).toFixed(2) + '%';\n\n// Parse CSV\nconst rawLines = csvRaw.split('\\n');\nlet headerIdx = -1;\nfor (let i = 0; i < Math.min(rawLines.length, 15); i++) {\n  const l = rawLines[i].replace(/\"/g, '');\n  if (l.includes('Account Name') || l.includes('CLIENT_NAME') || l.includes('Account Number')) {\n    headerIdx = i; break;\n  }\n}\nif (headerIdx === -1) {\n  return [{ json: { clientName: '_error', accountNumber: '', _payload: '{}' } }];\n}\n\nconst lines = rawLines.slice(headerIdx).filter(l => l.trim() && !l.startsWith('#') && !/^[,\\s\"]*$/.test(l));\nconst headers = parseCSVLine(lines[0]);\nconsole.log('Headers:', headers.join(' | '));\nconsole.log('Data rows:', lines.length - 1);\n\nconst cashSymbols = ['MMKT', 'CASH', 'MONEY MARKET', 'CASHX', 'USD', 'SWVXX', 'SNAXX', 'SNVXX'];\nconst allPayloads = [];\n\n// Parse all data rows\nconst rows = [];\nfor (let i = 1; i < lines.length; i++) {\n  if (!lines[i].trim()) continue;\n  const vals = parseCSVLine(lines[i]);\n  const r = {};\n  headers.forEach((h, idx) => { r[h] = vals[idx] || ''; });\n  let name = r['Account Name'] || r['CLIENT_NAME'] || '';\n  if (!name) continue;\n  // Flip \"Last, First\" \u00c3\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 \"First Last\"\n  if (name.includes(',')) { const p = name.split(',').map(s => s.trim()); name = p[1] + ' ' + p[0]; }\n  rows.push({\n    CLIENT_NAME: name,\n    ACCOUNT_NUMBER: r['Account Number'] || r['ACCOUNT_NUMBER'] || '',\n    SYMBOL: (r['Symbol'] || r['SYMBOL'] || '').trim(),\n    SECURITY_NAME: r['Security Description'] || r['SECURITY_NAME'] || '',\n    MARKET_VALUE: parseMoney(r['Market Value'] || r['MARKET_VALUE']),\n    COST_BASIS: parseMoney(r['Cost Basis'] || r['COST_BASIS']),\n    GAIN_LOSS: parseMoney(r['Unrealized Gain/Loss'] || r['GAIN_LOSS_DOLLAR']),\n    SECURITY_TYPE: r['Security Type'] || r['SECURITY_TYPE'] || '',\n    ACCOUNT_TYPE: r['Account Type'] || r['ACCOUNT_TYPE'] || '',\n  });\n}\n\n// Group by client name\nconst clients = {};\nfor (const row of rows) {\n  if (!clients[row.CLIENT_NAME]) clients[row.CLIENT_NAME] = [];\n  clients[row.CLIENT_NAME].push(row);\n}\nconsole.log('Clients:', Object.keys(clients).join(', '));\n\nfor (const [clientName, positions] of Object.entries(clients)) {\n  const meta = positions[0];\n  const portfolioValue = positions.reduce((s, p) => s + p.MARKET_VALUE, 0);\n  const totalCost = positions.reduce((s, p) => s + p.COST_BASIS, 0);\n  const totalGain = positions.reduce((s, p) => s + p.GAIN_LOSS, 0);\n  const ytdPct = totalCost > 0 ? (totalGain / totalCost * 100) : 0;\n\n  // Top holding (exclude cash)\n  const invested = positions.filter(p => !cashSymbols.includes(p.SYMBOL.toUpperCase()));\n  invested.sort((a, b) => b.MARKET_VALUE - a.MARKET_VALUE);\n  const top = invested[0];\n  const topStr = top ? top.SYMBOL + ' (' + top.SECURITY_NAME + ') - ' + fmtDollar(top.MARKET_VALUE) : '';\n\n  const bmYTD = benchmarkYTD['S&P 500'] ?? null;\n  const vsBm = bmYTD !== null ? parseFloat((ytdPct - bmYTD).toFixed(2)) : null;\n\n  console.log(clientName + ': ' + fmtDollar(portfolioValue) + ' | YTD=' + ytdPct.toFixed(2) + '% | Top=' + (top?.SYMBOL || '-'));\n\n  allPayloads.push({\n    json: {\n      clientName: clean(clientName),\n      accountNumber: clean(meta.ACCOUNT_NUMBER),\n      _payload: JSON.stringify({\n        clientName: clean(clientName),\n        firmName: 'Dakona, LLC',\n        advisorName: 'Demo Advisor',\n        reportPeriod: currentQuarter,\n        reportDate: today,\n        portfolioValue: fmtDollar(portfolioValue),\n        ytdReturn: fmtPct(ytdPct),\n        benchmarkReturn: bmYTD !== null ? fmtPct(bmYTD) : '',\n        vsBenchmark: vsBm !== null ? fmtPct(vsBm) : '',\n        topHolding: topStr,\n        accountNumber: clean(meta.ACCOUNT_NUMBER),\n        accountType: clean(meta.ACCOUNT_TYPE),\n        riskProfile: '',\n        investmentObjective: '',\n        timeHorizon: '',\n        backgroundInfo: '',\n        meetingDate: today,\n        meetingLocation: 'Zoom',\n        attendees: 'Demo Advisor',\n        meetingDuration: '60 min',\n        discussionPoint1: '',\n        discussionPoint2: '',\n        discussionPoint3: '',\n        advisorNotes: '',\n        goal1: '',\n        goal2: '',\n        goal3: '',\n        goalsProgressNotes: '',\n        action1: '',\n        action1Owner: '',\n        action1Due: '',\n        action2: '',\n        action2Owner: '',\n        action2Due: '',\n        action3: '',\n        action3Owner: '',\n        action3Due: '',\n        nextMeetingDate: '',\n        nextMeetingAgenda: ''\n      })\n    }\n  });\n}\n\nconsole.log('Total:', allPayloads.length, 'payloads');\nreturn allPayloads;"
+            },
+            "id": "parse-build-001",
+            "name": "Parse CSV & Build Payloads",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1820,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://n8n.dakona.net/webhook/generate-document",
+                "sendBody": true,
+                "contentType": "json",
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.parse($json._payload) }}",
+                "options": {
+                    "timeout": 120000
+                }
+            },
+            "id": "gen-doc-001",
+            "name": "Generate Document",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                2300,
+                460
+            ],
+            "continueOnFail": true
+        },
+        {
+            "parameters": {
+                "mode": "runOnceForAllItems",
+                "jsCode": "var items = $(\"Generate Document\").all();\nvar mergeItems = $(\"Merge WB Data\").all();\nvar results = items.map(function(item, idx) {\n  var j = item.json;\n  var md = mergeItems[idx] ? mergeItems[idx].json : {};\n  return {\n    clientName: j.clientName || md.clientName || \"Unknown\",\n    webUrl: j.webUrl || \"\",\n    success: !!j.webUrl,\n    contactId: md._contactId || 0,\n    portfolioValue: md._portfolioValue || \"\",\n    ytdReturn: md._ytdReturn || \"\"\n  };\n});\nvar succeeded = results.filter(function(r) { return r.success; });\nvar links = succeeded.map(function(r) { return \"- [\" + r.clientName + \"](\" + r.webUrl + \")\"; }).join(\"\\n\");\nreturn [{ json: { summary: \"Generated \" + succeeded.length + \" of \" + results.length + \" reports\", links: links, results: results }}];"
+            },
+            "id": "aggregate-001",
+            "name": "Aggregate Results",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2300,
+                140
+            ]
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "https://api.crmworkspace.com/v1/contacts?per_page=250",
+                "sendHeaders": true,
+                "specifyHeaders": "json",
+                "jsonHeaders": "{\"ACCESS_TOKEN\": \"2565bf3734934e0facbe77c7c2accd40\"}",
+                "options": {
+                    "timeout": 15000
+                }
+            },
+            "id": "wb-find-001",
+            "name": "WB Find Contact",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                2060,
+                300
+            ],
+            "continueOnFail": true
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "https://api.crmworkspace.com/v1/notes?per_page=250",
+                "sendHeaders": true,
+                "specifyHeaders": "json",
+                "jsonHeaders": "{\"ACCESS_TOKEN\": \"2565bf3734934e0facbe77c7c2accd40\"}",
+                "options": {
+                    "timeout": 15000
+                }
+            },
+            "id": "wb-notes-001",
+            "name": "WB Get Notes",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                2300,
+                300
+            ],
+            "continueOnFail": true
+        },
+        {
+            "parameters": {
+                "jsCode": "const parseItems = $('Parse CSV & Build Payloads').all();\nconst wbAllContacts = $('WB Find Contact').first().json.contacts || [];\nconst wbAllNotes = $('WB Get Notes').all();\n\n// Build account number \u00c3\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 contact map\nconst contactsByAcct = {};\nfor (const c of wbAllContacts) {\n  const acctField = c.custom_fields?.find(f => f.name === 'account_number');\n  if (acctField?.value) contactsByAcct[acctField.value] = c;\n}\nconsole.log('[WB] Contacts:', wbAllContacts.length, '| Mapped:', Object.keys(contactsByAcct).join(', '));\n\n// Collect all notes into a flat array for filtering\nconst allNotes = wbAllNotes.flatMap(n => (n.json.status_updates || []));\n\nconst results = [];\nfor (let i = 0; i < parseItems.length; i++) {\n  const parseData = parseItems[i].json;\n  const doc = JSON.parse(parseData._payload);\n  const contact = contactsByAcct[parseData.accountNumber];\n\n  if (contact) {\n    // \u00c3\u00a2\u00e2\u20ac\udc9d\u00e2\u201a\u00ac\u00c3\u00a2\u00e2\u20ac\udc9d\u00e2\u201a\u00ac Profile fields \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d use WB direct fields, fall back to background keywords \u00c3\u00a2\u00e2\u20ac\udc9d\u00e2\u201a\u00ac\u00c3\u00a2\u00e2\u20ac\udc9d\u00e2\u201a\u00ac\n    const bg = contact.background_info || '';\n\n    // Risk profile\n    doc.riskProfile = contact.risk_tolerance || doc.riskProfile || '';\n    if (!doc.riskProfile) {\n      if (/conservative/i.test(bg)) doc.riskProfile = 'Conservative';\n      else if (/aggressive/i.test(bg)) doc.riskProfile = 'Aggressive';\n      else if (/moderate/i.test(bg)) doc.riskProfile = 'Moderate';\n    }\n\n    // Investment objective\n    doc.investmentObjective = contact.investment_objective || doc.investmentObjective || '';\n    if (!doc.investmentObjective) {\n      if (/growth.*income|income.*growth/i.test(bg)) doc.investmentObjective = 'Growth & Income';\n      else if (/growth/i.test(bg)) doc.investmentObjective = 'Growth';\n      else if (/income/i.test(bg)) doc.investmentObjective = 'Income';\n      else if (/preservation|conserv/i.test(bg)) doc.investmentObjective = 'Capital Preservation';\n    }\n\n    // Time horizon\n    doc.timeHorizon = contact.time_horizon || doc.timeHorizon || '';\n    if (!doc.timeHorizon) {\n      if (/long.?term|10\\+|long time/i.test(bg)) doc.timeHorizon = 'Long-Term';\n      else if (/mid.?term|intermediate|5.?10/i.test(bg)) doc.timeHorizon = 'Intermediate';\n      else if (/short.?term|near|1.?3/i.test(bg)) doc.timeHorizon = 'Short-Term';\n    }\n\n    // Background info \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d plain narrative\n    doc.backgroundInfo = bg;\n\n    console.log('[WB] ' + doc.clientName + ' \u00c3\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 ' + contact.name + ' | risk:' + doc.riskProfile + ' | obj:' + doc.investmentObjective + ' | horizon:' + doc.timeHorizon);\n\n    // \u00c3\u00a2\u00e2\u20ac\udc9d\u00e2\u201a\u00ac\u00c3\u00a2\u00e2\u20ac\udc9d\u00e2\u201a\u00ac Meeting notes \u00c3\u00a2\u00e2\u20ac\udc9d\u00e2\u201a\u00ac\u00c3\u00a2\u00e2\u20ac\udc9d\u00e2\u201a\u00ac\n    const notesForContact = allNotes.filter(n => n.linked_to?.some(lt => lt.id === contact.id));\n    const meetingNote = notesForContact.find(n => n.tags?.some(t => t.name === 'Meeting'));\n    const noteContent = meetingNote?.content || '';\n    if (!noteContent && notesForContact.length > 0) {\n      // Use most recent note as fallback\n      const fallbackNote = notesForContact[0]?.content || '';\n      if (fallbackNote) {\n        doc.advisorNotes = fallbackNote.substring(0, 500);\n        doc.goalsProgressNotes = fallbackNote.substring(0, 300);\n      }\n    }\n\n    if (noteContent) {\n      // Parse goals\n      const goalSentences = noteContent.split(/[.!]/).filter(s =>\n        /goal|objective|target|plan|fund|retire|save|independence|income|estate|college|endowment|529/i.test(s)\n      ).slice(0, 3);\n      doc.goal1 = doc.goal1 || goalSentences[0]?.trim() || '';\n      doc.goal2 = doc.goal2 || goalSentences[1]?.trim() || '';\n      doc.goal3 = doc.goal3 || goalSentences[2]?.trim() || '';\n\n      // Parse action items \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d look for numbered items like (1), (2)\n      const numberedActions = [];\n      const numMatches = noteContent.match(/\\(\\d\\)\\s*[^(]+/g) || [];\n      for (const m of numMatches) {\n        const text = m.replace(/^\\(\\d\\)\\s*/, '').trim();\n        // Extract due date\n        const dueMatch = text.match(/(?:by|before|due)\\s+([A-Z][a-z]+ \\d+(?:,?\\s*\\d{4})?|year end|end of [A-Za-z]+)/i);\n        numberedActions.push({\n          action: dueMatch ? text.replace(dueMatch[0], '').trim() : text,\n          owner: 'Demo Advisor',\n          due: dueMatch ? dueMatch[1] : ''\n        });\n      }\n\n      // Fallback: keyword-based action detection\n      if (numberedActions.length === 0) {\n        const actionSentences = noteContent.split(/[.!]/).filter(s =>\n          /action|follow.?up|next step|schedule|review|rebalance|update|consider|evaluate|discuss/i.test(s)\n        ).slice(0, 3);\n        for (const s of actionSentences) {\n          numberedActions.push({ action: s.trim(), owner: 'Demo Advisor', due: '' });\n        }\n      }\n\n      doc.action1 = doc.action1 || numberedActions[0]?.action || '';\n      doc.action1Owner = numberedActions[0]?.owner || 'Demo Advisor';\n      doc.action1Due = numberedActions[0]?.due || '';\n      doc.action2 = doc.action2 || numberedActions[1]?.action || '';\n      doc.action2Owner = numberedActions[1]?.owner || 'Demo Advisor';\n      doc.action2Due = numberedActions[1]?.due || '';\n      doc.action3 = doc.action3 || numberedActions[2]?.action || '';\n      doc.action3Owner = numberedActions[2]?.owner || 'Demo Advisor';\n      doc.action3Due = numberedActions[2]?.due || '';\n\n      // Discussion points \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d first 3 distinct sentences from note\n      const discSentences = noteContent.split(/[.!]/).map(s => s.trim()).filter(s => s.length > 10).slice(0, 3);\n      doc.discussionPoint1 = doc.discussionPoint1 || discSentences[0] || '';\n      doc.discussionPoint2 = doc.discussionPoint2 || discSentences[1] || '';\n      doc.discussionPoint3 = doc.discussionPoint3 || discSentences[2] || '';\n\n      doc.advisorNotes = noteContent.substring(0, 500);\n      doc.goalsProgressNotes = doc.goalsProgressNotes || noteContent.substring(0, 300);\n\n      // Next meeting date\n      const nextMatch = noteContent.match(/[Nn]ext meeting[:\\s]+([A-Z][a-z]+ \\d+,?\\s*\\d{4})/);\n      doc.nextMeetingDate = doc.nextMeetingDate || (nextMatch ? nextMatch[1].trim() : '');\n      doc.nextMeetingAgenda = doc.nextMeetingAgenda || 'Portfolio review and strategy update';\n    }\n  } else {\n    console.log('[WB] No match: ' + doc.clientName + ' (acct:' + parseData.accountNumber + ')');\n  }\n\n  results.push({ json: { clientName: parseData.clientName, _payload: JSON.stringify(doc), _contactId: contact ? contact.id : 0, _portfolioValue: doc.portfolioValue || \"\", _ytdReturn: doc.ytdReturn || \"\", _topHolding: doc.topHolding || \"\" } });\n}\n\nconsole.log('[WB] Total:', results.length);\nreturn results;",
+                "mode": "runOnceForAllItems"
+            },
+            "id": "wb-merge-001",
+            "name": "Merge WB Data",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2540,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "mode": "runOnceForAllItems",
+                "jsCode": "var advisorTimezone = process.env.ADVISOR_TIMEZONE || 'America/New_York';\nvar https = require(\"https\");\nvar data = $input.all()[0].json;\nvar results = data.results || [];\nvar toLog = results.filter(function(r) { return r.success && r.contactId; });\n\nfunction postNote(contactId, clientName, pv, ytd) {\n  return new Promise(function(resolve) {\n    var ts = new Date().toLocaleString(\"en-US\", { timeZone: advisorTimezone });\n    var body = JSON.stringify({\n      content: \"[DAX] Quarterly Review Generated\\nDate: \" + ts + \"\\nAdvisor: Demo Advisor\\nClient: \" + clientName + \"\\nPortfolio: \" + pv + \" | YTD: \" + ytd + \"\\nGenerated by DAX v0.3.2\",\n      linked_to: [{ id: contactId, type: \"Contact\" }],\n      tags: [\"DAX\", \"Automated\"]\n    });\n    var req = https.request({\n      hostname: \"api.crmworkspace.com\", path: \"/v1/notes\", method: \"POST\",\n      headers: { \"ACCESS_TOKEN\": \"2565bf3734934e0facbe77c7c2accd40\", \"Content-Type\": \"application/json\", \"Content-Length\": Buffer.byteLength(body) }\n    }, function(res) {\n      var d = \"\"; res.on(\"data\", function(c) { d += c; });\n      res.on(\"end\", function() { resolve(d); });\n    });\n    req.on(\"error\", function(e) { resolve(\"err:\" + e.message); });\n    req.write(body); req.end();\n  });\n}\n\nvar promises = toLog.map(function(r) { return postNote(r.contactId, r.clientName, r.portfolioValue, r.ytdReturn); });\nvar logResults = await Promise.all(promises);\nconsole.log(\"Audit: \" + logResults.length + \" notes logged\");\n\nreturn [{ json: data }];"
+            },
+            "id": "log-audit-001",
+            "name": "Log Audit",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2400,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Get OAuth Token",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get OAuth Token": {
+            "main": [
+                [
+                    {
+                        "node": "List Schwab Exports",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "List Schwab Exports": {
+            "main": [
+                [
+                    {
+                        "node": "Extract CSV URL",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract CSV URL": {
+            "main": [
+                [
+                    {
+                        "node": "Download CSV",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Download CSV": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch SPY YTD",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch SPY YTD": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch AGG YTD",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch AGG YTD": {
+            "main": [
+                [
+                    {
+                        "node": "Parse CSV & Build Payloads",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse CSV & Build Payloads": {
+            "main": [
+                [
+                    {
+                        "node": "WB Find Contact",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Document": {
+            "main": [
+                [
+                    {
+                        "node": "Aggregate Results",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Aggregate Results": {
+            "main": [
+                [
+                    {
+                        "node": "Log Audit",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "WB Find Contact": {
+            "main": [
+                [
+                    {
+                        "node": "WB Get Notes",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "WB Get Notes": {
+            "main": [
+                [
+                    {
+                        "node": "Merge WB Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Merge WB Data": {
+            "main": [
+                [
+                    {
+                        "node": "Generate Document",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Log Audit": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1",
+        "callerPolicy": "workflowsFromSameOwner",
+        "availableInMCP": false
+    },
+    "staticData": null,
+    "meta": null,
+    "pinData": null,
+    "versionId": "4e726aba-81c4-49aa-8384-8747aafc914a",
+    "activeVersionId": "4e726aba-81c4-49aa-8384-8747aafc914a",
+    "versionCounter": 195,
+    "triggerCount": 1,
+    "shared": [
+        {
+            "updatedAt": "2026-03-18T17:13:21.064Z",
+            "createdAt": "2026-03-18T17:13:21.064Z",
+            "role": "workflow:owner",
+            "workflowId": "8y1fZmL1anhRDY0K",
+            "projectId": "xDgj8rwVTQP3E9Cb",
+            "project": {
+                "updatedAt": "2025-11-10T15:32:18.748Z",
+                "createdAt": "2025-11-10T03:21:08.872Z",
+                "id": "xDgj8rwVTQP3E9Cb",
+                "name": "Richard Mabbun <rmabbun@dakona.com>",
+                "type": "personal",
+                "icon": null,
+                "description": null,
+                "creatorId": "763ebc85-8160-4949-8238-c0ab68058111"
+            }
+        }
+    ],
+    "tags": [],
+    "activeVersion": {
+        "updatedAt": "2026-03-26T16:05:22.623Z",
+        "createdAt": "2026-03-26T16:05:22.623Z",
+        "versionId": "4e726aba-81c4-49aa-8384-8747aafc914a",
+        "workflowId": "8y1fZmL1anhRDY0K",
+        "nodes": [
+            {
+                "id": "a1b2c3d4-0001-0001-0001-000000000001",
+                "name": "Webhook Trigger",
+                "type": "n8n-nodes-base.webhook",
+                "typeVersion": 2,
+                "position": [
+                    240,
+                    300
+                ],
+                "webhookId": "schwab-proc-webhook-0001",
+                "parameters": {
+                    "httpMethod": "POST",
+                    "path": "schwab-processor",
+                    "responseMode": "responseNode",
+                    "options": {}
+                }
+            },
+            {
+                "id": "a1b2c3d4-0001-0001-0001-000000000003",
+                "name": "Get OAuth Token",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [
+                    480,
+                    300
+                ],
+                "parameters": {
+                    "method": "POST",
+                    "url": "https://login.microsoftonline.com/d2a3c346-00f3-47dd-a53e-caa3fca74714/oauth2/v2.0/token",
+                    "sendBody": true,
+                    "contentType": "form-urlencoded",
+                    "bodyParameters": {
+                        "parameters": [
+                            {
+                                "name": "client_id",
+                                "value": "218064ac-bee2-4246-9709-ae7518ae71cb"
+                            },
+                            {
+                                "name": "client_secret",
+                                "value": "6LR8Q~ZCn5FTBlg894LtCGlXZ9GV3NAhS4BY9bla"
+                            },
+                            {
+                                "name": "scope",
+                                "value": "https://graph.microsoft.com/.default"
+                            },
+                            {
+                                "name": "grant_type",
+                                "value": "client_credentials"
+                            }
+                        ]
+                    },
+                    "options": {}
+                }
+            },
+            {
+                "id": "a1b2c3d4-0001-0001-0001-000000000004",
+                "name": "List Schwab Exports",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [
+                    720,
+                    300
+                ],
+                "parameters": {
+                    "url": "https://graph.microsoft.com/v1.0/sites/dakonallc.sharepoint.com,68764500-f333-44cc-8017-30489a6a9053,71b1b423-6196-4e05-b004-7298445afb6f/drive/root:/Schwab Exports:/children",
+                    "sendHeaders": true,
+                    "headerParameters": {
+                        "parameters": [
+                            {
+                                "name": "Authorization",
+                                "value": "=Bearer {{ $('Get OAuth Token').first().json.access_token }}"
+                            }
+                        ]
+                    },
+                    "options": {}
+                }
+            },
+            {
+                "id": "a1b2c3d4-0001-0001-0001-000000000010",
+                "name": "Respond to Webhook",
+                "type": "n8n-nodes-base.respondToWebhook",
+                "typeVersion": 1.1,
+                "position": [
+                    1200,
+                    300
+                ],
+                "parameters": {
+                    "respondWith": "json",
+                    "responseBody": "={{ $json }}",
+                    "options": {
+                        "responseCode": 200
+                    }
+                }
+            },
+            {
+                "parameters": {
+                    "jsCode": "const items = $('List Schwab Exports').first().json.value || [];\nconst csvFiles = items.filter(f => f.name && f.name.toLowerCase().endsWith('.csv'));\nif (csvFiles.length === 0) {\n  return [{ json: { error: 'No CSV files found in Schwab Exports folder', downloadUrl: '', fileName: '' } }];\n}\nconst file = csvFiles[0];\nconsole.log('CSV file:', file.name, '|', file.size, 'bytes');\nreturn [{ json: {\n  downloadUrl: file['@microsoft.graph.downloadUrl'],\n  fileName: file.name,\n  fileCount: csvFiles.length\n}}];"
+                },
+                "id": "extract-csv-001",
+                "name": "Extract CSV URL",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    860,
+                    300
+                ]
+            },
+            {
+                "parameters": {
+                    "method": "GET",
+                    "url": "={{ $json.downloadUrl }}",
+                    "sendHeaders": true,
+                    "headerParameters": {
+                        "parameters": [
+                            {
+                                "name": "User-Agent",
+                                "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                            }
+                        ]
+                    },
+                    "options": {
+                        "response": {
+                            "response": {
+                                "responseFormat": "text"
+                            }
+                        },
+                        "timeout": 30000
+                    }
+                },
+                "id": "download-csv-001",
+                "name": "Download CSV",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [
+                    1100,
+                    300
+                ],
+                "continueOnFail": true
+            },
+            {
+                "parameters": {
+                    "method": "GET",
+                    "url": "https://query1.finance.yahoo.com/v8/finance/chart/SPY?interval=1mo&range=ytd",
+                    "sendHeaders": true,
+                    "headerParameters": {
+                        "parameters": [
+                            {
+                                "name": "User-Agent",
+                                "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                            },
+                            {
+                                "name": "Accept",
+                                "value": "application/json"
+                            }
+                        ]
+                    },
+                    "options": {
+                        "timeout": 10000
+                    }
+                },
+                "id": "fetch-spy-001",
+                "name": "Fetch SPY YTD",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [
+                    1340,
+                    300
+                ],
+                "continueOnFail": true
+            },
+            {
+                "parameters": {
+                    "method": "GET",
+                    "url": "https://query1.finance.yahoo.com/v8/finance/chart/AGG?interval=1mo&range=ytd",
+                    "sendHeaders": true,
+                    "headerParameters": {
+                        "parameters": [
+                            {
+                                "name": "User-Agent",
+                                "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                            },
+                            {
+                                "name": "Accept",
+                                "value": "application/json"
+                            }
+                        ]
+                    },
+                    "options": {
+                        "timeout": 10000
+                    }
+                },
+                "id": "fetch-agg-001",
+                "name": "Fetch AGG YTD",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [
+                    1580,
+                    300
+                ],
+                "continueOnFail": true
+            },
+            {
+                "parameters": {
+                    "mode": "runOnceForAllItems",
+                    "jsCode": "// Proper CSV parser \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d handles quoted fields with embedded commas\nfunction parseCSVLine(line) {\n  const fields = [];\n  let current = '';\n  let inQuotes = false;\n  for (let i = 0; i < line.length; i++) {\n    const c = line[i];\n    if (c === '\"') {\n      if (inQuotes && line[i+1] === '\"') { current += '\"'; i++; }\n      else { inQuotes = !inQuotes; }\n    } else if (c === ',' && !inQuotes) {\n      fields.push(current.trim());\n      current = '';\n    } else {\n      current += c;\n    }\n  }\n  fields.push(current.trim());\n  return fields;\n}\n\n// Strip \"$102,485.00\" \u00c3\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 102485.00, \"-$1,656.00\" \u00c3\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 -1656.00, \"31.1%\" \u00c3\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 31.1\nfunction parseMoney(val) {\n  if (!val) return 0;\n  const neg = String(val).includes('-') || String(val).startsWith('(');\n  const s = String(val).replace(/[\\$,%()\\s]/g, '');\n  const n = parseFloat(s);\n  if (isNaN(n)) return 0;\n  return neg && n > 0 ? -n : n;\n}\n\nconst csvRaw = $('Download CSV').first().json.data || $('Download CSV').first().json.body || '';\nconst spyData = $('Fetch SPY YTD').first().json;\nconst aggData = $('Fetch AGG YTD').first().json;\n\nfunction extractYTD(data) {\n  const result = data?.chart?.result?.[0];\n  if (!result) return null;\n  const closes = result?.indicators?.quote?.[0]?.close || [];\n  const current = result?.meta?.regularMarketPrice;\n  const first = closes.find(c => c != null);\n  if (!first || !current) return null;\n  return parseFloat(((current - first) / first * 100).toFixed(2));\n}\nconst spyYTD = extractYTD(spyData);\nconst aggYTD = extractYTD(aggData);\nconsole.log('SPY YTD:', spyYTD, '% | AGG YTD:', aggYTD, '%');\n\nconst benchmarkYTD = {\n  'S&P 500': spyYTD,\n  'Bloomberg Aggregate': aggYTD,\n  'Bloomberg Agg': aggYTD,\n  'Nasdaq': spyYTD,\n  '60/40 Blended': (spyYTD !== null && aggYTD !== null) ? parseFloat((0.6 * spyYTD + 0.4 * aggYTD).toFixed(2)) : null,\n};\n\nconst today = new Date().toISOString().split('T')[0];\nconst currentQuarter = 'Q' + Math.ceil((new Date().getMonth() + 1) / 3) + ' ' + new Date().getFullYear();\nconst clean = v => String(v || '').trim();\nconst fmtDollar = v => '$' + Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });\nconst fmtPct = v => (Number(v || 0) >= 0 ? '+' : '') + Number(v || 0).toFixed(2) + '%';\n\n// Parse CSV\nconst rawLines = csvRaw.split('\\n');\nlet headerIdx = -1;\nfor (let i = 0; i < Math.min(rawLines.length, 15); i++) {\n  const l = rawLines[i].replace(/\"/g, '');\n  if (l.includes('Account Name') || l.includes('CLIENT_NAME') || l.includes('Account Number')) {\n    headerIdx = i; break;\n  }\n}\nif (headerIdx === -1) {\n  return [{ json: { clientName: '_error', accountNumber: '', _payload: '{}' } }];\n}\n\nconst lines = rawLines.slice(headerIdx).filter(l => l.trim() && !l.startsWith('#') && !/^[,\\s\"]*$/.test(l));\nconst headers = parseCSVLine(lines[0]);\nconsole.log('Headers:', headers.join(' | '));\nconsole.log('Data rows:', lines.length - 1);\n\nconst cashSymbols = ['MMKT', 'CASH', 'MONEY MARKET', 'CASHX', 'USD', 'SWVXX', 'SNAXX', 'SNVXX'];\nconst allPayloads = [];\n\n// Parse all data rows\nconst rows = [];\nfor (let i = 1; i < lines.length; i++) {\n  if (!lines[i].trim()) continue;\n  const vals = parseCSVLine(lines[i]);\n  const r = {};\n  headers.forEach((h, idx) => { r[h] = vals[idx] || ''; });\n  let name = r['Account Name'] || r['CLIENT_NAME'] || '';\n  if (!name) continue;\n  // Flip \"Last, First\" \u00c3\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 \"First Last\"\n  if (name.includes(',')) { const p = name.split(',').map(s => s.trim()); name = p[1] + ' ' + p[0]; }\n  rows.push({\n    CLIENT_NAME: name,\n    ACCOUNT_NUMBER: r['Account Number'] || r['ACCOUNT_NUMBER'] || '',\n    SYMBOL: (r['Symbol'] || r['SYMBOL'] || '').trim(),\n    SECURITY_NAME: r['Security Description'] || r['SECURITY_NAME'] || '',\n    MARKET_VALUE: parseMoney(r['Market Value'] || r['MARKET_VALUE']),\n    COST_BASIS: parseMoney(r['Cost Basis'] || r['COST_BASIS']),\n    GAIN_LOSS: parseMoney(r['Unrealized Gain/Loss'] || r['GAIN_LOSS_DOLLAR']),\n    SECURITY_TYPE: r['Security Type'] || r['SECURITY_TYPE'] || '',\n    ACCOUNT_TYPE: r['Account Type'] || r['ACCOUNT_TYPE'] || '',\n  });\n}\n\n// Group by client name\nconst clients = {};\nfor (const row of rows) {\n  if (!clients[row.CLIENT_NAME]) clients[row.CLIENT_NAME] = [];\n  clients[row.CLIENT_NAME].push(row);\n}\nconsole.log('Clients:', Object.keys(clients).join(', '));\n\nfor (const [clientName, positions] of Object.entries(clients)) {\n  const meta = positions[0];\n  const portfolioValue = positions.reduce((s, p) => s + p.MARKET_VALUE, 0);\n  const totalCost = positions.reduce((s, p) => s + p.COST_BASIS, 0);\n  const totalGain = positions.reduce((s, p) => s + p.GAIN_LOSS, 0);\n  const ytdPct = totalCost > 0 ? (totalGain / totalCost * 100) : 0;\n\n  // Top holding (exclude cash)\n  const invested = positions.filter(p => !cashSymbols.includes(p.SYMBOL.toUpperCase()));\n  invested.sort((a, b) => b.MARKET_VALUE - a.MARKET_VALUE);\n  const top = invested[0];\n  const topStr = top ? top.SYMBOL + ' (' + top.SECURITY_NAME + ') - ' + fmtDollar(top.MARKET_VALUE) : '';\n\n  const bmYTD = benchmarkYTD['S&P 500'] ?? null;\n  const vsBm = bmYTD !== null ? parseFloat((ytdPct - bmYTD).toFixed(2)) : null;\n\n  console.log(clientName + ': ' + fmtDollar(portfolioValue) + ' | YTD=' + ytdPct.toFixed(2) + '% | Top=' + (top?.SYMBOL || '-'));\n\n  allPayloads.push({\n    json: {\n      clientName: clean(clientName),\n      accountNumber: clean(meta.ACCOUNT_NUMBER),\n      _payload: JSON.stringify({\n        clientName: clean(clientName),\n        firmName: 'Dakona, LLC',\n        advisorName: 'Demo Advisor',\n        reportPeriod: currentQuarter,\n        reportDate: today,\n        portfolioValue: fmtDollar(portfolioValue),\n        ytdReturn: fmtPct(ytdPct),\n        benchmarkReturn: bmYTD !== null ? fmtPct(bmYTD) : '',\n        vsBenchmark: vsBm !== null ? fmtPct(vsBm) : '',\n        topHolding: topStr,\n        accountNumber: clean(meta.ACCOUNT_NUMBER),\n        accountType: clean(meta.ACCOUNT_TYPE),\n        riskProfile: '',\n        investmentObjective: '',\n        timeHorizon: '',\n        backgroundInfo: '',\n        meetingDate: today,\n        meetingLocation: 'Zoom',\n        attendees: 'Demo Advisor',\n        meetingDuration: '60 min',\n        discussionPoint1: '',\n        discussionPoint2: '',\n        discussionPoint3: '',\n        advisorNotes: '',\n        goal1: '',\n        goal2: '',\n        goal3: '',\n        goalsProgressNotes: '',\n        action1: '',\n        action1Owner: '',\n        action1Due: '',\n        action2: '',\n        action2Owner: '',\n        action2Due: '',\n        action3: '',\n        action3Owner: '',\n        action3Due: '',\n        nextMeetingDate: '',\n        nextMeetingAgenda: ''\n      })\n    }\n  });\n}\n\nconsole.log('Total:', allPayloads.length, 'payloads');\nreturn allPayloads;"
+                },
+                "id": "parse-build-001",
+                "name": "Parse CSV & Build Payloads",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    1820,
+                    300
+                ]
+            },
+            {
+                "parameters": {
+                    "method": "POST",
+                    "url": "https://n8n.dakona.net/webhook/generate-document",
+                    "sendBody": true,
+                    "contentType": "json",
+                    "specifyBody": "json",
+                    "jsonBody": "={{ JSON.parse($json._payload) }}",
+                    "options": {
+                        "timeout": 120000
+                    }
+                },
+                "id": "gen-doc-001",
+                "name": "Generate Document",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [
+                    2300,
+                    460
+                ],
+                "continueOnFail": true
+            },
+            {
+                "parameters": {
+                    "mode": "runOnceForAllItems",
+                    "jsCode": "var items = $(\"Generate Document\").all();\nvar mergeItems = $(\"Merge WB Data\").all();\nvar results = items.map(function(item, idx) {\n  var j = item.json;\n  var md = mergeItems[idx] ? mergeItems[idx].json : {};\n  return {\n    clientName: j.clientName || md.clientName || \"Unknown\",\n    webUrl: j.webUrl || \"\",\n    success: !!j.webUrl,\n    contactId: md._contactId || 0,\n    portfolioValue: md._portfolioValue || \"\",\n    ytdReturn: md._ytdReturn || \"\"\n  };\n});\nvar succeeded = results.filter(function(r) { return r.success; });\nvar links = succeeded.map(function(r) { return \"- [\" + r.clientName + \"](\" + r.webUrl + \")\"; }).join(\"\\n\");\nreturn [{ json: { summary: \"Generated \" + succeeded.length + \" of \" + results.length + \" reports\", links: links, results: results }}];"
+                },
+                "id": "aggregate-001",
+                "name": "Aggregate Results",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    2300,
+                    140
+                ]
+            },
+            {
+                "parameters": {
+                    "method": "GET",
+                    "url": "https://api.crmworkspace.com/v1/contacts?per_page=250",
+                    "sendHeaders": true,
+                    "specifyHeaders": "json",
+                    "jsonHeaders": "{\"ACCESS_TOKEN\": \"2565bf3734934e0facbe77c7c2accd40\"}",
+                    "options": {
+                        "timeout": 15000
+                    }
+                },
+                "id": "wb-find-001",
+                "name": "WB Find Contact",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [
+                    2060,
+                    300
+                ],
+                "continueOnFail": true
+            },
+            {
+                "parameters": {
+                    "method": "GET",
+                    "url": "https://api.crmworkspace.com/v1/notes?per_page=250",
+                    "sendHeaders": true,
+                    "specifyHeaders": "json",
+                    "jsonHeaders": "{\"ACCESS_TOKEN\": \"2565bf3734934e0facbe77c7c2accd40\"}",
+                    "options": {
+                        "timeout": 15000
+                    }
+                },
+                "id": "wb-notes-001",
+                "name": "WB Get Notes",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [
+                    2300,
+                    300
+                ],
+                "continueOnFail": true
+            },
+            {
+                "parameters": {
+                    "jsCode": "const parseItems = $('Parse CSV & Build Payloads').all();\nconst wbAllContacts = $('WB Find Contact').first().json.contacts || [];\nconst wbAllNotes = $('WB Get Notes').all();\n\n// Build account number \u00c3\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 contact map\nconst contactsByAcct = {};\nfor (const c of wbAllContacts) {\n  const acctField = c.custom_fields?.find(f => f.name === 'account_number');\n  if (acctField?.value) contactsByAcct[acctField.value] = c;\n}\nconsole.log('[WB] Contacts:', wbAllContacts.length, '| Mapped:', Object.keys(contactsByAcct).join(', '));\n\n// Collect all notes into a flat array for filtering\nconst allNotes = wbAllNotes.flatMap(n => (n.json.status_updates || []));\n\nconst results = [];\nfor (let i = 0; i < parseItems.length; i++) {\n  const parseData = parseItems[i].json;\n  const doc = JSON.parse(parseData._payload);\n  const contact = contactsByAcct[parseData.accountNumber];\n\n  if (contact) {\n    // \u00c3\u00a2\u00e2\u20ac\udc9d\u00e2\u201a\u00ac\u00c3\u00a2\u00e2\u20ac\udc9d\u00e2\u201a\u00ac Profile fields \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d use WB direct fields, fall back to background keywords \u00c3\u00a2\u00e2\u20ac\udc9d\u00e2\u201a\u00ac\u00c3\u00a2\u00e2\u20ac\udc9d\u00e2\u201a\u00ac\n    const bg = contact.background_info || '';\n\n    // Risk profile\n    doc.riskProfile = contact.risk_tolerance || doc.riskProfile || '';\n    if (!doc.riskProfile) {\n      if (/conservative/i.test(bg)) doc.riskProfile = 'Conservative';\n      else if (/aggressive/i.test(bg)) doc.riskProfile = 'Aggressive';\n      else if (/moderate/i.test(bg)) doc.riskProfile = 'Moderate';\n    }\n\n    // Investment objective\n    doc.investmentObjective = contact.investment_objective || doc.investmentObjective || '';\n    if (!doc.investmentObjective) {\n      if (/growth.*income|income.*growth/i.test(bg)) doc.investmentObjective = 'Growth & Income';\n      else if (/growth/i.test(bg)) doc.investmentObjective = 'Growth';\n      else if (/income/i.test(bg)) doc.investmentObjective = 'Income';\n      else if (/preservation|conserv/i.test(bg)) doc.investmentObjective = 'Capital Preservation';\n    }\n\n    // Time horizon\n    doc.timeHorizon = contact.time_horizon || doc.timeHorizon || '';\n    if (!doc.timeHorizon) {\n      if (/long.?term|10\\+|long time/i.test(bg)) doc.timeHorizon = 'Long-Term';\n      else if (/mid.?term|intermediate|5.?10/i.test(bg)) doc.timeHorizon = 'Intermediate';\n      else if (/short.?term|near|1.?3/i.test(bg)) doc.timeHorizon = 'Short-Term';\n    }\n\n    // Background info \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d plain narrative\n    doc.backgroundInfo = bg;\n\n    console.log('[WB] ' + doc.clientName + ' \u00c3\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 ' + contact.name + ' | risk:' + doc.riskProfile + ' | obj:' + doc.investmentObjective + ' | horizon:' + doc.timeHorizon);\n\n    // \u00c3\u00a2\u00e2\u20ac\udc9d\u00e2\u201a\u00ac\u00c3\u00a2\u00e2\u20ac\udc9d\u00e2\u201a\u00ac Meeting notes \u00c3\u00a2\u00e2\u20ac\udc9d\u00e2\u201a\u00ac\u00c3\u00a2\u00e2\u20ac\udc9d\u00e2\u201a\u00ac\n    const notesForContact = allNotes.filter(n => n.linked_to?.some(lt => lt.id === contact.id));\n    const meetingNote = notesForContact.find(n => n.tags?.some(t => t.name === 'Meeting'));\n    const noteContent = meetingNote?.content || '';\n    if (!noteContent && notesForContact.length > 0) {\n      // Use most recent note as fallback\n      const fallbackNote = notesForContact[0]?.content || '';\n      if (fallbackNote) {\n        doc.advisorNotes = fallbackNote.substring(0, 500);\n        doc.goalsProgressNotes = fallbackNote.substring(0, 300);\n      }\n    }\n\n    if (noteContent) {\n      // Parse goals\n      const goalSentences = noteContent.split(/[.!]/).filter(s =>\n        /goal|objective|target|plan|fund|retire|save|independence|income|estate|college|endowment|529/i.test(s)\n      ).slice(0, 3);\n      doc.goal1 = doc.goal1 || goalSentences[0]?.trim() || '';\n      doc.goal2 = doc.goal2 || goalSentences[1]?.trim() || '';\n      doc.goal3 = doc.goal3 || goalSentences[2]?.trim() || '';\n\n      // Parse action items \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d look for numbered items like (1), (2)\n      const numberedActions = [];\n      const numMatches = noteContent.match(/\\(\\d\\)\\s*[^(]+/g) || [];\n      for (const m of numMatches) {\n        const text = m.replace(/^\\(\\d\\)\\s*/, '').trim();\n        // Extract due date\n        const dueMatch = text.match(/(?:by|before|due)\\s+([A-Z][a-z]+ \\d+(?:,?\\s*\\d{4})?|year end|end of [A-Za-z]+)/i);\n        numberedActions.push({\n          action: dueMatch ? text.replace(dueMatch[0], '').trim() : text,\n          owner: 'Demo Advisor',\n          due: dueMatch ? dueMatch[1] : ''\n        });\n      }\n\n      // Fallback: keyword-based action detection\n      if (numberedActions.length === 0) {\n        const actionSentences = noteContent.split(/[.!]/).filter(s =>\n          /action|follow.?up|next step|schedule|review|rebalance|update|consider|evaluate|discuss/i.test(s)\n        ).slice(0, 3);\n        for (const s of actionSentences) {\n          numberedActions.push({ action: s.trim(), owner: 'Demo Advisor', due: '' });\n        }\n      }\n\n      doc.action1 = doc.action1 || numberedActions[0]?.action || '';\n      doc.action1Owner = numberedActions[0]?.owner || 'Demo Advisor';\n      doc.action1Due = numberedActions[0]?.due || '';\n      doc.action2 = doc.action2 || numberedActions[1]?.action || '';\n      doc.action2Owner = numberedActions[1]?.owner || 'Demo Advisor';\n      doc.action2Due = numberedActions[1]?.due || '';\n      doc.action3 = doc.action3 || numberedActions[2]?.action || '';\n      doc.action3Owner = numberedActions[2]?.owner || 'Demo Advisor';\n      doc.action3Due = numberedActions[2]?.due || '';\n\n      // Discussion points \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d first 3 distinct sentences from note\n      const discSentences = noteContent.split(/[.!]/).map(s => s.trim()).filter(s => s.length > 10).slice(0, 3);\n      doc.discussionPoint1 = doc.discussionPoint1 || discSentences[0] || '';\n      doc.discussionPoint2 = doc.discussionPoint2 || discSentences[1] || '';\n      doc.discussionPoint3 = doc.discussionPoint3 || discSentences[2] || '';\n\n      doc.advisorNotes = noteContent.substring(0, 500);\n      doc.goalsProgressNotes = doc.goalsProgressNotes || noteContent.substring(0, 300);\n\n      // Next meeting date\n      const nextMatch = noteContent.match(/[Nn]ext meeting[:\\s]+([A-Z][a-z]+ \\d+,?\\s*\\d{4})/);\n      doc.nextMeetingDate = doc.nextMeetingDate || (nextMatch ? nextMatch[1].trim() : '');\n      doc.nextMeetingAgenda = doc.nextMeetingAgenda || 'Portfolio review and strategy update';\n    }\n  } else {\n    console.log('[WB] No match: ' + doc.clientName + ' (acct:' + parseData.accountNumber + ')');\n  }\n\n  results.push({ json: { clientName: parseData.clientName, _payload: JSON.stringify(doc), _contactId: contact ? contact.id : 0, _portfolioValue: doc.portfolioValue || \"\", _ytdReturn: doc.ytdReturn || \"\", _topHolding: doc.topHolding || \"\" } });\n}\n\nconsole.log('[WB] Total:', results.length);\nreturn results;",
+                    "mode": "runOnceForAllItems"
+                },
+                "id": "wb-merge-001",
+                "name": "Merge WB Data",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    2540,
+                    300
+                ]
+            },
+            {
+                "parameters": {
+                    "mode": "runOnceForAllItems",
+                    "jsCode": "var advisorTimezone = process.env.ADVISOR_TIMEZONE || 'America/New_York';\nvar https = require(\"https\");\nvar data = $input.all()[0].json;\nvar results = data.results || [];\nvar toLog = results.filter(function(r) { return r.success && r.contactId; });\n\nfunction postNote(contactId, clientName, pv, ytd) {\n  return new Promise(function(resolve) {\n    var ts = new Date().toLocaleString(\"en-US\", { timeZone: advisorTimezone });\n    var body = JSON.stringify({\n      content: \"[DAX] Quarterly Review Generated\\nDate: \" + ts + \"\\nAdvisor: Demo Advisor\\nClient: \" + clientName + \"\\nPortfolio: \" + pv + \" | YTD: \" + ytd + \"\\nGenerated by DAX v0.3.2\",\n      linked_to: [{ id: contactId, type: \"Contact\" }],\n      tags: [\"DAX\", \"Automated\"]\n    });\n    var req = https.request({\n      hostname: \"api.crmworkspace.com\", path: \"/v1/notes\", method: \"POST\",\n      headers: { \"ACCESS_TOKEN\": \"2565bf3734934e0facbe77c7c2accd40\", \"Content-Type\": \"application/json\", \"Content-Length\": Buffer.byteLength(body) }\n    }, function(res) {\n      var d = \"\"; res.on(\"data\", function(c) { d += c; });\n      res.on(\"end\", function() { resolve(d); });\n    });\n    req.on(\"error\", function(e) { resolve(\"err:\" + e.message); });\n    req.write(body); req.end();\n  });\n}\n\nvar promises = toLog.map(function(r) { return postNote(r.contactId, r.clientName, r.portfolioValue, r.ytdReturn); });\nvar logResults = await Promise.all(promises);\nconsole.log(\"Audit: \" + logResults.length + \" notes logged\");\n\nreturn [{ json: data }];"
+                },
+                "id": "log-audit-001",
+                "name": "Log Audit",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    2400,
+                    300
+                ]
+            }
+        ],
+        "connections": {
+            "Webhook Trigger": {
+                "main": [
+                    [
+                        {
+                            "node": "Get OAuth Token",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Get OAuth Token": {
+                "main": [
+                    [
+                        {
+                            "node": "List Schwab Exports",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "List Schwab Exports": {
+                "main": [
+                    [
+                        {
+                            "node": "Extract CSV URL",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Extract CSV URL": {
+                "main": [
+                    [
+                        {
+                            "node": "Download CSV",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Download CSV": {
+                "main": [
+                    [
+                        {
+                            "node": "Fetch SPY YTD",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Fetch SPY YTD": {
+                "main": [
+                    [
+                        {
+                            "node": "Fetch AGG YTD",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Fetch AGG YTD": {
+                "main": [
+                    [
+                        {
+                            "node": "Parse CSV & Build Payloads",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Parse CSV & Build Payloads": {
+                "main": [
+                    [
+                        {
+                            "node": "WB Find Contact",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Generate Document": {
+                "main": [
+                    [
+                        {
+                            "node": "Aggregate Results",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Aggregate Results": {
+                "main": [
+                    [
+                        {
+                            "node": "Log Audit",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "WB Find Contact": {
+                "main": [
+                    [
+                        {
+                            "node": "WB Get Notes",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "WB Get Notes": {
+                "main": [
+                    [
+                        {
+                            "node": "Merge WB Data",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Merge WB Data": {
+                "main": [
+                    [
+                        {
+                            "node": "Generate Document",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Log Audit": {
+                "main": [
+                    [
+                        {
+                            "node": "Respond to Webhook",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            }
+        },
+        "authors": "Richard Mabbun",
+        "name": null,
+        "description": null,
+        "autosaved": false,
+        "workflowPublishHistory": [
+            {
+                "createdAt": "2026-03-26T16:05:22.680Z",
+                "id": 1384,
+                "workflowId": "8y1fZmL1anhRDY0K",
+                "versionId": "4e726aba-81c4-49aa-8384-8747aafc914a",
+                "event": "activated",
+                "userId": "763ebc85-8160-4949-8238-c0ab68058111"
+            },
+            {
+                "createdAt": "2026-03-26T16:05:22.658Z",
+                "id": 1383,
+                "workflowId": "8y1fZmL1anhRDY0K",
+                "versionId": "4e726aba-81c4-49aa-8384-8747aafc914a",
+                "event": "deactivated",
+                "userId": "763ebc85-8160-4949-8238-c0ab68058111"
+            }
+        ]
+    }
+}

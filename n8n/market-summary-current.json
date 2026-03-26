@@ -1,0 +1,577 @@
+{
+    "updatedAt": "2026-03-26T16:05:22.239Z",
+    "createdAt": "2026-03-25T18:57:08.830Z",
+    "id": "7oPNzVYnYKgxqeYP",
+    "name": "DAX Market Summary",
+    "description": null,
+    "active": true,
+    "isArchived": false,
+    "nodes": [
+        {
+            "id": "wh-1",
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2,
+            "position": [
+                260,
+                340
+            ],
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "get-market-summary",
+                "responseMode": "responseNode",
+                "options": {}
+            }
+        },
+        {
+            "id": "news-1",
+            "name": "Fetch Finnhub News",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                500,
+                200
+            ],
+            "parameters": {
+                "method": "GET",
+                "url": "https://finnhub.io/api/v1/news?category=general&token=d7223bpr01qjeeefjd60d7223bpr01qjeeefjd6g",
+                "options": {
+                    "timeout": 10000,
+                    "response": {
+                        "response": {
+                            "neverError": true
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "id": "quotes-spy",
+            "name": "Fetch SPY Quote",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                500,
+                400
+            ],
+            "parameters": {
+                "method": "GET",
+                "url": "https://financialmodelingprep.com/stable/quote?symbol=SPY&apikey=d65SRP1CgzVzaMfhwEniVWMLF7pWNwIn",
+                "options": {
+                    "timeout": 10000,
+                    "response": {
+                        "response": {
+                            "neverError": true
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "id": "quotes-qqq",
+            "name": "Fetch QQQ Quote",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                500,
+                520
+            ],
+            "parameters": {
+                "method": "GET",
+                "url": "https://financialmodelingprep.com/stable/quote?symbol=QQQ&apikey=d65SRP1CgzVzaMfhwEniVWMLF7pWNwIn",
+                "options": {
+                    "timeout": 10000,
+                    "response": {
+                        "response": {
+                            "neverError": true
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "id": "merge-1",
+            "name": "Merge Data",
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 3,
+            "position": [
+                740,
+                300
+            ],
+            "parameters": {
+                "mode": "append"
+            }
+        },
+        {
+            "id": "merge-2",
+            "name": "Merge Quotes",
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 3,
+            "position": [
+                740,
+                460
+            ],
+            "parameters": {
+                "mode": "append"
+            }
+        },
+        {
+            "id": "merge-all",
+            "name": "Merge All",
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 3,
+            "position": [
+                960,
+                380
+            ],
+            "parameters": {
+                "mode": "append"
+            }
+        },
+        {
+            "id": "fmt-1",
+            "name": "Format Response",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1180,
+                380
+            ],
+            "parameters": {
+                "jsCode": "var advisorTimezone = process.env.ADVISOR_TIMEZONE || 'America/New_York';\n// Collect all input items\nvar allItems = $input.all();\nvar newsItems = [];\nvar quoteItems = [];\n\nfor (var i = 0; i < allItems.length; i++) {\n  var j = allItems[i].json;\n  // Finnhub news items have 'headline' field\n  if (j.headline) newsItems.push(j);\n  // FMP quote items have 'symbol' and 'price' fields\n  if (j.symbol && j.price !== undefined) quoteItems.push(j);\n}\n\nvar headlines = newsItems.slice(0, 8).map(function(n) {\n  return {\n    title: n.headline || \"\",\n    summary: (n.summary || \"\").substring(0, 150),\n    source: n.source || \"Unknown\",\n    published: n.datetime\n      ? new Date(n.datetime * 1000).toLocaleString(\"en-US\", { timeZone: advisorTimezone, month: \"short\", day: \"numeric\", hour: \"numeric\", minute: \"2-digit\", hour12: true })\n      : \"\",\n    symbol: n.related || \"\"\n  };\n});\n\nvar snapshot = quoteItems.map(function(q) {\n  var pct = q.changesPercentage || 0;\n  return q.symbol + \": $\" + (q.price || 0).toFixed(2) + \" (\" + (pct >= 0 ? \"+\" : \"\") + pct.toFixed(2) + \"%)\";\n}).join(\" | \");\n\nvar today = new Date().toLocaleDateString(\"en-US\", {\n  timeZone: advisorTimezone, weekday: \"long\", month: \"long\", day: \"numeric\", year: \"numeric\"\n});\n\nvar headlineText = headlines.length > 0\n  ? headlines.map(function(h, i) {\n      return (i+1) + \". **\" + h.title + \"**\" + (h.symbol ? \" (\" + h.symbol + \")\" : \"\") +\n        \"\\n   \" + (h.summary || \"\") +\n        \"\\n   \" + h.source + \" | \" + h.published;\n    }).join(\"\\n\\n\")\n  : \"No market news available right now.\";\n\nvar response = \"MARKET SUMMARY \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d \" + today + \"\\n\\n\" +\n  \"KEY INDICES\\n\" + (snapshot || \"Price data unavailable\") + \"\\n\\n\" +\n  \"TOP MARKET STORIES\\n\" + headlineText + \"\\n\\n\" +\n  \"Source: FMP/Finnhub live data | Note: For investment decisions, verify with primary sources.\";\n\nreturn [{ json: { response: response } }];",
+                "mode": "runOnceForAllItems"
+            }
+        },
+        {
+            "id": "resp-1",
+            "name": "Respond",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                1400,
+                380
+            ],
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ $json }}",
+                "options": {
+                    "responseCode": 200
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch Finnhub News",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Fetch SPY Quote",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Fetch QQQ Quote",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Finnhub News": {
+            "main": [
+                [
+                    {
+                        "node": "Merge Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch SPY Quote": {
+            "main": [
+                [
+                    {
+                        "node": "Merge Quotes",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch QQQ Quote": {
+            "main": [
+                [
+                    {
+                        "node": "Merge Quotes",
+                        "type": "main",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "Merge Data": {
+            "main": [
+                [
+                    {
+                        "node": "Merge All",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Merge Quotes": {
+            "main": [
+                [
+                    {
+                        "node": "Merge All",
+                        "type": "main",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "Merge All": {
+            "main": [
+                [
+                    {
+                        "node": "Format Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Response": {
+            "main": [
+                [
+                    {
+                        "node": "Respond",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1",
+        "callerPolicy": "workflowsFromSameOwner",
+        "availableInMCP": false
+    },
+    "staticData": null,
+    "meta": null,
+    "pinData": null,
+    "versionId": "d1d5cd06-1804-4cc7-8656-9e867e3de9c8",
+    "activeVersionId": "d1d5cd06-1804-4cc7-8656-9e867e3de9c8",
+    "versionCounter": 11,
+    "triggerCount": 1,
+    "shared": [
+        {
+            "updatedAt": "2026-03-25T18:57:08.832Z",
+            "createdAt": "2026-03-25T18:57:08.832Z",
+            "role": "workflow:owner",
+            "workflowId": "7oPNzVYnYKgxqeYP",
+            "projectId": "xDgj8rwVTQP3E9Cb",
+            "project": {
+                "updatedAt": "2025-11-10T15:32:18.748Z",
+                "createdAt": "2025-11-10T03:21:08.872Z",
+                "id": "xDgj8rwVTQP3E9Cb",
+                "name": "Richard Mabbun <rmabbun@dakona.com>",
+                "type": "personal",
+                "icon": null,
+                "description": null,
+                "creatorId": "763ebc85-8160-4949-8238-c0ab68058111"
+            }
+        }
+    ],
+    "tags": [],
+    "activeVersion": {
+        "updatedAt": "2026-03-26T16:05:22.239Z",
+        "createdAt": "2026-03-26T16:05:22.239Z",
+        "versionId": "d1d5cd06-1804-4cc7-8656-9e867e3de9c8",
+        "workflowId": "7oPNzVYnYKgxqeYP",
+        "nodes": [
+            {
+                "id": "wh-1",
+                "name": "Webhook",
+                "type": "n8n-nodes-base.webhook",
+                "typeVersion": 2,
+                "position": [
+                    260,
+                    340
+                ],
+                "parameters": {
+                    "httpMethod": "POST",
+                    "path": "get-market-summary",
+                    "responseMode": "responseNode",
+                    "options": {}
+                }
+            },
+            {
+                "id": "news-1",
+                "name": "Fetch Finnhub News",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [
+                    500,
+                    200
+                ],
+                "parameters": {
+                    "method": "GET",
+                    "url": "https://finnhub.io/api/v1/news?category=general&token=d7223bpr01qjeeefjd60d7223bpr01qjeeefjd6g",
+                    "options": {
+                        "timeout": 10000,
+                        "response": {
+                            "response": {
+                                "neverError": true
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "id": "quotes-spy",
+                "name": "Fetch SPY Quote",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [
+                    500,
+                    400
+                ],
+                "parameters": {
+                    "method": "GET",
+                    "url": "https://financialmodelingprep.com/stable/quote?symbol=SPY&apikey=d65SRP1CgzVzaMfhwEniVWMLF7pWNwIn",
+                    "options": {
+                        "timeout": 10000,
+                        "response": {
+                            "response": {
+                                "neverError": true
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "id": "quotes-qqq",
+                "name": "Fetch QQQ Quote",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [
+                    500,
+                    520
+                ],
+                "parameters": {
+                    "method": "GET",
+                    "url": "https://financialmodelingprep.com/stable/quote?symbol=QQQ&apikey=d65SRP1CgzVzaMfhwEniVWMLF7pWNwIn",
+                    "options": {
+                        "timeout": 10000,
+                        "response": {
+                            "response": {
+                                "neverError": true
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "id": "merge-1",
+                "name": "Merge Data",
+                "type": "n8n-nodes-base.merge",
+                "typeVersion": 3,
+                "position": [
+                    740,
+                    300
+                ],
+                "parameters": {
+                    "mode": "append"
+                }
+            },
+            {
+                "id": "merge-2",
+                "name": "Merge Quotes",
+                "type": "n8n-nodes-base.merge",
+                "typeVersion": 3,
+                "position": [
+                    740,
+                    460
+                ],
+                "parameters": {
+                    "mode": "append"
+                }
+            },
+            {
+                "id": "merge-all",
+                "name": "Merge All",
+                "type": "n8n-nodes-base.merge",
+                "typeVersion": 3,
+                "position": [
+                    960,
+                    380
+                ],
+                "parameters": {
+                    "mode": "append"
+                }
+            },
+            {
+                "id": "fmt-1",
+                "name": "Format Response",
+                "type": "n8n-nodes-base.code",
+                "typeVersion": 2,
+                "position": [
+                    1180,
+                    380
+                ],
+                "parameters": {
+                    "jsCode": "var advisorTimezone = process.env.ADVISOR_TIMEZONE || 'America/New_York';\n// Collect all input items\nvar allItems = $input.all();\nvar newsItems = [];\nvar quoteItems = [];\n\nfor (var i = 0; i < allItems.length; i++) {\n  var j = allItems[i].json;\n  // Finnhub news items have 'headline' field\n  if (j.headline) newsItems.push(j);\n  // FMP quote items have 'symbol' and 'price' fields\n  if (j.symbol && j.price !== undefined) quoteItems.push(j);\n}\n\nvar headlines = newsItems.slice(0, 8).map(function(n) {\n  return {\n    title: n.headline || \"\",\n    summary: (n.summary || \"\").substring(0, 150),\n    source: n.source || \"Unknown\",\n    published: n.datetime\n      ? new Date(n.datetime * 1000).toLocaleString(\"en-US\", { timeZone: advisorTimezone, month: \"short\", day: \"numeric\", hour: \"numeric\", minute: \"2-digit\", hour12: true })\n      : \"\",\n    symbol: n.related || \"\"\n  };\n});\n\nvar snapshot = quoteItems.map(function(q) {\n  var pct = q.changesPercentage || 0;\n  return q.symbol + \": $\" + (q.price || 0).toFixed(2) + \" (\" + (pct >= 0 ? \"+\" : \"\") + pct.toFixed(2) + \"%)\";\n}).join(\" | \");\n\nvar today = new Date().toLocaleDateString(\"en-US\", {\n  timeZone: advisorTimezone, weekday: \"long\", month: \"long\", day: \"numeric\", year: \"numeric\"\n});\n\nvar headlineText = headlines.length > 0\n  ? headlines.map(function(h, i) {\n      return (i+1) + \". **\" + h.title + \"**\" + (h.symbol ? \" (\" + h.symbol + \")\" : \"\") +\n        \"\\n   \" + (h.summary || \"\") +\n        \"\\n   \" + h.source + \" | \" + h.published;\n    }).join(\"\\n\\n\")\n  : \"No market news available right now.\";\n\nvar response = \"MARKET SUMMARY \u00c3\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\udc9d \" + today + \"\\n\\n\" +\n  \"KEY INDICES\\n\" + (snapshot || \"Price data unavailable\") + \"\\n\\n\" +\n  \"TOP MARKET STORIES\\n\" + headlineText + \"\\n\\n\" +\n  \"Source: FMP/Finnhub live data | Note: For investment decisions, verify with primary sources.\";\n\nreturn [{ json: { response: response } }];",
+                    "mode": "runOnceForAllItems"
+                }
+            },
+            {
+                "id": "resp-1",
+                "name": "Respond",
+                "type": "n8n-nodes-base.respondToWebhook",
+                "typeVersion": 1.1,
+                "position": [
+                    1400,
+                    380
+                ],
+                "parameters": {
+                    "respondWith": "json",
+                    "responseBody": "={{ $json }}",
+                    "options": {
+                        "responseCode": 200
+                    }
+                }
+            }
+        ],
+        "connections": {
+            "Webhook": {
+                "main": [
+                    [
+                        {
+                            "node": "Fetch Finnhub News",
+                            "type": "main",
+                            "index": 0
+                        },
+                        {
+                            "node": "Fetch SPY Quote",
+                            "type": "main",
+                            "index": 0
+                        },
+                        {
+                            "node": "Fetch QQQ Quote",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Fetch Finnhub News": {
+                "main": [
+                    [
+                        {
+                            "node": "Merge Data",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Fetch SPY Quote": {
+                "main": [
+                    [
+                        {
+                            "node": "Merge Quotes",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Fetch QQQ Quote": {
+                "main": [
+                    [
+                        {
+                            "node": "Merge Quotes",
+                            "type": "main",
+                            "index": 1
+                        }
+                    ]
+                ]
+            },
+            "Merge Data": {
+                "main": [
+                    [
+                        {
+                            "node": "Merge All",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Merge Quotes": {
+                "main": [
+                    [
+                        {
+                            "node": "Merge All",
+                            "type": "main",
+                            "index": 1
+                        }
+                    ]
+                ]
+            },
+            "Merge All": {
+                "main": [
+                    [
+                        {
+                            "node": "Format Response",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Format Response": {
+                "main": [
+                    [
+                        {
+                            "node": "Respond",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            }
+        },
+        "authors": "Richard Mabbun",
+        "name": null,
+        "description": null,
+        "autosaved": false,
+        "workflowPublishHistory": [
+            {
+                "createdAt": "2026-03-26T16:05:22.293Z",
+                "id": 1382,
+                "workflowId": "7oPNzVYnYKgxqeYP",
+                "versionId": "d1d5cd06-1804-4cc7-8656-9e867e3de9c8",
+                "event": "activated",
+                "userId": "763ebc85-8160-4949-8238-c0ab68058111"
+            },
+            {
+                "createdAt": "2026-03-26T16:05:22.273Z",
+                "id": 1381,
+                "workflowId": "7oPNzVYnYKgxqeYP",
+                "versionId": "d1d5cd06-1804-4cc7-8656-9e867e3de9c8",
+                "event": "deactivated",
+                "userId": "763ebc85-8160-4949-8238-c0ab68058111"
+            }
+        ]
+    }
+}
