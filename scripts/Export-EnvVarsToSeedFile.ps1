@@ -15,17 +15,32 @@ $ResourceGroup = "rg-dax-dakona-pilot"
 $ContainerApp  = "ca-dax-mcp-dakona-pilot"
 $SeedFile      = "$PSScriptRoot\kv-seed.json"
 
-# Map: Container App env var / secret name => Key Vault secret name
-$EnvToKV = @{
-    "N8N_API_KEY"           = "n8n-api-key"
-    "VINCE_N8N_API_KEY"     = "vince-n8n-api-key"
-    "FMP_API_KEY"           = "fmp-api-key"
-    "FINNHUB_API_KEY"       = "finnhub-api-key"
-    "CLICKUP_API_KEY"       = "clickup-api-key"
-    "MAKE_API_KEY"          = "make-api-key"
-    "RPE_SLACK_TOKEN"       = "rpe-slack-token"
-    "DESKTOP_BRIDGE_SECRET" = "desktop-bridge-secret"
-    "MONGO_URI"             = "cosmos-connection-string"
+# Map: ALL known Container App env var names AND secret names => KV secret name
+# Covers both naming conventions (underscores and hyphens)
+$ToKV = @{
+    # Plain env var names
+    "N8N_API_KEY"            = "n8n-api-key"
+    "VINCE_N8N_API_KEY"      = "vince-n8n-api-key"
+    "FMP_API_KEY"            = "fmp-api-key"
+    "FINNHUB_API_KEY"        = "finnhub-api-key"
+    "CLICKUP_API_KEY"        = "clickup-api-key"
+    "MAKE_API_KEY"           = "make-api-key"
+    "RPE_SLACK_TOKEN"        = "rpe-slack-token"
+    "DESKTOP_BRIDGE_SECRET"  = "desktop-bridge-secret"
+    "MONGO_URI"              = "cosmos-connection-string"
+    # Container App secret names (as shown by az containerapp secret list)
+    "n8n-api-key"            = "n8n-api-key"
+    "vince-n8n-api-key"      = "vince-n8n-api-key"
+    "fmp-api-key"            = "fmp-api-key"
+    "finnhub-api-key"        = "finnhub-api-key"
+    "clickup-api-key"        = "clickup-api-key"
+    "make-api-key"           = "make-api-key"
+    "rpe-slack-bot-token"    = "rpe-slack-token"
+    "rpe-pit-token"          = "rpe-pit-token"
+    "github-token"           = "github-token"
+    "asana-api-token"        = "asana-api-token"
+    "desktop-bridge-secret"  = "desktop-bridge-secret"
+    "cosmos-connection-string" = "cosmos-connection-string"
 }
 
 Write-Host "=== DAX Env Var Export to KV Seed File ===" -ForegroundColor Cyan
@@ -34,6 +49,8 @@ Write-Host "=== DAX Env Var Export to KV Seed File ===" -ForegroundColor Cyan
 $account = az account show --query name -o tsv
 Write-Host "Azure account: $account" -ForegroundColor Gray
 
+$valueLookup = @{}
+
 # ── Step 1: Read plain env vars ───────────────────────────────
 Write-Host "`nReading plain env vars from: $ContainerApp..." -ForegroundColor Yellow
 $envVarsJson = az containerapp show `
@@ -41,63 +58,49 @@ $envVarsJson = az containerapp show `
     --resource-group $ResourceGroup `
     --query "properties.template.containers[0].env" `
     -o json
-
 $envVars = $envVarsJson | ConvertFrom-Json
-
-$envLookup = @{}
 foreach ($ev in $envVars) {
-    if ($ev.value) {
-        $envLookup[$ev.name] = $ev.value
+    if ($ev.value -and -not [string]::IsNullOrWhiteSpace($ev.value)) {
+        $valueLookup[$ev.name] = $ev.value
     }
 }
-Write-Host "  Found $($envLookup.Count) plain env vars" -ForegroundColor Gray
+Write-Host "  Found $($valueLookup.Count) plain env vars" -ForegroundColor Gray
 
-# ── Step 2: Read Container App secrets ───────────────────────
-Write-Host "Reading Container App secrets from: $ContainerApp..." -ForegroundColor Yellow
-$secretsJson = az containerapp secret list `
+# ── Step 2: Read Container App secrets by name ───────────────
+Write-Host "Reading Container App secrets..." -ForegroundColor Yellow
+$secretsListJson = az containerapp secret list `
     --name $ContainerApp `
     --resource-group $ResourceGroup `
     -o json
-
-$secretsList = $secretsJson | ConvertFrom-Json
+$secretsList = $secretsListJson | ConvertFrom-Json
 
 foreach ($s in $secretsList) {
-    $secretName = $s.name
-    # Secret names in Container Apps use hyphens; env vars use underscores
-    # Try to match by converting hyphens to underscores for lookup
-    $envEquivalent = $secretName.ToUpper().Replace("-","_")
-
-    # Fetch the actual secret value
+    $sName = $s.name
+    Write-Host "  Fetching secret: $sName" -ForegroundColor Gray
     try {
-        $secretValue = (az containerapp secret show `
+        $val = (az containerapp secret show `
             --name $ContainerApp `
             --resource-group $ResourceGroup `
-            --secret-name $secretName `
+            --secret-name $sName `
             --query "value" -o tsv 2>$null).Trim()
-
-        if (-not [string]::IsNullOrWhiteSpace($secretValue)) {
-            # Store under both the original secret name and env var equivalent
-            $envLookup[$secretName]      = $secretValue
-            $envLookup[$envEquivalent]   = $secretValue
+        if (-not [string]::IsNullOrWhiteSpace($val)) {
+            $valueLookup[$sName] = $val
         }
     } catch {
-        Write-Host "  Could not read secret: $secretName" -ForegroundColor Yellow
+        Write-Host "  Could not read secret: $sName" -ForegroundColor Yellow
     }
 }
-Write-Host "  Total values available (env + secrets): $($envLookup.Count)" -ForegroundColor Gray
+Write-Host "  Total values available: $($valueLookup.Count)" -ForegroundColor Gray
 
-# ── Step 3: Build seed object ─────────────────────────────────
-$seed    = @{}
-$found   = @()
-$missing = @()
+# ── Step 3: Build seed object (deduplicated by KV secret name) ─
+$seed  = @{}
+$found = @()
 
-foreach ($envName in $EnvToKV.Keys) {
-    $kvName = $EnvToKV[$envName]
-    if ($envLookup.ContainsKey($envName) -and -not [string]::IsNullOrWhiteSpace($envLookup[$envName])) {
-        $seed[$kvName] = $envLookup[$envName]
-        $found += $envName
-    } else {
-        $missing += $envName
+foreach ($sourceName in $ToKV.Keys) {
+    $kvName = $ToKV[$sourceName]
+    if ($valueLookup.ContainsKey($sourceName) -and -not $seed.ContainsKey($kvName)) {
+        $seed[$kvName] = $valueLookup[$sourceName]
+        $found += "$sourceName -> $kvName"
     }
 }
 
@@ -105,12 +108,14 @@ foreach ($envName in $EnvToKV.Keys) {
 $seed | ConvertTo-Json -Depth 3 | Set-Content -Path $SeedFile -Encoding UTF8
 
 Write-Host "`n[OK] Seed file written: $SeedFile" -ForegroundColor Green
-Write-Host "  Exported : $($found.Count) - $($found -join ', ')" -ForegroundColor Green
+Write-Host "  Exported $($seed.Count) secrets:" -ForegroundColor Green
+$found | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
 
-if ($missing.Count -gt 0) {
-    Write-Host "  Not found: $($missing.Count) - $($missing -join ', ')" -ForegroundColor Yellow
-    Write-Host "  You can add these manually to: $SeedFile" -ForegroundColor Gray
-    Write-Host "  Format: { ""secret-name"": ""value"", ... }" -ForegroundColor Gray
+$allKVNames = $ToKV.Values | Sort-Object -Unique
+$notFound = $allKVNames | Where-Object { -not $seed.ContainsKey($_) }
+if ($notFound.Count -gt 0) {
+    Write-Host "`n  Not found ($($notFound.Count)): $($notFound -join ', ')" -ForegroundColor Yellow
+    Write-Host "  Add these manually to $SeedFile if needed" -ForegroundColor Gray
 }
 
 Write-Host "`n[!] SECURITY: This file contains plaintext secrets." -ForegroundColor Red
