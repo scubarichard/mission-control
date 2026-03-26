@@ -1,5 +1,5 @@
 # ============================================================
-# DAX Desktop Bridge — Install as Windows Service
+# DAX Desktop Bridge - Install as Windows Service
 # Run this ONCE as Administrator in PowerShell
 # ============================================================
 
@@ -41,7 +41,7 @@ BRIDGE_LOG=$BridgeDir\bridge.log
 "@ | Set-Content $envFile
     Write-Host "  Created .env with random secret: $envFile" -ForegroundColor Green
 } else {
-    Write-Host "  .env exists — keeping config" -ForegroundColor Green
+    Write-Host "  .env exists - keeping config" -ForegroundColor Green
 }
 
 # Step 4: Install NSSM
@@ -61,7 +61,7 @@ if (-not (Test-Path $nssmPath)) {
 Write-Host "`n[5/5] Registering Windows service..." -ForegroundColor Yellow
 $nodePath = (Get-Command node).Source
 
-# Remove if exists
+# Remove existing service if present
 if (Get-Service $ServiceName -ErrorAction SilentlyContinue) {
     nssm stop $ServiceName 2>$null
     nssm remove $ServiceName confirm 2>$null
@@ -71,7 +71,7 @@ if (Get-Service $ServiceName -ErrorAction SilentlyContinue) {
 nssm install $ServiceName $nodePath "bridge.js"
 nssm set $ServiceName AppDirectory $BridgeDir
 nssm set $ServiceName DisplayName "DAX Desktop Bridge"
-nssm set $ServiceName Description "Connects Claude AI to Richard's local Windows environment"
+nssm set $ServiceName Description "Connects Claude AI to Richards local Windows environment"
 nssm set $ServiceName Start SERVICE_AUTO_START
 nssm set $ServiceName AppStdout "$BridgeDir\bridge.log"
 nssm set $ServiceName AppStderr "$BridgeDir\bridge-error.log"
@@ -90,11 +90,13 @@ try {
 } catch {
     Write-Host "`n=== Check logs ===" -ForegroundColor Yellow
     Write-Host "Service installed but health check failed."
-    Write-Host "Log: $BridgeDir\bridge.log"
+    $logPath = "$BridgeDir\bridge.log"
+    Write-Host "Log: $logPath"
 }
 
+$logPath = "$BridgeDir\bridge.log"
 Write-Host "`nService management:" -ForegroundColor Cyan
 Write-Host "  nssm start $ServiceName"
 Write-Host "  nssm stop $ServiceName"
 Write-Host "  nssm status $ServiceName"
-Write-Host "  Get-Content '$BridgeDir\bridge.log' -Tail 50"
+Write-Host "  Get-Content $logPath -Tail 50"
