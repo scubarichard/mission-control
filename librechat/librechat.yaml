@@ -27,7 +27,6 @@ endpoints:
         - "stop"
         - "frequency_penalty"
         - "presence_penalty"
-        - "user"
         - "n"
         - "logprobs"
         - "top_logprobs"
