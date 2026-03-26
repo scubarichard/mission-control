@@ -1,13 +1,13 @@
 # ============================================================
 # Export-EnvVarsToSeedFile.ps1
-# ─────────────────────────────────────────────────────────────
+# -------------------------------------------------------------
 # ONE-TIME USE. Reads current API keys from the Azure Container
 # App env vars and writes them to a local seed file that
 # Install-CredentialVaultArchitecture.ps1 reads on first run.
 #
 # After KV migration is complete, delete the seed file.
 # Run as: .\Export-EnvVarsToSeedFile.ps1
-# ─────────────────────────────────────────────────────────────
+# ============================================================
 
 $ErrorActionPreference = "Stop"
 
@@ -70,14 +70,14 @@ foreach ($envName in $EnvToKV.Keys) {
 # Write seed file
 $seed | ConvertTo-Json -Depth 3 | Set-Content -Path $SeedFile -Encoding UTF8
 
-Write-Host "`n✓ Seed file written: $SeedFile" -ForegroundColor Green
-Write-Host "  Exported : $($found.Count) — $($found -join ', ')" -ForegroundColor Green
+Write-Host "`n[OK] Seed file written: $SeedFile" -ForegroundColor Green
+Write-Host "  Exported : $($found.Count) - $($found -join ', ')" -ForegroundColor Green
 
 if ($missing.Count -gt 0) {
-    Write-Host "  Not found: $($missing.Count) — $($missing -join ', ')" -ForegroundColor Yellow
-    Write-Host "  (These will be skipped during KV migration — add manually if needed)" -ForegroundColor Gray
+    Write-Host "  Not found: $($missing.Count) - $($missing -join ', ')" -ForegroundColor Yellow
+    Write-Host "  (These will be skipped during KV migration - add manually if needed)" -ForegroundColor Gray
 }
 
-Write-Host "`n⚠  SECURITY: This file contains plaintext secrets." -ForegroundColor Red
-Write-Host "   Delete it immediately after running Install-CredentialVaultArchitecture.ps1" -ForegroundColor Red
-Write-Host "   Path: $SeedFile`n" -ForegroundColor Red
+Write-Host "`n[!] SECURITY: This file contains plaintext secrets." -ForegroundColor Red
+Write-Host "    Delete it immediately after running Install-CredentialVaultArchitecture.ps1" -ForegroundColor Red
+Write-Host "    Path: $SeedFile`n" -ForegroundColor Red
