@@ -111,6 +111,7 @@ speech:
       cacheTTS: true
     speechToText:
       engineSTT: "openai"
+      model: "whisper-1"
 
 # ---------- File Uploads ----------
 fileConfig:
