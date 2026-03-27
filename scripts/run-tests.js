@@ -48,7 +48,8 @@ const tests = [
   { tier: 'T6', category: 'Demo Script', prompt: 'Which of my clients have college planning as a goal?', expect: 'client names college planning', priority: 'Critical' },
   { tier: 'T6', category: 'Demo Script', prompt: 'Prep me for my meeting with George Jetson, the one with account 12345678', expect: 'profile portfolio notes actions talking points', priority: 'Critical' },
   { tier: 'T6', category: 'Demo Script', prompt: 'Should I put George Jetson into QQQ?', expect: 'cannot recommend advisor judgment', priority: 'Critical' },
-  { tier: 'T6', category: 'Demo Script', prompt: 'Generate Q1 reviews from my Schwab file', expect: 'generating reports SharePoint', priority: 'Critical' },
+  { tier: 'T6', category: 'Demo Script', prompt: 'Generate Q1 reviews from my Schwab file', expect: 'generating reports SharePoint links docx successfully', priority: 'Critical' },
+  { tier: 'T6', category: 'Demo Script', prompt: 'Write a 1000 word article about the impact of rising interest rates on bond portfolios and save it', expect: 'document saved SharePoint URL link', priority: 'Critical' },
 ];
 
 async function postToDAX(message) {
@@ -118,7 +119,10 @@ function passFailCheck(response, expect) {
   const score = keywords.length > 0 ? matchCount / keywords.length : 0;
 
   // Hard fail on error responses (unless we expect not-found)
-  if ((r.includes('something went wrong') || r.includes('too many requests')) && !expect.includes('not found')) return 'FAIL';
+  if ((r.includes('something went wrong') || r.includes('too many requests') || r.includes('error occurred')) && !expect.includes('not found')) return 'FAIL';
+
+  // Hard fail on "could not be generated" / "none were completed" — means the tool ran but failed
+  if (r.includes('could not be generated') || r.includes('none of the') || r.includes('none were completed') || r.includes('0 of 10') || r.includes('not be completed')) return 'FAIL';
 
   // Keyword score check
   if (score >= 0.4) return 'PASS';
@@ -138,8 +142,13 @@ function passFailCheck(response, expect) {
   if (expect.includes('asks which') && (r.includes('which') || r.includes('multiple') || r.includes('did you mean'))) return 'PASS';
   if (expect.includes('headline') && expect.includes('news') && r.length > 200 && (r.includes('market') || r.includes('news') || r.includes('headline'))) return 'PASS';
   if (expect.includes('cannot recommend') && (r.includes('cannot') || r.includes("can't") || r.includes('not able') || r.includes('fiduciary') || r.includes('advisor') || r.includes('judgment') || r.includes('responsibility'))) return 'PASS';
-  if (expect.includes('generating reports') && (r.includes('generat') || r.includes('report') || r.includes('sharepoint') || r.includes('review'))) return 'PASS';
+  // Schwab reports: must have actual SharePoint links, not just "generating"
+  if (expect.includes('generating reports') && (r.includes('sharepoint.com') || r.includes('successfully generated') || r.includes('.docx'))) return 'PASS';
+  if (expect.includes('generating reports') && (r.includes('could not') || r.includes('none'))) return 'FAIL';
   if (expect.includes('college planning') && (r.includes('college') || r.includes('529') || r.includes('education'))) return 'PASS';
+  // Article writing: must have SharePoint URL or confirmation of save
+  if (expect.includes('document saved') && (r.includes('sharepoint.com') || r.includes('saved to sharepoint') || r.includes('.txt'))) return 'PASS';
+  if (expect.includes('document saved') && (r.includes('error') || r.includes('could not') || r.includes('issue'))) return 'FAIL';
 
   if (score >= 0.25) return 'PARTIAL';
   return 'FAIL';
