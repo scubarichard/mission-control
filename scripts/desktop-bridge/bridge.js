@@ -1,4 +1,4 @@
-import "dotenv/config";
+﻿import "dotenv/config";
 import express from "express";
 import { execSync } from "node:child_process";
 import {
@@ -156,8 +156,8 @@ app.post("/execute/run_claude_code", async (req, res) => {
   try {
     writeFileSync(tmpFile, prompt, "utf-8");
     const output = execSync(
-      `claude -p "${tmpFile}" --output-format text`,
-      { cwd: workDir, timeout, encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"] },
+      `"C:\\Windows\\System32\\config\\systemprofile\\AppData\\Roaming\\npm\\claude.cmd" -p "${tmpFile}" --output-format text`,
+      { cwd: workDir, timeout, encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"], shell: "C:\\Windows\\System32\\cmd.exe", env: { ...process.env, PATH: (process.env.PATH || "") + ";C:\\Windows\\System32\\config\\systemprofile\\AppData\\Roaming\\npm" } },
     );
     res.json({ output: output || "(no output)" });
   } catch (err) {
