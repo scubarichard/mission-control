@@ -648,12 +648,12 @@ function registerTools(server) {
 
   // ── Desktop Bridge tools ───────────────────────────────────────────
 
-  server.tool("desktop_run_powershell", "Run PowerShell on Richard's local Windows desktop.",
+  server.tool("desktop_run_powershell", "Run PowerShell on Richard's local Windows desktop. Use for P:\\ drive access, local tools, or anything requiring the Windows environment.",
     { command: z.string(), timeout: z.number().optional() },
     async ({ command, timeout }) => ({ content: [{ type: "text", text: await bridgeCall("run_powershell", { command, timeout }) }] })
   );
 
-  server.tool("desktop_read_file", "Read a file from Richard's local desktop.",
+  server.tool("desktop_read_file", "Read a file from Richard's local desktop. Path relative to BRIDGE_BASE_PATH (default P:/_clients/dakona).",
     { path: z.string() },
     async ({ path }) => ({ content: [{ type: "text", text: await bridgeCall("read_file", { path }) }] })
   );
@@ -668,7 +668,7 @@ function registerTools(server) {
     async ({ path, depth }) => ({ content: [{ type: "text", text: await bridgeCall("list_files", { path, depth }) }] })
   );
 
-  server.tool("desktop_run_claude_code", "Run Claude Code CLI headlessly on Richard's desktop.",
+  server.tool("desktop_run_claude_code", "Run Claude Code CLI headlessly on Richard's desktop with the given prompt.",
     { prompt: z.string(), cwd: z.string().optional(), timeout: z.number().optional() },
     async ({ prompt, cwd, timeout }) => ({ content: [{ type: "text", text: await bridgeCall("run_claude_code", { prompt, cwd, timeout }) }] })
   );
@@ -710,11 +710,10 @@ if (MODE === "sse") {
   });
 
   // Auth — permanent gateway token from env var, never auto-rotated
-  // Claude.ai URL stays the same forever; internal credentials rotate via KV
   app.use((req, res, next) => {
     if (req.path === "/health") return next();
     const gatewayToken = creds.GATEWAY_TOKEN;
-    if (!gatewayToken) return next(); // no auth configured
+    if (!gatewayToken) return next();
     const hToken = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
     const qToken = req.query.token || "";
     if (hToken !== gatewayToken && qToken !== gatewayToken) {
@@ -725,7 +724,7 @@ if (MODE === "sse") {
 
   app.use(express.json());
 
-  // Health check — includes credential refresh status
+  // Health check
   app.get("/health", (_req, res) => {
     res.json({
       status: "ok",
@@ -815,7 +814,7 @@ if (MODE === "sse") {
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`DAX MCP server on http://0.0.0.0:${PORT}`);
-    console.log(`  Credential source: Key Vault (${KV_NAME || "kvdaxdakonapilot"}), refresh every 6h`);
+    console.log(`  Credential source: Key Vault (${process.env.KV_NAME || "kvdaxdakonapilot"}), refresh every 6h`);
     console.log(`  Gateway token:     ${creds.GATEWAY_TOKEN ? "configured (permanent)" : "NONE"}`);
     startKeepalive();
   });
