@@ -21,6 +21,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 COPY server.js .
+COPY lib/ ./lib/
 
 ENV MCP_TRANSPORT=sse
 # Note: MCP_TRANSPORT=sse enables HTTP server mode (Streamable HTTP on /mcp)

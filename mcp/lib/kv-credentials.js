@@ -53,15 +53,38 @@ let _lastRefresh = null;
 let _refreshTimer = null;
 
 // ── Get managed identity token for Key Vault ─────────────────────────────────
+// Container Apps use IDENTITY_ENDPOINT + IDENTITY_HEADER (not VM IMDS).
+// For user-assigned identities, client_id must be specified.
+const MI_CLIENT_ID = process.env.AZURE_CLIENT_ID || "";
+
 async function getManagedIdentityToken() {
   if (_kvToken && Date.now() < _kvTokenExp - 60_000) return _kvToken;
+
+  const identityEndpoint = process.env.IDENTITY_ENDPOINT;
+  const identityHeader   = process.env.IDENTITY_HEADER;
+
   try {
-    const res = await fetch(
-      "http://169.254.169.254/metadata/identity/oauth2/token" +
-      "?api-version=2018-02-01&resource=https%3A%2F%2Fvault.azure.net",
-      { headers: { Metadata: "true" }, signal: AbortSignal.timeout(5_000) }
-    );
-    if (!res.ok) throw new Error(`IMDS ${res.status}`);
+    let res;
+    if (identityEndpoint && identityHeader) {
+      // Azure Container Apps managed identity endpoint
+      const params = new URLSearchParams({
+        resource: "https://vault.azure.net",
+        "api-version": "2019-08-01",
+      });
+      if (MI_CLIENT_ID) params.set("client_id", MI_CLIENT_ID);
+      res = await fetch(`${identityEndpoint}?${params}`, {
+        headers: { "X-IDENTITY-HEADER": identityHeader },
+        signal: AbortSignal.timeout(5_000),
+      });
+    } else {
+      // Fallback: VM IMDS (local dev on Azure VM)
+      res = await fetch(
+        "http://169.254.169.254/metadata/identity/oauth2/token" +
+        "?api-version=2018-02-01&resource=https%3A%2F%2Fvault.azure.net",
+        { headers: { Metadata: "true" }, signal: AbortSignal.timeout(5_000) }
+      );
+    }
+    if (!res.ok) throw new Error(`Token endpoint ${res.status}: ${await res.text().catch(() => "")}`);
     const data = await res.json();
     _kvToken    = data.access_token;
     _kvTokenExp = Date.now() + parseInt(data.expires_in, 10) * 1000;

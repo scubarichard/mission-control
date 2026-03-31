@@ -132,13 +132,16 @@ try {
 } catch { }
 
 if ($caExists) {
-    Write-Host "  Container App exists, updating image..." -ForegroundColor DarkGray
+    # Zero-downtime deploy: create new revision with 0% traffic, verify, then shift
+    $revSuffix = "v" + (Get-Date -Format "yyyyMMdd-HHmmss").Replace("-","")
+    Write-Host "  Creating new revision ($revSuffix) with 0% traffic..." -ForegroundColor DarkGray
     az containerapp update `
         -n "$caName" `
         -g "$rgName" `
         --image "$latestImage" `
+        --revision-suffix "$revSuffix" `
         | Out-Null
-    Write-Host "  Image updated." -ForegroundColor Green
+    Write-Host "  New revision created." -ForegroundColor Green
 } else {
     az containerapp create `
         --name "$caName" `
@@ -150,7 +153,7 @@ if ($caExists) {
         --target-port 3001 `
         --ingress "external" `
         --min-replicas 1 `
-        --max-replicas 3 `
+        --max-replicas 1 `
         --cpu 0.5 `
         --memory 1.0Gi `
         --user-assigned "$identityId" `
@@ -165,6 +168,49 @@ if ($caExists) {
         | Out-Null
 
     Write-Host "  Container App created." -ForegroundColor Green
+}
+
+# Zero-downtime: wait for new revision health, then shift 100% traffic
+if ($caExists) {
+    Write-Host "`nWaiting for new revision to become healthy..." -ForegroundColor Yellow
+    $newRevision = az containerapp revision list `
+        -n "$caName" -g "$rgName" `
+        --query "sort_by([],&properties.createdTime)[-1].name" -o tsv
+
+    $revHealthy = $false
+    for ($i = 1; $i -le 12; $i++) {
+        Start-Sleep -Seconds 10
+        $state = az containerapp revision show `
+            -n "$caName" -g "$rgName" `
+            --revision "$newRevision" `
+            --query "properties.runningState" -o tsv 2>$null
+        if ($state -match "Running") {
+            $revHealthy = $true
+            break
+        }
+        Write-Host "  Attempt $i/12 — state: $state" -ForegroundColor DarkGray
+    }
+
+    if ($revHealthy) {
+        Write-Host "  New revision healthy. Shifting traffic..." -ForegroundColor Green
+        az containerapp ingress traffic set `
+            -n "$caName" -g "$rgName" `
+            --revision-weight "$newRevision=100" `
+            -o none
+        Write-Host "  Traffic shifted to $newRevision (100%)" -ForegroundColor Green
+
+        # Deactivate old revisions
+        $oldRevisions = az containerapp revision list `
+            -n "$caName" -g "$rgName" `
+            --query "[?name!='$newRevision' && properties.active].name" -o tsv
+        foreach ($old in ($oldRevisions -split "`n" | Where-Object { $_ })) {
+            az containerapp revision deactivate -n "$caName" -g "$rgName" --revision "$old" -o none 2>$null
+            Write-Host "  Deactivated: $old" -ForegroundColor DarkGray
+        }
+    } else {
+        Write-Host "  WARNING: New revision did not become healthy in 2 min." -ForegroundColor Red
+        Write-Host "  Old revision still serving traffic. Check logs manually." -ForegroundColor Yellow
+    }
 }
 
 # ============================================================================
@@ -267,11 +313,10 @@ Write-Host ""
 Write-Host "Container App:   $caName"
 Write-Host "Default URL:     $mcpUrl"
 Write-Host "Health check:    $mcpUrl/health"
-Write-Host "SSE endpoint:    $mcpUrl/sse"
-Write-Host "Messages:        $mcpUrl/messages"
+Write-Host "MCP endpoint:    $mcpUrl/mcp"
 Write-Host "Environment:     $envName (shared with LibreChat)"
 Write-Host "Image:           $fullImage"
-Write-Host "Min replicas:    1 (always warm)"
+Write-Host "Replicas:        1 (min/max, zero-downtime via revision traffic shift)"
 Write-Host ""
 if ($CustomDomain) {
     Write-Host "Custom domain:   https://$CustomDomain" -ForegroundColor Yellow
@@ -280,8 +325,8 @@ if ($CustomDomain) {
 Write-Host ""
 Write-Host "To add to claude.ai:" -ForegroundColor Yellow
 Write-Host "  1. Go to claude.ai > Settings > Integrations > MCP"
-Write-Host "  2. Add server URL: $mcpUrl/sse"
+Write-Host "  2. Add server URL: $mcpUrl/mcp"
 if ($CustomDomain) {
-    Write-Host "     Or: https://$CustomDomain/sse (after DNS is configured)"
+    Write-Host "     Or: https://$CustomDomain/mcp (after DNS is configured)"
 }
 Write-Host ""

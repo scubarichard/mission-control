@@ -4,8 +4,14 @@ set -e
 # Authenticate Azure CLI with managed identity (if running in Azure)
 if [ -n "$IDENTITY_HEADER" ] || [ -n "$MSI_ENDPOINT" ]; then
   echo "Authenticating Azure CLI with managed identity..."
-  az login --identity --allow-no-subscriptions -o none 2>/dev/null || \
-    echo "Warning: az login --identity failed; Azure tools may not work."
+  # For user-assigned identity, pass the client ID via --client-id (az CLI 2.84+)
+  if [ -n "$AZURE_CLIENT_ID" ]; then
+    az login --identity --client-id "$AZURE_CLIENT_ID" --allow-no-subscriptions -o none 2>/dev/null || \
+      echo "Warning: az login --identity (user-assigned) failed; Azure tools may not work."
+  else
+    az login --identity --allow-no-subscriptions -o none 2>/dev/null || \
+      echo "Warning: az login --identity failed; Azure tools may not work."
+  fi
 fi
 
 # Clone DAX repo so file/git/search tools work on real code

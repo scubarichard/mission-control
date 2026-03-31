@@ -648,12 +648,12 @@ function registerTools(server) {
 
   // ── Desktop Bridge tools ───────────────────────────────────────────
 
-  server.tool("desktop_run_powershell", "Run PowerShell on Richard's local Windows desktop. Use for P:\\ drive access, local tools, or anything requiring the Windows environment.",
+  server.tool("desktop_run_powershell", "Run PowerShell on Richard's local Windows desktop.",
     { command: z.string(), timeout: z.number().optional() },
     async ({ command, timeout }) => ({ content: [{ type: "text", text: await bridgeCall("run_powershell", { command, timeout }) }] })
   );
 
-  server.tool("desktop_read_file", "Read a file from Richard's local desktop. Path relative to BRIDGE_BASE_PATH (default P:/_clients/dakona).",
+  server.tool("desktop_read_file", "Read a file from Richard's local desktop.",
     { path: z.string() },
     async ({ path }) => ({ content: [{ type: "text", text: await bridgeCall("read_file", { path }) }] })
   );
@@ -668,7 +668,7 @@ function registerTools(server) {
     async ({ path, depth }) => ({ content: [{ type: "text", text: await bridgeCall("list_files", { path, depth }) }] })
   );
 
-  server.tool("desktop_run_claude_code", "Run Claude Code CLI headlessly on Richard's desktop with the given prompt.",
+  server.tool("desktop_run_claude_code", "Run Claude Code CLI headlessly on Richard's desktop.",
     { prompt: z.string(), cwd: z.string().optional(), timeout: z.number().optional() },
     async ({ prompt, cwd, timeout }) => ({ content: [{ type: "text", text: await bridgeCall("run_claude_code", { prompt, cwd, timeout }) }] })
   );
@@ -710,10 +710,11 @@ if (MODE === "sse") {
   });
 
   // Auth — permanent gateway token from env var, never auto-rotated
+  // Claude.ai URL stays the same forever; internal credentials rotate via KV
   app.use((req, res, next) => {
     if (req.path === "/health") return next();
     const gatewayToken = creds.GATEWAY_TOKEN;
-    if (!gatewayToken) return next();
+    if (!gatewayToken) return next(); // no auth configured
     const hToken = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
     const qToken = req.query.token || "";
     if (hToken !== gatewayToken && qToken !== gatewayToken) {
@@ -724,20 +725,96 @@ if (MODE === "sse") {
 
   app.use(express.json());
 
-  // Health check
+  /* ── Session store with TTL ──────────────────────────────────────── */
+
+  const SESSION_TTL  = 4 * 60 * 60 * 1000;  // 4 hours
+  const CLEANUP_INTERVAL = 15 * 60 * 1000;   // 15 minutes
+  const sessions = new Map(); // sessionId → { transport, lastActive }
+
+  function touchSession(sid) {
+    const s = sessions.get(sid);
+    if (s) s.lastActive = Date.now();
+  }
+
+  function createMcpSession(preferredId) {
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => preferredId || uuidv4(),
+      onsessioninitialized: (sessionId) => {
+        sessions.set(sessionId, { transport, lastActive: Date.now() });
+        console.log(`[MCP] Session created: ${sessionId} (active: ${sessions.size})`);
+      },
+    });
+    // Don't delete session on transport close — let TTL handle cleanup.
+    // SSE connections drop frequently (proxy timeouts, network blips) but
+    // the session should survive so the next POST re-uses it.
+    transport.onclose = () => {
+      const sid = transport.sessionId;
+      console.log(`[MCP] Transport closed for ${sid || "unknown"} (session kept alive for TTL)`);
+    };
+    const mcpServer = new McpServer({ name: "dax-dev", version: "1.0.0" });
+    registerTools(mcpServer);
+    return { transport, mcpServer };
+  }
+
+  // Resurrect a stale session by creating a fresh transport+server and
+  // force-setting internal state so tool calls work without a real init handshake.
+  // This is necessary because claude.ai does NOT re-initialize after session loss.
+  async function resurrectSession(clientSessionId) {
+    const { transport, mcpServer } = createMcpSession(clientSessionId);
+    await mcpServer.connect(transport);
+
+    // The real init state lives on transport._webStandardTransport (the inner transport).
+    // We must set _initialized, _sessionId, and _started on it directly.
+    const inner = transport._webStandardTransport;
+    if (inner) {
+      inner._initialized = true;
+      inner._sessionId = clientSessionId;
+      inner._started = true;
+      console.log(`[MCP] Force-set inner transport: _initialized=true, _sessionId=${clientSessionId.slice(0,8)}, _started=true`);
+    } else {
+      console.warn(`[MCP] No _webStandardTransport found — resurrection may fail`);
+    }
+
+    // Manually register in our session map (onsessioninitialized won't fire)
+    sessions.set(clientSessionId, { transport, lastActive: Date.now() });
+
+    console.log(`[MCP] Session resurrected: ${clientSessionId} (active: ${sessions.size})`);
+    return transport;
+  }
+
+  // Expire sessions that haven't been touched in SESSION_TTL
+  setInterval(() => {
+    const now = Date.now();
+    let expired = 0;
+    for (const [sid, session] of sessions) {
+      if (now - session.lastActive > SESSION_TTL) {
+        try { session.transport.close(); } catch {}
+        sessions.delete(sid);
+        expired++;
+      }
+    }
+    if (expired > 0) console.log(`[MCP] Cleaned ${expired} expired session(s), ${sessions.size} remaining`);
+  }, CLEANUP_INTERVAL).unref();
+
+  // Health check — includes credential refresh status and session details
   app.get("/health", (_req, res) => {
+    const now = Date.now();
+    const sessionList = [];
+    for (const [sid, s] of sessions) {
+      sessionList.push({ id: sid.slice(0, 8), ageMin: Math.round((now - s.lastActive) / 60000) });
+    }
     res.json({
       status: "ok",
       server: "dax-dev",
       transport: "streamable-http",
-      activeSessions: Object.keys(transports).length,
+      activeSessions: sessions.size,
+      sessions: sessionList,
+      sessionTTL: `${SESSION_TTL / 3600000}h`,
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
       credentials: getCredentialStatus(),
     });
   });
-
-  const transports = {};
 
   app.post("/mcp", async (req, res) => {
     try {
@@ -745,27 +822,33 @@ if (MODE === "sse") {
       const isInitRequest = body && body.method === "initialize";
       const clientSessionId = req.headers["mcp-session-id"];
 
-      if (isInitRequest) {
-        const transport = new StreamableHTTPServerTransport({
-          sessionIdGenerator: () => uuidv4(),
-          onsessioninitialized: (sessionId) => {
-            transports[sessionId] = transport;
-            console.log(`[MCP] New session: ${sessionId}`);
-          },
-        });
-        transport.onclose = () => {
-          const sid = transport.sessionId;
-          if (sid) delete transports[sid];
-        };
-        const mcpServer = new McpServer({ name: "dax-dev", version: "1.0.0" });
-        registerTools(mcpServer);
-        await mcpServer.connect(transport);
-        await transport.handleRequest(req, res, body);
-      } else if (clientSessionId && transports[clientSessionId]) {
-        await transports[clientSessionId].handleRequest(req, res, body);
-      } else {
-        res.status(400).json({ jsonrpc: "2.0", error: { code: -32003, message: "No valid session ID" }, id: body?.id ?? null });
+      // Fast path — known session
+      const existing = clientSessionId && sessions.get(clientSessionId);
+      if (existing) {
+        touchSession(clientSessionId);
+        return existing.transport.handleRequest(req, res, body);
       }
+
+      // New or re-initialize — create fresh session
+      if (isInitRequest) {
+        const { transport, mcpServer } = createMcpSession();
+        await mcpServer.connect(transport);
+        return transport.handleRequest(req, res, body);
+      }
+
+      // Stale session — auto-resurrect (claude.ai does not re-initialize)
+      if (clientSessionId) {
+        const transport = await resurrectSession(clientSessionId);
+        touchSession(clientSessionId);
+        return transport.handleRequest(req, res, body);
+      }
+
+      // No session ID at all
+      res.status(400).json({
+        jsonrpc: "2.0",
+        error: { code: -32003, message: "Missing session ID. Send an initialize request first." },
+        id: body?.id ?? null,
+      });
     } catch (err) {
       console.error("[MCP] Error:", err);
       if (!res.headersSent) res.status(500).json({ jsonrpc: "2.0", error: { code: -32603, message: err.message }, id: null });
@@ -774,16 +857,23 @@ if (MODE === "sse") {
 
   app.get("/mcp", async (req, res) => {
     const sessionId = req.headers["mcp-session-id"];
-    if (!sessionId || !transports[sessionId]) { res.status(400).json({ error: "Invalid session ID" }); return; }
-    await transports[sessionId].handleRequest(req, res);
+    let session = sessionId && sessions.get(sessionId);
+    if (!session && sessionId) {
+      await resurrectSession(sessionId);
+      session = sessions.get(sessionId);
+    }
+    if (!session) { res.status(400).json({ error: "Invalid or expired session ID" }); return; }
+    touchSession(sessionId);
+    await session.transport.handleRequest(req, res);
   });
 
   app.delete("/mcp", async (req, res) => {
     const sessionId = req.headers["mcp-session-id"];
-    const transport = transports[sessionId];
-    if (transport) {
-      try { await transport.close(); } catch {}
-      delete transports[sessionId];
+    const session = sessions.get(sessionId);
+    if (session) {
+      try { session.transport.close(); } catch {}
+      sessions.delete(sessionId);
+      console.log(`[MCP] Session deleted: ${sessionId} (active: ${sessions.size})`);
       res.status(204).end();
     } else {
       res.status(404).json({ error: "Session not found" });
@@ -802,10 +892,10 @@ if (MODE === "sse") {
   }
 
   async function shutdown(signal) {
-    console.log(`[MCP] ${signal} — shutting down`);
-    for (const sid of Object.keys(transports)) {
-      try { await transports[sid].close(); } catch {}
-      delete transports[sid];
+    console.log(`[MCP] ${signal} — closing ${sessions.size} session(s)`);
+    for (const [sid, session] of sessions) {
+      try { session.transport.close(); } catch {}
+      sessions.delete(sid);
     }
     process.exit(0);
   }
