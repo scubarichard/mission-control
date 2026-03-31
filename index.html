@@ -190,7 +190,7 @@ const infraItems = [
   {name:'SSH Tunnel',url:'ram-bot.dakona.net',detail:'OpenSSH / Cloudflare Access',icon:'\uD83D\uDD10',key:null},
 ];
 function Infrastructure({liveStatus}) {
-  const st = k => { if(!k||!liveStatus) return 'live'; return liveStatus.agents?.[k]?.status==='active'?'live':'offline'; };
+  const st = k => { if(!k||!liveStatus) return 'live'; const s = liveStatus.agents?.[k]?.status; return (s==='active'||s==='live')?'live':'offline'; };
   return (<div className="grid">{infraItems.map(s => (
     <div key={s.name} className="ic"><span style={{fontSize:'24px'}}>{s.icon}</span>
       <div style={{flex:1}}><div style={{fontSize:'14px',fontWeight:600}}>{s.name}</div>
@@ -262,21 +262,9 @@ function NeuralCenter() {
         }
       }
     };
-    // Fallback routes follow the hierarchy
-    const hiRoutes = [
-      ['richard','projectai'], ['projectai','sonnet'], ['projectai','cc'],
-      ['sonnet','cc'], ['cc','mcp'], ['sonnet','mcp'],
-      ['mcp','bridge'], ['mcp','vm'], ['vm','n8n'], ['vm','dax'],
-      ['cc','projectai'], ['sonnet','projectai'], ['projectai','richard'],
-    ];
-    const fallback = setInterval(() => {
-      if (Date.now() - lastTs > 10000) {
-        const route = hiRoutes[Math.floor(Math.random()*hiRoutes.length)];
-        spawnMessenger(route[0], route[1], '...');
-      }
-    }, 10000);
+    // No fallback — only real events trigger messengers
     const ticker = setInterval(() => forceUpdate(n=>n+1), 100);
-    return () => { sse.close(); clearInterval(fallback); clearInterval(ticker); };
+    return () => { sse.close(); clearInterval(ticker); };
   }, [spawnMessenger]);
 
   const now = Date.now();
