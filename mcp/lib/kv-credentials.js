@@ -42,6 +42,11 @@ export const creds = {
   SLACK_TOKEN:          process.env.RPE_SLACK_TOKEN      || "",
   DESKTOP_BRIDGE_SECRET:process.env.DESKTOP_BRIDGE_SECRET|| "",
   MONGO_URI:            process.env.MONGO_URI            || "",
+  // GHL + Telegram — read from env, no KV rotation needed
+  GHL_API_TOKEN:        process.env.GHL_API_TOKEN        || "",
+  GHL_LOCATION_ID:      process.env.GHL_LOCATION_ID      || "",
+  TELEGRAM_BOT_TOKEN:   process.env.TELEGRAM_BOT_TOKEN   || "",
+  TELEGRAM_CHAT_ID:     process.env.TELEGRAM_CHAT_ID     || "7337480629",
   // Static — never auto-rotated (used in Claude.ai URL)
   GATEWAY_TOKEN:        process.env.MCP_GATEWAY_TOKEN    || process.env.MCP_AUTH_TOKEN || "",
   DESKTOP_BRIDGE_URL:   process.env.DESKTOP_BRIDGE_URL   || "",
