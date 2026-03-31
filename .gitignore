@@ -40,3 +40,4 @@ scripts/container-diag.js
 scripts/container-diag-runner.js
 scripts/diag-inline.js
 patches/run-diag.sh
+scripts/mission-control/

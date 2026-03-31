@@ -27,6 +27,8 @@ const SECRET_MAP = {
   "rpe-slack-token":       "SLACK_TOKEN",
   "desktop-bridge-secret": "DESKTOP_BRIDGE_SECRET",
   "cosmos-connection-string": "MONGO_URI",
+  "ghl-api-token":         "GHL_API_TOKEN",
+  "telegram-bot-token":    "TELEGRAM_BOT_TOKEN",
 };
 
 // ── Live credential store — seeded from env vars ──────────────────────────────
