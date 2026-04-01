@@ -12,7 +12,7 @@ Tasks are written by Atlas or Forge. Agents poll this file and execute tasks ass
 
 ## TASK-001
 - **Assignee:** Triton
-- **Status:** PENDING
+- **Status:** DONE
 - **From:** Forge
 - **Priority:** Test
 - **Task:** Confirm you can read this file. Post "[Triton] Task queue confirmed — round trip test passed" to Slack #dax-collab (C0APVGG486M). Then change Status above to DONE and push.
