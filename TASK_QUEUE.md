@@ -252,3 +252,23 @@ REQUEST from Triton: Make shared CLAUDE.md at ~/clients/ platform-agnostic (remo
 - **Priority:** Low
 - **Task:** Check OPT Tyro/Nuvei workflow execution after hourly trigger fires. Verify AI transform agent works end-to-end.
 - **Context:** Files re-uploaded to Google Drive, waiting for hourly poll trigger.
+
+---
+
+## DECISION LOG — Sync Daemon Ownership
+
+**Date:** 2026-04-01 22:11 UTC  
+**Decision:** Atlas owns ClickUp ↔ GitHub sync daemon  
+**Rationale:** 
+- Sync is part of task queue lifecycle (Atlas's domain)
+- Combined with task-queue-poller into unified 5-min cron cycle
+- No session dependencies, runs continuously on vm-dax-dev
+- Can monitor and alert on sync failures
+
+**Implementation:**
+- Daemon: `sync-clickup.js` (built by Triton, now integrated)
+- Runner: `unified_poller.sh` (runs both task check + sync)
+- Frequency: Every 5 minutes
+- Env: CLICKUP_API_KEY loaded and ready
+- Status: LIVE
+
