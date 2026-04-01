@@ -80,7 +80,7 @@
 
 ### TASK-20260401-017
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **Priority:** Medium
 - **Task:** Import Tour Days DB (232 rows) into Tour_Days table
 - **Context:** Google Sheet: 1TZVUy7zlWljYKICoRzTb81mftBMHdpIFtyBT4G9shFQ
