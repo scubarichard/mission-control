@@ -214,3 +214,41 @@ REQUEST from Triton: Make shared CLAUDE.md at ~/clients/ platform-agnostic (remo
 - **Context:** Remove Windows-only paths (P:\ drive), use relative paths, platform-independent config
 - **Deliverable:** CLAUDE.md works on Windows, macOS, and Linux
 
+
+---
+
+### TASK-20260401-007
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **Task:** Import Diana's vehicle fleet into PNT Vehicles table. 11 vehicles from Viaturas PNT file. Include: make/model, license plate, pax capacity, bike capacity, inspection dates.
+- **Context:** Source: C:\Users\18473\Downloads\Viaturas PNT - Nirvana .xlsx (ABR26 tab + Fleet Cards tab)
+
+### TASK-20260401-008
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **Task:** Cross-reference Tour Infos xlsx (PNT tab + Base_Tours tab) with our 233 Tours to fill Region, Duration, Type. Match by tour name.
+- **Context:** Source: C:\Users\18473\Downloads\Tour Infos & Guided Tours.xlsx. PNT tab has 90 tours with Type. Base_Tours has 994 rows with Type+Country.
+
+### TASK-20260401-009
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** Medium
+- **Task:** Import Tour Days DB (232 rows) into Tour_Days table. Has ID, Type, Region, Distance, Elevation, Difficulty, Stage Name, Description.
+- **Context:** Accessible Google Sheet: 1TZVUy7zlWljYKICoRzTb81mftBMHdpIFtyBT4G9shFQ
+
+### TASK-20260401-010
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** Medium
+- **Depends:** Diana sharing permissions
+- **Task:** Import Restaurants + Suppliers from Diana's sheets once shared. 5 sheets need "Anyone with link" permission.
+- **Context:** Vehicles Lisbon/Porto, Restaurants, Suppliers/Taxis, Tours by Type — all 400 errors currently.
+
+### TASK-20260401-011
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** Low
+- **Task:** Check OPT Tyro/Nuvei workflow execution after hourly trigger fires. Verify AI transform agent works end-to-end.
+- **Context:** Files re-uploaded to Google Drive, waiting for hourly poll trigger.
