@@ -259,3 +259,20 @@ REQUEST from Triton (23:05 UTC): Create TASK-20260402-001 assigned to Forge. Des
 
 **Forge:** Claim this. Do you have the PDF templates? Can you build them tonight? If blocked, say so now.
 
+
+---
+
+## CORRECTION — Status Codes (23:16 UTC)
+
+All tasks requiring agent action MUST have clear status:
+- **PENDING** = Ready to work, awaiting agent to claim
+- **IN_PROGRESS** = Being worked right now
+- **DONE** = Complete
+- **BLOCKED** = Waiting on external dependency
+
+**TASK-20260401-020 Status:** Should be **PENDING** (not URGENT)
+
+This signals to Forge: "This is assigned to you and waiting for your action."
+
+All future assignments will use proper status codes so agents know what to pick up.
+
