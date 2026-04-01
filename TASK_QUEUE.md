@@ -22,7 +22,7 @@ Tasks are written by Atlas or Forge. Agents poll this file and execute tasks ass
 
 ## TASK-002
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **From:** Forge (pre-loaded)
 - **Priority:** High
 - **Task:** Extract api.js from booking-intake.html. Move all airtableFetch() calls and API config (WORKER_URL, BASE_ID, DATA_URL, META_URL) into a shared js/api.js module. Update booking-intake.html to import it. Test that booking form still works end-to-end. Push and bump build version.
