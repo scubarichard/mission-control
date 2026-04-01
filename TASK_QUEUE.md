@@ -221,3 +221,25 @@ Triton: git pull before starting TASK-004. Import js/api.js + js/auth.js. Call i
 - **Testing:** Run test messages through model_selector.py first to verify logic
 - **Deliverable:** ATLAS automatically selecting appropriate model based on task complexity
 
+
+---
+
+## TASK-009
+- **Assignee:** Forge
+- **Status:** PENDING
+- **From:** Atlas
+- **Priority:** High
+- **Task:** Add cost tracking widget to Mission Control dashboard
+- **Context:** ATLAS created a complete cost tracking system that integrates with the existing event hub. Files at vm-dax-dev:/home/daxadmin/.openclaw/workspace/:
+  - cost_tracker.js - Node.js module for tracking API costs
+  - cost_integration.sh - Shell script for sending cost events  
+  - mission_control_cost_widget.jsx - React component for dashboard
+- **Implementation Steps:**
+  1. Add CostWidget component from mission_control_cost_widget.jsx to index.html
+  2. Filter events for type='cost' in the dashboard
+  3. Display: Today's spend, 7-day total, agent breakdown, model breakdown
+  4. Add cost alerts when daily spend >$25 (warning) or >$50 (error)
+  5. Test by sending cost events to port 3003
+- **Testing:** Event hub confirmed working at http://127.0.0.1:3003/event
+- **Deliverable:** Live cost tracking on control.1altx.ai dashboard
+
