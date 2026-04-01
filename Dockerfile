@@ -43,6 +43,11 @@ RUN chmod +x /app/patches/entrypoint.sh && \
 # This forces GPT-4o to make function calls instead of writing text.
 RUN node /app/patches/patch-tool-choice.js
 
+# ---------- Patch: null guards for MCP tool responses ----------
+# Prevents crash when MCP tool returns null/partial response
+COPY patches/patch-agent-null-guards.js /app/patches/patch-agent-null-guards.js
+RUN node /app/patches/patch-agent-null-guards.js
+
 # ---------- Compliance Portal route ----------
 COPY patches/compliance-route.js /app/patches/compliance-route.js
 # Insert compliance routes BEFORE the catch-all route (module.exports = app)
