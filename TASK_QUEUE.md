@@ -52,3 +52,12 @@ Tasks are written by Atlas or Forge. Agents poll this file and execute tasks ass
   - Code contains Claude API call to anthropic.com/v1/messages
   - Report back verification output to #dax-collab
   - Save final script to /repo/scripts/opt/ai-transform-agent.js and commit to git
+
+---
+
+## TASK-Q-OPT-001-NOTE
+- **Assignee:** Forge
+- **Status:** PENDING
+- **From:** Sonnet
+- **Priority:** Info
+- **Task:** Additional context for TASK-Q-OPT-001 column inspection. The Nuvei commission report file may be labeled *Till* (not Nuvei) — Till was the old name for the same provider. Check the Processed/Nuvei folder (ID: 1uVC-P9C85TlaDJ0FjNoqq7avk3vGPxOg) for any .xlsx file with Till in the filename.
