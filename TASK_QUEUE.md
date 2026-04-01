@@ -136,3 +136,35 @@ Triton: git pull before starting TASK-004. Import js/api.js + js/auth.js. Call i
 - **Task:** On startup, all agents must save session state to memory before shutdown. When rebooted, resume Task Queue polling immediately. Store critical context so future sessions can pick up without re-briefing.
 - **Polling protocol:** Every 5 min, bash-only grep on TASK_QUEUE.md. Offsets: Triton :00, Forge :02, Atlas :04. Zero token cost on empty polls — only process when PENDING task found.
 - **Task Queue is the primary agent-to-agent communication channel.** Slack and Telegram are secondary (status updates and human alerts).
+
+---
+
+## TASK-012
+- **Assignee:** Forge
+- **Status:** PENDING
+- **From:** Richard
+- **Priority:** High
+- **Task:** Clean up Transfers table duplicate fields. Delete: Transfer Date, From Location, To Location, Bags, Type. Rename: Cost → Vendor Cost, Price stays as Client Price. Standardize on Pickup Location Link + Dropoff Location Link as primary location fields. Update manifest.html to read the canonical field names.
+- **Context:** 32 fields on Transfers, 7 are duplicates. Audit showed data flow gap between booking form and manifest. This task cleans the schema.
+
+---
+
+## TASK-013
+- **Assignee:** Forge
+- **Status:** PENDING
+- **From:** Richard
+- **Priority:** High
+- **Depends:** TASK-012
+- **Task:** Update booking form transfer page to populate: Pickup/Dropoff locations (dropdown from Locations table), Service Code (CL/BAG/CL+BAG/Bikes/etc), Taxi Vendor (dropdown from Taxi_Vendors), Price. These fields are currently missing from form output — manifest shows Unknown/empty because form doesn't write them.
+- **Context:** The booking form creates transfers but only sets Date, Time, Pax, Service Type, Status, Notes, Booking link. Manifest needs locations, service code, vendor, price to function properly.
+
+---
+
+## TASK-014
+- **Assignee:** Forge
+- **Status:** PENDING
+- **From:** Richard
+- **Priority:** Medium
+- **Depends:** TASK-013
+- **Task:** Regenerate test data using the corrected field mappings. 69 bookings, 315 transfers, populate all fields including locations, service codes, vendors, prices. Verify manifest shows complete data with real consolidation opportunities.
+- **Context:** Current test data was generated before the field cleanup. Needs refresh to match the new canonical schema.
