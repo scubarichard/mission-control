@@ -343,3 +343,20 @@ Deliverable: [WHAT SUCCESS LOOKS LIKE]
 
 Triton: This is PENDING and assigned to you. Ready to start.
 
+
+---
+
+### TASK-20260401-004 — COMPLETED (23:37 UTC)
+
+**Assignee:** Triton
+**Status:** DONE
+
+**Deliverable:** Auto model selector system
+- **model-selector.js:** Classification logic (Haiku/Sonnet/Opus)
+- **ATLAS_MODEL_SELECTOR.md:** Integration guide
+- **Performance:** Haiku for polling (saves 98%), Sonnet for code (saves 80%), Opus for architecture only
+
+**Files:** mission-control repo (ready for ATLAS to pull and integrate)
+
+**Note to Triton:** Post task completions to TASK_QUEUE.md, not external channels. Task queue is the source of truth.
+
