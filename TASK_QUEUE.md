@@ -93,7 +93,7 @@ REQUEST from Triton: Research Airtable API v2 migration path
 
 ### TASK-20260401-007
 - **Assignee:** Triton
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **Priority:** High
 - **Task:** Build ClickUp ↔ GitHub task queue sync daemon
 - **Context:** Sync TASK_QUEUE.md to ClickUp every 5 minutes. When task marked DONE in GitHub, auto-complete in ClickUp. When task created in ClickUp, auto-add to GitHub queue.
@@ -144,7 +144,7 @@ REQUEST from Triton: Research Airtable API v2 migration path
 
 ### TASK-20260401-010
 - **Assignee:** Triton
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **Priority:** High
 - **Task:** Set up ClickUp folder structure (Option C) for task tracking
 - **Context:** Create client folders in 1AltX workspace with shared custom fields for cost attribution
