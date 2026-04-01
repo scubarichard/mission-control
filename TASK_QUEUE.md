@@ -333,7 +333,7 @@ Deliverable: [WHAT SUCCESS LOOKS LIKE]
 
 ### TASK-20260401-004 (CORRECTION - 23:26 UTC)
 - **Assignee:** Triton
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **Priority:** HIGH
 - **Task:** Implement automatic model selection for ATLAS
 - **Context:** Files ready at /home/daxadmin/.openclaw/workspace/MODELS.md and model_selector.py
