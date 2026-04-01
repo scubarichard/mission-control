@@ -111,7 +111,7 @@
 ## REQUEST QUEUE
 *Agents: Add requests here. Atlas assigns task numbers.*
 
-(None currently)
+REQUEST from Triton: Create TASK-20260402-001 assigned to Forge (description TBD from Richard)
 
 ---
 
