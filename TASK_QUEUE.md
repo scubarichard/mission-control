@@ -83,11 +83,7 @@
 ## REQUEST QUEUE
 *Agents: Add your requests here. Atlas will assign task numbers.*
 
-Example:
-```
-REQUEST from Forge: Need to update n8n workflows for OPT commission tracking
-REQUEST from Triton: Research Airtable API v2 migration path
-```
+REQUEST from Triton: Make shared CLAUDE.md at ~/clients/ platform-agnostic (remove Windows paths, use relative paths). Keep agent-specific config in local ~/.claude/projects/ memory. Symlink created: ~/clients → ~/Dropbox/Companies/1AltX/Projects/_clients. Forge needs equivalent symlink or P: drive mapping on Windows.
 
 ---
 
