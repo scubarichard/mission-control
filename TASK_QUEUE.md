@@ -139,3 +139,41 @@ REQUEST from Triton: Research Airtable API v2 migration path
 - **Testing:** Run a test task, verify cost accumulates and writes to ClickUp
 - **Deliverable:** True cost per task, visible in ClickUp
 
+
+---
+
+### TASK-20260401-010
+- **Assignee:** Triton
+- **Status:** PENDING
+- **Priority:** High
+- **Task:** Set up ClickUp folder structure (Option C) for task tracking
+- **Context:** Create client folders in 1AltX workspace with shared custom fields for cost attribution
+- **Structure:**
+  ```
+  1AltX (Workspace)
+  ├── Clients (Folder)
+  │   ├── PNT (List) - Professional Netting Training
+  │   ├── RPE (List) - Atlanta Flooring Solutions
+  │   ├── OPT (List) - Optimization Project
+  │   ├── ADAM (List) - Paylidify Projects
+  │   ├── Heartland (List) - Heartland Project
+  │   ├── BrokerBin (List) - BrokerBin Project
+  │   └── DAX (List) - DAX Product
+  ├── Master Task Queue (List) - Syncs with GitHub
+  └── Internal (List) - Heartbeats, monitoring
+  ```
+- **Custom Fields (apply to all lists):**
+  - API_Cost (Currency)
+  - Task_ID (Text) — GitHub task link
+  - Client (Single Select)
+  - Model_Used (Single Select) — Haiku/Sonnet/Opus/GPT-4o
+  - Revenue (Currency) — for margin calculation
+  - Margin % (Formula) — (Revenue - API_Cost) / Revenue
+- **Implementation:**
+  1. Create Clients folder
+  2. Create 7 lists (one per client)
+  3. Add custom fields to workspace (applies to all)
+  4. Create filtered views per client
+  5. Set up Master Task Queue list for sync
+- **Deliverable:** Clean ClickUp structure ready for cost tracking
+
