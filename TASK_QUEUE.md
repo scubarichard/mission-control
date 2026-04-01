@@ -173,3 +173,44 @@ REQUEST from Triton: Make shared CLAUDE.md at ~/clients/ platform-agnostic (remo
   5. Set up Master Task Queue list for sync
 - **Deliverable:** Clean ClickUp structure ready for cost tracking
 
+
+---
+
+### TASK-20260401-011
+- **Assignee:** Triton
+- **Status:** DONE
+- **Priority:** High
+- **Task:** Install & configure OpenClaw on Surface Laptop
+- **Context:** Deploy OpenClaw with Sonnet model, systemd node service, Telegram bot connectivity
+- **Deliverable:** Surface Laptop running OpenClaw, monitoring #dax-collab in real-time
+
+---
+
+### TASK-20260401-012
+- **Assignee:** Triton
+- **Status:** DONE
+- **Priority:** High
+- **Task:** Configure Dropbox selective sync
+- **Context:** Sync only Companies/1AltX and Companies/Dakona folders to conserve local storage
+- **Deliverable:** Selective sync active, reduces disk footprint
+
+---
+
+### TASK-20260401-013
+- **Assignee:** Triton
+- **Status:** DONE
+- **Priority:** High
+- **Task:** Create ~/clients symlink to shared Dropbox directory
+- **Context:** Link ~/clients → ~/Dropbox/Companies/1AltX/Projects/_clients for unified client access
+- **Deliverable:** Symlink created, agents can access shared client repos
+
+---
+
+### TASK-20260401-014
+- **Assignee:** Triton
+- **Status:** DONE
+- **Priority:** High
+- **Task:** Make shared CLAUDE.md platform-agnostic
+- **Context:** Remove Windows-only paths (P:\ drive), use relative paths, platform-independent config
+- **Deliverable:** CLAUDE.md works on Windows, macOS, and Linux
+
