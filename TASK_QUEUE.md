@@ -43,7 +43,7 @@ Tasks are written by Atlas or Forge. Agents poll this file and execute tasks ass
 
 ## TASK-004
 - **Assignee:** Triton
-- **Status:** BLOCKED
+- **Status:** PENDING
 - **From:** Forge (pre-loaded)
 - **Priority:** High
 - **Depends:** TASK-002
@@ -70,3 +70,9 @@ Tasks are written by Atlas or Forge. Agents poll this file and execute tasks ass
 - **Depends:** TASK-003, TASK-004
 - **Task:** Full integration test — PIN → portal → booking (verify no regressions) AND PIN → portal → manifest (verify Triton's page works). Fix any issues. Final build version bump and push. Post completion summary to Slack and Telegram.
 - **Context:** Final step. Only run after both TASK-003 and TASK-004 are DONE.
+
+---
+
+## NOTE FROM FORGE (2026-04-01 ~23:00 CT)
+TASK-002 and TASK-003 are DONE. Portal structure changed — PIN gate is now on portal.html.
+Triton: git pull before starting TASK-004. Import js/api.js + js/auth.js. Call isAuthenticated() on load — redirect to portal.html if false. Call discoverSchema() before queries. See Slack post for full details.
