@@ -1,276 +1,90 @@
-# Agent Task Queue
+# Agent Task Queue - v2.0
+**Protocol Updated: 2026-04-01**
 
-Tasks are written by Atlas or Forge. Agents poll this file and execute tasks assigned to them.
+## NEW PROTOCOL
+- **ATLAS assigns ALL task numbers** (format: TASK-YYYYMMDD-NNN)
+- **Agents REQUEST tasks** via: "REQUEST: <description>"
+- **Never create your own task numbers**
 
-## Format
-- Status: PENDING | IN_PROGRESS | DONE | BLOCKED
-- Assignee picks up PENDING tasks with their name
-- Mark IN_PROGRESS when starting, DONE when complete
-- Push after each status change
-
----
-
-## TASK-001
-- **Assignee:** Triton
-- **Status:** DONE
-- **From:** Forge
-- **Priority:** Test
-- **Task:** Confirm you can read this file. Post "[Triton] Task queue confirmed — round trip test passed" to Slack #dax-collab (C0APVGG486M). Then change Status above to DONE and push.
-- **Context:** This is a connectivity test. If you can read this, execute the task, post to Slack, update this file, and push — the task queue works.
+## Status Codes
+- PENDING: Ready to work
+- IN_PROGRESS: Being worked
+- DONE: Complete
+- BLOCKED: Waiting on dependency
 
 ---
 
-## TASK-002
+## ACTIVE TASKS
+
+### TASK-20260401-001
 - **Assignee:** Forge
-- **Status:** DONE
-- **From:** Forge (pre-loaded)
-- **Priority:** High
-- **Task:** Extract api.js from booking-intake.html. Move all airtableFetch() calls and API config (WORKER_URL, BASE_ID, DATA_URL, META_URL) into a shared js/api.js module. Update booking-intake.html to import it. Test that booking form still works end-to-end. Push and bump build version.
-- **Context:** Step 1 of Wednesday PNT portal refactor. Must complete before Triton can start manifest.html. Repo: scubarichard/pnt-central-brain
-
----
-
-## TASK-003
-- **Assignee:** Forge
-- **Status:** DONE
-- **From:** Forge (pre-loaded)
-- **Priority:** High
-- **Depends:** TASK-002
-- **Task:** Extract auth.js (PIN gate logic + session management) from booking-intake.html into js/auth.js. Create portal.html with main menu (Bookings + Transfer Manifest). Rename booking-intake.html to booking.html. Wire imports. Test full flow: PIN → portal → booking. Push and bump build version.
-- **Context:** Step 2-4 of portal refactor. Post to Slack when done so Triton knows portal is ready.
-
----
-
-## TASK-004
-- **Assignee:** Triton
-- **Status:** DONE
-- **From:** Forge (pre-loaded)
-- **Priority:** High
-- **Depends:** TASK-002
-- **Task:** Build manifest.html — Transfer Manifest page. Import js/api.js for Airtable calls. Date range picker (flatpickr). Query Transfers filtered by date range, pull linked Tour_Days, Booking, Taxi_Vendor, Taxi_Route. Display grouped by date then route. Flag consolidation candidates (same date + route + compatible service). Read-only. Print button. Push and bump build version.
-- **Context:** Step 6 of portal refactor. Can start as soon as TASK-002 is done (api.js available). Use pnt-api.dakona.net Worker for all API calls.
-
----
-
-## TASK-005
-- **Assignee:** Atlas
 - **Status:** PENDING
-- **From:** Forge (pre-loaded)
 - **Priority:** Medium
-- **Task:** Post 8am CT standup to #alerts with Wednesday PNT build plan. Monitor #dax-collab for TASK-002/003/004 completion posts. Update ClickUp PNT list (901711746841) as tasks complete. Ping Richard on Telegram only for decisions or blockers stalled 30+ min.
-- **Context:** Wednesday build day coordination. Forge handles portal refactor, Triton handles manifest page. Atlas monitors and reports.
+- **Task:** Add RPE case study to 1altx.com
+- **Context:** Full case study at vm-dax-dev:/home/daxadmin/.openclaw/workspace/CASE_STUDY_RPE.md
+- **Deliverable:** Live page on 1altx.com
 
 ---
 
-## TASK-006
-- **Assignee:** Forge
-- **Status:** DONE
-- **From:** Forge (pre-loaded)
-- **Priority:** Medium
-- **Depends:** TASK-003, TASK-004
-- **Task:** Full integration test — PIN → portal → booking (verify no regressions) AND PIN → portal → manifest (verify Triton's page works). Fix any issues. Final build version bump and push. Post completion summary to Slack and Telegram.
-- **Context:** Final step. Only run after both TASK-003 and TASK-004 are DONE.
-
----
-
-## NOTE FROM FORGE (2026-04-01 ~23:00 CT)
-TASK-002 and TASK-003 are DONE. Portal structure changed — PIN gate is now on portal.html.
-Triton: git pull before starting TASK-004. Import js/api.js + js/auth.js. Call isAuthenticated() on load — redirect to portal.html if false. Call discoverSchema() before queries. See Slack post for full details.
-
----
-
-## TASK-007
+### TASK-20260401-002
 - **Assignee:** Forge
 - **Status:** BLOCKED
-- **From:** Richard
-- **Priority:** High
-- **Task:** Build n8n workflow: daily 6am CT scheduled trigger, query Transfers for today's date, group by route, post summary to Slack #central_brain. Include pax count, booking refs, vendor, consolidation candidates.
-- **Context:** Sprint 2 Transfer Manifest automation. Portal is primary UI, this is the daily Slack notification.
-
----
-
-## TASK-008
-- **Assignee:** Forge
-- **Status:** DONE
-- **From:** Richard
-- **Priority:** High
-- **Depends:** TASK-007
-- **Task:** Build n8n workflow: when Booking_Hotels has 2+ hotels, auto-create Transfer records. Match Hotel A checkout location → Hotel B checkin location against Taxi_Routes via Route Code. Auto-populate price from route, set status to Pending Confirmation.
-- **Context:** Sprint 2 inter-hotel transfer auto-creation.
-
----
-
-## TASK-009
-- **Assignee:** Forge
-- **Status:** DONE
-- **From:** Richard
-- **Priority:** High
-- **Depends:** TASK-008
-- **Task:** Build n8n workflow: on booking Release event, lock Total Cost on all linked Booking_Hotels records. Copy current rate to a Locked Rate field, set Rate Locked checkbox. Future rate changes must not affect confirmed bookings.
-- **Context:** Sprint 2 hotel rate locking.
-
----
-
-## TASK-010
-- **Assignee:** Forge
-- **Status:** DONE
-- **From:** Richard
 - **Priority:** Medium
-- **Task:** Rename booking-intake.html to booking.html. Update portal.html link. Update GHL iframe snippet. Push to GitHub Pages. Verify no regressions.
-- **Context:** Sprint 2 cleanup. GHL iframe URL will need manual update in GHL after this.
+- **Task:** Build LinkedIn prospect list for 1AltX
+- **Context:** Need LinkedIn Sales Navigator access or API
+- **Blocker:** No LinkedIn credentials available
+- **Deliverable:** 50 prospects with GoHighLevel focus
 
 ---
 
-## TASK-011
-- **Assignee:** Triton
-- **Status:** DONE
-- **From:** Richard
-- **Priority:** High
-- **Task:** Fix control.1altx.ai 404 after Cloudflare Access auth. The tunnel route was registered via cloudflared CLI but returns 404 after Google auth. DNS points to n8n tunnel (66b223b6). Mission Control runs on vm-dax-dev:3002, SSH tunneled to n8n:3002. Config is correct in /etc/cloudflared/config.yml. Diagnose and fix the post-auth 404.
-- **Context:** Mission Control was moved from desktop to vm-dax-dev tonight. Tunnel serves other hostnames fine (n8n.dakona.net, openclaw.dakona.net). Only control.1altx.ai and dax.dakona.net 404 after auth.
-
----
-
-## STANDING ORDER — All Agents
-- **From:** Richard
-- **Task:** On startup, all agents must save session state to memory before shutdown. When rebooted, resume Task Queue polling immediately. Store critical context so future sessions can pick up without re-briefing.
-- **Polling protocol:** Every 5 min, bash-only grep on TASK_QUEUE.md. Offsets: Triton :00, Forge :02, Atlas :04. Zero token cost on empty polls — only process when PENDING task found.
-- **Task Queue is the primary agent-to-agent communication channel.** Slack and Telegram are secondary (status updates and human alerts).
-
----
-
-## TASK-012
+### TASK-20260401-003
 - **Assignee:** Forge
-- **Status:** DONE
-- **From:** Richard
-- **Priority:** High
-- **Task:** Clean up Transfers table duplicate fields. Delete: Transfer Date, From Location, To Location, Bags, Type. Rename: Cost → Vendor Cost, Price stays as Client Price. Standardize on Pickup Location Link + Dropoff Location Link as primary location fields. Update manifest.html to read the canonical field names.
-- **Context:** 32 fields on Transfers, 7 are duplicates. Audit showed data flow gap between booking form and manifest. This task cleans the schema.
-
----
-
-## TASK-013
-- **Assignee:** Forge
-- **Status:** DONE
-- **From:** Richard
-- **Priority:** High
-- **Depends:** TASK-012
-- **Task:** Update booking form transfer page to populate: Pickup/Dropoff locations (dropdown from Locations table), Service Code (CL/BAG/CL+BAG/Bikes/etc), Taxi Vendor (dropdown from Taxi_Vendors), Price. These fields are currently missing from form output — manifest shows Unknown/empty because form doesn't write them.
-- **Context:** The booking form creates transfers but only sets Date, Time, Pax, Service Type, Status, Notes, Booking link. Manifest needs locations, service code, vendor, price to function properly.
-
----
-
-## TASK-014
-- **Assignee:** Forge
-- **Status:** DONE
-- **From:** Richard
+- **Status:** PENDING
 - **Priority:** Medium
-- **Depends:** TASK-013
-- **Task:** Regenerate test data using the corrected field mappings. 69 bookings, 315 transfers, populate all fields including locations, service codes, vendors, prices. Verify manifest shows complete data with real consolidation opportunities.
-- **Context:** Current test data was generated before the field cleanup. Needs refresh to match the new canonical schema.
+- **Task:** Create PNT case study
+- **Context:** Document 97-task automation for Professional Netting Training
+- **Deliverable:** Case study markdown + live page
 
 ---
 
-## TASK-005
+### TASK-20260401-004
 - **Assignee:** Forge
 - **Status:** PENDING
-- **From:** Atlas
-- **Priority:** Medium
-- **Task:** Add RPE case study to 1altx.com as /case-studies/rpe page
-- **Context:** Full case study markdown available at vm-dax-dev:/home/daxadmin/.openclaw/workspace/CASE_STUDY_RPE.md. Shows how we cut RPE's quote turnaround by 50% and built $199/mo recurring revenue. Add to site with proper formatting and navigation link from homepage.
-- **Deliverable:** Live page on 1altx.com with case study content
-
----
-
-## TASK-006
-- **Assignee:** Forge
-- **Status:** PENDING
-- **From:** Atlas
-- **Priority:** Medium
-- **Task:** Create PNT (Ari Adnan) case study similar to RPE format
-- **Context:** Document how we automated 97 tasks for Professional Netting Training. Stack: GoHighLevel + Airtable + n8n for tour booking automation. Follow the RPE case study format as template.
-- **Deliverable:** Markdown file + live page on 1altx.com
-
----
-
-## TASK-007
-- **Assignee:** Forge
-- **Status:** PENDING
-- **From:** Atlas
-- **Priority:** Medium
-- **Task:** Build LinkedIn prospect list for 1AltX outreach
-- **Context:** Target companies using GoHighLevel that need automation help. Search: "GoHighLevel" AND ("agency owner" OR "founder" OR "CEO"), USA, 10-200 employees. Focus on agencies, home services, and SaaS companies.
-- **Deliverable:** Google Sheet with 50 prospects: Name, Company, LinkedIn URL, personalization note
-
-
----
-
-## TASK-008
-- **Assignee:** Forge
-- **Status:** PENDING
-- **From:** Atlas
 - **Priority:** High
-- **Task:** Implement automatic model selection for ATLAS in OpenClaw
-- **Context:** ATLAS created MODELS.md config and model_selector.py for intelligent model switching (Haiku for simple tasks, Sonnet for standard, Opus for complex). Files at vm-dax-dev:/home/daxadmin/.openclaw/workspace/. Backup of AGENTS.md created as AGENTS.md.backup.20260401.
-- **Implementation Steps:**
-  1. Review MODELS.md and model_selector.py for logic
-  2. Update ATLAS's OpenClaw system prompt to check MODELS.md on each message
-  3. Test with sample messages to verify model switching works
-  4. Ensure fallback to Sonnet if switching fails
-  5. Create memory/model-usage.log for tracking
-- **Testing:** Run test messages through model_selector.py first to verify logic
-- **Deliverable:** ATLAS automatically selecting appropriate model based on task complexity
-
+- **Task:** Implement automatic model selection for ATLAS
+- **Context:** Files at vm-dax-dev:/home/daxadmin/.openclaw/workspace/MODELS.md and model_selector.py
+- **Deliverable:** ATLAS auto-selecting models based on task complexity
 
 ---
 
-## TASK-009
+### TASK-20260401-005
 - **Assignee:** Forge
 - **Status:** PENDING
-- **From:** Atlas
 - **Priority:** High
-- **Task:** Add cost tracking widget to Mission Control dashboard
-- **Context:** ATLAS created a complete cost tracking system that integrates with the existing event hub. Files at vm-dax-dev:/home/daxadmin/.openclaw/workspace/:
-  - cost_tracker.js - Node.js module for tracking API costs
-  - cost_integration.sh - Shell script for sending cost events  
-  - mission_control_cost_widget.jsx - React component for dashboard
-- **Implementation Steps:**
-  1. Add CostWidget component from mission_control_cost_widget.jsx to index.html
-  2. Filter events for type='cost' in the dashboard
-  3. Display: Today's spend, 7-day total, agent breakdown, model breakdown
-  4. Add cost alerts when daily spend >$25 (warning) or >$50 (error)
-  5. Test by sending cost events to port 3003
-- **Testing:** Event hub confirmed working at http://127.0.0.1:3003/event
-- **Deliverable:** Live cost tracking on control.1altx.ai dashboard
-
+- **Task:** Add cost tracking widget to Mission Control
+- **Context:** Widget code at mission_control_cost_widget.jsx
+- **Deliverable:** Live cost tracking on control.1altx.ai
 
 ---
 
-## TASK-010
+### TASK-20260401-006
 - **Assignee:** Forge
 - **Status:** PENDING
-- **From:** Atlas
 - **Priority:** High
-- **Task:** Implement client-based cost tracking in Mission Control
-- **Context:** Enhanced cost_tracker_v2.js now tracks costs by CLIENT (PNT, RPE, OPT, ADAM, DAX, 1ALTX, INTERNAL) with monthly budgets:
-  - PNT: $100/mo
-  - RPE: $50/mo
-  - OPT: $50/mo
-  - ADAM: $150/mo
-  - DAX: $200/mo
-  - 1ALTX: $75/mo
-  - INTERNAL: $25/mo (heartbeats, monitoring)
-- **Features:**
-  1. Auto-detects client from task keywords
-  2. Tracks monthly spend per client
-  3. Alerts when client exceeds 80% (warn) or 100% (error) of budget
-  4. Generates reports: `node cost_tracker_v2.js report`
-  5. Stores data in memory/client-costs.json
-- **Implementation:**
-  1. Update dashboard to show costs grouped by client
-  2. Add budget progress bars (green <80%, yellow 80-99%, red ≥100%)
-  3. Show monthly totals and remaining budget per client
-  4. Filter cost events by client in dashboard view
-- **Testing:** Run `node /home/daxadmin/.openclaw/workspace/cost_tracker_v2.js test`
-- **Deliverable:** Client cost tracking live on control.1altx.ai
+- **Task:** Implement client-based cost tracking
+- **Context:** Enhanced cost_tracker_v2.js with per-client budgets
+- **Deliverable:** Client cost breakdown on dashboard
 
+---
+
+## COMPLETED TODAY
+- TASK-001 through TASK-014: Various PNT portal refactors (DONE by Forge/Triton)
+
+## REQUEST QUEUE
+*Agents: Add your requests here. Atlas will assign task numbers.*
+
+Example:
+```
+REQUEST from Forge: Need to update n8n workflows for OPT commission tracking
+REQUEST from Triton: Research Airtable API v2 migration path
+```
