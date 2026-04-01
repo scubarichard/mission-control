@@ -91,7 +91,7 @@ Triton: git pull before starting TASK-004. Import js/api.js + js/auth.js. Call i
 
 ## TASK-008
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **From:** Richard
 - **Priority:** High
 - **Depends:** TASK-007
@@ -102,7 +102,7 @@ Triton: git pull before starting TASK-004. Import js/api.js + js/auth.js. Call i
 
 ## TASK-009
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **From:** Richard
 - **Priority:** High
 - **Depends:** TASK-008
@@ -113,7 +113,7 @@ Triton: git pull before starting TASK-004. Import js/api.js + js/auth.js. Call i
 
 ## TASK-010
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **From:** Richard
 - **Priority:** Medium
 - **Task:** Rename booking-intake.html to booking.html. Update portal.html link. Update GHL iframe snippet. Push to GitHub Pages. Verify no regressions.
