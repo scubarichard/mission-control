@@ -110,7 +110,7 @@ REQUEST from Triton: Research Airtable API v2 migration path
 
 ### TASK-20260401-008
 - **Assignee:** Triton
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **Priority:** High
 - **Task:** Backfill completed tasks (001-014) into ClickUp with cost estimates
 - **Context:** Historical tasks from today need to be in ClickUp with metadata. Estimate costs based on task complexity and model used.
