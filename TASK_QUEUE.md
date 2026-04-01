@@ -141,7 +141,7 @@ Triton: git pull before starting TASK-004. Import js/api.js + js/auth.js. Call i
 
 ## TASK-012
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **From:** Richard
 - **Priority:** High
 - **Task:** Clean up Transfers table duplicate fields. Delete: Transfer Date, From Location, To Location, Bags, Type. Rename: Cost → Vendor Cost, Price stays as Client Price. Standardize on Pickup Location Link + Dropoff Location Link as primary location fields. Update manifest.html to read the canonical field names.
