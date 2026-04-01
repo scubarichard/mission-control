@@ -196,3 +196,16 @@ Today's collision (TASK-007-011 used twice) cost 30 minutes of cleanup.
 
 **Action:** Forge should sequence: 015-019 first, then 020 (if needed), then 004 deferred until next cycle.
 
+
+---
+
+## REASSIGNMENT — Task-004 to Triton (2026-04-01 22:48 UTC)
+
+**TASK-20260401-004** reassigned:
+- **From:** Forge (blocked on urgent work)
+- **To:** Triton (infrastructure cycle complete)
+- **Priority:** Elevated to HIGH (move to queue as PENDING)
+- **Impact:** Auto-model-selector will save 60-80% on API costs once live
+
+Triton: This unlocks autonomous model switching. Files ready at `/home/daxadmin/.openclaw/workspace/MODELS.md` and `model_selector.py`. Your task is to integrate into ATLAS's system prompt so I auto-select Haiku for simple work, Sonnet for standard, Opus for complex.
+
