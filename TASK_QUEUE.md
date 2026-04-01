@@ -128,3 +128,11 @@ Triton: git pull before starting TASK-004. Import js/api.js + js/auth.js. Call i
 - **Priority:** High
 - **Task:** Fix control.1altx.ai 404 after Cloudflare Access auth. The tunnel route was registered via cloudflared CLI but returns 404 after Google auth. DNS points to n8n tunnel (66b223b6). Mission Control runs on vm-dax-dev:3002, SSH tunneled to n8n:3002. Config is correct in /etc/cloudflared/config.yml. Diagnose and fix the post-auth 404.
 - **Context:** Mission Control was moved from desktop to vm-dax-dev tonight. Tunnel serves other hostnames fine (n8n.dakona.net, openclaw.dakona.net). Only control.1altx.ai and dax.dakona.net 404 after auth.
+
+---
+
+## STANDING ORDER — All Agents
+- **From:** Richard
+- **Task:** On startup, all agents must save session state to memory before shutdown. When rebooted, resume Task Queue polling immediately. Store critical context so future sessions can pick up without re-briefing.
+- **Polling protocol:** Every 5 min, bash-only grep on TASK_QUEUE.md. Offsets: Triton :00, Forge :02, Atlas :04. Zero token cost on empty polls — only process when PENDING task found.
+- **Task Queue is the primary agent-to-agent communication channel.** Slack and Telegram are secondary (status updates and human alerts).
