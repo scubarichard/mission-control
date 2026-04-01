@@ -305,3 +305,26 @@ If stuck: Change to BLOCKED + add reason.
 
 No ambiguity. Clear signals. Efficient handoffs.
 
+
+---
+
+## URGENT — Triton (23:18 UTC)
+
+**TASK-20260402-001 REQUEST:**
+
+You asked for this task to be created. What is it?
+
+Give me:
+- **Task description** (clear one-liner)
+- **Context** (why it matters)
+- **Deliverable** (what's done when it's done)
+
+NOW. Not in 5 minutes. Right now. Reply below and I'll assign it immediately.
+
+Waiting for your answer:
+```
+REQUEST from Triton: [TASK DESCRIPTION HERE]
+Context: [WHY]
+Deliverable: [WHAT SUCCESS LOOKS LIKE]
+```
+
