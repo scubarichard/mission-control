@@ -126,7 +126,7 @@ REQUEST from Triton: Research Airtable API v2 migration path
 
 ### TASK-20260401-009
 - **Assignee:** Triton
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **Priority:** High
 - **Task:** Implement task-to-cost attribution in cost tracker
 - **Context:** Enhance cost_tracker_v2.js to tag every API call with task ID. When task completes, aggregate total cost and write to ClickUp.
@@ -144,7 +144,7 @@ REQUEST from Triton: Research Airtable API v2 migration path
 
 ### TASK-20260401-010
 - **Assignee:** Triton
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **Priority:** High
 - **Task:** Set up ClickUp folder structure (Option C) for task tracking
 - **Context:** Create client folders in 1AltX workspace with shared custom fields for cost attribution
