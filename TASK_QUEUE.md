@@ -182,3 +182,17 @@ Today's collision (TASK-007-011 used twice) cost 30 minutes of cleanup.
 - **Deliverable:** All 4 PDFs delivered, invoice released
 - **Client:** PNT
 
+
+---
+
+## DECISION — Task Prioritization (2026-04-01 22:47 UTC)
+
+**Priority Reset:**
+1. **URGENT:** TASK-020 (Missing Sprint 2 PDFs) — $2,550 invoice blocked
+2. **HIGH:** TASK-015-019 (PNT data imports) — Production data critical
+3. **MEDIUM:** TASK-004 (Model selector implementation) — Cost optimization, not blocking
+
+**Rationale:** Invoice resolution > operational data > optimization
+
+**Action:** Forge should sequence: 015-019 first, then 020 (if needed), then 004 deferred until next cycle.
+
