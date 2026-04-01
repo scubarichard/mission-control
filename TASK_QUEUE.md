@@ -76,3 +76,55 @@ Tasks are written by Atlas or Forge. Agents poll this file and execute tasks ass
 ## NOTE FROM FORGE (2026-04-01 ~23:00 CT)
 TASK-002 and TASK-003 are DONE. Portal structure changed — PIN gate is now on portal.html.
 Triton: git pull before starting TASK-004. Import js/api.js + js/auth.js. Call isAuthenticated() on load — redirect to portal.html if false. Call discoverSchema() before queries. See Slack post for full details.
+
+---
+
+## TASK-007
+- **Assignee:** Forge
+- **Status:** IN_PROGRESS
+- **From:** Richard
+- **Priority:** High
+- **Task:** Build n8n workflow: daily 6am CT scheduled trigger, query Transfers for today's date, group by route, post summary to Slack #central_brain. Include pax count, booking refs, vendor, consolidation candidates.
+- **Context:** Sprint 2 Transfer Manifest automation. Portal is primary UI, this is the daily Slack notification.
+
+---
+
+## TASK-008
+- **Assignee:** Forge
+- **Status:** PENDING
+- **From:** Richard
+- **Priority:** High
+- **Depends:** TASK-007
+- **Task:** Build n8n workflow: when Booking_Hotels has 2+ hotels, auto-create Transfer records. Match Hotel A checkout location → Hotel B checkin location against Taxi_Routes via Route Code. Auto-populate price from route, set status to Pending Confirmation.
+- **Context:** Sprint 2 inter-hotel transfer auto-creation.
+
+---
+
+## TASK-009
+- **Assignee:** Forge
+- **Status:** PENDING
+- **From:** Richard
+- **Priority:** High
+- **Depends:** TASK-008
+- **Task:** Build n8n workflow: on booking Release event, lock Total Cost on all linked Booking_Hotels records. Copy current rate to a Locked Rate field, set Rate Locked checkbox. Future rate changes must not affect confirmed bookings.
+- **Context:** Sprint 2 hotel rate locking.
+
+---
+
+## TASK-010
+- **Assignee:** Forge
+- **Status:** PENDING
+- **From:** Richard
+- **Priority:** Medium
+- **Task:** Rename booking-intake.html to booking.html. Update portal.html link. Update GHL iframe snippet. Push to GitHub Pages. Verify no regressions.
+- **Context:** Sprint 2 cleanup. GHL iframe URL will need manual update in GHL after this.
+
+---
+
+## TASK-011
+- **Assignee:** Triton
+- **Status:** PENDING
+- **From:** Richard
+- **Priority:** High
+- **Task:** Fix control.1altx.ai 404 after Cloudflare Access auth. The tunnel route was registered via cloudflared CLI but returns 404 after Google auth. DNS points to n8n tunnel (66b223b6). Mission Control runs on vm-dax-dev:3002, SSH tunneled to n8n:3002. Config is correct in /etc/cloudflared/config.yml. Diagnose and fix the post-auth 404.
+- **Context:** Mission Control was moved from desktop to vm-dax-dev tonight. Tunnel serves other hostnames fine (n8n.dakona.net, openclaw.dakona.net). Only control.1altx.ai and dax.dakona.net 404 after auth.
