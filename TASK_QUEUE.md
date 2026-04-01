@@ -18,7 +18,7 @@
 
 ### TASK-20260401-001
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **Priority:** Medium
 - **Task:** Add RPE case study to 1altx.com
 - **Context:** Full case study at vm-dax-dev:/home/daxadmin/.openclaw/workspace/CASE_STUDY_RPE.md
@@ -39,7 +39,7 @@
 
 ### TASK-20260401-003
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **Priority:** Medium
 - **Task:** Create PNT case study
 - **Context:** Document 97-task automation for Professional Netting Training
@@ -49,7 +49,7 @@
 
 ### TASK-20260401-004
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** High
 - **Task:** Implement automatic model selection for ATLAS
 - **Context:** Files at vm-dax-dev:/home/daxadmin/.openclaw/workspace/MODELS.md and model_selector.py
@@ -59,7 +59,7 @@
 
 ### TASK-20260401-005
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** High
 - **Task:** Add cost tracking widget to Mission Control
 - **Context:** Widget code at mission_control_cost_widget.jsx
@@ -69,7 +69,7 @@
 
 ### TASK-20260401-006
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** High
 - **Task:** Implement client-based cost tracking
 - **Context:** Enhanced cost_tracker_v2.js with per-client budgets
