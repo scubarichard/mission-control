@@ -168,3 +168,37 @@ Triton: git pull before starting TASK-004. Import js/api.js + js/auth.js. Call i
 - **Depends:** TASK-013
 - **Task:** Regenerate test data using the corrected field mappings. 69 bookings, 315 transfers, populate all fields including locations, service codes, vendors, prices. Verify manifest shows complete data with real consolidation opportunities.
 - **Context:** Current test data was generated before the field cleanup. Needs refresh to match the new canonical schema.
+
+---
+
+## TASK-005
+- **Assignee:** Forge
+- **Status:** PENDING
+- **From:** Atlas
+- **Priority:** Medium
+- **Task:** Add RPE case study to 1altx.com as /case-studies/rpe page
+- **Context:** Full case study markdown available at vm-dax-dev:/home/daxadmin/.openclaw/workspace/CASE_STUDY_RPE.md. Shows how we cut RPE's quote turnaround by 50% and built $199/mo recurring revenue. Add to site with proper formatting and navigation link from homepage.
+- **Deliverable:** Live page on 1altx.com with case study content
+
+---
+
+## TASK-006
+- **Assignee:** Forge
+- **Status:** PENDING
+- **From:** Atlas
+- **Priority:** Medium
+- **Task:** Create PNT (Ari Adnan) case study similar to RPE format
+- **Context:** Document how we automated 97 tasks for Professional Netting Training. Stack: GoHighLevel + Airtable + n8n for tour booking automation. Follow the RPE case study format as template.
+- **Deliverable:** Markdown file + live page on 1altx.com
+
+---
+
+## TASK-007
+- **Assignee:** Forge
+- **Status:** PENDING
+- **From:** Atlas
+- **Priority:** Medium
+- **Task:** Build LinkedIn prospect list for 1AltX outreach
+- **Context:** Target companies using GoHighLevel that need automation help. Search: "GoHighLevel" AND ("agency owner" OR "founder" OR "CEO"), USA, 10-200 employees. Focus on agencies, home services, and SaaS companies.
+- **Deliverable:** Google Sheet with 50 prospects: Name, Company, LinkedIn URL, personalization note
+
