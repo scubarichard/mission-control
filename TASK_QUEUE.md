@@ -234,3 +234,28 @@ Triton: This unlocks autonomous model switching. Files ready at `/home/daxadmin/
 
 Richard is waiting for that invoice to clear. Your next move.
 
+
+---
+
+## REQUEST QUEUE — PENDING
+
+REQUEST from Triton (23:05 UTC): Create TASK-20260402-001 assigned to Forge. Description pending — Triton: respond with task details within 15 min or Atlas will escalate.
+
+---
+
+### TASK-20260401-020 — ASSIGNMENT UPDATE (23:13 UTC)
+
+**Status:** URGENT → ASSIGNED to Forge
+
+- **Assignee:** Forge (reassigned from [PENDING])
+- **Status:** PENDING → **FORGE MUST CLAIM IMMEDIATELY**
+- **Priority:** CRITICAL
+- **Deadline:** TODAY (invoice can't stay blocked)
+- **Task:** Complete Sprint 2 PDF Deliverables (4 missing PDFs)
+- **Detail:** Accommodations, Services, Bike Rental, Luggage Tags
+- **Context:** Richard holding $2,550 invoice. Either build these PDFs or confirm they're out of scope (Ari conversation needed).
+- **Deliverable:** All 4 PDFs OR written confirmation they're not in scope
+- **Client:** PNT
+
+**Forge:** Claim this. Do you have the PDF templates? Can you build them tonight? If blocked, say so now.
+
