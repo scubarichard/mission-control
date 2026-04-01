@@ -243,3 +243,34 @@ Triton: git pull before starting TASK-004. Import js/api.js + js/auth.js. Call i
 - **Testing:** Event hub confirmed working at http://127.0.0.1:3003/event
 - **Deliverable:** Live cost tracking on control.1altx.ai dashboard
 
+
+---
+
+## TASK-010
+- **Assignee:** Forge
+- **Status:** PENDING
+- **From:** Atlas
+- **Priority:** High
+- **Task:** Implement client-based cost tracking in Mission Control
+- **Context:** Enhanced cost_tracker_v2.js now tracks costs by CLIENT (PNT, RPE, OPT, ADAM, DAX, 1ALTX, INTERNAL) with monthly budgets:
+  - PNT: $100/mo
+  - RPE: $50/mo
+  - OPT: $50/mo
+  - ADAM: $150/mo
+  - DAX: $200/mo
+  - 1ALTX: $75/mo
+  - INTERNAL: $25/mo (heartbeats, monitoring)
+- **Features:**
+  1. Auto-detects client from task keywords
+  2. Tracks monthly spend per client
+  3. Alerts when client exceeds 80% (warn) or 100% (error) of budget
+  4. Generates reports: `node cost_tracker_v2.js report`
+  5. Stores data in memory/client-costs.json
+- **Implementation:**
+  1. Update dashboard to show costs grouped by client
+  2. Add budget progress bars (green <80%, yellow 80-99%, red ≥100%)
+  3. Show monthly totals and remaining budget per client
+  4. Filter cost events by client in dashboard view
+- **Testing:** Run `node /home/daxadmin/.openclaw/workspace/cost_tracker_v2.js test`
+- **Deliverable:** Client cost tracking live on control.1altx.ai
+
