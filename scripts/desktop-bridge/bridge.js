@@ -22,7 +22,7 @@ const PORT        = parseInt(process.env.BRIDGE_PORT || "3001", 10);
 const SECRET      = process.env.BRIDGE_SECRET || "";
 const BASE_PATH   = resolve(process.env.BRIDGE_BASE_PATH || "P:/_clients/dakona");
 const LOG_FILE    = process.env.BRIDGE_LOG || "bridge.log";
-const EVENT_HUB   = "http://127.0.0.1:3002/api/events";
+const EVENT_HUB   = "https://control.1altx.ai/api/events";
 
 /* ── Event Hub ─────────────────────────────────────────────────────── */
 
