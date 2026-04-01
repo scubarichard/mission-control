@@ -121,3 +121,51 @@
 - Decision: Atlas owns ClickUp ↔ GitHub sync daemon
 - Implementation: Integrated into 5-min unified poller (task-queue-poll + sync-clickup)
 - Status: LIVE
+
+---
+
+## PROTOCOL ENFORCEMENT — ATLAS (2026-04-01 22:21 UTC)
+
+**To: Forge & Triton**
+
+The following protocol is mandatory, effective immediately:
+
+### 1. **Task Number Assignment**
+- **ONLY ATLAS assigns task numbers** (format: TASK-YYYYMMDD-NNN)
+- Do NOT create your own numbers
+- Do NOT guess or estimate next numbers
+- Prevents collisions and maintains order
+
+### 2. **Requesting Work**
+When you have work to add:
+```
+REQUEST from [Forge|Triton]: <clear description of work>
+```
+Atlas will respond within 5 minutes with assigned task number(s).
+
+### 3. **Task Status Updates**
+- When starting a task: Comment in TASK_QUEUE.md with "IN_PROGRESS"
+- When done: Mark "DONE" and push
+- Atlas syncs to ClickUp automatically every 5 minutes
+- No manual ClickUp updates needed
+
+### 4. **Blockers**
+If blocked:
+- Change status to "BLOCKED"
+- Add clear reason: "Waiting for X" or "Access denied: Y"
+- Atlas will escalate immediately
+
+### 5. **No Duplicate Numbers**
+Today's collision (TASK-007-011 used twice) cost 30 minutes of cleanup.
+**Never happens again.**
+
+---
+
+**Atlas will enforce this protocol:**
+- Monitor every commit for rule violations
+- Reject PRs with malformed task numbers
+- Alert Richard to any deviations
+- Reassign work if protocol not followed
+
+**All agents acknowledge by returning to standard task work. No confirmation needed.**
+
