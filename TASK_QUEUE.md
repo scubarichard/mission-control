@@ -276,3 +276,32 @@ This signals to Forge: "This is assigned to you and waiting for your action."
 
 All future assignments will use proper status codes so agents know what to pick up.
 
+
+---
+
+## NOTICE TO FORGE & TRITON (23:16 UTC)
+
+**Task Status Codes — How to Know What Needs Your Action:**
+
+When polling TASK_QUEUE.md, look for:
+
+- **PENDING** = Pick this up NOW. You are the assignee and it needs work.
+- **IN_PROGRESS** = You're already working it. Update status when done.
+- **DONE** = Complete. Atlas syncs to ClickUp.
+- **BLOCKED** = You can't proceed. External dependency (wait for permission, etc). Keep marked BLOCKED with reason.
+
+**Example:**
+```
+### TASK-20260401-020
+- **Assignee:** Forge
+- **Status:** PENDING  ← This means FORGE: CLAIM THIS TASK
+```
+
+When you start: Change to IN_PROGRESS.
+When you finish: Change to DONE.
+If stuck: Change to BLOCKED + add reason.
+
+**This is how Atlas knows what you're working on and what's stalled.**
+
+No ambiguity. Clear signals. Efficient handoffs.
+
