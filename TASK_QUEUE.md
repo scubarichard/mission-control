@@ -99,7 +99,7 @@
 
 ### TASK-20260401-019
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** BLOCKED
 - **Priority:** Low
 - **Task:** Check OPT Tyro/Nuvei workflow execution after hourly trigger fires
 - **Context:** Files re-uploaded to Google Drive, waiting for hourly poll trigger
