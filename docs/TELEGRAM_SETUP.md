@@ -6,7 +6,7 @@ Chat ID: 7337480629 (Richard Mabbun DM)
 ## Environment Variables Required
 
 ```
-TELEGRAM_BOT_TOKEN=<stored in P:/_tools/telegram/.env>
+TELEGRAM_BOT_TOKEN=8764597777:AAHCuMgyC3LENO4mp4m_u6ZfE4dUX7VT6BY
 TELEGRAM_CHAT_ID=7337480629
 ```
 
