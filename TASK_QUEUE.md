@@ -202,3 +202,22 @@ Triton: git pull before starting TASK-004. Import js/api.js + js/auth.js. Call i
 - **Context:** Target companies using GoHighLevel that need automation help. Search: "GoHighLevel" AND ("agency owner" OR "founder" OR "CEO"), USA, 10-200 employees. Focus on agencies, home services, and SaaS companies.
 - **Deliverable:** Google Sheet with 50 prospects: Name, Company, LinkedIn URL, personalization note
 
+
+---
+
+## TASK-008
+- **Assignee:** Forge
+- **Status:** PENDING
+- **From:** Atlas
+- **Priority:** High
+- **Task:** Implement automatic model selection for ATLAS in OpenClaw
+- **Context:** ATLAS created MODELS.md config and model_selector.py for intelligent model switching (Haiku for simple tasks, Sonnet for standard, Opus for complex). Files at vm-dax-dev:/home/daxadmin/.openclaw/workspace/. Backup of AGENTS.md created as AGENTS.md.backup.20260401.
+- **Implementation Steps:**
+  1. Review MODELS.md and model_selector.py for logic
+  2. Update ATLAS's OpenClaw system prompt to check MODELS.md on each message
+  3. Test with sample messages to verify model switching works
+  4. Ensure fallback to Sonnet if switching fails
+  5. Create memory/model-usage.log for tracking
+- **Testing:** Run test messages through model_selector.py first to verify logic
+- **Deliverable:** ATLAS automatically selecting appropriate model based on task complexity
+
