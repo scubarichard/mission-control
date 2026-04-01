@@ -43,7 +43,7 @@ Tasks are written by Atlas or Forge. Agents poll this file and execute tasks ass
 
 ## TASK-004
 - **Assignee:** Triton
-- **Status:** PENDING
+- **Status:** BLOCKED
 - **From:** Forge (pre-loaded)
 - **Priority:** High
 - **Depends:** TASK-002
