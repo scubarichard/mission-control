@@ -62,7 +62,7 @@
 
 ### TASK-20260401-015
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** High
 - **Task:** Import Diana's vehicle fleet into PNT Vehicles table
 - **Context:** 11 vehicles from Viaturas PNT file (C:\Users\18473\Downloads\Viaturas PNT - Nirvana .xlsx, ABR26 tab)
@@ -71,7 +71,7 @@
 
 ### TASK-20260401-016
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **Priority:** High
 - **Task:** Cross-reference Tour Infos with 233 Tours to fill Region, Duration, Type
 - **Context:** Source: C:\Users\18473\Downloads\Tour Infos & Guided Tours.xlsx
