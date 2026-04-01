@@ -18,7 +18,7 @@
 
 ### TASK-20260401-001
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **Priority:** Medium
 - **Task:** Add RPE case study to 1altx.com
 - **Context:** Full case study at vm-dax-dev:/home/daxadmin/.openclaw/workspace/CASE_STUDY_RPE.md
@@ -39,7 +39,7 @@
 
 ### TASK-20260401-003
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **Priority:** Medium
 - **Task:** Create PNT case study
 - **Context:** Document 97-task automation for Professional Netting Training
