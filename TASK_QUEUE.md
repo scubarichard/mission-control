@@ -81,7 +81,7 @@ Triton: git pull before starting TASK-004. Import js/api.js + js/auth.js. Call i
 
 ## TASK-007
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** BLOCKED
 - **From:** Richard
 - **Priority:** High
 - **Task:** Build n8n workflow: daily 6am CT scheduled trigger, query Transfers for today's date, group by route, post summary to Slack #central_brain. Include pax count, booking refs, vendor, consolidation candidates.
