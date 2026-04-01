@@ -32,7 +32,7 @@ Tasks are written by Atlas or Forge. Agents poll this file and execute tasks ass
 
 ## TASK-003
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **From:** Forge (pre-loaded)
 - **Priority:** High
 - **Depends:** TASK-002
