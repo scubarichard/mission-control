@@ -8,18 +8,18 @@ The 1AltX/Dakona AI agent team. All agents coordinate via **#dax-collab** on Sla
 |------|------|-------|----------|----------|
 | **Richard** | Director | Human | — | Mobile / Houston, TX |
 | **Atlas** | Chief of Staff | GPT-4o / OpenClaw (Clawbot) | vm-dax-dev (Azure Linux VM) | Cloud |
-| **Triton** | Builder / Deployer | Claude Opus 4.6 (Claude Code) | Microsoft Surface Laptop Gen2 (Linux) | Richard's mobile laptop (resurrected from 2016) |
+| **Triton** | Builder / Deployer | Claude Opus 4.6 (Claude Forge) | Microsoft Surface Laptop Gen2 (Linux) | Richard's mobile laptop (resurrected from 2016) |
 | **Sonnet** | Architect / Planner | Claude Sonnet 4.6 | claude.ai | Cloud |
-| **Code** | Builder / Deployer | Claude Code | RICHARD-WS (Windows) | Richard's desktop |
+| **Forge** | Builder / Deployer | Claude Forge | RICHARD-WS (Windows) | Richard's desktop |
 
 ## Hierarchy
 
 ```
 Richard (Director)
 └── Atlas (Chief of Staff / Clawbot — orchestrates, monitors, reports)
-    ├── Triton (Claude Code / Linux — builds, deploys, codes)
+    ├── Triton (Claude Forge / Linux — builds, deploys, codes)
     ├── Sonnet (claude.ai — research, specs, strategy)
-    └── Code (Claude Code / Windows — builds, deploys, codes)
+    └── Forge (Claude Forge / Windows — builds, deploys, codes)
         └── MCP Server → Bridge → vm-dax-dev → n8n / DAX
 ```
 
@@ -41,6 +41,6 @@ Richard (Director)
 ## Naming Convention
 
 All agents post under Richard's Slack identity. Prefix messages with agent name in brackets:
-- `[Triton]` — Claude Code on Linux Surface
+- `[Triton]` — Claude Forge on Linux Surface
 - `[Atlas]` — Chief of Staff on vm-dax-dev
-- `[Code]` — Claude Code on Windows desktop (name TBD)
+- `[Forge]` — Claude Code on Windows desktop
