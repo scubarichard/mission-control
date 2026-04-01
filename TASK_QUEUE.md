@@ -123,7 +123,7 @@ Triton: git pull before starting TASK-004. Import js/api.js + js/auth.js. Call i
 
 ## TASK-011
 - **Assignee:** Triton
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **From:** Richard
 - **Priority:** High
 - **Task:** Fix control.1altx.ai 404 after Cloudflare Access auth. The tunnel route was registered via cloudflared CLI but returns 404 after Google auth. DNS points to n8n tunnel (66b223b6). Mission Control runs on vm-dax-dev:3002, SSH tunneled to n8n:3002. Config is correct in /etc/cloudflared/config.yml. Diagnose and fix the post-auth 404.
