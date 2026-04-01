@@ -339,7 +339,7 @@ function App() {
       </div>))}
     </div>
     <div className="tabs">
-      {[{id:'portal',label:'Portal'},{id:'feed',label:'Activity Feed'},{id:'infra',label:'Infrastructure'},{id:'neural',label:'Agent Office'}].map(t => (
+      {[{id:'portal',label:'Portal'},{id:'feed',label:'Activity Feed'},{id:'infra',label:'Infrastructure'},{id:'neural',label:'Agent Office'},{id:'costs',label:'Costs'}].map(t => (
         <button key={t.id} className={`tab ${tab===t.id?'active':''}`} onClick={()=>setTab(t.id)}>{t.label}</button>
       ))}
     </div>
@@ -347,9 +347,74 @@ function App() {
     {tab==='feed' && <ActivityFeed />}
     {tab==='infra' && <Infrastructure liveStatus={liveStatus} />}
     {tab==='neural' && <NeuralCenter />}
+    {tab==='costs' && <CostDashboard events={events} />}
     {lastUpdate && <div className="last-poll">Last poll: {lastUpdate.toLocaleTimeString()} (every 30s)</div>}
   </div>);
 }
+
+function CostDashboard({ events }) {
+  // Estimate costs from events by agent
+  const agentEvents = {};
+  const today = new Date().toDateString();
+  let todayCount = 0;
+
+  events.forEach(e => {
+    const agent = e.agent || 'Unknown';
+    if (!agentEvents[agent]) agentEvents[agent] = { total: 0, today: 0 };
+    agentEvents[agent].total++;
+    if (new Date(e.ts).toDateString() === today) {
+      agentEvents[agent].today++;
+      todayCount++;
+    }
+  });
+
+  // Rough cost estimates per event by agent/model
+  const costPerEvent = { 'ATLAS': 0.002, 'Forge': 0.01, 'Triton': 0.005, 'Claude Code': 0.01, 'Sonnet': 0.008 };
+
+  const agents = Object.entries(agentEvents).sort((a,b) => b[1].total - a[1].total);
+  const totalEstimate = agents.reduce((s, [name, d]) => s + d.total * (costPerEvent[name] || 0.005), 0);
+  const todayEstimate = agents.reduce((s, [name, d]) => s + d.today * (costPerEvent[name] || 0.005), 0);
+
+  return React.createElement('div', {className:'grid'},
+    React.createElement('div', {style:{gridColumn:'1/-1',display:'flex',gap:'20px',flexWrap:'wrap',marginBottom:'16px'}},
+      React.createElement('div', {className:'ic',style:{flex:1,textAlign:'center',padding:'20px'}},
+        React.createElement('div', {style:{fontSize:'32px',fontWeight:700,color:'#3fb950'}}, '$' + todayEstimate.toFixed(2)),
+        React.createElement('div', {style:{fontSize:'12px',color:'#8b949e'}}, "Today's Estimated Spend")
+      ),
+      React.createElement('div', {className:'ic',style:{flex:1,textAlign:'center',padding:'20px'}},
+        React.createElement('div', {style:{fontSize:'32px',fontWeight:700,color:'#58a6ff'}}, '$' + totalEstimate.toFixed(2)),
+        React.createElement('div', {style:{fontSize:'12px',color:'#8b949e'}}, 'Total Estimated Spend')
+      ),
+      React.createElement('div', {className:'ic',style:{flex:1,textAlign:'center',padding:'20px'}},
+        React.createElement('div', {style:{fontSize:'32px',fontWeight:700,color:'#d29922'}}, todayCount),
+        React.createElement('div', {style:{fontSize:'12px',color:'#8b949e'}}, 'Events Today')
+      ),
+      React.createElement('div', {className:'ic',style:{flex:1,textAlign:'center',padding:'20px'}},
+        React.createElement('div', {style:{fontSize:'32px',fontWeight:700,color:'#8b949e'}}, events.length),
+        React.createElement('div', {style:{fontSize:'12px',color:'#8b949e'}}, 'Total Events')
+      )
+    ),
+    React.createElement('div', {style:{gridColumn:'1/-1'}},
+      React.createElement('h3', {style:{color:'#e6edf3',marginBottom:'12px'}}, 'Cost by Agent'),
+      ...agents.map(([name, data]) => {
+        const est = data.total * (costPerEvent[name] || 0.005);
+        const pct = totalEstimate > 0 ? (est / totalEstimate * 100) : 0;
+        return React.createElement('div', {key:name,style:{display:'flex',alignItems:'center',gap:'12px',marginBottom:'8px'}},
+          React.createElement('div', {style:{width:'120px',fontSize:'13px',color:'#e6edf3',fontWeight:600}}, name),
+          React.createElement('div', {style:{flex:1,background:'#21262d',borderRadius:'4px',height:'20px',overflow:'hidden'}},
+            React.createElement('div', {style:{width:pct+'%',height:'100%',background:pct>40?'#f85149':pct>20?'#d29922':'#3fb950',borderRadius:'4px',transition:'width 0.3s'}})
+          ),
+          React.createElement('div', {style:{width:'80px',textAlign:'right',fontSize:'12px',color:'#8b949e'}}, '$'+est.toFixed(2)),
+          React.createElement('div', {style:{width:'50px',textAlign:'right',fontSize:'11px',color:'#6e7681'}}, data.total+' events')
+        );
+      })
+    ),
+    React.createElement('div', {style:{gridColumn:'1/-1',marginTop:'16px',padding:'12px',background:'#161b22',borderRadius:'8px',fontSize:'11px',color:'#6e7681'}},
+      'Note: Cost estimates are approximate based on event counts and average token usage per agent. Actual costs depend on prompt length and model used. Check console.anthropic.com for exact billing.'
+    )
+  );
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 </script>
 </body>
