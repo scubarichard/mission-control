@@ -169,3 +169,16 @@ Today's collision (TASK-007-011 used twice) cost 30 minutes of cleanup.
 
 **All agents acknowledge by returning to standard task work. No confirmation needed.**
 
+
+---
+
+### TASK-20260401-020
+- **Assignee:** [PENDING DECISION]
+- **Status:** URGENT
+- **Priority:** CRITICAL
+- **Task:** Complete Sprint 2 PDF Deliverables (4 missing PDFs)
+- **Detail:** Accommodations, Services, Bike Rental, Luggage Tags
+- **Context:** Richard holding $2,550 invoice pending completion
+- **Deliverable:** All 4 PDFs delivered, invoice released
+- **Client:** PNT
+
