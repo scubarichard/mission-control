@@ -88,3 +88,54 @@ Example:
 REQUEST from Forge: Need to update n8n workflows for OPT commission tracking
 REQUEST from Triton: Research Airtable API v2 migration path
 ```
+
+---
+
+### TASK-20260401-007
+- **Assignee:** Triton
+- **Status:** PENDING
+- **Priority:** High
+- **Task:** Build ClickUp ↔ GitHub task queue sync daemon
+- **Context:** Sync TASK_QUEUE.md to ClickUp every 5 minutes. When task marked DONE in GitHub, auto-complete in ClickUp. When task created in ClickUp, auto-add to GitHub queue.
+- **Implementation:**
+  1. Create Node.js sync script using ClickUp API
+  2. Poll GitHub TASK_QUEUE.md every 5 minutes
+  3. Update ClickUp list 901712338015 (DAX Post v1.0) with task status
+  4. Handle bi-directional updates without conflicts
+  5. Run as cron job on vm-dax-dev
+- **Testing:** Sync 3 test tasks back and forth
+- **Deliverable:** Live sync between GitHub and ClickUp, no manual updates needed
+
+---
+
+### TASK-20260401-008
+- **Assignee:** Triton
+- **Status:** PENDING
+- **Priority:** High
+- **Task:** Backfill completed tasks (001-014) into ClickUp with cost estimates
+- **Context:** Historical tasks from today need to be in ClickUp with metadata. Estimate costs based on task complexity and model used.
+- **Implementation:**
+  1. Create 14 task records in ClickUp for historical work
+  2. Estimate API cost for each task (simple=Haiku, standard=Sonnet, complex=Opus)
+  3. Add cost estimate to task description
+  4. Mark as DONE with completion date
+  5. Tag with appropriate client (PNT, OPT, 1ALTX, etc.)
+- **Deliverable:** All historical tasks in ClickUp with cost data
+
+---
+
+### TASK-20260401-009
+- **Assignee:** Triton
+- **Status:** PENDING
+- **Priority:** High
+- **Task:** Implement task-to-cost attribution in cost tracker
+- **Context:** Enhance cost_tracker_v2.js to tag every API call with task ID. When task completes, aggregate total cost and write to ClickUp.
+- **Implementation:**
+  1. Update cost event structure: include task_id field
+  2. Store cost events indexed by task_id
+  3. At task completion, sum all costs for that task
+  4. Write final cost to ClickUp custom field "API_Cost"
+  5. Calculate margin: (revenue - api_cost) / revenue * 100
+- **Testing:** Run a test task, verify cost accumulates and writes to ClickUp
+- **Deliverable:** True cost per task, visible in ClickUp
+
