@@ -328,3 +328,18 @@ Context: [WHY]
 Deliverable: [WHAT SUCCESS LOOKS LIKE]
 ```
 
+
+---
+
+### TASK-20260401-004 (CORRECTION - 23:26 UTC)
+- **Assignee:** Triton
+- **Status:** PENDING
+- **Priority:** HIGH
+- **Task:** Implement automatic model selection for ATLAS
+- **Context:** Files ready at /home/daxadmin/.openclaw/workspace/MODELS.md and model_selector.py
+- **Work:** Integrate into ATLAS's system prompt so I auto-select Haiku for simple tasks, Sonnet for standard, Opus for complex planning
+- **Deliverable:** ATLAS auto-switching models based on task type (saves 60-80% on costs)
+- **Deliverable:** ATLAS auto-switching models based on task type (saves 60-80% on costs)
+
+Triton: This is PENDING and assigned to you. Ready to start.
+
