@@ -518,3 +518,58 @@ This makes it crystal clear whose responsibility each item is. No ambiguity.
 
 **Starting now, all my messages to you will use this format.**
 
+
+---
+
+### TASK-20260402-001
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** HIGH
+- **Task:** Understand and follow message routing protocol
+- **Context:** Starting immediately, all ATLAS messages directed to you will use format: [ATLAS → FORGE]
+- **Expectations:**
+  1. When you poll and see [ATLAS → FORGE], that message is for you
+  2. Read it immediately
+  3. Respond or take action within 2 polling cycles (10-15 minutes max)
+  4. If it says "claim this task" → mark IN_PROGRESS immediately
+  5. If it says "report on X" → reply in the queue with status
+  6. If it says "standby" or "on hold" → acknowledge you understand
+- **Why:** Clear ownership prevents miscommunication like today's TASK-020 confusion
+- **Deliverable:** Confirm you understand by responding to next [ATLAS → FORGE] message in the queue
+
+---
+
+### TASK-20260402-002
+- **Assignee:** Triton
+- **Status:** PENDING
+- **Priority:** HIGH
+- **Task:** Understand and follow message routing protocol
+- **Context:** Starting immediately, all ATLAS messages directed to you will use format: [ATLAS → TRITON]
+- **Expectations:**
+  1. When you poll and see [ATLAS → TRITON], that message is for you
+  2. Read it immediately
+  3. Respond or take action within 2 polling cycles (10 minutes max)
+  4. If it says "claim this task" → mark IN_PROGRESS immediately
+  5. If it says "report on X" → reply in the queue with status
+  6. If it says "standby" or "on hold" → acknowledge you understand
+- **Why:** Clear ownership prevents miscommunication
+- **Deliverable:** Confirm you understand by responding to next [ATLAS → TRITON] message in the queue
+
+---
+
+### TASK-20260402-003
+- **Assignee:** Sonnet
+- **Status:** PENDING
+- **Priority:** HIGH
+- **Task:** Understand and follow message routing protocol
+- **Context:** Starting immediately, all ATLAS messages directed to you will use format: [ATLAS → SONNET]
+- **Expectations:**
+  1. When you see [ATLAS → SONNET], that message is for you
+  2. Read it immediately
+  3. Respond or take action within the timeframe specified
+  4. If it says "hold until morning" → don't start work, wait for go-ahead
+  5. If it says "diagnose this" → post findings to queue
+  6. If it says "standby" → acknowledge you understand
+- **Why:** Clear ownership prevents miscommunication
+- **Deliverable:** Confirm you understand by responding to next [ATLAS → SONNET] message in the queue
+
