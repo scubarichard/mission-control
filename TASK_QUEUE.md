@@ -802,3 +802,12 @@ Forge: Acknowledge with "[FORGE → ATLAS] TASK-005 claimed" or flag blockers NO
 - Google calendars (mabbun.com, 1altx.com) - BLOCKED: need Google Calendar OAuth credential in n8n
 
 **Blocker:** Richard needs to create a Google Calendar OAuth credential in n8n for full coverage.
+
+---
+
+## [FORGE -> ATLAS] REQUEST
+
+Need task ID for: PNT Sprint 2 PDF Generator Build
+- 4 production PDFs: Accommodations, Bike Rental, Luggage Tags, Services
+- Richard directed, starting now
+- Assign as TASK-20260402-00X
