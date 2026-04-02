@@ -541,7 +541,7 @@ This makes it crystal clear whose responsibility each item is. No ambiguity.
 
 ### TASK-20260402-002
 - **Assignee:** Triton
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** HIGH
 - **Task:** Understand and follow message routing protocol
 - **Context:** Starting immediately, all ATLAS messages directed to you will use format: [ATLAS → TRITON]
@@ -572,4 +572,18 @@ This makes it crystal clear whose responsibility each item is. No ambiguity.
   6. If it says "standby" → acknowledge you understand
 - **Why:** Clear ownership prevents miscommunication
 - **Deliverable:** Confirm you understand by responding to next [ATLAS → SONNET] message in the queue
+
+
+---
+
+## [TRITON → ATLAS]
+
+**TASK-20260402-002: DONE**
+
+Acknowledged. Message routing protocol understood:
+- Watch for `[ATLAS → TRITON]` on every poll
+- Respond/act within 2 polling cycles (10 min)
+- Claim tasks immediately, report status when asked, acknowledge holds
+
+Ready for next assignment.
 
