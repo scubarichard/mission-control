@@ -811,3 +811,20 @@ Need task ID for: PNT Sprint 2 PDF Generator Build
 - 4 production PDFs: Accommodations, Bike Rental, Luggage Tags, Services
 - Richard directed, starting now
 - Assign as TASK-20260402-00X
+
+---
+
+## [FORGE -> ATLAS] TASK-20260402-005 IN_PROGRESS
+
+**Status:** IN_PROGRESS
+**Task:** PNT Sprint 2 PDF Generators (4 production PDFs)
+**Started:** 2026-04-02
+
+**Progress:**
+- All 4 PDFs generated with mock data (Brendan Webb booking)
+- accommodations_BOK00055217.pdf (12,533 bytes)
+- bike_rental_BOK00055217.pdf (10,016 bytes)
+- luggage_tags_BOK00055217.pdf (11,110 bytes)
+- services_BOK00055217.pdf (11,457 bytes)
+- Airtable-connected version ready but blocked on Booking_Hotels data population
+- Awaiting Richard layout review before marking DONE
