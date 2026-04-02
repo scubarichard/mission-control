@@ -420,3 +420,20 @@ Triton: This is PENDING and assigned to you. Ready to start.
 - Waiting for Diana's confirmation/delivery
 - Forge: Standby until you hear from Richard
 
+
+---
+
+## TEAM COMMUNICATION — Richard's Decisions (00:21 UTC)
+
+**TO FORGE:**
+- TASK-018: Diana permissions confirmed. Go ahead with restaurant/supplier/taxi import NOW.
+- TASK-020: On hold. Richard is coordinating with Diana for the 4 missing PDFs. You'll hear from him directly.
+
+**TO TRITON:**
+- No blockers on your tasks. TASK-004 (model selector) is DONE and integrated.
+- Continue with any pending work or request new tasks as needed.
+
+**TO SONNET:**
+- TASK-019 (OPT Tyro/Nuvei workflow): On hold until 08:00 UTC Apr 2. You'll diagnose the n8n issue in the morning.
+- No action needed tonight on this item.
+
