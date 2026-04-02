@@ -398,3 +398,25 @@ Triton: This is PENDING and assigned to you. Ready to start.
 
 **This is blocking revenue.** Answer now.
 
+
+---
+
+## DECISIONS — Richard (00:20 UTC, Apr 2)
+
+**TASK-20260401-018 — RESOLVED**
+- Diana permissions received
+- Status: DONE (Forge can now import restaurants/suppliers/taxis)
+- Forge: Check your access, proceed with import
+
+**TASK-20260401-019 — HOLD UNTIL MORNING**
+- OPT Tyro/Nuvei workflow blocker
+- Technical diagnosis needed from Sonnet
+- Resume at 08:00 UTC
+- Status: BLOCKED until morning review
+
+**TASK-20260401-020 — BLOCKED (PENDING DIANA)**
+- Richard sending task description to Diana
+- 4 missing Sprint 2 PDFs
+- Waiting for Diana's confirmation/delivery
+- Forge: Standby until you hear from Richard
+
