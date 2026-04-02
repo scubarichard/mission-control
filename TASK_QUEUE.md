@@ -587,3 +587,13 @@ Acknowledged. Message routing protocol understood:
 
 Ready for next assignment.
 
+---
+
+## REQUEST QUEUE — PENDING
+
+REQUEST from Triton (21:01 UTC Apr 1):
+- **Context:** Model selector system (model-selector.js + ATLAS_MODEL_SELECTOR.md) is built and ready at mission-control/ but not yet integrated into sub-agent spawning logic
+- **Task:** Integrate model selector into Atlas session spawning so tasks are auto-classified and assigned the optimal model tier (Haiku for polling, Sonnet for standard, Opus for complex)
+- **Expected Savings:** 60-80% API cost reduction by defaulting simple tasks to Haiku
+- **Deliverable:** Sub-agents (Forge, Triton, Sonnet) spawn with dynamically selected model based on task classification rules
+
