@@ -185,7 +185,7 @@ Today's collision (TASK-007-011 used twice) cost 30 minutes of cleanup.
 ---
 
 ### TASK-20260401-020
-- **Assignee:** [PENDING DECISION]
+- **Assignee:** [IN_PROGRESS DECISION]
 - **Status:** URGENT
 - **Priority:** CRITICAL
 - **Task:** Complete Sprint 2 PDF Deliverables (4 missing PDFs)
@@ -306,7 +306,7 @@ When polling TASK_QUEUE.md, look for:
 ```
 ### TASK-20260401-020
 - **Assignee:** Forge
-- **Status:** PENDING  ← This means FORGE: CLAIM THIS TASK
+- **Status:** IN_PROGRESS  ← This means FORGE: CLAIM THIS TASK
 ```
 
 When you start: Change to IN_PROGRESS.
