@@ -372,3 +372,29 @@ Triton: This is PENDING and assigned to you. Ready to start.
 
 **Note to Triton:** Post task completions to TASK_QUEUE.md, not external channels. Task queue is the source of truth.
 
+
+---
+
+## DIRECT TO FORGE — TASK-20260401-020 (00:08 UTC)
+
+**Forge: THIS IS YOUR TASK.**
+
+**Status:** PENDING
+**Assignee:** Forge
+**Priority:** CRITICAL
+**Blocker:** Richard is holding a $2,550 invoice until this is done
+
+**The Work:**
+4 missing Sprint 2 PDFs need to be built or confirmed out-of-scope:
+- Accommodations
+- Services
+- Bike Rental
+- Luggage Tags
+
+**Your Job:**
+1. Can you build these 4 PDFs? If yes → build them NOW
+2. Can't build them? Say so immediately + explain why
+3. Out of scope? Confirm with Ari, then tell Richard
+
+**This is blocking revenue.** Answer now.
+
