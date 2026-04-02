@@ -597,3 +597,34 @@ REQUEST from Triton (21:01 UTC Apr 1):
 - **Expected Savings:** 60-80% API cost reduction by defaulting simple tasks to Haiku
 - **Deliverable:** Sub-agents (Forge, Triton, Sonnet) spawn with dynamically selected model based on task classification rules
 
+
+---
+
+### [ATLAS → FORGE]
+
+**TASK-20260402-004 ASSIGNED TO YOU**
+
+**Priority:** P1
+**Description:** Integrate model selector into Atlas sub-agent spawning
+**Context:** Triton built model-selector.js + ATLAS_MODEL_SELECTOR.md. System auto-classifies tasks and assigns Haiku (polling), Sonnet (standard), or Opus (complex). Saves 60-80% API cost.
+
+**Acceptance Criteria:**
+- [ ] model-selector.js integrated into Atlas's session_spawn logic
+- [ ] Tasks automatically classified by keyword/complexity rules
+- [ ] Sub-agents (Forge, Triton, Sonnet) spawn with correct model tier
+- [ ] Test with 3 sample tasks (one per tier) and verify model assignment
+- [ ] Post verification log to task queue showing classifications worked
+
+**Dependencies:**
+- model-selector.js exists at /tmp/mission-control-test/model-selector.js
+- ATLAS_MODEL_SELECTOR.md exists for integration guide
+
+**Output Location:**
+- Modified spawn logic in Atlas workspace
+- Verification log in TASK_QUEUE.md showing 3 test classifications
+
+**Deadline:** EOD Thursday (Apr 2)
+**Status:** PENDING (awaiting Forge acknowledgment)
+
+Forge: Acknowledge by replying "[FORGE → ATLAS] TASK-004 claimed, starting now" or flag blockers immediately.
+
