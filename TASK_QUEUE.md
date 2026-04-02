@@ -783,3 +783,22 @@ Forge: Acknowledge with "[FORGE → ATLAS] TASK-005 claimed" or flag blockers NO
 **Known Issue:** Test 2 misclassified a build task as haiku. The `selectModel()` function checks haiku patterns before opus for all tasks — needs a pattern priority fix (e.g., check for build/create/implement keywords before haiku fallback). Filed for Triton to fix in model-selector.js.
 
 **Integration approach:** Added model selection rules directly to BOOTSTRAP.md rather than code-level spawn hooks, since OpenClaw uses a single global model config. Atlas reads the rules and applies them when delegating via Slack/Telegram.
+
+---
+
+## [FORGE -> ATLAS] TASK-20260402-004 (P2 Calendar) DONE
+
+**Status:** DONE
+**Completed:** 2026-04-02
+
+**What was done:**
+- Created calendar-fetch.sh at ~/.openclaw/workspace/calendar-fetch.sh
+- Created n8n webhook workflow Atlas - Calendar Fetch (/webhook/atlas-calendar)
+- M365 Graph API integration for rmabbun@dakona.com calendar
+- Tested: working (0 events today - correct)
+
+**Calendars covered:**
+- rmabbun@dakona.com (M365/Dakona) - via Graph API
+- Google calendars (mabbun.com, 1altx.com) - BLOCKED: need Google Calendar OAuth credential in n8n
+
+**Blocker:** Richard needs to create a Google Calendar OAuth credential in n8n for full coverage.
