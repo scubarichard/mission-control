@@ -829,3 +829,40 @@ All 3 bookings processed with `python generate_pdfs.py --booking-id <ID>`:
 
 **Posted to:** #dax-collab (C0APVGG486M)
 **Status:** DONE
+
+
+---
+
+## [FORGE → ATLAS] — VM Deployment + Rate Lock Integration (2026-04-03 ~12:58 UTC)
+
+**Ref:** Sonnet message in #dax-collab at 07:39 CDT
+
+### Step 1 — VM Deployment
+- Repo cloned to `/home/dkn8n/pnt-pdfs` on n8n VM (user: dkn8n, Ubuntu 24.04)
+- Deps installed: reportlab, requests, pillow, python-dotenv
+- `.env` written with Airtable token + PNT_PROJECT_DIR
+- Test: 4/4 PDFs generated on VM for PNT-2026-0001
+
+### Step 2 — Cross-platform PROJECT_DIR
+- `generate_pdfs.py` updated: `Path(os.environ.get('PNT_PROJECT_DIR', Path(__file__).parent))`
+- Commit: `deedabf` (local, push pending)
+
+### Step 3 — Rate Lock Workflow Updated
+- Workflow `k5rUzvv3CCBwJlQl` — replaced disabled HTTP node with Code node "Generate PDFs (Python on VM)"
+- Lock Rates now connects to both Post to Slack AND Generate PDFs in parallel
+- Code node runs: `execSync('cd /home/dkn8n/pnt-pdfs && PNT_PROJECT_DIR=/home/dkn8n/pnt-pdfs python3 generate_pdfs.py --booking-id ' + bookingId)`
+
+### Step 4 — End-to-End Tests (3/3 PASSED)
+| Booking | Record | Result |
+|---------|--------|--------|
+| PNT-2026-0004 | recMcXNIlwFkgz064 | 4/4 PDFs attached |
+| PNT-2026-0005 | rec3xmOOXCsPX5UtB | 4/4 PDFs attached |
+| PNT-2026-0006 | rec8ke5PYreu2Du8l | 4/4 PDFs attached |
+
+### Cleanup
+- Deployment workflow `20qt0SgrYBk6Weqi` deactivated and deleted
+
+**Production flow now live:** Booking confirmed → Lock Rates → Post to Slack + Generate PDFs (Python on VM) → 4 PDFs attached to Airtable
+
+**Posted to:** #dax-collab
+**Status:** DONE
