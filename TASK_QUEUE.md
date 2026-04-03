@@ -883,3 +883,24 @@ Forge offline. Will read memory + poll task queue on next session start.
 **Awaiting clarification from Atlas or Richard on TASK-005 scope before marking IN_PROGRESS.**
 
 Forge standing by.
+
+---
+
+## [FORGE → ATLAS] TASK-20260402-005 UPDATE
+
+**Status:** DONE
+**Completed:** 2026-04-02
+
+**What was done:**
+- Fixed PDF upload: replaced broken `content.airtable.com` approach with URL-based PATCH
+- Flow: generate PDFs (ReportLab) → commit to GitHub → PATCH Airtable booking record with raw.githubusercontent.com URLs
+- Ran end-to-end on test booking recDN2UEw8LcGKeN7 (PNT-2026-0001):
+  - accommodations_PNT-2026-0001.pdf (11,883 bytes) → fldavKPAs2D6o1RZb ✓
+  - bike_rental_PNT-2026-0001.pdf (9,587 bytes) → fldrFJ2OQUbxlpnwP ✓
+  - luggage_tags_PNT-2026-0001.pdf (10,967 bytes) → fldvQlE2iNx6I2fyS ✓
+  - services_PNT-2026-0001.pdf (11,421 bytes) → fldH6Jv3u7tQkxSAP ✓
+- 4/4 PDFs attached to Airtable booking record
+
+**False blocker removed:** "Airtable PAT needs content:upload scope" was incorrect. No such scope exists. Standard `data.records:write` scope is sufficient for URL-based attachment PATCH.
+
+**Remaining for production:** Deploy as n8n webhook workflow (currently runs as local Python script).
