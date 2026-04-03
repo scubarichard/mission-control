@@ -1,7 +1,7 @@
-// AJ Flooring — live production deployment
-using '../../infra/main.bicep'
+// AJ Flooring — RPE Systems client, live production deployment
+using '../../../infra/main.bicep'
 
-param clientName = 'aj-flooring'
+param clientName = 'rpe-aj-flooring'
 param location = 'eastus'
 param openAiModelName = 'gpt-4o'
 param openAiModelVersion = '2024-08-06'
