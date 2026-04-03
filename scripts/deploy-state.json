@@ -1,0 +1,56 @@
+{
+  "phase": "1B",
+  "location_id": "eWmOhK85TA8xb2HTiSh6",
+  "custom_fields": {
+    "labor_budget": "sTXOP6QYot56yGCJ0EW5",
+    "crew_payout": "g2rGP4kVgan7tIOxD2zR",
+    "gross_margin_pct": "UHiQZiJLrnHBym0L5ckf",
+    "product_type": "oqXEac7kNLYcf15oeq2N",
+    "material_cost": "cpmZ8eYwdH5RU2zrfAU4",
+    "clickup_task_id": "cLv6ZRlToMihb4Y4IyIx",
+    "clickup_short_id": "K7SEFRrZoJBQanhFBViq",
+    "completion_date": "ynFgX8bjs6YT4M600PNr",
+    "labor_cap_pct": "s6t9PpTRgOLhjZw8GsVh",
+    "material_sku": "uAxA3LmplQ3G0DZBjrBL",
+    "material_order_total": "679zao3lbvC74bjq1YqN",
+    "order_date": "dqKKt2vXpxnprXs4aSjz",
+    "crew": "tWI5Os62uC4ElzzVYshY",
+    "photos_uploaded": "rW1CnCNEXdmBhUZZk4sD",
+    "signed_off": "R6VkYBJSrljiZ9aV4d0j",
+    "goback_required": "1B5EMTr8TJ4vHHp02RZw"
+  },
+  "pipeline_id": "CW1kMmEnMcDarAd4eNcI",
+  "stages": {
+    "new_lead": "400b336d-276c-4811-8aef-f98a61d462c7",
+    "estimate_sent": "7be42f61-0318-4cc9-aa19-2bb445d4d27c",
+    "contract_signed": "b5d6054a-452d-48d1-b52e-c29ef401e201",
+    "in_production": "814bd4cb-d9a6-4665-8aea-d32ced95e48e",
+    "closed_won": "332dba51-881f-45b2-b204-fcbd10130c9a",
+    "margin_review": "76a379b6-439c-406d-b7db-18e91f27b628"
+  },
+  "stats": {
+    "fields_created": 16,
+    "fields_failed": 0,
+    "pipeline_created": true,
+    "clickup_space_created": true
+  },
+  "clickup": {
+    "space_id": "90175033250",
+    "folders": {
+      "active_jobs": "90177912865",
+      "completed_jobs": "90177912866",
+      "change_orders": "90177912869",
+      "dashboard_development": "90177912871"
+    },
+    "lists": {
+      "current_pipeline": "901712562147",
+      "starting_this_week": "901712562148",
+      "completed": "901712562149",
+      "pending_cos": "901712562150",
+      "approved_cos": "901712562151",
+      "backlog": "901712562152",
+      "in_progress": "901712562153"
+    },
+    "custom_fields": {}
+  }
+}
