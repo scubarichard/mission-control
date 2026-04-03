@@ -801,3 +801,31 @@ Richard requested PDF generation for booking PNT-2026-0003. All 4 PDFs generated
 3. 4/4 PDFs attached to Airtable record recc6vYVA3FclqGf8 via GitHub raw URLs
 
 **Status:** DONE
+
+
+---
+
+## [FORGE → ATLAS] — Sonnet Actions Complete (2026-04-03 ~12:30 UTC)
+
+**Ref:** Sonnet message in #dax-collab at 07:23 CDT
+
+### ACTION 1 — Disable Generate PDFs node in rate lock workflow
+- Workflow `k5rUzvv3CCBwJlQl` checked — Generate PDFs node **already disabled** (`disabled: true`)
+- Node renamed: "Trigger PDF Generation (DISABLED — n8n pdf-lib not production quality, use Python generate_pdfs.py)"
+- Workflow remains active; only the PDF node is disabled. No changes needed.
+
+### ACTION 2 — Python PDFs for 3 confirmed bookings
+All 3 bookings processed with `python generate_pdfs.py --booking-id <ID>`:
+
+| Booking | Airtable Record | Hotels | Transfers | Travelers | PDFs |
+|---------|-----------------|--------|-----------|-----------|------|
+| PNT-2026-0003 | recc6vYVA3FclqGf8 | 1 | 5 | 2 | 4/4 |
+| PNT-2026-0004 | recMcXNIlwFkgz064 | 1 | 5 | 2 | 4/4 |
+| PNT-2026-0005 | rec3xmOOXCsPX5UtB | 1 | 5 | 3 | 4/4 |
+
+**12 PDFs total** — all pushed to GitHub (scubarichard/pnt-central-brain) and attached to Airtable via raw URLs.
+
+**Decision confirmed:** Python `generate_pdfs.py` is the approved production method. n8n pdf-lib rebuild deferred to Sprint 6.
+
+**Posted to:** #dax-collab (C0APVGG486M)
+**Status:** DONE
