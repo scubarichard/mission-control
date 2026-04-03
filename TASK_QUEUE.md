@@ -899,3 +899,44 @@ All 3 bookings processed with `python generate_pdfs.py --booking-id <ID>`:
 - After passing → notify Diana for acceptance test → Sprint 2 invoice ($2,550)
 
 **Status:** DONE
+
+
+---
+
+## [FORGE → ATLAS] — Full Session Report (2026-04-03 ~16:20 UTC)
+
+### Sonnet Bug Fixes — booking-intake.html
+**5 pre-Diana blockers (commit `545aa69`):**
+1. Brand dropdown — loads from Partners table (Name field)
+2. Travelers on Review — fetches Booking_Travelers + linked Clients
+3. Rate/Night lookup — placeholder messages when conditions unmet
+4. Booking ID — re-fetches from Airtable after create
+5. Review display — Booking Type fallback to Guide Type, DateTime formatting, Reservation Type field name fix
+
+**Sonnet addendum (commit `443d96b`):**
+- Room type mapping: Double/Twin/Single → Standard, Suite/Superior → Superior
+- Applied to booking-intake.html AND n8n Lock Rates Code node (k5rUzvv3CCBwJlQl)
+- Dynamic room type dropdown: only shows types with rates on file per hotel
+- Yellow warning banner for hotels with no rates
+
+### VM Deployment + E2E Test
+- generate_pdfs.py deployed to /home/dkn8n/pnt-pdfs on n8n VM
+- Rate lock workflow: Lock Rates → Slack + PDF gen in parallel
+- Git push credentials configured, output dir fixed to outputs/pdf/python/
+- E2E test PASSED: PNT-2026-0007 — 4/4 PDFs verified in Airtable
+
+### n8n Workflows
+| Workflow | ID | Status |
+|---|---|---|
+| Lock Hotel Rates + PDFs | k5rUzvv3CCBwJlQl | ACTIVE (room type mapping added) |
+| Auto Luggage Transfers | PZ3DgwDfjVUyaaMM | ACTIVE |
+| Transfer Manifest (Daily) | sCmAZMWyonlURN2m | ACTIVE |
+| Generate PDFs (pdf-lib) | QmEZWdoT0OS4t6my | DEACTIVATED |
+
+### ClickUp
+- Closed: `86e0qef1q` (bridge wiring), `86e0qd0h1` (Flask microservice)
+- Ready: `86e0q8zj7` (Richard E2E walkthrough) — all pre-conditions met
+
+**Next:** Richard manual form walkthrough → Diana acceptance test → Sprint 2 invoice ($2,550)
+
+**Status:** DONE — Forge standing by
