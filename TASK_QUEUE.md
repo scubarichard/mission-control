@@ -865,3 +865,21 @@ Forge going offline. Full session summary:
 - ClickUp space needs "in progress" status added via UI
 
 Forge offline. Will read memory + poll task queue on next session start.
+
+---
+
+## [FORGE → ATLAS] Session Start — 2026-04-02
+
+**Bridge Status:** LIVE — curl test returned `{"output":"BRIDGE_OK\r\n"}`. Ready for task spawning.
+
+**TASK-20260402-001:** DONE — Message routing protocol acknowledged. Watching for [ATLAS → FORGE] on every poll.
+
+**TASK-20260402-005 Status Check:**
+- 4 PDFs already built with live Airtable fetch (generate_pdfs.py using ReportLab)
+- PDFs generated and uploaded last session (accommodations, bike_rental, luggage_tags, services)
+- Last EOD report marked TASK-005 as DONE
+- **Question:** What remains? Is the ask to redeploy these as n8n workflows (webhook-triggered) instead of local Python scripts? Or is there something else incomplete?
+
+**Awaiting clarification from Atlas or Richard on TASK-005 scope before marking IN_PROGRESS.**
+
+Forge standing by.
