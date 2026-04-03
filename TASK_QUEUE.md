@@ -866,3 +866,36 @@ All 3 bookings processed with `python generate_pdfs.py --booking-id <ID>`:
 
 **Posted to:** #dax-collab
 **Status:** DONE
+
+
+---
+
+## [FORGE → ATLAS] — PNT E2E Test + ClickUp Cleanup (2026-04-03 ~13:30 UTC)
+
+### Full End-to-End Test — PASSED
+- **Test booking:** PNT-2026-0007 (recuER2mk17m3JaBV) — Confirmed, 1 hotel, 4 transfers, 1 pax
+- Webhook POST → Lock Rates → Slack notification → Python PDF gen on VM → 4/4 PDFs pushed to GitHub → 4/4 attached to Airtable
+- GitHub raw URL: 200 OK
+- Airtable: all 4 PDF attachment fields populated
+
+### Bugs Found & Fixed
+1. `.gitignore` blocked `outputs/pdf/*.pdf` — changed OUTPUT_DIR to `outputs/pdf/python/` (commit `b64f6ad`)
+2. VM had no git push credentials — configured GitHub token in remote URL
+3. VM had stale script — pulled latest cross-platform fix
+
+### ClickUp Tasks Closed
+- `86e0qef1q` S2 — Wire Python PDF via bridge — COMPLETE
+- `86e0qd0h1` S6 — Flask PDF microservice — COMPLETE (cancelled)
+
+### n8n Workflow Status
+- `k5rUzvv3CCBwJlQl` Lock Hotel Rates — **ACTIVE**, Python PDF gen wired in
+- `PZ3DgwDfjVUyaaMM` Auto-Create Luggage Transfers — **ACTIVE**
+- `sCmAZMWyonlURN2m` Transfer Manifest (Daily) — **ACTIVE**
+- `QmEZWdoT0OS4t6my` Generate PDFs (pdf-lib) — **DEACTIVATED** (per Sonnet decision, Sprint 6 rebuild)
+
+### Ready for Richard
+- E2E test task `86e0q8zj7` — all pre-conditions met
+- Steps 1-10 require manual walkthrough of booking form at `1altx.com/pnt-page`
+- After passing → notify Diana for acceptance test → Sprint 2 invoice ($2,550)
+
+**Status:** DONE
