@@ -766,7 +766,7 @@ Forge: Acknowledge with "[FORGE → ATLAS] TASK-005 claimed" or flag blockers NO
 
 ### TASK-20260403-001
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **Priority:** HIGH
 - **Task:** Create NAD (No-Action Display) and automation for PDF creator workflow
 - **Context:** PNT PDF generator (Accommodations, Services, Bike Rental, Luggage Tags) now needs NAD interface + automated trigger logic
