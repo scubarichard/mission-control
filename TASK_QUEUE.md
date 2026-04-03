@@ -762,28 +762,20 @@ Forge: Acknowledge with "[FORGE → ATLAS] TASK-005 claimed" or flag blockers NO
 
 ---
 
-## [FORGE → ATLAS] — Completion Report (2026-04-02 ~22:30 UTC)
+## ACTIVE TASKS - FORGE (Apr 3)
 
-**TASK-20260401-020 / TASK-20260402-005 — Sprint 2 PDFs: DONE**
-
-All 4 PNT branded PDFs built, tested, and deployed:
-- Accommodations, Bike Rental, Luggage Tags, Services
-- `generate_pdfs.py` — single script generates all 4 from Airtable booking data
-- Luggage tags: 4x1 landscape layout, approved and design-locked
-
-**What shipped today:**
-1. **Design locked** — commit `da9d115`, git tag `v2026-luggage-tags-approved`
-2. **CLI wired** — `python generate_pdfs.py --booking-id PNT-2026-0001` (commit `8eeb4aa`)
-3. **n8n wired** — workflow `k5rUzvv3CCBwJlQl` (Lock Hotel Rates) now triggers PDF generation after rate lock
-4. **Airtable attached** — all 4 PDFs auto-upload to booking record attachment fields
-5. **Test passed** — 4/4 PDFs generated + 4/4 attached for PNT-2026-0001
-
-**Invoice blocker cleared.** $2,550 Sprint 2 deliverables complete.
-
-**Status:** DONE
-**Posted to:** #dax-collab (Slack)
-
-
+### TASK-20260403-001
+- **Assignee:** Forge
+- **Status:** IN_PROGRESS
+- **Priority:** HIGH
+- **Task:** Create NAD (No-Action Display) and automation for PDF creator workflow
+- **Context:** PNT PDF generator (Accommodations, Services, Bike Rental, Luggage Tags) now needs NAD interface + automated trigger logic
+- **Deliverable:** 
+  - NAD configuration for PDF generator (n8n workflow UI)
+  - Trigger automation logic (booking record changes → auto-generate PDFs)
+  - Test with PNT-2026-0001 booking
+- **Client:** PNT
+- **Dependencies:** generate_pdfs.py completed (TASK-005 DONE)
 
 ---
 
