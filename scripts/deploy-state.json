@@ -1,5 +1,5 @@
 {
-  "phase": "1B",
+  "phase": "4",
   "location_id": "eWmOhK85TA8xb2HTiSh6",
   "custom_fields": {
     "labor_budget": "sTXOP6QYot56yGCJ0EW5",
@@ -51,6 +51,341 @@
       "backlog": "901712562152",
       "in_progress": "901712562153"
     },
-    "custom_fields": {}
+    "custom_fields": {
+      "ghl_opportunity_id": "62062a65-a1e9-4f94-b4ce-d9ac164ac504",
+      "contract_value": "b905d1e2-0381-406b-ad7c-d71650470fc8",
+      "gross_margin_percent": "46ebfa4b-cc5d-4f4c-9194-34ab2307a9a6",
+      "labor_budget": "78be9193-3953-4c0d-af8e-e4793a0bb095",
+      "crew_payout": "6bf5e2d8-6f9c-411a-bcd4-03de66ee1ab1",
+      "crew_assigned": "8ec4cd0b-9abf-46c8-a4ee-9b654d1ef570",
+      "material_sku": "ea826279-f805-4ed1-905f-d32d145cb9d4",
+      "project_type": "d25dd400-5226-411c-b533-15f61553fa58",
+      "total_sq_ft": "44125714-ac60-4a51-937b-9067ff7f509f",
+      "install_date": "1e1c8a47-1603-427f-9a3a-106d8a68a9e3"
+    }
+  },
+  "placeholders": {
+    "{{client_name}}": "AJ Flooring Solutions",
+    "{{client_slug}}": "aj-flooring",
+    "{{slug}}": "aj-flooring",
+    "{{owner_name}}": "",
+    "{{owner_email}}": "",
+    "{{headcount}}": "2",
+    "{{margin_target}}": "40",
+    "{{margin_warning}}": "35",
+    "{{labor_cap_pct}}": "15",
+    "{{labor_warning_pct}}": "12",
+    "{{crew_names_json}}": "{\"Crew A\":\"Lead 1\"}",
+    "{{ghl_token}}": "pit-d05c48da-3603-421c-9042-8486df7b5fab",
+    "{{ghl_location_id}}": "eWmOhK85TA8xb2HTiSh6",
+    "{{ghl_pipeline_id}}": "CW1kMmEnMcDarAd4eNcI",
+    "{{ghl_cf_labor_budget}}": "sTXOP6QYot56yGCJ0EW5",
+    "{{ghl_cf_crew_payout}}": "g2rGP4kVgan7tIOxD2zR",
+    "{{ghl_cf_gross_margin_pct}}": "UHiQZiJLrnHBym0L5ckf",
+    "{{ghl_cf_product_type}}": "oqXEac7kNLYcf15oeq2N",
+    "{{ghl_cf_material_cost}}": "cpmZ8eYwdH5RU2zrfAU4",
+    "{{ghl_cf_clickup_task_id}}": "cLv6ZRlToMihb4Y4IyIx",
+    "{{ghl_cf_clickup_short_id}}": "K7SEFRrZoJBQanhFBViq",
+    "{{ghl_cf_completion_date}}": "ynFgX8bjs6YT4M600PNr",
+    "{{ghl_cf_labor_cap_pct}}": "s6t9PpTRgOLhjZw8GsVh",
+    "{{ghl_cf_material_sku}}": "uAxA3LmplQ3G0DZBjrBL",
+    "{{ghl_cf_material_order_total}}": "679zao3lbvC74bjq1YqN",
+    "{{ghl_cf_order_date}}": "dqKKt2vXpxnprXs4aSjz",
+    "{{ghl_cf_crew}}": "tWI5Os62uC4ElzzVYshY",
+    "{{ghl_cf_photos_uploaded}}": "rW1CnCNEXdmBhUZZk4sD",
+    "{{ghl_cf_signed_off}}": "R6VkYBJSrljiZ9aV4d0j",
+    "{{ghl_cf_goback_required}}": "1B5EMTr8TJ4vHHp02RZw",
+    "{{ghl_stage_new_lead}}": "400b336d-276c-4811-8aef-f98a61d462c7",
+    "{{ghl_stage_estimate_sent}}": "7be42f61-0318-4cc9-aa19-2bb445d4d27c",
+    "{{ghl_stage_contract_signed}}": "b5d6054a-452d-48d1-b52e-c29ef401e201",
+    "{{ghl_stage_in_production}}": "814bd4cb-d9a6-4665-8aea-d32ced95e48e",
+    "{{ghl_stage_closed_won}}": "332dba51-881f-45b2-b204-fcbd10130c9a",
+    "{{ghl_stage_margin_review}}": "76a379b6-439c-406d-b7db-18e91f27b628",
+    "{{clickup_token}}": "pk_106144226_VOUJ8CKLMYGIIB8JQHMQEMS83LWFH8M7",
+    "{{clickup_team_id}}": "9017745115",
+    "{{clickup_space_id}}": "90175033250",
+    "{{clickup_folder_active_jobs}}": "90177912865",
+    "{{clickup_folder_completed_jobs}}": "90177912866",
+    "{{clickup_folder_change_orders}}": "90177912869",
+    "{{clickup_list_current_pipeline}}": "901712562147",
+    "{{clickup_list_starting_this_week}}": "901712562148",
+    "{{clickup_list_completed}}": "901712562149",
+    "{{clickup_list_pending_cos}}": "901712562150",
+    "{{sheet_id}}": "1SpW7VSB27_yIf7mAYfSut_VOTyBmN0NU2jIpigesZps",
+    "{{n8n_base}}": "https://n8n.dakona.net",
+    "{{n8n_api_key}}": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiYWM0MmE5ODUtMTA5Ni00ODkxLTliYzQtZGQxYTBiNDNiYjFhIiwiaWF0IjoxNzczNzE0OTgwfQ.gBSwNl_frCaOvQylr5DLQubJmRGqcT-LRJpzcTWdCP4",
+    "{{github_owner}}": "scubarichard",
+    "{{github_token}}": "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",
+    "{{slack_webhook}}": "",
+    "{{slack_bot_token}}": "xoxb-10348572271763-10762740917729-aNGDNEruAK3NXCpiinTdmTIm",
+    "{{slack_channel_id}}": "C0AAEUK10P4",
+    "{{clickup_cf_opportunity_id}}": "62062a65-a1e9-4f94-b4ce-d9ac164ac504",
+    "{{clickup_cf_contract_value}}": "b905d1e2-0381-406b-ad7c-d71650470fc8",
+    "{{clickup_cf_gross_margin}}": "46ebfa4b-cc5d-4f4c-9194-34ab2307a9a6",
+    "{{clickup_cf_labor_budget}}": "78be9193-3953-4c0d-af8e-e4793a0bb095",
+    "{{clickup_cf_crew_payout}}": "6bf5e2d8-6f9c-411a-bcd4-03de66ee1ab1",
+    "{{clickup_cf_crew_assigned}}": "8ec4cd0b-9abf-46c8-a4ee-9b654d1ef570",
+    "{{clickup_cf_material_sku}}": "ea826279-f805-4ed1-905f-d32d145cb9d4",
+    "{{clickup_cf_project_type}}": "d25dd400-5226-411c-b533-15f61553fa58"
+  },
+  "missing_ids": [],
+  "google_sheet_id": "1SpW7VSB27_yIf7mAYfSut_VOTyBmN0NU2jIpigesZps",
+  "created_workflows": [
+    {
+      "name": "[AJ] AJ Flooring Solutions - v01 Margin Guardrail",
+      "id": "jJ3NCeC96NF0VE4U",
+      "template": "workflow-v01-margin-guardrail.json",
+      "active": true
+    },
+    {
+      "name": "[AJ] AJ Flooring Solutions - v02 Labor Cap Monitor",
+      "id": "5JmDLkD32vfmP8fe",
+      "template": "workflow-v02-labor-cap-monitor.json",
+      "active": true
+    },
+    {
+      "name": "[AJ] AJ Flooring Solutions - v03 Field Validation Gate",
+      "id": "HnawrPzwBs6Soq7b",
+      "template": "workflow-v03-field-validation.json",
+      "active": true
+    },
+    {
+      "name": "[AJ] AJ Flooring Solutions - v04 Job Completion",
+      "id": "J1Qqff6W0OV8GobT",
+      "template": "workflow-v04-job-completion.json",
+      "active": true
+    },
+    {
+      "name": "[AJ] AJ Flooring Solutions - v05 Material Order",
+      "id": "YsEFTLHOsWV4gmhO",
+      "template": "workflow-v05-material-order.json",
+      "active": true
+    },
+    {
+      "name": "[AJ] AJ Flooring Solutions - v06 Change Order Sync",
+      "id": "FkobAJDaiZFghEDQ",
+      "template": "workflow-v06-change-order-sync.json",
+      "active": true
+    },
+    {
+      "name": "[AJ] AJ Flooring Solutions - v07 Payout Gate",
+      "id": "U1bLao1XP0klHD0I",
+      "template": "workflow-v07-payout-gate.json",
+      "active": true
+    },
+    {
+      "name": "[AJ] AJ Flooring Solutions - v08 CO Paid Recalc",
+      "id": "zQrJyJIWQghaqBWl",
+      "template": "workflow-v08-co-paid-recalc.json",
+      "active": true
+    },
+    {
+      "name": "[AJ] AJ Flooring Solutions - v09 Dashboard Feed",
+      "id": "u85rlq63IALDQfZG",
+      "template": "workflow-v09-dashboard-feed.json",
+      "active": true
+    },
+    {
+      "name": "[AJ] AJ Flooring Solutions - v10 Dashboard Feed GHL",
+      "id": "wsOZzz6mPqjK6Zmo",
+      "template": "workflow-v10-dashboard-feed-ghl.json",
+      "active": true
+    },
+    {
+      "name": "[AJ] AJ Flooring Solutions - v11 Dashboard Live JSON",
+      "id": "8EtgidLhvjicKoSO",
+      "template": "workflow-v11-dashboard-live-json.json",
+      "active": true
+    },
+    {
+      "name": "[AJ] AJ Flooring Solutions - v12 Signoff Receiver",
+      "id": "v48PRyeXXzfJp1JB",
+      "template": "workflow-v12-signoff-receiver.json",
+      "active": true
+    }
+  ],
+  "failed_workflows": [],
+  "dashboard": {
+    "url": "https://scubarichard.github.io/aj-flooring-dashboard/",
+    "signoff_url": "https://scubarichard.github.io/aj-flooring-dashboard/signoff.html",
+    "repo": "scubarichard/aj-flooring-dashboard"
+  },
+  "manifest": {
+    "deployment_id": "aj-flooring-mnji70ng",
+    "client_name": "AJ Flooring Solutions",
+    "client_slug": "aj-flooring",
+    "deployed_at": "2026-04-03T22:57:01.708Z",
+    "status": "COMPLETE",
+    "ghl": {
+      "location_id": "eWmOhK85TA8xb2HTiSh6",
+      "pipeline_id": "CW1kMmEnMcDarAd4eNcI",
+      "stages": {
+        "new_lead": "400b336d-276c-4811-8aef-f98a61d462c7",
+        "estimate_sent": "7be42f61-0318-4cc9-aa19-2bb445d4d27c",
+        "contract_signed": "b5d6054a-452d-48d1-b52e-c29ef401e201",
+        "in_production": "814bd4cb-d9a6-4665-8aea-d32ced95e48e",
+        "closed_won": "332dba51-881f-45b2-b204-fcbd10130c9a",
+        "margin_review": "76a379b6-439c-406d-b7db-18e91f27b628"
+      },
+      "custom_fields": {
+        "labor_budget": "sTXOP6QYot56yGCJ0EW5",
+        "crew_payout": "g2rGP4kVgan7tIOxD2zR",
+        "gross_margin_pct": "UHiQZiJLrnHBym0L5ckf",
+        "product_type": "oqXEac7kNLYcf15oeq2N",
+        "material_cost": "cpmZ8eYwdH5RU2zrfAU4",
+        "clickup_task_id": "cLv6ZRlToMihb4Y4IyIx",
+        "clickup_short_id": "K7SEFRrZoJBQanhFBViq",
+        "completion_date": "ynFgX8bjs6YT4M600PNr",
+        "labor_cap_pct": "s6t9PpTRgOLhjZw8GsVh",
+        "material_sku": "uAxA3LmplQ3G0DZBjrBL",
+        "material_order_total": "679zao3lbvC74bjq1YqN",
+        "order_date": "dqKKt2vXpxnprXs4aSjz",
+        "crew": "tWI5Os62uC4ElzzVYshY",
+        "photos_uploaded": "rW1CnCNEXdmBhUZZk4sD",
+        "signed_off": "R6VkYBJSrljiZ9aV4d0j",
+        "goback_required": "1B5EMTr8TJ4vHHp02RZw"
+      },
+      "pit_token_key": "rpe-ajflooring-pit-token"
+    },
+    "clickup": {
+      "team_id": "9017745115",
+      "space_id": "90175033250",
+      "folders": {
+        "active_jobs": "90177912865",
+        "completed_jobs": "90177912866",
+        "change_orders": "90177912869",
+        "dashboard_development": "90177912871"
+      },
+      "lists": {
+        "current_pipeline": "901712562147",
+        "starting_this_week": "901712562148",
+        "completed": "901712562149",
+        "pending_cos": "901712562150",
+        "approved_cos": "901712562151",
+        "backlog": "901712562152",
+        "in_progress": "901712562153"
+      },
+      "custom_fields": {
+        "ghl_opportunity_id": "62062a65-a1e9-4f94-b4ce-d9ac164ac504",
+        "contract_value": "b905d1e2-0381-406b-ad7c-d71650470fc8",
+        "gross_margin_percent": "46ebfa4b-cc5d-4f4c-9194-34ab2307a9a6",
+        "labor_budget": "78be9193-3953-4c0d-af8e-e4793a0bb095",
+        "crew_payout": "6bf5e2d8-6f9c-411a-bcd4-03de66ee1ab1",
+        "crew_assigned": "8ec4cd0b-9abf-46c8-a4ee-9b654d1ef570",
+        "material_sku": "ea826279-f805-4ed1-905f-d32d145cb9d4",
+        "project_type": "d25dd400-5226-411c-b533-15f61553fa58",
+        "total_sq_ft": "44125714-ac60-4a51-937b-9067ff7f509f",
+        "install_date": "1e1c8a47-1603-427f-9a3a-106d8a68a9e3"
+      }
+    },
+    "n8n": {
+      "folder_id": "iMvolHM9IilDAcIj",
+      "workflows": [
+        {
+          "name": "[AJ] AJ Flooring Solutions - v01 Margin Guardrail",
+          "id": "jJ3NCeC96NF0VE4U",
+          "template": "workflow-v01-margin-guardrail.json",
+          "active": true
+        },
+        {
+          "name": "[AJ] AJ Flooring Solutions - v02 Labor Cap Monitor",
+          "id": "5JmDLkD32vfmP8fe",
+          "template": "workflow-v02-labor-cap-monitor.json",
+          "active": true
+        },
+        {
+          "name": "[AJ] AJ Flooring Solutions - v03 Field Validation Gate",
+          "id": "HnawrPzwBs6Soq7b",
+          "template": "workflow-v03-field-validation.json",
+          "active": true
+        },
+        {
+          "name": "[AJ] AJ Flooring Solutions - v04 Job Completion",
+          "id": "J1Qqff6W0OV8GobT",
+          "template": "workflow-v04-job-completion.json",
+          "active": true
+        },
+        {
+          "name": "[AJ] AJ Flooring Solutions - v05 Material Order",
+          "id": "YsEFTLHOsWV4gmhO",
+          "template": "workflow-v05-material-order.json",
+          "active": true
+        },
+        {
+          "name": "[AJ] AJ Flooring Solutions - v06 Change Order Sync",
+          "id": "FkobAJDaiZFghEDQ",
+          "template": "workflow-v06-change-order-sync.json",
+          "active": true
+        },
+        {
+          "name": "[AJ] AJ Flooring Solutions - v07 Payout Gate",
+          "id": "U1bLao1XP0klHD0I",
+          "template": "workflow-v07-payout-gate.json",
+          "active": true
+        },
+        {
+          "name": "[AJ] AJ Flooring Solutions - v08 CO Paid Recalc",
+          "id": "zQrJyJIWQghaqBWl",
+          "template": "workflow-v08-co-paid-recalc.json",
+          "active": true
+        },
+        {
+          "name": "[AJ] AJ Flooring Solutions - v09 Dashboard Feed",
+          "id": "u85rlq63IALDQfZG",
+          "template": "workflow-v09-dashboard-feed.json",
+          "active": true
+        },
+        {
+          "name": "[AJ] AJ Flooring Solutions - v10 Dashboard Feed GHL",
+          "id": "wsOZzz6mPqjK6Zmo",
+          "template": "workflow-v10-dashboard-feed-ghl.json",
+          "active": true
+        },
+        {
+          "name": "[AJ] AJ Flooring Solutions - v11 Dashboard Live JSON",
+          "id": "8EtgidLhvjicKoSO",
+          "template": "workflow-v11-dashboard-live-json.json",
+          "active": true
+        },
+        {
+          "name": "[AJ] AJ Flooring Solutions - v12 Signoff Receiver",
+          "id": "v48PRyeXXzfJp1JB",
+          "template": "workflow-v12-signoff-receiver.json",
+          "active": true
+        }
+      ]
+    },
+    "google": {
+      "sheet_id": "1SpW7VSB27_yIf7mAYfSut_VOTyBmN0NU2jIpigesZps",
+      "sheet_url": "https://docs.google.com/spreadsheets/d/1SpW7VSB27_yIf7mAYfSut_VOTyBmN0NU2jIpigesZps"
+    },
+    "dashboard": {
+      "url": "https://scubarichard.github.io/aj-flooring-dashboard/",
+      "signoff_url": "https://scubarichard.github.io/aj-flooring-dashboard/signoff.html",
+      "repo": "scubarichard/aj-flooring-dashboard"
+    },
+    "slack": {
+      "channel_id": "C0AAEUK10P4",
+      "channel_name": "#01-operations-engine"
+    },
+    "config": {
+      "headcount": 2,
+      "margin_target": 40,
+      "margin_warning": 35,
+      "labor_cap_pct": 15,
+      "labor_warning_pct": 12,
+      "crew_names": {
+        "Crew A": "Lead 1"
+      }
+    },
+    "manual_steps": [
+      "Apply GHL snapshot (RPE_Flooring_Operations_v1) to AJ Flooring subaccount for dashboards/widgets",
+      "Verify dashboard loads at https://scubarichard.github.io/aj-flooring-dashboard/",
+      "Update crew names and headcount when AJ Flooring provides actual crew info",
+      "Configure GHL workflow triggers (stage changes → n8n webhooks)",
+      "Test signoff form with a sample opportunity",
+      "Move 12 [AJ] workflows into the AJ Flooring n8n folder (iMvolHM9IilDAcIj)",
+      "Set up custom domain for dashboard if needed (e.g., aj-flooring.rpe-systems.1altx.ai)"
+    ]
   }
 }
