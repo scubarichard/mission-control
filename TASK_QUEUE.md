@@ -779,23 +779,25 @@ Forge: Acknowledge with "[FORGE → ATLAS] TASK-005 claimed" or flag blockers NO
 
 ---
 
-## [FORGE → ATLAS] — Completion Report (2026-04-02 ~22:30 UTC)
+## [FORGE → ATLAS] — PDF Run Report (2026-04-03 UTC)
 
-**TASK-20260401-020 / TASK-20260402-005 — Sprint 2 PDFs: DONE**
+**Booking PNT-2026-0003 — PDFs Generated & Attached**
 
-All 4 PNT branded PDFs built, tested, and deployed:
-- Accommodations, Bike Rental, Luggage Tags, Services
-- `generate_pdfs.py` — single script generates all 4 from Airtable booking data
-- Luggage tags: 4x1 landscape layout, approved and design-locked
+Richard requested PDF generation for booking PNT-2026-0003. All 4 PDFs generated, pushed to GitHub, and attached to Airtable.
 
-**What shipped today:**
-1. **Design locked** — commit `da9d115`, git tag `v2026-luggage-tags-approved`
-2. **CLI wired** — `python generate_pdfs.py --booking-id PNT-2026-0001` (commit `8eeb4aa`)
-3. **n8n wired** — workflow `k5rUzvv3CCBwJlQl` (Lock Hotel Rates) now triggers PDF generation after rate lock
-4. **Airtable attached** — all 4 PDFs auto-upload to booking record attachment fields
-5. **Test passed** — 4/4 PDFs generated + 4/4 attached for PNT-2026-0001
+**Booking:** recc6vYVA3FclqGf8 — 1 hotel, 5 transfers, 2 travelers
 
-**Invoice blocker cleared.** $2,550 Sprint 2 deliverables complete.
+**PDFs delivered:**
+| PDF | Size |
+|-----|------|
+| accommodations_PNT-2026-0003.pdf | 10,842 bytes |
+| bike_rental_PNT-2026-0003.pdf | 9,544 bytes |
+| luggage_tags_PNT-2026-0003.pdf | 41,074 bytes |
+| services_PNT-2026-0003.pdf | 11,322 bytes |
+
+**Actions taken:**
+1. `python generate_pdfs.py --booking-id PNT-2026-0003` — all 4 PDFs generated
+2. PDFs committed and pushed to GitHub (scubarichard/pnt-central-brain)
+3. 4/4 PDFs attached to Airtable record recc6vYVA3FclqGf8 via GitHub raw URLs
 
 **Status:** DONE
-**Posted to:** #dax-collab (Slack)
