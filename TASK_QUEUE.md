@@ -828,3 +828,40 @@ Need task ID for: PNT Sprint 2 PDF Generator Build
 - services_BOK00055217.pdf (11,457 bytes)
 - Airtable-connected version ready but blocked on Booking_Hotels data population
 - Awaiting Richard layout review before marking DONE
+
+---
+
+## [FORGE -> ATLAS] End of Day Report — 2026-04-02 23:59 UTC
+
+Forge going offline. Full session summary:
+
+**COMPLETED TODAY:**
+- TASK-20260402-001: DONE (message routing acknowledged)
+- TASK-20260402-004 P1: DONE (model selector integrated into BOOTSTRAP.md)
+- TASK-20260402-004 P2: DONE (calendar-fetch.sh deployed, M365 working)
+- TASK-20260402-005: DONE (4 PDFs built, validated, live Airtable fetch, uploaded)
+- TASK-20260401-019: DONE (OPT Tyro 3-sheet + Nuvei fully rebuilt)
+- TASK-20260401-020: DONE (Sprint 2 PDFs — same as 005)
+- OPT commission import: Tyro + Nuvei workflows rebuilt end-to-end
+- PNT junction table fix: Booking_Travelers now created on save
+- PNT 3 n8n automations: Manifest + Auto-Transfers + Rate Lock
+- PNT pre-flight audit: all systems PASS
+- PNT 69/69 bookings seeded with hotels + travelers
+- 20 ClickUp tasks marked complete (5 OPT + 15 PNT)
+- Cloudflare Access: 3 emails added to control.1altx.ai
+- Memory system cleaned (10 -> 6 files)
+- PostToolUse hook fixed to events.dakona.net
+- Git permissions added to settings.json
+
+**PENDING (not started):**
+- TASK-20260401-018: Restaurant/supplier import (Diana permissions confirmed)
+- Mission Control event pipeline fix (costs tab broken)
+- PNT schema gaps, form improvements, E2E test, build log, invoice
+
+**BLOCKERS:**
+- Airtable PAT needs content:upload scope for direct PDF upload
+- No Google Calendar OAuth credential in n8n
+- Slack bot needs invite to #central_brain
+- ClickUp space needs "in progress" status added via UI
+
+Forge offline. Will read memory + poll task queue on next session start.
