@@ -124,6 +124,39 @@
 - **Commit:** 3fc4d75
 - **Client:** PNT
 
+### TASK-20260404-003
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** Medium
+- **Task:** UX fixes — splash removal, portal auth passthrough, pagination, status filter, confirm modals, bike fixes, pedal preference schema
+- **Context:** 12 commits covering PIN flow, bookings list, bike save 422 fix, iframe warnings
+- **Client:** PNT
+
+### TASK-20260404-004
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** Medium
+- **Task:** Generate PDFs button + auto-trigger on confirmation
+- **Context:** Review page button → n8n webhook QmEZWdoT0OS4t6my. Rate lock workflow updated. PDF links on Review page.
+- **Client:** PNT
+
+### TASK-20260404-005
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** Medium
+- **Task:** Transfer Manifest page (manifest.html) + portal Operations card
+- **Context:** Route grouping, consolidation badges, day/week/month/custom date range, correct Airtable fields (Pickup Location, Luggage Count)
+- **ClickUp:** 86e0qwvjc
+- **Client:** PNT
+
+### TASK-20260404-006
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** Medium
+- **Task:** Reports page (reports.html) — booking PDF viewer/generator
+- **Context:** Search all bookings, view existing PDF attachments, generate new PDFs with polling, portal card added
+- **Client:** PNT
+
 ---
 
 ## REQUEST QUEUE
