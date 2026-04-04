@@ -106,6 +106,24 @@
 - **Verify:** AI transform agent works end-to-end
 - **Client:** OPT
 
+### TASK-20260404-001
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** Medium
+- **Task:** 8 form UX bug fixes in booking-intake.html
+- **Context:** Hotel type-ahead, consecutive hotel dates, balance due auto-populate, auto-save 75s, bikes conditional, transfers smart defaults, date defaults, reservation date defaults
+- **Commit:** 54c1a55
+- **Client:** PNT
+
+### TASK-20260404-002
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** Low
+- **Task:** PDF logo upgrade — convert official PNT vector assets to high-res PNG
+- **Context:** Horizontal (6388×2421) + Square (2613×1964) RGBA PNGs from Diana's EPS/AI files. generate_pdfs.py updated. Revert tag: v2026-pdf-spec-approved
+- **Commit:** 3fc4d75
+- **Client:** PNT
+
 ---
 
 ## REQUEST QUEUE
