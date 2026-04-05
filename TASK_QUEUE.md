@@ -157,6 +157,22 @@
 - **Context:** Search all bookings, view existing PDF attachments, generate new PDFs with polling, portal card added
 - **Client:** PNT
 
+### TASK-20260404-007
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** High
+- **Task:** Refactor booking-intake.html into modular JS architecture
+- **Context:** 5,921 lines → 1,653 line shell + 18 JS modules. Tags: v2026-s2-final, v2026-s3-ready. Branch merged.
+- **Client:** PNT
+
+### TASK-20260404-008
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** Medium
+- **Task:** Diana Google Sheets data imports — taxi vendors, vehicles, restaurants
+- **Context:** 3 new taxi vendors (152 total), 3 Porto vehicles, 10 Lisbon vehicles updated, 299 restaurants verified. Tours metadata skipped (wrong sheet format).
+- **Client:** PNT
+
 ---
 
 ## REQUEST QUEUE
