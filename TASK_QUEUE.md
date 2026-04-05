@@ -184,10 +184,11 @@
 
 ### TASK-20260405-002
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE (pending OAuth)
 - **Priority:** High
 - **Task:** Google Calendar integration — GCP setup + n8n workflow
-- **Context:** OAuth requires browser interaction — setup doc created for Richard
+- **Context:** Python script, n8n workflow (Tv7TnPLia85fFExR), rate lock wired, setup doc. OAuth requires Richard's browser auth — see GOOGLE_CALENDAR_SETUP.md
+- **Commit:** 0f85548
 - **Client:** PNT
 
 ---
