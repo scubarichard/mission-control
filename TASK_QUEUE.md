@@ -173,6 +173,23 @@
 - **Context:** 3 new taxi vendors (152 total), 3 Porto vehicles, 10 Lisbon vehicles updated, 299 restaurants verified. Tours metadata skipped (wrong sheet format).
 - **Client:** PNT
 
+### TASK-20260405-001
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** High
+- **Task:** S2 carryover form items — 6 enhancements
+- **Context:** 3 Airtable fields created, dynamic Partners dropdown, agency/insurance/tailor fields, provider status dropdowns (Hotels/Reservations/Transfers), emergency contacts per traveler, Tour_Days auto-link on save
+- **Commit:** 1c452e7
+- **Client:** PNT
+
+### TASK-20260405-002
+- **Assignee:** Forge
+- **Status:** IN_PROGRESS
+- **Priority:** High
+- **Task:** Google Calendar integration — GCP setup + n8n workflow
+- **Context:** OAuth requires browser interaction — setup doc created for Richard
+- **Client:** PNT
+
 ---
 
 ## REQUEST QUEUE
