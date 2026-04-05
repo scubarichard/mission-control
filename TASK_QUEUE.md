@@ -1007,3 +1007,124 @@ All 3 bookings processed with `python generate_pdfs.py --booking-id <ID>`:
 **Next:** Richard manual form walkthrough → Diana acceptance test → Sprint 2 invoice ($2,550)
 
 **Status:** DONE — Forge standing by
+
+
+---
+
+## ACTIVE TASKS - FORGE (Apr 5) -- ASSIGNED BY SONNET/DAX
+
+### TASK-20260405-001
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** P0 -- S3 SPRINT START
+- **Task:** S2 Carryover Form Items + Schema Additions
+- **Client:** PNT
+- **Authorized by:** Richard Mabbun (signed off for night, autonomous execution approved)
+- **Fallback:** git checkpoint ebf9c32 (S3 sprint start), local backup at backups/s3-start-20260405-0031/
+
+### CONTEXT
+
+Sprint 3 has started. Before Tour Masters can be built, 6 S2 carryover form items must be completed. Schema side is mostly done in Airtable -- form side is the gap. Work through each item below in order. Commit after each logical group.
+
+Repo: C:\Users\18473\Dropbox\Companies\1AltX\Projects\_clients\pnt-central-brain
+Active form: booking.html + js/ modules (NOT booking-intake.html -- that is legacy)
+Airtable base: appDqWxcM86CpBHoQ
+API proxy: pnt-api.dakona.net (all Airtable calls route through this -- no token in client code)
+Airtable token location: C:\Users\18473\Dropbox\Companies\1AltX\Projects\_clients\pnt-central-brain\.env
+
+### ITEM 1 -- Add 3 Missing Schema Fields to Bookings (Airtable)
+
+These 3 fields do not exist in the Bookings table. Create via Airtable API before touching the form.
+  - Agency Booking Reference | singleLineText
+  - Insurance Required | checkbox
+  - Tailor Made | checkbox
+
+Verify all 3 created before proceeding.
+
+### ITEM 2 -- Brand/Agency: Dynamic Load from Partners Table
+
+Current: Brand dropdown on Page 2 is hardcoded (PNT/CN or similar).
+Required: Load Partner names dynamically from Partners table. When selected, save linked record ID to Bookings.Partner field.
+- In js/pages/page2-booking.js: fetch Partners table, populate dropdown with Name field values
+- On save: write selected partner as a linked record to Bookings.Partner
+- Brand text field (Bookings.Brand) can remain as free-text override if no partner selected
+
+### ITEM 3 -- Agency Booking Reference, Insurance Required, Tailor Made in Form
+
+Add to booking basics page (Page 2):
+- Agency Booking Ref -- text input, show only when Booking Type = Agency or partner selected
+- Insurance Required -- checkbox
+- Tailor Made -- checkbox
+Save all 3 to corresponding Airtable fields from Item 1.
+
+### ITEM 4 -- Provider Booking Status Dropdowns
+
+Add Status dropdown to each provider row on Hotels, Reservations, Transfers pages.
+- Booking_Hotels Status: Requested, Confirmed, Waitlisted, Cancelled
+- Reservations Status: Requested, Confirmed, Cancelled, No Show
+- Transfers Status: Pending, Confirmed, Completed, Cancelled
+Files: js/pages/page3-hotels.js, js/pages/page6-reservations.js, js/pages/page10-transfers.js
+Save status value to Status field in respective Airtable table on save.
+
+### ITEM 5 -- Emergency Contact in Travelers Section
+
+Fields Emergency Contact Name + Emergency Contact Phone exist in Booking_Travelers schema but not in form.
+Add both fields to the traveler entry/edit section (wherever per-traveler details are captured).
+Save to Booking_Travelers.Emergency Contact Name and Booking_Travelers.Emergency Contact Phone.
+
+### ITEM 6 -- Tour_Days Activities/Services Linking
+
+Tour_Days has linked fields for Reservations and Transfers in Airtable schema but form does not write these links.
+On save of a Reservation or Transfer: check if a Tour_Day record exists for that booking + date.
+If match found: write Tour_Day record ID into Reservation.Tour Day and Transfer.Tour Day linked fields.
+This is a save-time auto-link -- no UI change needed.
+
+### ACCEPTANCE CRITERIA
+- [ ] 3 new fields exist in Airtable Bookings table (verify via API)
+- [ ] Partner dropdown loads dynamically from Airtable Partners table
+- [ ] Agency Booking Ref, Insurance Required, Tailor Made save correctly to Airtable
+- [ ] Status dropdowns visible and saving on Hotels, Reservations, Transfers pages
+- [ ] Emergency Contact Name + Phone present in traveler section and saving to Booking_Travelers
+- [ ] Tour_Days auto-link working on Reservation + Transfer save
+- [ ] All changes committed with clear commit messages
+- [ ] Git pushed to origin/main
+
+When TASK-20260405-001 is DONE, mark it and immediately pick up TASK-20260405-002.
+
+---
+
+### TASK-20260405-002
+- **Assignee:** Forge
+- **Status:** PENDING (start after TASK-20260405-001 DONE)
+- **Priority:** P1
+- **Task:** Google Calendar Integration -- Setup + Auto-Create on Booking Release
+- **Client:** PNT
+
+Build against richard@1altx.com Google account (PNT GCP handoff at Sprint 6).
+
+1. Create/use existing GCP project with Google Calendar API enabled
+2. Generate OAuth 2.0 credentials (client ID + secret)
+3. Run OAuth consent flow and store refresh token
+4. Build n8n workflow: trigger = Bookings.Status changes to Confirmed -- create Google Calendar event
+5. Calendar event fields:
+   - Title: Booking Name (e.g. "26-04-15 WIKINGER SG Atlantic West Coast - Smith")
+   - Start: Begin Date | End: End Date
+   - Description: Tour, PAX, Guide Type, Tour Leader, Booking ID
+   - Calendar: richard@1altx.com primary (swap to PNT at Sprint 6)
+6. On success: update Bookings.Google Cal Created = true
+7. Test against 2 existing confirmed bookings
+
+NOTE: If OAuth consent flow requires browser interaction Richard cannot complete tonight, document steps clearly and stop -- do not block. Richard will complete OAuth in the morning.
+
+### ACCEPTANCE CRITERIA
+- [ ] GCP project + Calendar API enabled
+- [ ] OAuth credentials generated and stored securely (not committed to git)
+- [ ] n8n workflow built (activated if OAuth complete, ready-to-activate if OAuth pending)
+- [ ] Calendar event created correctly on test booking
+- [ ] Bookings.Google Cal Created updated on success
+- [ ] Commit + push all setup scripts and docs
+
+### REPORTING
+
+When both tasks done (or blocked), post summary to #dax-collab (C0APVGG486M) so Richard sees it in the morning.
+Include: items completed, blockers hit, next recommended step.
