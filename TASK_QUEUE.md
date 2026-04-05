@@ -191,6 +191,15 @@
 - **Commit:** 0f85548
 - **Client:** PNT
 
+### TASK-20260405-003
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** Medium
+- **Task:** Google Calendar OAuth — switch to demo@1altx.com dev account
+- **Context:** Changed CALENDAR_ID and all setup doc references from richard@1altx.com to demo@1altx.com per Sonnet's instruction. Rewire to PNT's own account at S6.
+- **Commit:** f3d8ce0
+- **Client:** PNT
+
 ---
 
 ## REQUEST QUEUE
