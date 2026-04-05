@@ -200,6 +200,15 @@
 - **Commit:** f3d8ce0
 - **Client:** PNT
 
+### TASK-20260405-004
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** High
+- **Task:** PDF Overhaul — 5 PDFs (Accommodations, Services, Traveler List, Bike Rental, Luggage Tags)
+- **Context:** Accommodations: room types, status, release date, rate, ALERTA PREÇO, summary table. Services: merged reservations+transfers by day. Traveler List: NEW landscape PDF with daily hotel grid. Bike/Luggage: verified unchanged. E2E tested on VM (PNT-2026-0001 + PNT-2026-0078). 4/5 attached to Airtable (traveler_list needs field ID). Deployed to VM /home/dkn8n/pnt-pdfs/.
+- **Commit:** 60fabbf
+- **Client:** PNT
+
 ---
 
 ## REQUEST QUEUE
