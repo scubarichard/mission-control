@@ -1,0 +1,41 @@
+{
+  "client": {
+    "name": "Impact Capital Partners",
+    "shortName": "impact-capital",
+    "domain": "impact-cp.com",
+    "adminEmail": "brett@impact-cp.com"
+  },
+  "azure": {
+    "tenantId": "eaf1a864-97ff-451c-87e7-88cf7512e98c",
+    "subscriptionId": "e1c109d7-9232-4e26-bed7-b1e1b5a6f611",
+    "deployPrincipalClientId": "213f104f-c25b-4ccd-bf3c-d6f441384a77",
+    "deployPrincipalSecretRef": "ICP-ClientSecret",
+    "resourceGroup": "rg-dax-impact-capital",
+    "location": "eastus"
+  },
+  "resources": {
+    "containerAppName": "ca-dax-impact-capital",
+    "cosmosDbName": "cosmos-dax-impact-capital",
+    "keyVaultName": "kvdaximpactcapital",
+    "openAiName": "oai-dax-impact-capital",
+    "openAiModel": "gpt-4o"
+  },
+  "sharePoint": {
+    "tenantName": "impactcapitalpartnersllc",
+    "siteUrl": "https://impactcapitalpartnersllc.sharepoint.com/sites/ImpactCapitalPartners",
+    "siteId": "impactcapitalpartnersllc.sharepoint.com,9408138e-0aa3-404e-b131-bc905b2d99d0,40e05979-6387-4bb6-8b8e-6638aa9c1e2f",
+    "templatesLibrary": "DAX Templates",
+    "reportsLibrary": "DAX Reports",
+    "documentsLibrary": "DAX Documents"
+  },
+  "integrations": {
+    "wealthbox": false,
+    "schwab": false
+  },
+  "dax": {
+    "advisorName": "Brett Stone",
+    "firmName": "Impact Capital Partners",
+    "beta": true,
+    "billing": false
+  }
+}

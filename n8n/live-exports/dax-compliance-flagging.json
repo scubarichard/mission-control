@@ -1,0 +1,99 @@
+{
+  "updatedAt": "2026-03-27T02:46:34.068Z",
+  "createdAt": "2026-03-25T13:20:51.113Z",
+  "id": "IsPeLFaPuSivluus",
+  "name": "DAX Compliance Flagging",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "compliance-flag-check",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "cf-webhook-001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all()[0].json;\nconst body = input.body || input;\nconst userMessage = (body.userMessage || '').toLowerCase();\nconst daxResponse = (body.daxResponse || '').toLowerCase();\nconst conversationId = body.conversationId || 'unknown';\nconst advisorName = body.advisorName || 'Unknown Advisor';\nconst clientName = body.clientName || '';\nconst contactId = body.contactId || null;\n\nconst defaultTriggers = [\n  { phrase: 'should i buy', severity: 'HIGH', reason: 'Potential investment recommendation request' },\n  { phrase: 'should i sell', severity: 'HIGH', reason: 'Potential investment recommendation request' },\n  { phrase: 'i recommend', severity: 'HIGH', reason: 'Explicit recommendation language' },\n  { phrase: 'best investment', severity: 'HIGH', reason: 'Investment recommendation language' },\n  { phrase: 'will go up', severity: 'HIGH', reason: 'Price prediction language' },\n  { phrase: 'will go down', severity: 'HIGH', reason: 'Price prediction language' },\n  { phrase: 'guarantee', severity: 'HIGH', reason: 'Prohibited guarantee language' },\n  { phrase: 'guaranteed return', severity: 'CRITICAL', reason: 'Prohibited guarantee of returns' },\n  { phrase: 'risk-free', severity: 'CRITICAL', reason: 'Prohibited risk-free claim' },\n  { phrase: 'outperform', severity: 'MEDIUM', reason: 'Performance claim language' },\n  { phrase: 'promise', severity: 'MEDIUM', reason: 'Promise language' },\n  { phrase: 'insider', severity: 'CRITICAL', reason: 'Potential insider information reference' },\n  { phrase: 'complaint', severity: 'MEDIUM', reason: 'Client complaint signal' },\n  { phrase: 'lawsuit', severity: 'HIGH', reason: 'Legal action reference' },\n  { phrase: 'legal action', severity: 'HIGH', reason: 'Legal action reference' },\n  { phrase: 'withdraw all', severity: 'MEDIUM', reason: 'Client distress signal' },\n  { phrase: 'switch everything', severity: 'MEDIUM', reason: 'Potential churning signal' },\n  { phrase: 'move everything', severity: 'MEDIUM', reason: 'Potential churning signal' },\n  { phrase: 'market timing', severity: 'MEDIUM', reason: 'Market timing language' },\n  { phrase: 'beat the market', severity: 'MEDIUM', reason: 'Performance claim language' }\n];\n\nconst combined = userMessage + ' ' + daxResponse;\nconst matches = defaultTriggers.filter(t => combined.includes(t.phrase));\n\nif (matches.length === 0) {\n  return [{ json: { flagged: false } }];\n}\n\n// Determine highest severity\nconst severityOrder = { CRITICAL: 3, HIGH: 2, MEDIUM: 1 };\nconst severity = matches.reduce((max, m) =>\n  (severityOrder[m.severity] || 0) > (severityOrder[max] || 0) ? m.severity : max\n, 'MEDIUM');\n\nconst triggerList = matches.map(m => '- [' + m.severity + '] \"' + m.phrase + '\" — ' + m.reason).join('\\n');\nconst timestamp = new Date().toISOString();\n\nconst noteContent = '[DAX-REVIEW] Compliance Flag — ' + severity + '\\n' +\n  'Flagged: ' + timestamp + '\\n' +\n  'Advisor: ' + advisorName + '\\n' +\n  (clientName ? 'Client: ' + clientName + '\\n' : '') +\n  'Conversation: ' + conversationId + '\\n\\n' +\n  'Triggers matched:\\n' + triggerList + '\\n\\n' +\n  'User message excerpt: \"' + (body.userMessage || '').substring(0, 500) + '\"\\n' +\n  'DAX response excerpt: \"' + (body.daxResponse || '').substring(0, 500) + '\"';\n\n// Post note to Wealthbox\nconst notePayload = {\n  content: noteContent,\n  tags: ['dax-compliance', severity.toLowerCase()],\n};\nif (contactId) {\n  notePayload.linked_to = [{ id: Number(contactId), type: 'Contact' }];\n}\n\nawait $http.request({\n  method: 'POST',\n  url: 'https://api.crmworkspace.com/v1/notes',\n  headers: { 'ACCESS_TOKEN': '2565bf3734934e0facbe77c7c2accd40', 'Content-Type': 'application/json' },\n  body: notePayload\n});\n\n// Store flag via compliance store workflow\nconst flag = {\n  id: 'flag-' + Date.now(),\n  timestamp: timestamp,\n  severity: severity,\n  advisorName: advisorName,\n  clientName: clientName,\n  contactId: contactId,\n  conversationId: conversationId,\n  triggers: matches.map(m => ({ phrase: m.phrase, severity: m.severity, reason: m.reason })),\n  userMessageExcerpt: (body.userMessage || '').substring(0, 500),\n  daxResponseExcerpt: (body.daxResponse || '').substring(0, 500),\n  status: 'PENDING'\n};\n\nawait $http.request({\n  method: 'POST',\n  url: 'http://localhost:5678/webhook/compliance-store-flag',\n  headers: { 'Content-Type': 'application/json' },\n  body: flag\n});\n\nreturn [{ json: { flagged: true, severity: severity, matches: matches.length } }];"
+      },
+      "id": "cf-code-001",
+      "name": "Check Triggers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "cf-respond-001",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        700,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check Triggers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Triggers": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "9fac4ec0-b5cd-4f38-a03a-3f35d93cd286",
+  "activeVersionId": "9fac4ec0-b5cd-4f38-a03a-3f35d93cd286",
+  "versionCounter": 24,
+  "triggerCount": 1,
+  "tags": [
+    {
+      "id": "EIql1CPs6WQ8Z9am",
+      "name": "DAX"
+    }
+  ]
+}

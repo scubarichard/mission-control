@@ -1,0 +1,232 @@
+{
+  "updatedAt": "2026-03-27T14:41:41.808Z",
+  "createdAt": "2026-03-27T02:34:08.144Z",
+  "id": "2eNUFkeZf0jsEHcq",
+  "name": "DAX Research and Write",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "rw-webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "webhookId": "dax-research-write",
+      "parameters": {
+        "path": "dax/research-write",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "rw-parse",
+      "name": "Parse Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "jsCode": "var raw = $input.first().json;\nvar body = (raw.body && typeof raw.body === 'object') ? raw.body : raw;\nvar topic = body.topic || body.title || 'Untitled';\nvar keywords = body.keywords || '';\nvar folderPath = body.folderPath || 'DAX Documents';\nvar spFolderUrl = 'https://dakonallc.sharepoint.com/Shared%20Documents/' + folderPath.replace(/ /g, '%20');\nreturn [{json: {\n  topic: topic,\n  title: topic,\n  wordCount: parseInt(body.wordCount) || 1200,\n  primaryKeyword: keywords.split(',')[0].trim() || topic.split(' ').slice(0,3).join(' '),\n  secondaryKeywords: JSON.stringify(keywords.split(',').slice(1).map(function(k){return k.trim()}).filter(Boolean)),\n  audience: body.audience || 'financial advisors and RIA clients',\n  tone: body.tone || 'professional, clear, and practical',\n  additionalInstructions: body.additionalInstructions || '',\n  folderPath: folderPath,\n  spFolderUrl: spFolderUrl\n}}];\n"
+      }
+    },
+    {
+      "id": "rw-respond-early",
+      "name": "Respond Immediately",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'generating', message: 'Your article on \"' + $json.title + '\" is being written now. It will appear in your DAX Documents folder in about 2 minutes.', folder: $json.folderPath, folderUrl: $json.spFolderUrl, topic: $json.title }) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "rw-outline",
+      "name": "Generate Outline",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "jsCode": "var https = require(\"https\");\nvar data = $input.first().json;\nvar brief = JSON.stringify({ title: data.title, wordCount: data.wordCount, primaryKeyword: data.primaryKeyword, secondaryKeywords: JSON.parse(data.secondaryKeywords || '[]'), audience: data.audience, tone: data.tone, additionalInstructions: data.additionalInstructions }, null, 2);\nvar prompt = \"Use the following JSON brief to write a detailed article outline in Markdown format (atx).\\n\\nCRITICAL STRUCTURAL RULES:\\n1. Generate exactly 6-8 unique ## sections. Each heading must appear EXACTLY ONCE.\\n2. Do NOT create more than one section on the same concept. Combine overlapping topics.\\n3. Every ## heading must be distinct in both wording AND concept.\\n\\nQUALITY RULES FOR EACH SECTION:\\nFor each ## section, include 3-4 bullet points specifying:\\n- The specific ANGLE or argument (not just the topic)\\n- A concrete example, statistic, or scenario to include\\n- What the reader should walk away knowing\\nThese bullets are writing instructions, not subheadings.\\n\\n\" + brief;\nvar body = JSON.stringify({ messages: [{role: \"system\", content: \"You are an expert financial writer who creates outlines with specific angles and concrete examples, not generic topic lists.\"}, {role: \"user\", content: prompt}], max_tokens: 2048, temperature: 0.7 });\nvar resp = await new Promise(function(resolve) { var req = https.request({ hostname: \"oai-dax-dakona-pilot.openai.azure.com\", path: \"/openai/deployments/gpt-4o/chat/completions?api-version=2024-08-01-preview\", method: \"POST\", headers: { \"api-key\": \"635645200b2c4f90a1833de2bda6b753\", \"Content-Type\": \"application/json\", \"Content-Length\": Buffer.byteLength(body) } }, function(res) { var d = \"\"; res.on(\"data\", function(c) { d += c; }); res.on(\"end\", function() { resolve(d); }); }); req.on(\"error\", function(e) { resolve(JSON.stringify({error: e.message})); }); req.write(body); req.end(); });\nvar result = JSON.parse(resp);\nvar outline = result.choices[0].message.content || \"\";\nreturn [{json: { ...data, inputBrief: outline }}];\n"
+      }
+    },
+    {
+      "id": "rw-loop",
+      "name": "Write All Sections",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ],
+      "parameters": {
+        "jsCode": "var https = require('https');\nvar vars = $('Parse Input').first().json;\nvar inputBrief = $input.first().json.inputBrief;\nasync function callAzure(messages, temperature) {\n  return new Promise(function(resolve) {\n    var body = JSON.stringify({ model: 'gpt-4o', messages: messages, max_tokens: 2048, temperature: temperature || 1 });\n    var req = https.request({ hostname: 'oai-dax-dakona-pilot.openai.azure.com', path: '/openai/deployments/gpt-4o/chat/completions?api-version=2024-08-01-preview', method: 'POST', headers: { 'api-key': '635645200b2c4f90a1833de2bda6b753', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } }, function(res) { var data = ''; res.on('data', function(c) { data += c; }); res.on('end', function() { try { resolve(JSON.parse(data).choices[0].message.content || ''); } catch(e) { resolve(''); } }); }); req.on('error', function() { resolve(''); }); req.write(body); req.end();\n  });\n}\nvar lines = inputBrief.split('\\n'); var intro = []; var headingBlocks = []; var currentBlock = null;\nfor (var i = 0; i < lines.length; i++) { var line = lines[i]; if (line.match(/^## /)) { if (currentBlock !== null) headingBlocks.push(currentBlock); currentBlock = { heading: line, lines: [line] }; } else if (currentBlock !== null) { currentBlock.lines.push(line); } else { intro.push(line); } }\nif (currentBlock !== null) headingBlocks.push(currentBlock);\nvar seenHeadings = {}; var uniqueBlocks = [];\nfor (var b = 0; b < headingBlocks.length; b++) { var key = headingBlocks[b].heading.replace(/^##\\s+/, '').toLowerCase().trim(); if (!seenHeadings[key]) { seenHeadings[key] = true; uniqueBlocks.push(headingBlocks[b]); } }\nvar totalSections = uniqueBlocks.length; var targetWordCount = vars.wordCount || 1200; var avgWordsPerSection = Math.round(targetWordCount / totalSections);\nvar audience = vars.audience || 'financial advisors and RIA clients'; var tone = vars.tone || 'professional, clear, and practical'; var primaryKeyword = vars.primaryKeyword || ''; var articleTitle = vars.title || '';\nvar sectionTexts = [];\nfor (var h = 0; h < uniqueBlocks.length; h++) {\n  var block = uniqueBlocks[h]; var blockText = block.lines.join('\\n');\n  var sectionInput = inputBrief.replace(blockText, blockText + '\\n<-- WRITE THIS SECTION -->');\n  var headingLower = block.heading.toLowerCase();\n  var isStrategic = headingLower.indexOf('strateg') >= 0 || headingLower.indexOf('plan') >= 0 || headingLower.indexOf('manag') >= 0 || headingLower.indexOf('mitigat') >= 0;\n  var isIntroOrConclusion = headingLower.indexOf('intro') >= 0 || headingLower.indexOf('conclusion') >= 0;\n  var sectionTarget = isStrategic ? Math.max(avgWordsPerSection + 100, 350) : isIntroOrConclusion ? Math.min(avgWordsPerSection, 200) : avgWordsPerSection;\n  var systemPrompt = 'You are a seasoned financial writer who creates content for Registered Investment Advisors (RIAs). You write like a trusted expert talking to a peer — specific, confident, no hedging. You use concrete examples and real numbers wherever possible. You never start a sentence with \"It is important to note\", \"In today\\'s world\", or \"As a retiree\". You avoid passive voice. You never use filler phrases. Every sentence earns its place.';\n  var userPrompt = 'Article: \"' + articleTitle + '\"\\nAudience: ' + audience + '\\nTone: ' + tone + '\\nPrimary keyword: ' + primaryKeyword + '\\n\\nFull outline below. Write ONE section only: the one marked \"<-- WRITE THIS SECTION -->\".\\n\\nRULES:\\n1. Write ONLY body paragraphs. No heading, no title, no document structure.\\n2. Start directly with the first sentence — no preamble.\\n3. Target ' + sectionTarget + ' words. Use outline bullets as writing guide, not subheadings.\\n4. Include at least one concrete example, dollar figure, or real scenario.\\n5. End with a sentence that leads into the next topic.\\n\\n---\\n\\n' + sectionInput;\n  var sectionText = await callAzure([{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], 0.8);\n  var roll = Math.floor(Math.random() * 4) + 1;\n  if (roll === 3 && sectionText) { var reformatted = await callAzure([{ role: 'system', content: 'You are a professional editor.' }, { role: 'user', content: 'Edit the following to break up flow for readability. Add bullets or a brief subheading where it genuinely helps. Do NOT add a top-level heading. Do NOT change substance.\\n\\n' + sectionText }], 0.5); if (reformatted) sectionText = reformatted; }\n  if (sectionText) sectionTexts.push(block.heading + '\\n\\n' + sectionText);\n}\nvar introText = intro.join('\\n').trim();\nvar fullDocument = (introText ? introText + '\\n\\n' : '') + sectionTexts.join('\\n\\n');\nreturn [{ json: { inputBrief, fullDocument, title: vars.title, folderPath: vars.folderPath || 'DAX Documents', spFolderUrl: vars.spFolderUrl || '', sectionCount: sectionTexts.length, actualWordCount: fullDocument.split(/\\s+/).length, topic: vars.topic, wordCount: vars.wordCount || 1200 } }];\n"
+      }
+    },
+    {
+      "id": "rw-sharpen",
+      "name": "Sharpen Writing",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        300
+      ],
+      "parameters": {
+        "jsCode": "var https = require('https');\nvar data = $input.first().json;\nvar prompt = 'Rewrite the following article to eliminate common AI writing patterns:\\n1. Replace \"it is important to\" / \"it is worth noting\" — say it directly\\n2. Replace \"in conclusion\" / \"in summary\" — use a natural closing\\n3. Replace passive voice where active is clearer\\n4. Replace vague hedges with confident statements where facts support it\\n5. Remove throat-clearing openers: \"As a retiree...\", \"When it comes to...\"\\n6. Replace generic transitions (\"Furthermore\", \"Moreover\") with specific connective tissue\\n7. Cut sentences that say nothing new\\n\\nDo NOT change facts, numbers, examples, or structure. Do NOT shorten sections.\\nReturn ONLY the rewritten article.\\n\\n---\\n\\n' + data.fullDocument;\nvar body = JSON.stringify({ model: 'gpt-4o', messages: [{ role: 'system', content: 'You are a sharp copy editor. Make writing direct, confident, and human without changing substance.' }, { role: 'user', content: prompt }], max_tokens: 4096, temperature: 0.3 });\nvar resp = await new Promise(function(resolve) { var req = https.request({ hostname: 'oai-dax-dakona-pilot.openai.azure.com', path: '/openai/deployments/gpt-4o/chat/completions?api-version=2024-08-01-preview', method: 'POST', headers: { 'api-key': '635645200b2c4f90a1833de2bda6b753', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } }, function(res) { var d = ''; res.on('data', function(c) { d += c; }); res.on('end', function() { resolve(d); }); }); req.on('error', function(e) { resolve(JSON.stringify({error: e.message})); }); req.write(body); req.end(); });\nvar result = {}; try { result = JSON.parse(resp); } catch(e) {}\nvar sharpened = (result.choices && result.choices[0] && result.choices[0].message && result.choices[0].message.content) || '';\nvar sharpenedWords = sharpened.split(/\\s+/).length; var originalWords = data.fullDocument.split(/\\s+/).length;\nvar finalDoc = (sharpened.length > 100 && sharpenedWords >= originalWords * 0.75) ? sharpened : data.fullDocument;\nreturn [{json: Object.assign({}, data, { fullDocument: finalDoc, actualWordCount: finalDoc.split(/\\s+/).length })}];\n"
+      }
+    },
+    {
+      "id": "rw-review",
+      "name": "Editorial Review",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        300
+      ],
+      "parameters": {
+        "jsCode": "var https = require('https');\nvar data = $input.first().json;\nvar targetWordCount = data.wordCount || 1200;\nvar prompt = \"Review the following article and return an improved final version.\\n\\nEDITING RULES:\\n1. MINIMUM LENGTH: At least \" + Math.round(targetWordCount * 0.8) + \" words. Do NOT cut entire sections.\\n2. If a section is thin (under 120 words), expand it slightly — do not delete it.\\n3. Remove only truly redundant content — keep the better version, cut only that sentence.\\n4. Add smooth transitions between sections where the jump feels abrupt.\\n5. Fix any section body that opens by repeating the heading word-for-word.\\n6. Intro previews what follows. Conclusion references what was covered.\\n7. Do NOT invent new facts. Only edit, tighten, and connect.\\n\\nReturn ONLY the edited article. No commentary.\\n\\n---\\n\\n\" + data.fullDocument;\nvar body = JSON.stringify({ model: 'gpt-4o', messages: [{ role: 'system', content: 'You are a professional editor. Polish and connect, not shorten. Never gut a section.' }, { role: 'user', content: prompt }], max_tokens: 4096, temperature: 0.3 });\nvar resp = await new Promise(function(resolve) { var req = https.request({ hostname: 'oai-dax-dakona-pilot.openai.azure.com', path: '/openai/deployments/gpt-4o/chat/completions?api-version=2024-08-01-preview', method: 'POST', headers: { 'api-key': '635645200b2c4f90a1833de2bda6b753', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } }, function(res) { var d = ''; res.on('data', function(c) { d += c; }); res.on('end', function() { resolve(d); }); }); req.on('error', function(e) { resolve(JSON.stringify({error: e.message})); }); req.write(body); req.end(); });\nvar result = {}; try { result = JSON.parse(resp); } catch(e) {}\nvar reviewed = (result.choices && result.choices[0] && result.choices[0].message && result.choices[0].message.content) || '';\nvar reviewedWords = reviewed.split(/\\s+/).length; var originalWords = data.fullDocument.split(/\\s+/).length;\nvar finalDoc = (reviewed.length > 100 && reviewedWords >= originalWords * 0.7) ? reviewed : data.fullDocument;\nreturn [{json: Object.assign({}, data, { fullDocument: finalDoc, actualWordCount: finalDoc.split(/\\s+/).length })}];\n"
+      }
+    },
+    {
+      "id": "rw-upload",
+      "name": "Upload to SharePoint",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        300
+      ],
+      "parameters": {
+        "jsCode": "var https = require(\"https\");\nvar data = $input.first().json;\nfunction httpsReq(method, hostname, path, headers, body) { return new Promise(function(resolve) { var opts = { hostname: hostname, path: path, method: method, headers: headers || {} }; var req = https.request(opts, function(res) { var d = \"\"; res.on(\"data\", function(chunk) { d += chunk; }); res.on(\"end\", function() { resolve({ status: res.statusCode, body: d }); }); }); req.on(\"error\", function(e) { resolve({ status: 0, body: e.message }); }); if (body) req.write(body); req.end(); }); }\nvar tokenBody = \"client_id=218064ac-bee2-4246-9709-ae7518ae71cb&client_secret=6LR8Q~ZCn5FTBlg894LtCGlXZ9GV3NAhS4BY9bla&scope=https%3A%2F%2Fgraph.microsoft.com%2F.default&grant_type=client_credentials\";\nvar tokenRes = await httpsReq(\"POST\", \"login.microsoftonline.com\", \"/d2a3c346-00f3-47dd-a53e-caa3fca74714/oauth2/v2.0/token\", { \"Content-Type\": \"application/x-www-form-urlencoded\", \"Content-Length\": tokenBody.length }, tokenBody);\nvar tokenData = {}; try { tokenData = JSON.parse(tokenRes.body); } catch(e) {}\nif (!tokenData.access_token) return [{ json: { error: \"Could not get Graph token\" } }];\nvar gToken = tokenData.access_token;\nvar safeName = data.title.replace(/[^a-zA-Z0-9 -]/g, \"\").replace(/\\s+/g, \"-\").substring(0, 60);\nvar dateSuffix = new Date().toISOString().split(\"T\")[0];\nvar fileName = safeName + \"_\" + dateSuffix + \".txt\";\nvar fileContent = data.title + \"\\n\" + Array(data.title.length + 1).join(\"=\") + \"\\n\\n\" + data.fullDocument + \"\\n\\n---\\nGenerated by DAX Research & Write | \" + dateSuffix + \" | \" + data.sectionCount + \" sections | \" + data.actualWordCount + \" words\";\nvar siteId = \"dakonallc.sharepoint.com,68764500-f333-44cc-8017-30489a6a9053,71b1b423-6196-4e05-b004-7298445afb6f\";\nvar folderPath = (data.folderPath || \"DAX Documents\").replace(/ /g, \"%20\");\nvar uploadPath = \"/v1.0/sites/\" + siteId + \"/drive/root:/\" + folderPath + \"/\" + fileName.replace(/ /g, \"%20\") + \":/content\";\nvar uploadRes = await httpsReq(\"PUT\", \"graph.microsoft.com\", uploadPath, { \"Authorization\": \"Bearer \" + gToken, \"Content-Type\": \"text/plain\", \"Content-Length\": Buffer.byteLength(fileContent) }, fileContent);\nvar uploadData = {}; try { uploadData = JSON.parse(uploadRes.body); } catch(e) {}\nreturn [{ json: { success: uploadRes.status === 200 || uploadRes.status === 201, webUrl: uploadData.webUrl || \"\", fileName: fileName, folder: data.folderPath, sectionCount: data.sectionCount, actualWordCount: data.actualWordCount, topic: data.topic } }];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input": {
+      "main": [
+        [
+          {
+            "node": "Respond Immediately",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond Immediately": {
+      "main": [
+        [
+          {
+            "node": "Generate Outline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Outline": {
+      "main": [
+        [
+          {
+            "node": "Write All Sections",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write All Sections": {
+      "main": [
+        [
+          {
+            "node": "Sharpen Writing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sharpen Writing": {
+      "main": [
+        [
+          {
+            "node": "Editorial Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Editorial Review": {
+      "main": [
+        [
+          {
+            "node": "Upload to SharePoint",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "11857756-19e7-426f-b231-92cfb8ccdcce",
+  "activeVersionId": "11857756-19e7-426f-b231-92cfb8ccdcce",
+  "versionCounter": 45,
+  "triggerCount": 1,
+  "tags": [
+    {
+      "id": "EIql1CPs6WQ8Z9am",
+      "name": "DAX"
+    }
+  ]
+}
