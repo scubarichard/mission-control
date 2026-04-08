@@ -1,0 +1,1722 @@
+{
+  "updatedAt": "2026-03-27T23:22:15Z",
+  "createdAt": "2026-03-17T03:38:38.176Z",
+  "id": "3tniyxZREqfnAbfo",
+  "name": "DAX Router - AI Agent",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dax/chat/completions",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "239c8918-6c92-4b56-b4a7-30d965423032",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        272,
+        404
+      ],
+      "webhookId": "4d239fe4-a8ea-4a56-aace-d3e25bc1688e"
+    },
+    {
+      "parameters": {
+        "jsCode": "var body = $json.body || $json;\nvar rawMessages = body.messages || [];\nvar messages = [];\nfor (var i = 0; i < rawMessages.length; i++) {\n  var m = rawMessages[i];\n  if (!m || typeof m !== 'object') continue;\n  var role = String(m.role || '').trim();\n  if (!role) continue;\n  if (Array.isArray(m.content)) {\n    var hasContent = false;\n    for (var c = 0; c < m.content.length; c++) {\n      var part = m.content[c];\n      if (part.type === 'text' && part.text) hasContent = true;\n      if (part.type === 'image_url') hasContent = true;\n      if (part.type === 'image') hasContent = true;\n    }\n    if (hasContent) messages.push({ role: role, content: m.content });\n  } else if (typeof m.content === 'string' && m.content.trim()) {\n    messages.push({ role: role, content: m.content });\n  }\n}\nvar userText = '';\nfor (var j = messages.length - 1; j >= 0; j--) {\n  if (messages[j].role === 'user') {\n    if (typeof messages[j].content === 'string') { userText = messages[j].content; }\n    else if (Array.isArray(messages[j].content)) {\n      var parts = [];\n      for (var k = 0; k < messages[j].content.length; k++) {\n        if (messages[j].content[k].type === 'text') parts.push(messages[j].content[k].text || '');\n      }\n      userText = parts.join(' ');\n      if (!userText) userText = '[Image uploaded]';\n    }\n    break;\n  }\n}\nvar lcText = userText.toLowerCase();\nvar isTitle = lcText.indexOf('title for the conversation') >= 0 || lcText.indexOf('concise title') >= 0 || lcText.indexOf('5-word') >= 0;\nif (messages.length === 0) messages.push({ role: 'user', content: userText || 'Hello' });\nvar hasImage = false;\nfor (var x = 0; x < messages.length; x++) {\n  if (Array.isArray(messages[x].content)) {\n    for (var y = 0; y < messages[x].content.length; y++) {\n      if (messages[x].content[y].type === 'image_url' || messages[x].content[y].type === 'image') hasImage = true;\n    }\n  }\n}\nvar advisorEmail = $env.ADVISOR_EMAIL || 'rmabbun@dakona.com';\nvar librechatUserId = body.user || body.userId || '';\nvar emailSource = 'fallback';\nif (librechatUserId) {\n  try {\n    var cosmosUri = $env.COSMOS_LIBRECHAT_URI;\n    if (cosmosUri) {\n      var { MongoClient, ObjectId } = require('mongodb');\n      var mongoClient = new MongoClient(cosmosUri, { serverSelectionTimeoutMS: 5000 });\n      await mongoClient.connect();\n      var usersCol = mongoClient.db('librechat').collection('users');\n      var user = null;\n      try { user = await usersCol.findOne({ _id: new ObjectId(librechatUserId) }); } catch(e) { user = await usersCol.findOne({ _id: librechatUserId }); }\n      if (user && user.email) { advisorEmail = user.email; emailSource = 'cosmos'; }\n      await mongoClient.close();\n    }\n  } catch(e) { console.log('Cosmos user lookup failed: ' + e.message); }\n}\nconsole.log('advisorEmail source: ' + emailSource + ', email: ' + advisorEmail);\nvar advisorTimezone = $env.ADVISOR_TIMEZONE || 'America/New_York';\nvar currentDateTime = '';\nvar currentTime = '';\ntry {\n  var tenantId = $env.GRAPH_TENANT_ID;\n  var clientId = $env.GRAPH_CLIENT_ID;\n  var clientSecret = $env.GRAPH_CLIENT_SECRET;\n  if (tenantId && clientId && clientSecret) {\n    var tokenUrl = 'https://login.microsoftonline.com/' + tenantId + '/oauth2/v2.0/token';\n    var tokenBody = 'grant_type=client_credentials&client_id=' + clientId + '&client_secret=' + encodeURIComponent(clientSecret) + '&scope=https%3A%2F%2Fgraph.microsoft.com%2F.default';\n    var tokenResp = await fetch(tokenUrl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: tokenBody });\n    var tokenData = await tokenResp.json();\n    if (tokenData.access_token) {\n      var mbResp = await fetch('https://graph.microsoft.com/v1.0/users/' + advisorEmail + '/mailboxSettings', { headers: { 'Authorization': 'Bearer ' + tokenData.access_token } });\n      if (mbResp.ok) {\n        var mbData = await mbResp.json();\n        if (mbData.timeZone) {\n          var winToIana = { 'Eastern Standard Time': 'America/New_York', 'Central Standard Time': 'America/Chicago', 'Mountain Standard Time': 'America/Denver', 'Pacific Standard Time': 'America/Los_Angeles', 'Alaska Standard Time': 'America/Anchorage', 'Hawaiian Standard Time': 'Pacific/Honolulu', 'Arizona': 'America/Phoenix', 'UTC': 'UTC' };\n          advisorTimezone = winToIana[mbData.timeZone] || mbData.timeZone;\n        }\n      }\n    }\n  }\n} catch(e) {}\ntry {\n  var now = new Date();\n  currentDateTime = now.toLocaleString('en-US', { timeZone: advisorTimezone, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });\n  currentTime = now.toLocaleTimeString('en-US', { timeZone: advisorTimezone, hour: 'numeric', minute: '2-digit', hour12: true });\n} catch(e) { currentDateTime = new Date().toISOString(); currentTime = new Date().toISOString(); }\nvar useProxy = isTitle || hasImage;\nreturn [{ json: { userText, isTitle, hasImage, useProxy, originalMessages: messages, originalBody: body, advisorTimezone, currentDateTime, currentTime, advisorEmail, librechatUserId, emailSource } }];"
+      },
+      "id": "extract-msg-001",
+      "name": "Extract Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        404
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.userText }}",
+        "options": {
+          "systemMessage": "=You are DAX, an AI assistant built by Dakona LLC and deployed inside this firm's Microsoft Azure environment. Everything you do stays private — your data never leaves this tenant. You are general-purpose — help with absolutely anything. You also have special tools for RIA-specific tasks.\n\nVERSION AND IDENTITY:\nYou are DAX v0.5.0, build date 2026-03-26. Your system prompt version is v68.\nWhen asked what version you are, what build you are, or anything about your version — respond with this exact info: DAX v0.5.0, prompt v68, build 2026-03-26. Do not say \"latest version\" or be vague. Give the actual version numbers.\n\nTOOL USAGE — CRITICAL:\nWhen an advisor mentions ANY person's name — whether asking about them, saying they have a meeting with them, saying they are a client, or anything else — ALWAYS call get_client_info FIRST before responding. Do not answer from general knowledge about people. If someone says \"tell me about George Jetson\", \"I have a client named Homer Simpson\", \"what can you tell me about Clark Kent\" — call get_client_info immediately. Never assume you know who someone is from training data. Always check Wealthbox first.\nOnly skip get_client_info if the person is clearly a public figure being asked about in a general context — like \"tell me about Warren Buffett's investment philosophy\" or \"what did Jerome Powell say today.\"\nWhen in doubt — use the tool.\n\n- When an advisor asks to generate reports, review Schwab data, or create quarterly reviews — use the generate_quarterly_reports tool.\n- When an advisor asks about stock prices, market performance, treasury yields, the fed funds rate, gold/oil prices, or any current financial data — ALWAYS use the get_market_data tool.\n- When an advisor asks to see clients, list clients, or filter clients by name/tag/interest/risk — use the list_clients tool.\n- When an advisor asks to write, create, draft, save, or generate any document (essay, report, letter, memo, summary, article, analysis, plan, or any written content) — ALWAYS use the create_document tool to save it to SharePoint. Pass { \"title\": \"...\", \"content\": \"...\" }. Never say you cannot create or save documents.\n- When an advisor asks to research and write a long-form document, article, white paper, blog post, or research report on any topic — use the research_and_write tool. It generates a full multi-section document and saves it to SharePoint automatically.\nIMPORTANT: When the research_and_write tool responds, it returns a JSON object with status, message, folder, and folderUrl fields.\nAlways present this response to the advisor as:\n1. A natural sentence confirming the article is being written\n2. The SharePoint folder link formatted as a clickable markdown link: [Open DAX/Documents folder]({folderUrl})\n3. Tell them to expect it in about 2 minutes\nExample: \"Your article on RMDs is being written now. It will appear in your [DAX/Documents folder](https://dakonallc.sharepoint.com/Shared%20Documents/DAX/Documents) in about 2 minutes.\"\n- For everything else — answer directly from your knowledge.\n\nCOMPLIANCE GUIDELINES:\n- For serious compliance, legal, or regulatory questions, direct advisors to their compliance counsel.\n- All conversations are retained 7 years per SEC Rule 17a-4.\n- DAX supports RIA compliance requirements through its compliance-focused architecture — it does not guarantee regulatory compliance.\n- Authentication is Microsoft SSO only. Everything runs in the firm's own Azure tenant.\n\nSEARCH AND DATA PRIVACY:\nNEVER include client names, account numbers, dates of birth, SSNs, or any personally identifiable information in parameters passed to get_market_data or any future search tools. When researching a concept related to a client's situation, abstract the question first — search for the concept, not the person.\n\nTONE:\nWarm, real, and direct. No \"As an AI language model...\" ever. Just be a genuinely helpful, knowledgeable colleague. Never say you do not have access to something without trying the relevant tool first.\n\nIMAGE ANALYSIS:\nWhen an advisor uploads an image, analyze it fully. For PowerShell or terminal screenshots — read every line and explain what the commands did and what the output means. For financial charts — identify the security, timeframe, and describe the trend. For Schwab statements or documents — extract the key numbers and summarize. For error messages — diagnose the problem and suggest fixes. Never say you cannot see an image — always describe what you observe.\n\nCALENDAR DATA:\nWhen displaying calendar events, always use the EXACT dates and times returned by the get_calendar tool. Never infer, estimate, or guess dates. If the tool returns \"Wednesday, March 26, 2026 at 2:30 PM\" — display exactly that. Never convert or reformat calendar data. If asked about today's date, use the \"Today is...\" line returned by the tool.\n\nINVESTMENT ADVICE — HARD RULE:\nWhen asked if something is a \"good buy\", \"good investment\", \"should I buy/sell\", or any variation of investment recommendation — always respond with:\n\"I'm not able to make investment recommendations. That judgment belongs with you as the advisor. I can provide current price data, fundamentals, or pull up the client's risk profile to inform your decision — would either of those help?\"\nNever provide analysis that could be interpreted as a recommendation, even indirectly.\n\nDATA INTEGRITY — CRITICAL:\nWhen presenting client information from tools, ONLY display data that was explicitly returned by the tool. NEVER infer, guess, or fill in missing fields from general knowledge. If a field is empty or missing, say \"Not on file\" — never invent values. This is especially critical for client financial data, risk profiles, and meeting notes. Presenting invented client data is a compliance violation.\n\nERROR RECOVERY:\nIf a tool call fails or returns \"not found\", always retry once with a slightly different approach before giving up. For client lookups — if get_meeting_prep fails, try get_client_info first, then retry. Never tell the advisor a client doesn't exist after a single failed attempt.\n\nCRITICAL — MARKET COMMENTARY:\nNEVER generate market analysis or commentary from general knowledge.\n\"What is driving markets?\" → ALWAYS call get_market_summary\n\"Any market news?\" → ALWAYS call get_market_summary\nIf the tool returns no data → say \"I don't have current market news available right now\"\nNEVER say things like \"the Fed is watching inflation\" without calling the tool first.\n\nMARKET QUERIES — INDEX DEFAULTS:\nWhen asked about \"the market\", \"markets today\", \"how are markets doing\" with no specific ticker — always call get_market_summary which returns ALL major indices.\nNever respond to a general market question with only SPY.\nDefault index set: S&P 500, Dow, Nasdaq, Russell 2000, Treasuries, Gold, VIX, US Dollar\nNEVER generate market commentary, explanations, or analysis from general knowledge.\n- For live prices only → use get_market_data\n- For news, context, \"what's driving markets\", \"market update\" → use get_market_summary\n- NEVER say things like \"the Fed is driving markets\" or \"earnings are causing volatility\" without calling get_market_summary first\n- If get_market_summary returns no data — say \"I don't have current market news available\" not invented commentary\n\nCURRENT DATE AND TIME:\nToday is {{ $('Extract Message').first().json.currentDateTime }}.\nCurrent time: {{ $('Extract Message').first().json.currentTime }}.\nAdvisor timezone: {{ $('Extract Message').first().json.advisorTimezone }}.\n\nAlways use this timezone when displaying times to the advisor.\nNever say you don't know the current date or time.\nNever hardcode a timezone — always use the advisor's timezone from above.\n\nRESPONSE ENDINGS:\nEnd with the answer. That is the default. No sign-off, no closing line, no invitation to ask more questions.\nNever use phrases like: \"If you have any questions feel free to ask\", \"Let me know if you need anything else\", \"Happy to help with anything else\", \"Is there anything else I can assist you with\", or any variation of these.\nOnly add a brief natural closing if the conversation genuinely calls for one — like wrapping up a long back-and-forth. Otherwise just stop after the answer.",
+          "maxIterations": 15,
+          "returnIntermediateSteps": false
+        }
+      },
+      "id": "dax-agent-001",
+      "name": "DAX Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1384,
+        596
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {
+          "temperature": 0.7,
+          "timeout": 120000
+        }
+      },
+      "id": "azure-llm-001",
+      "name": "Azure OpenAI GPT-4o",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        944,
+        820
+      ],
+      "credentials": {
+        "azureOpenAiApi": {
+          "id": "REPLACE_WITH_CLIENT_CREDENTIAL_ID",
+          "name": "Azure Open AI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "dax_chat",
+        "contextWindowLength": 5
+      },
+      "id": "memory-001",
+      "name": "Chat Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1072,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WEBHOOK_URL + 'webhook/schwab-processor' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{ \"source\": \"dax_agent\" }",
+        "placeholderDefinitions": {
+          "values": []
+        }
+      },
+      "id": "tool-schwab-001",
+      "name": "Generate Reports Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "name": "get_client_info",
+        "description": "Looks up a specific person in Wealthbox CRM. ALWAYS use this tool when an advisor mentions a person's name.",
+        "jsCode": "var advisorTimezone = $env.ADVISOR_TIMEZONE || $input.all()[0]?.json?.advisorTimezone || 'America/New_York';\nvar https = require('https');\nfunction get(hostname, path, hdrs) {\n  return new Promise(function(resolve) {\n    https.get({ hostname: hostname, path: path, headers: hdrs || {} }, function(res) {\n      var d = ''; res.on('data', function(c) { d += c; }); res.on('end', function() { try { resolve(JSON.parse(d)); } catch(e) { resolve({}); } });\n    }).on('error', function() { resolve({}); });\n  });\n}\nvar input = $input.all()[0].json || {};\nvar rawText = (input.userText || input.query || input.clientName || input.name || '').trim();\nvar clientName = rawText.replace(/tell me about/i,'').replace(/pull up/i,'').replace(/look up/i,'').replace(/show me/i,'').replace(/what can you tell me about/i,'').replace(/what do you know about/i,'').replace(/i have a client named/i,'').replace(/my client/i,'').replace(/'s risk.*$/i,'').replace(/'s profile.*$/i,'').replace(/[?.!,]/g,'').trim();\nif (!clientName) clientName = rawText.replace(/[?.!,]/g,'').trim();\nif (!clientName) return 'Please specify a client name.';\nvar wbData = await get('api.crmworkspace.com', '/v1/contacts?per_page=250', { 'ACCESS_TOKEN': (process.env.WEALTHBOX_API_KEY||'') });\nvar allContacts = wbData.contacts || [];\nvar lcName = clientName.toLowerCase();\nvar nameParts = lcName.split(' ').filter(function(p) { return p.length > 0; });\nvar contact = null;\nfor (var i = 0; i < allContacts.length; i++) { if ((allContacts[i].name||'').toLowerCase() === lcName) { contact = allContacts[i]; break; } }\nif (!contact && nameParts.length >= 2) { for (var j = 0; j < allContacts.length; j++) { var cn = (allContacts[j].name||'').toLowerCase(); var allMatch = true; for (var k = 0; k < nameParts.length; k++) { if (cn.indexOf(nameParts[k]) < 0) { allMatch = false; break; } } if (allMatch) { contact = allContacts[j]; break; } } }\nif (!contact) { var suggestions = allContacts.filter(function(c) { var cn = (c.name||'').toLowerCase(); return nameParts.some(function(p){return cn.indexOf(p)>=0;}); }).slice(0,5); return 'Could not find \"' + clientName + '\" in Wealthbox. Did you mean: ' + suggestions.map(function(c){return c.name;}).join(', ') + '?'; }\nvar bg = contact.background_info||''; var risk = contact.risk_tolerance||'Not specified'; var obj = contact.investment_objective||'Not specified'; var hor = contact.time_horizon||'Not specified';\nvar tagList = (contact.tags||[]).map(function(t){return typeof t==='object'?t.name:String(t);});\nvar acct = ''; var cf = contact.custom_fields||[]; for (var m=0;m<cf.length;m++){if(cf[m].name==='account_number'){acct=cf[m].value;break;}}\nvar notesData = await get('api.crmworkspace.com','/v1/notes?per_page=100',{'ACCESS_TOKEN':(process.env.WEALTHBOX_API_KEY||'')});\nvar notes = notesData.status_updates||[];\nvar verifiedNotes = []; for (var vn=0;vn<notes.length;vn++){var linkedTo=notes[vn].linked_to||[];var isLinked=false;for(var lt=0;lt<linkedTo.length;lt++){if(linkedTo[lt].id===contact.id){isLinked=true;break;}}if(isLinked)verifiedNotes.push(notes[vn]);}\nnotes=verifiedNotes; var noteContent=''; for(var vk=0;vk<notes.length;vk++){var vnTags=notes[vk].tags||[];for(var vl=0;vl<vnTags.length;vl++){if((vnTags[vl].name||vnTags[vl])==='Meeting'){noteContent=notes[vk].content||'';break;}}if(noteContent)break;}\nif(!noteContent&&notes.length>0)noteContent=notes[0].content||'';\nvar d2 = JSON.stringify({content:'[DAX] Client Profile Accessed\\nDate: '+new Date().toLocaleString('en-US',{timeZone:advisorTimezone})+'\\nAdvisor: Demo Advisor\\nClient: '+contact.name,linked_to:[{id:contact.id,type:'Contact'}],tags:['DAX','Automated']});\nvar req2 = https.request({hostname:'api.crmworkspace.com',path:'/v1/notes',method:'POST',headers:{'ACCESS_TOKEN':(process.env.WEALTHBOX_API_KEY||''),'Content-Type':'application/json','Content-Length':Buffer.byteLength(d2)}},function(){});\nreq2.on('error',function(){});req2.write(d2);req2.end();\nreturn [contact.name,'Account: '+(acct||'N/A'),'Risk: '+risk+' | Objective: '+obj+' | Horizon: '+hor,'Interests: '+(tagList.join(', ')||'None'),bg?'Background: '+bg.substring(0,300):'',noteContent?'\\nRecent Notes: '+noteContent.substring(0,400):''].filter(function(l){return l;}).join('\\n');"
+      },
+      "id": "tool-client-001",
+      "name": "Client Lookup Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        816
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "var rawOutput = $json.output || $json.text || '';\n\n// Strip trailing filler — only check the LAST LINE, not last sentence\n// This preserves markdown links and multi-line content\nvar lines = rawOutput.trimEnd().split('\\n');\nif (lines.length > 1) {\n  var lastLine = lines[lines.length - 1].toLowerCase().trim();\n  var fillerStarts = [\n    'if you have any', 'if you need', 'if you want',\n    'feel free', \"don't hesitate\", 'do not hesitate',\n    \"i'm here to help\", 'i am here to help',\n    'let me know if', 'just let me know',\n    'happy to help', 'hope this helps',\n    'please let me know', 'please feel free',\n    'is there anything else', \"if there's anything\",\n    \"i'm always here\", \"i'm happy to\"\n  ];\n  var isFiller = false;\n  for (var f = 0; f < fillerStarts.length; f++) {\n    if (lastLine.indexOf(fillerStarts[f]) >= 0) { isFiller = true; break; }\n  }\n  if (isFiller) lines.pop();\n}\nvar agentOutput = lines.join('\\n').trimEnd();\n\nvar now = Math.floor(Date.now() / 1000);\nvar id = 'chatcmpl-dax-' + now;\n\nvar c1 = JSON.stringify({ id: id, object: 'chat.completion.chunk', created: now, model: 'gpt-4o', choices: [{ index: 0, delta: { role: 'assistant', content: '' }, finish_reason: null }] });\nvar c2 = JSON.stringify({ id: id, object: 'chat.completion.chunk', created: now, model: 'gpt-4o', choices: [{ index: 0, delta: { content: agentOutput }, finish_reason: null }] });\nvar c3 = JSON.stringify({ id: id, object: 'chat.completion.chunk', created: now, model: 'gpt-4o', choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] });\nvar sseBody = 'data: ' + c1 + '\\n\\ndata: ' + c2 + '\\n\\ndata: ' + c3 + '\\n\\ndata: [DONE]\\n\\n';\n\nvar _webhookInput = $('Webhook').first().json;\nvar _body = _webhookInput.body || _webhookInput;\nvar _msgs = _body.messages || [];\nvar _userMessage = _msgs.length > 0 ? (_msgs[_msgs.length - 1].content || '') : (_body.message || _body.text || '');\nreturn [{ json: { sseBody: sseBody, _userMessage: _userMessage, _agentOutput: agentOutput } }];\n"
+      },
+      "id": "format-resp-001",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2176,
+        596
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.sseBody }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/event-stream"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-cache"
+              },
+              {
+                "name": "Connection",
+                "value": "keep-alive"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-001",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2400,
+        596
+      ]
+    },
+    {
+      "parameters": {
+        "name": "get_market_data",
+        "description": "Fetches current stock prices, ETF prices, index levels, treasury yields, commodity prices, or crypto prices. Use when asked about current prices or how a stock is performing.",
+        "jsCode": "var https=require('https');\nvar input=$input.all()[0].json||{};\nvar rawSymbols=input.query||input.symbols||input.symbol||'';\nif(!rawSymbols&&input.userText){var text=input.userText;var lc=text.toLowerCase();var names={'apple':'AAPL','microsoft':'MSFT','google':'GOOGL','amazon':'AMZN','nvidia':'NVDA','tesla':'TSLA','meta':'META','s&p':'SPY','nasdaq':'QQQ','dow':'DIA','gold':'GC=F','oil':'CL=F','bitcoin':'BTC-USD','fed funds':'^IRX','10 year':'^TNX','vix':'^VIX'};for(var nm in names){if(lc.indexOf(nm)>=0){rawSymbols=names[nm];break;}}}\nif(!rawSymbols)rawSymbols='SPY';\nvar symbols=rawSymbols.split(',').map(function(s){return s.trim().toUpperCase();}).filter(Boolean).slice(0,10);\nfunction fetchQuote(symbol){return new Promise(function(resolve){https.get({hostname:'query1.finance.yahoo.com',path:'/v8/finance/chart/'+encodeURIComponent(symbol)+'?interval=1d&range=1d',headers:{'User-Agent':'Mozilla/5.0','Accept':'application/json','Referer':'https://finance.yahoo.com/'}},function(res){var data='';res.on('data',function(c){data+=c;});res.on('end',function(){try{var j=JSON.parse(data);var meta=j.chart&&j.chart.result&&j.chart.result[0]&&j.chart.result[0].meta;if(!meta){resolve({symbol:symbol,error:'No data'});return;}var price=meta.regularMarketPrice;var prev=meta.chartPreviousClose||meta.previousClose;var change=prev?(price-prev):0;var pct=prev?((change/prev)*100):0;resolve({symbol,name:meta.shortName||symbol,price:'$'+price.toFixed(2),changePct:(pct>=0?'+':'')+pct.toFixed(2)+'%'});}catch(e){resolve({symbol,error:'Parse error'});}});}).on('error',function(){resolve({symbol,error:'Connection error'});});});}\nvar results=await Promise.all(symbols.map(function(s){return fetchQuote(s);}));\nreturn results.map(function(r){if(r.error)return r.symbol+': '+r.error;return r.symbol+' ('+r.name+'): '+r.price+' ('+r.changePct+' today)';}).join('\\n');"
+      },
+      "id": "tool-market-001",
+      "name": "Market Data Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [
+        1456,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "name": "list_clients",
+        "description": "Lists and filters clients from Wealthbox CRM. Pass a search term to find clients by name, tag, risk profile, or interest.",
+        "jsCode": "var https=require('https');\nvar input=$input.all()[0].json||{};\nvar searchTerm=(input.query||input.searchTerm||input.filter||'').toLowerCase().trim();\nvar contacts=await new Promise(function(resolve){https.get({hostname:'api.crmworkspace.com',path:'/v1/contacts?per_page=250',headers:{'ACCESS_TOKEN':(process.env.WEALTHBOX_API_KEY||'')}},function(res){var data='';res.on('data',function(c){data+=c;});res.on('end',function(){try{resolve(JSON.parse(data).contacts||[]);}catch(e){resolve([]);}});}).on('error',function(){resolve([]);});});\nvar filtered=contacts;\nif(searchTerm){filtered=contacts.filter(function(c){var tags=(c.tags||[]).map(function(t){return(typeof t==='object'?t.name:String(t)).toLowerCase();});var all=(c.name||'').toLowerCase()+' '+(c.background_info||'').toLowerCase()+' '+(c.risk_tolerance||'').toLowerCase()+' '+(c.investment_objective||'').toLowerCase()+' '+tags.join(' ');return all.indexOf(searchTerm)>=0;});}\nvar list=filtered.map(function(c){var tags=(c.tags||[]).map(function(t){return typeof t==='object'?t.name:String(t);});return '- '+c.name+' | Risk: '+(c.risk_tolerance||'N/A')+' | Obj: '+(c.investment_objective||'N/A')+(tags.length?' | Tags: '+tags.join(', '):'');}).join('\\n');\nreturn filtered.length>0?'Found '+filtered.length+' clients'+(searchTerm?' matching \"'+searchTerm+'\"':'')+': \\n\\n'+list:'No clients found matching \"'+searchTerm+'\".';"
+      },
+      "id": "tool-list-code-001",
+      "name": "List Clients Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [
+        1584,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "name": "get_meeting_prep",
+        "description": "Generates a meeting preparation brief for a specific client.",
+        "jsCode": "var advisorEmail=$input.all()[0]?.json?.advisorEmail||$env.ADVISOR_EMAIL||'rmabbun@dakona.com';\nvar advisorTimezone=$env.ADVISOR_TIMEZONE||$input.all()[0]?.json?.advisorTimezone||'America/New_York';\nvar https=require('https');\nvar input=$input.all()[0].json||{};\nvar userText=input.userText||input.query||input.clientName||'';\nvar clientName=userText.replace(/prep me for (my )?meeting with/i,'').replace(/my meeting with/i,'').replace(/meeting with/i,'').replace(/pull up/i,'').replace(/tell me about/i,'').replace(/,?\\s*(the one |)(with |)(account|acct|acct\\.|#)\\s*\\d+/i,'').replace(/,?\\s*account\\s*\\d+/i,'').trim();\nif(!clientName)clientName=userText.trim();\nif(!clientName)return 'Please specify a client name.';\nfunction get(hostname,path,hdrs){return new Promise(function(resolve){https.get({hostname:hostname,path:path.split(' ').join('%20'),headers:hdrs||{}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({});}});}).on('error',function(){resolve({});});});}\nvar wbData=await get('api.crmworkspace.com','/v1/contacts?per_page=250',{'ACCESS_TOKEN':(process.env.WEALTHBOX_API_KEY||'')});\nvar contacts=wbData.contacts||[];\nvar contact=null;\nvar lcName=clientName.toLowerCase();\nfor(var i=0;i<contacts.length;i++){if((contacts[i].name||'').toLowerCase()===lcName){contact=contacts[i];break;}}\nif(!contact){for(var s=0;s<contacts.length;s++){if((contacts[s].name||'').toLowerCase().indexOf(lcName)>=0){contact=contacts[s];break;}}}\nif(!contact)return 'Could not find \"'+clientName+'\" in Wealthbox.';\nvar risk=contact.risk_tolerance||'Not specified';\nvar obj=contact.investment_objective||'Not specified';\nvar hor=contact.time_horizon||'Not specified';\nvar bg=contact.background_info||'';\nvar tagList=(contact.tags||[]).map(function(t){return typeof t==='object'?t.name:String(t);});\nvar notesData=await get('api.crmworkspace.com','/v1/notes?per_page=100',{'ACCESS_TOKEN':(process.env.WEALTHBOX_API_KEY||'')});\nvar notes=(notesData.status_updates||[]).filter(function(n){return(n.linked_to||[]).some(function(l){return l.id===contact.id;});});\nvar noteContent=notes.length>0?notes[0].content||'':'';\nvar spyData=await get('query1.finance.yahoo.com','/v8/finance/chart/SPY?interval=1d&range=1d',{});\nvar spyInfo='N/A';var ch=spyData.chart;if(ch&&ch.result&&ch.result[0]){var sm=ch.result[0].meta;spyInfo='$'+sm.regularMarketPrice.toFixed(2)+' ('+(((sm.regularMarketPrice-sm.previousClose)/sm.previousClose)*100).toFixed(2)+'% today)';}\nreturn ['MEETING PREP: '+contact.name.toUpperCase(),'Risk: '+risk+' | Objective: '+obj+' | Horizon: '+hor,'Interests: '+(tagList.join(', ')||'None'),bg?'Background: '+bg.substring(0,250):'','SPY: '+spyInfo,noteContent?'Last Notes: '+noteContent.substring(0,400):'No notes on file'].join('\\n');"
+      },
+      "id": "tool-prep-001",
+      "name": "Meeting Prep Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [
+        1712,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.useProxy }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              },
+              "id": "title-check-001"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-title-001",
+      "name": "Is Title?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        720,
+        404
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "var https=require('https');\nvar input=$input.all()[0].json;\nvar reqBody=JSON.stringify({messages:input.originalMessages||[{role:'user',content:input.userText||'Hello'}],max_tokens:input.isTitle?50:4096,temperature:0.7});\nvar result=await new Promise(function(resolve){var req=https.request({hostname:'oai-dax-dakona-pilot.openai.azure.com',path:'/openai/deployments/gpt-4o/chat/completions?api-version=2024-08-01-preview',method:'POST',headers:{'api-key':'635645200b2c4f90a1833de2bda6b753','Content-Type':'application/json','Content-Length':Buffer.byteLength(reqBody)}},function(res){var data='';res.on('data',function(c){data+=c;});res.on('end',function(){resolve(data);});});req.on('error',function(e){resolve(JSON.stringify({error:e.message}));});req.write(reqBody);req.end();});\nvar parsed={};try{parsed=JSON.parse(result);}catch(e){parsed={choices:[{message:{role:'assistant',content:'I had trouble processing that.'}}]};}\nif(input.isTitle){return [{json:{jsonResponse:parsed,isTitle:true}}];}else{var content=(parsed.choices&&parsed.choices[0]&&parsed.choices[0].message)?parsed.choices[0].message.content:'I could not analyze that image.';\nvar now=Math.floor(Date.now()/1000);var id='chatcmpl-dax-'+now;\nvar c1=JSON.stringify({id,object:'chat.completion.chunk',created:now,model:'gpt-4o',choices:[{index:0,delta:{role:'assistant',content:''},finish_reason:null}]});\nvar c2=JSON.stringify({id,object:'chat.completion.chunk',created:now,model:'gpt-4o',choices:[{index:0,delta:{content},finish_reason:null}]});\nvar c3=JSON.stringify({id,object:'chat.completion.chunk',created:now,model:'gpt-4o',choices:[{index:0,delta:{},finish_reason:'stop'}]});\nreturn [{json:{sseBody:'data: '+c1+'\\n\\ndata: '+c2+'\\n\\ndata: '+c3+'\\n\\ndata: [DONE]\\n\\n',isTitle:false}}];}"
+      },
+      "id": "title-proxy-001",
+      "name": "Direct GPT-4o Proxy",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1448,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.jsonResponse }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "title-respond-001",
+      "name": "Respond Title",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2400,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.isTitle }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              },
+              "id": "title-resp-check"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-title-resp-001",
+      "name": "Title or Image?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2176,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.sseBody }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/event-stream"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-cache"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-image-001",
+      "name": "Respond Image",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2400,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "name": "get_email",
+        "description": "Checks the advisor's Exchange email inbox.",
+        "jsCode": "var advisorEmail=$input.all()[0]?.json?.advisorEmail||$env.ADVISOR_EMAIL||'rmabbun@dakona.com';\nvar advisorTimezone=$env.ADVISOR_TIMEZONE||$input.all()[0]?.json?.advisorTimezone||'America/New_York';\nvar https=require('https');\nvar input=$input.all()[0].json||{};\nvar userText=(input.userText||input.query||'').toLowerCase();\nfunction graphGet(path,token){return new Promise(function(resolve){https.get({hostname:'graph.microsoft.com',path:path.split(' ').join('%20'),headers:{'Authorization':'Bearer '+token}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({error:'parse error'});}});}).on('error',function(){resolve({error:'connection error'});});});}\nvar tokenBody='client_id='+process.env.GRAPH_CLIENT_ID+'&client_secret='+process.env.GRAPH_CLIENT_SECRET+'&scope=https://graph.microsoft.com/.default&grant_type=client_credentials';\nvar tokenRes=await new Promise(function(resolve){var req=https.request({hostname:'login.microsoftonline.com',path:'/'+process.env.GRAPH_TENANT_ID+'/oauth2/v2.0/token',method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Content-Length':Buffer.byteLength(tokenBody)}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({});}});});req.on('error',function(){resolve({});});req.write(tokenBody);req.end();});\nvar token=tokenRes.access_token||'';\nif(!token)return 'Could not connect to email.';\nvar senderName='';\nvar fromMatch=userText.match(/from\\s+([a-z]+)/i);\nif(fromMatch)senderName=fromMatch[1];\nvar days=0;\nif(userText.indexOf('2 week')>=0)days=14;else if(userText.indexOf('last week')>=0)days=7;else if(userText.indexOf('month')>=0)days=30;else if(userText.indexOf('today')>=0)days=1;\nvar unreadOnly=userText.indexOf('unread')>=0;\nvar base='/v1.0/users/'+advisorEmail+'/mailFolders/inbox/messages';\nvar params='$top=25&$select=subject,from,receivedDateTime,isRead,bodyPreview&$orderby=receivedDateTime%20desc';\nif(senderName){params+='&$search=%22from:'+senderName+'%22';}\nif(!senderName){var filters=[];if(unreadOnly)filters.push('isRead%20eq%20false');if(days>0){var cutoff=new Date();cutoff.setDate(cutoff.getDate()-days);filters.push('receivedDateTime%20ge%20'+cutoff.toISOString().split('.')[0]+'Z');}if(filters.length>0)params+='&$filter='+filters.join('%20and%20');}\nvar mailData=await graphGet(base+'?'+params,token);\nvar messages=mailData.value||[];\nif(messages.length===0)return 'No emails found.';\nvar lines=messages.map(function(m,i){var fromName=(m.from&&m.from.emailAddress)?(m.from.emailAddress.name||m.from.emailAddress.address):'Unknown';var date=new Date(m.receivedDateTime).toLocaleString('en-US',{timeZone:advisorTimezone,dateStyle:'short',timeStyle:'short'});return (i+1)+'. '+m.subject+'\\n   From: '+fromName+' | '+date+' | '+(m.isRead?'Read':'Unread')+'\\n   '+(m.bodyPreview||'').substring(0,80);});\nreturn 'Found '+messages.length+' emails:\\n\\n'+lines.join('\\n\\n');"
+      },
+      "id": "tool-email-001",
+      "name": "Email Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "name": "get_calendar",
+        "description": "Checks the advisor's Exchange/Outlook calendar for upcoming meetings and events.",
+        "jsCode": "var advisorEmail=$input.all()[0]?.json?.advisorEmail||$env.ADVISOR_EMAIL||'rmabbun@dakona.com';\nvar advisorTimezone=$env.ADVISOR_TIMEZONE||$input.all()[0]?.json?.advisorTimezone||'America/New_York';\nvar https=require('https');\nvar input=$input.all()[0].json||{};\nvar userText=(input.userText||input.query||'').toLowerCase();\nvar TZ=advisorTimezone;\nvar tokenBody='client_id='+process.env.GRAPH_CLIENT_ID+'&client_secret='+process.env.GRAPH_CLIENT_SECRET+'&scope=https://graph.microsoft.com/.default&grant_type=client_credentials';\nvar tokenRes=await new Promise(function(resolve){var req=https.request({hostname:'login.microsoftonline.com',path:'/'+process.env.GRAPH_TENANT_ID+'/oauth2/v2.0/token',method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Content-Length':Buffer.byteLength(tokenBody)}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({});}});});req.on('error',function(){resolve({});});req.write(tokenBody);req.end();});\nvar token=tokenRes.access_token||'';\nif(!token)return 'Could not connect to calendar.';\nvar todayFormatted=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric',timeZone:TZ});\nvar now=new Date();\nvar timeMin,timeMax,period;\nif(userText.indexOf('tomorrow')>=0){var tom=new Date();tom.setDate(tom.getDate()+1);timeMin=tom.toISOString().split('T')[0]+'T00:00:00Z';timeMax=tom.toISOString().split('T')[0]+'T23:59:59Z';period='tomorrow';}else if(userText.indexOf('week')>=0){timeMin=now.toISOString();var weekEnd=new Date();weekEnd.setDate(weekEnd.getDate()+7);timeMax=weekEnd.toISOString();period='this week';}else{var todayStr=now.toISOString().split('T')[0];timeMin=todayStr+'T00:00:00Z';timeMax=todayStr+'T23:59:59Z';period='today';}\nvar path='/v1.0/users/'+advisorEmail+'/events?$top=20&$select=subject,start,end,location,attendees&$orderby=start/dateTime&$filter=start/dateTime%20ge%20\\''+encodeURIComponent(timeMin)+'\\''+'%20and%20end/dateTime%20le%20\\''+encodeURIComponent(timeMax)+'\\'';\nvar calData=await new Promise(function(resolve){https.get({hostname:'graph.microsoft.com',path:path.split(' ').join('%20'),headers:{'Authorization':'Bearer '+token}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({});}});}).on('error',function(){resolve({});});});\nvar events=calData.value||[];\nif(events.length===0)return 'Today is '+todayFormatted+'. No events found for '+period+'.';\nvar lines=events.map(function(e,i){var startDT=new Date(e.start.dateTime+'Z');var endDT=new Date(e.end.dateTime+'Z');var startTime=startDT.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:TZ});var endTime=endDT.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:TZ});var loc=(e.location&&e.location.displayName)||'No location';return (i+1)+'. '+e.subject+'\\n   '+startTime+' - '+endTime+' | '+loc;});\nreturn 'Today is '+todayFormatted+'.\\n\\n'+events.length+' event(s) '+period+':\\n\\n'+lines.join('\\n\\n');"
+      },
+      "id": "tool-calendar-001",
+      "name": "Calendar Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [
+        1968,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "name": "send_email",
+        "description": "Drafts or sends emails from the advisor's Exchange mailbox.",
+        "jsCode": "var advisorEmail=$input.all()[0]?.json?.advisorEmail||$env.ADVISOR_EMAIL||'rmabbun@dakona.com';\nvar https=require('https');\nvar input=$input.all()[0].json||{};\nvar userText=(input.userText||input.query||'').trim();\nfunction graphReq(method,path,body,token){return new Promise(function(resolve){var bodyStr=body?JSON.stringify(body):'';var opts={hostname:'graph.microsoft.com',path:path.split(' ').join('%20'),method:method,headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'}};if(bodyStr)opts.headers['Content-Length']=Buffer.byteLength(bodyStr);var req=https.request(opts,function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({status:res.statusCode});}});});req.on('error',function(e){resolve({error:e.message});});if(bodyStr)req.write(bodyStr);req.end();});}\nvar tokenBody='client_id='+process.env.GRAPH_CLIENT_ID+'&client_secret='+process.env.GRAPH_CLIENT_SECRET+'&scope=https://graph.microsoft.com/.default&grant_type=client_credentials';\nvar tokenRes=await new Promise(function(resolve){var req=https.request({hostname:'login.microsoftonline.com',path:'/'+process.env.GRAPH_TENANT_ID+'/oauth2/v2.0/token',method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Content-Length':Buffer.byteLength(tokenBody)}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({});}});});req.on('error',function(){resolve({});});req.write(tokenBody);req.end();});\nvar token=tokenRes.access_token||'';\nif(!token)return 'Could not connect to email.';\nvar toMatch=userText.match(/to\\s+([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+)/i);\nvar toEmail=toMatch?toMatch[1]:'';\nvar subjectMatch=userText.match(/(?:about|subject|re:?)\\s+(.+?)(?:\\.|$)/i);\nvar subject=subjectMatch?subjectMatch[1].trim():'Follow-up from your advisor';\nvar isDraft=userText.indexOf('send')<0;\nvar body2='Dear Client,\\n\\nThis is a follow-up from your advisor.\\n\\nBest regards,\\nDemo Advisor';\nif(isDraft||!toEmail){var msg={subject:subject,body:{contentType:'Text',content:body2}};if(toEmail)msg.toRecipients=[{emailAddress:{address:toEmail}}];var r=await graphReq('POST','/v1.0/users/'+advisorEmail+'/messages',msg,token);if(r.id)return 'Draft saved. Subject: '+subject+(toEmail?' | To: '+toEmail:' | Recipient not set')+'. Edit and send from Outlook.';return 'Could not save draft.';}\nvar sendMsg={message:{subject:subject,body:{contentType:'Text',content:body2},toRecipients:[{emailAddress:{address:toEmail}}]},saveToSentItems:true};\nvar r=await graphReq('POST','/v1.0/users/'+advisorEmail+'/sendMail',sendMsg,token);\nif(!r.error)return 'Email sent to '+toEmail+'. Subject: '+subject;\nreturn 'Could not send email: '+(r.error||'unknown error');"
+      },
+      "id": "tool-send-email-001",
+      "name": "Send Email Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [
+        2380,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "name": "manage_calendar",
+        "description": "Creates, updates, or cancels calendar events in the advisor's Exchange calendar.",
+        "jsCode": "var advisorEmail=$input.all()[0]?.json?.advisorEmail||$env.ADVISOR_EMAIL||'rmabbun@dakona.com';\nvar advisorTimezone=$env.ADVISOR_TIMEZONE||$input.all()[0]?.json?.advisorTimezone||'America/New_York';\nvar https=require('https');\nvar input=$input.all()[0].json||{};\nvar userText=(input.userText||input.query||'').trim();\nfunction graphReq(method,path,body,token){return new Promise(function(resolve){var bodyStr=body?JSON.stringify(body):'';var opts={hostname:'graph.microsoft.com',path:path.split(' ').join('%20'),method:method,headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'}};if(bodyStr)opts.headers['Content-Length']=Buffer.byteLength(bodyStr);var req=https.request(opts,function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({status:res.statusCode});}});});req.on('error',function(e){resolve({error:e.message});});if(bodyStr)req.write(bodyStr);req.end();});}\nvar tokenBody='client_id='+process.env.GRAPH_CLIENT_ID+'&client_secret='+process.env.GRAPH_CLIENT_SECRET+'&scope=https://graph.microsoft.com/.default&grant_type=client_credentials';\nvar tokenRes=await new Promise(function(resolve){var req=https.request({hostname:'login.microsoftonline.com',path:'/'+process.env.GRAPH_TENANT_ID+'/oauth2/v2.0/token',method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Content-Length':Buffer.byteLength(tokenBody)}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({});}});});req.on('error',function(){resolve({});});req.write(tokenBody);req.end();});\nvar token=tokenRes.access_token||'';\nif(!token)return 'Could not connect to calendar.';\nvar lc=userText.toLowerCase();\nvar timeMatch=lc.match(/(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)/i);\nif(!timeMatch)return 'Please specify a time for the meeting (e.g., \"at 2pm\").';\nvar hour=parseInt(timeMatch[1]);\nif(timeMatch[3]&&timeMatch[3].toLowerCase()==='pm'&&hour<12)hour+=12;\nif(timeMatch[3]&&timeMatch[3].toLowerCase()==='am'&&hour===12)hour=0;\nvar minute=timeMatch[2]?parseInt(timeMatch[2]):0;\nvar meetDate=new Date();\nif(lc.indexOf('tomorrow')>=0)meetDate.setDate(meetDate.getDate()+1);\nvar startDT=meetDate.toISOString().split('T')[0]+'T'+String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0')+':00';\nvar endDT=meetDate.toISOString().split('T')[0]+'T'+String(hour+1).padStart(2,'0')+':'+String(minute).padStart(2,'0')+':00';\nvar subjectMatch=userText.match(/(?:schedule|book|create|set up)\\s+(?:a\\s+)?(?:meeting|call|appointment)\\s+(?:with\\s+)?(.+?)(?:\\s+(?:on|for|at|next|tomorrow))/i);\nvar meetSubject=subjectMatch?'Meeting with '+subjectMatch[1].trim():'Meeting';\nvar event={subject:meetSubject,start:{dateTime:startDT,timeZone:advisorTimezone},end:{dateTime:endDT,timeZone:advisorTimezone},location:{displayName:'Zoom'}};\nvar r=await graphReq('POST','/v1.0/users/'+advisorEmail+'/events',event,token);\nif(r.id){var formatted=new Date(startDT).toLocaleString('en-US',{timeZone:advisorTimezone,dateStyle:'full',timeStyle:'short'});return 'Meeting scheduled: '+meetSubject+'\\n'+formatted+' | Location: Zoom';}\nreturn 'Could not create meeting: '+JSON.stringify(r.error||r).substring(0,200);"
+      },
+      "id": "tool-manage-cal-001",
+      "name": "Manage Calendar Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [
+        2560,
+        520
+      ]
+    },
+    {
+      "id": "flag-check-1774448149171",
+      "name": "Compliance Flag Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2346,
+        596
+      ],
+      "parameters": {
+        "jsCode": "var advisorTimezone=$env.ADVISOR_TIMEZONE||$input.all()[0]?.json?.advisorTimezone||'America/New_York';\nvar response=$input.all()[0].json;\nvar userMsg=response._userMessage||'';\nvar daxResp=response._agentOutput||'';\nvar combinedText=(userMsg+' '+daxResp).toLowerCase();\nvar triggers=[{phrase:'should i buy',severity:'HIGH',reason:'Potential investment recommendation request'},{phrase:'should i sell',severity:'HIGH',reason:'Potential investment recommendation request'},{phrase:'i recommend',severity:'HIGH',reason:'Explicit recommendation language'},{phrase:'guarantee',severity:'HIGH',reason:'Prohibited guarantee language'},{phrase:'guaranteed return',severity:'CRITICAL',reason:'Prohibited guarantee of returns'},{phrase:'risk-free',severity:'CRITICAL',reason:'Prohibited risk-free claim'},{phrase:'insider',severity:'CRITICAL',reason:'Potential insider information reference'},{phrase:'lawsuit',severity:'HIGH',reason:'Legal action reference'}];\nvar matches=triggers.filter(function(t){return combinedText.indexOf(t.phrase)>=0;});\nvar output={sseBody:response.sseBody,_flagged:false};\nif(matches.length>0){var severity=matches.some(function(m){return m.severity==='CRITICAL';})? 'CRITICAL':matches.some(function(m){return m.severity==='HIGH';})? 'HIGH':'MEDIUM';var flagDetails=matches.map(function(m){return '['+m.severity+'] \"'+m.phrase+'\" - '+m.reason;}).join('\\n');var ts=new Date().toLocaleString('en-US',{timeZone:advisorTimezone});output._flagged=true;output._noteContent='[DAX-REVIEW] Compliance Flag - '+severity+'\\nDate: '+ts+'\\nAdvisor: Demo Advisor\\nStatus: PENDING\\n\\nTRIGGERS:\\n'+flagDetails+'\\n\\nUSER: '+userMsg.substring(0,300)+'\\n\\nDAX: '+daxResp.substring(0,300)+'\\n\\nGenerated by DAX v0.5.0';output._severity=severity;}\nreturn [{json:output}];"
+      }
+    },
+    {
+      "id": "flag-if-1774448149171",
+      "name": "Flag IF",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2516,
+        596
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": ""
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json._flagged }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "flag-post-1774448149171",
+      "name": "Flag Post to Wealthbox",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2686,
+        516
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.crmworkspace.com/v1/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "ACCESS_TOKEN",
+              "value": "={{ $env.WEALTHBOX_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({content: $json._noteContent, tags: [\"DAX\", \"DAX-REVIEW\", $json._severity]}) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "mst-1774465121362",
+      "name": "Market Summary Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [
+        2224,
+        820
+      ],
+      "parameters": {
+        "name": "get_market_summary",
+        "description": "Gets today's real market news and index prices. ALWAYS use when asked about market news, market update, or what is driving markets.",
+        "jsCode": "var advisorTimezone=$env.ADVISOR_TIMEZONE||$input.all()[0]?.json?.advisorTimezone||'America/New_York';\nvar https=require('https');\nfunction httpGet(hostname,path){return new Promise(function(resolve){https.get({hostname:hostname,path:path,timeout:15000},function(res){var data='';res.on('data',function(c){data+=c;});res.on('end',function(){try{resolve(JSON.parse(data));}catch(e){resolve(null);}});}).on('error',function(){resolve(null);}).on('timeout',function(){resolve(null);});});}\nvar headlines=[];\nvar fhData=await httpGet('finnhub.io','/api/v1/news?category=general&token='+(process.env.FINNHUB_API_KEY||'')+'');\nif(fhData&&Array.isArray(fhData)){headlines=fhData.slice(0,6).map(function(n){return{title:n.headline||'',summary:(n.summary||'').substring(0,150),source:n.source||'Unknown',published:n.datetime?new Date(n.datetime*1000).toLocaleString('en-US',{timeZone:advisorTimezone,month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}):''};});}\nvar symbols=['SPY','DIA','QQQ','IWM','TLT','GLD','VIXY'];\nvar labelMap={SPY:'S&P 500',DIA:'Dow Jones',QQQ:'Nasdaq 100',IWM:'Russell 2000',TLT:'20yr Treasury',GLD:'Gold',VIXY:'VIX (VIXY)'};\nvar quoteLines=[];\nfor(var i=0;i<symbols.length;i++){var qd=await httpGet('finnhub.io','/api/v1/quote?symbol='+symbols[i]+'&token='+(process.env.FINNHUB_API_KEY||'')+'');if(qd&&qd.c>0){var pct=qd.pc>0?((qd.c-qd.pc)/qd.pc*100):0;quoteLines.push((labelMap[symbols[i]]||symbols[i])+': $'+qd.c.toFixed(2)+' ('+(pct>=0?'+':'')+pct.toFixed(2)+'%)');} }\nvar today=new Date().toLocaleDateString('en-US',{timeZone:advisorTimezone,weekday:'long',month:'long',day:'numeric',year:'numeric'});\nvar headlineText=headlines.length>0?headlines.map(function(h,i){return (i+1)+'. '+h.title+'\\n   '+(h.summary||'')+'\\n   '+h.source+' | '+h.published;}).join('\\n\\n'):'No market news available.';\nreturn 'MARKET SUMMARY - '+today+'\\n\\nKEY INDICES\\n'+(quoteLines.join('\\n')||'Price data unavailable')+'\\n\\nTOP MARKET STORIES\\n'+headlineText;"
+      }
+    },
+    {
+      "parameters": {
+        "name": "create_document",
+        "description": "Creates a Word document (.docx) and saves it to SharePoint. ALWAYS use this tool when an advisor asks to write, draft, create, save, or generate any document. Pass { \"title\": \"...\", \"content\": \"...\" }.",
+        "jsCode": "var https=require('https');\nvar PizZip=require('pizzip');\nvar input=$input.all()[0].json||{};\nvar title,content,folderPath;\nif(typeof input==='string'){title='Document';content=input;folderPath='DAX/Documents';}else{title=String(input.title||input.fileName||input.name||'Document').trim();content=String(input.content||input.body||input.text||'').trim();folderPath=String(input.folderPath||'DAX/Documents').trim();}\nif(!content||content.length<3)return 'create_document requires a content field.';\nvar tokenBody='client_id='+process.env.GRAPH_CLIENT_ID+'&client_secret='+process.env.GRAPH_CLIENT_SECRET+'&scope=https://graph.microsoft.com/.default&grant_type=client_credentials';\nvar tokenRes=await new Promise(function(resolve){var req=https.request({hostname:'login.microsoftonline.com',path:'/'+process.env.GRAPH_TENANT_ID+'/oauth2/v2.0/token',method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Content-Length':Buffer.byteLength(tokenBody)}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({});}});});req.on('error',function(){resolve({});});req.write(tokenBody);req.end();});\nvar token=tokenRes.access_token||'';\nif(!token)return 'SharePoint connection failed.';\nfunction esc(v){return String(v||'').split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;');}\nvar lines=content.split('\\n');\nvar paraXml=lines.map(function(line){if(!line.trim())return '<w:p><w:pPr><w:spacing w:after=\"120\"/></w:pPr></w:p>';return '<w:p><w:r><w:t xml:space=\"preserve\">'+esc(line)+'</w:t></w:r></w:p>';}).join('');\nvar documentXml='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><w:document xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:body><w:p><w:pPr><w:jc w:val=\"center\"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val=\"32\"/></w:rPr><w:t>'+esc(title)+'</w:t></w:r></w:p><w:p></w:p>'+paraXml+'<w:sectPr><w:pgSz w:w=\"12240\" w:h=\"15840\"/><w:pgMar w:top=\"1440\" w:right=\"1440\" w:bottom=\"1440\" w:left=\"1440\"/></w:sectPr></w:body></w:document>';\nvar zip=new PizZip();\nzip.file('[Content_Types].xml','<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/><Default Extension=\"xml\" ContentType=\"application/xml\"/><Override PartName=\"/word/document.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml\"/><Override PartName=\"/word/styles.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml\"/></Types>');\nzip.file('_rels/.rels','<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"word/document.xml\"/></Relationships>');\nzip.file('word/document.xml',documentXml);\nzip.file('word/_rels/document.xml.rels','<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"styles.xml\"/></Relationships>');\nzip.file('word/styles.xml','<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><w:styles xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii=\"Calibri\" w:hAnsi=\"Calibri\"/><w:sz w:val=\"22\"/></w:rPr></w:rPrDefault></w:docDefaults><w:style w:type=\"paragraph\" w:default=\"1\" w:styleId=\"Normal\"><w:name w:val=\"Normal\"/></w:style></w:styles>');\nvar docBuffer=zip.generate({type:'nodebuffer',compression:'DEFLATE'});\nvar fileName=title.replace(/[^a-zA-Z0-9 \\-_]/g,'').trim().replace(/ +/g,'_')+'.docx';\nvar uploadPath='/v1.0/sites/'+process.env.GRAPH_SITE_ID+'/drive/root:/'+encodeURIComponent(folderPath)+'/'+encodeURIComponent(fileName)+':/content';\nvar uploadResult=await new Promise(function(resolve){var req=https.request({hostname:'graph.microsoft.com',path:uploadPath,method:'PUT',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','Content-Length':docBuffer.length}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({error:'parse'});}});});req.on('error',function(e){resolve({error:e.message});});req.write(docBuffer);req.end();});\nif(uploadResult.webUrl)return 'Document saved to SharePoint.\\nFile: '+fileName+'\\nLink: '+uploadResult.webUrl;\nreturn 'Upload failed: '+JSON.stringify(uploadResult).substring(0,300);"
+      },
+      "id": "tool-create-doc-001",
+      "name": "Create Document Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [
+        2096,
+        820
+      ]
+    },
+    {
+      "id": "tool-research-write-001",
+      "name": "Research and Write Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1,
+      "position": [
+        2352,
+        820
+      ],
+      "parameters": {
+        "name": "research_and_write",
+        "description": "Researches a topic and writes a complete professional long-form document saved to SharePoint. Use when an advisor asks to write an article, white paper, research report, blog post, or any multi-section document. Takes 60-90 seconds - tell the advisor it is generating.",
+        "jsCode": "var https = require(\"https\");\nvar input = $input.all()[0]?.json || {};\nvar userText = input.userText || input.query || \"\";\n\n// Extract topic - strip common request prefixes\nvar topic = userText\n  .replace(/^(can you |please |could you |i need you to |i want you to |go ahead and )/i, \"\")\n  .replace(/^(write|create|draft|generate|research|produce|compose)\\s+(a |an |me |us |)\\s*/i, \"\")\n  .replace(/^(\\d{3,5})\\s*word\\s+/i, \"\")\n  .replace(/^(article|report|white paper|whitepaper|blog post|blog|memo|document|piece|essay|newsletter|paper)\\s+(about|on|regarding|for|covering|discussing|analyzing|analysing)\\s+/i, \"\")\n  .replace(/\\s+(and |then |&)\\s*(save|upload|put|store|send)\\s+(it\\s+)?(to|on|in|into)\\s+sharepoint\\s*/i, \"\")\n  .replace(/\\s+to\\s+sharepoint\\s*$/i, \"\")\n  .trim();\nif (!topic || topic.length < 5) topic = userText.trim();\n\n// Extract word count if mentioned\nvar wcMatch = userText.match(/(\\d{3,5})\\s*word/i);\nvar wordCount = wcMatch ? parseInt(wcMatch[1]) : 1200;\n\n// Call the Research & Write webhook\nvar body = JSON.stringify({\n  topic: topic,\n  wordCount: wordCount,\n  keywords: \"\",\n  additionalInstructions: \"\"\n});\n\nvar resp = await new Promise(function(resolve) {\n  var req = https.request({\n    hostname: \"n8n.dakona.net\",\n    path: \"/webhook/dax/research-write\",\n    method: \"POST\",\n    headers: { \"Content-Type\": \"application/json\", \"Content-Length\": Buffer.byteLength(body) }\n  }, function(res) {\n    var data = \"\";\n    res.on(\"data\", function(c) { data += c; });\n    res.on(\"end\", function() { resolve(data); });\n  });\n  req.setTimeout(170000, function() { req.destroy(); resolve(JSON.stringify({error: \"Timed out after 170 seconds\"})); });\n  req.on(\"error\", function(e) { resolve(JSON.stringify({error: e.message})); });\n  req.write(body); req.end();\n});\n\nvar result = {};\ntry { result = JSON.parse(resp); } catch(e) { return \"Error parsing response from document generator\"; }\n\nif (result.success) {\n  return \"Document generated and saved to SharePoint:\\n- Topic: \" + topic + \"\\n- File: \" + result.fileName + \"\\n- Sections: \" + result.sectionCount + \"\\n- Words: \" + result.actualWordCount + \"\\n- URL: \" + result.webUrl;\n}\n\nreturn \"Error generating document: \" + (result.error || JSON.stringify(result).substring(0, 200));\n"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Message": {
+      "main": [
+        [
+          {
+            "node": "Is Title?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Azure OpenAI GPT-4o": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "DAX Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "DAX Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Reports Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "DAX Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Client Lookup Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "DAX Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DAX Agent": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Compliance Flag Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Market Data Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "DAX Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Clients Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "DAX Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meeting Prep Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "DAX Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Title?": {
+      "main": [
+        [
+          {
+            "node": "Direct GPT-4o Proxy",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DAX Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Direct GPT-4o Proxy": {
+      "main": [
+        [
+          {
+            "node": "Title or Image?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Title or Image?": {
+      "main": [
+        [
+          {
+            "node": "Respond Title",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "DAX Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "DAX Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "DAX Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manage Calendar Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "DAX Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compliance Flag Check": {
+      "main": [
+        [
+          {
+            "node": "Flag IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flag IF": {
+      "main": [
+        [
+          {
+            "node": "Flag Post to Wealthbox",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flag Post to Wealthbox": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Market Summary Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "DAX Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Document Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "DAX Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research and Write Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "DAX Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "447e4229-30f5-4a3a-b9f8-565f034978e3",
+  "activeVersionId": "447e4229-30f5-4a3a-b9f8-565f034978e3",
+  "versionCounter": 794,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-03-17T03:40:38.515Z",
+      "createdAt": "2026-03-17T03:40:38.515Z",
+      "role": "workflow:owner",
+      "workflowId": "3tniyxZREqfnAbfo",
+      "projectId": "xDgj8rwVTQP3E9Cb",
+      "project": {
+        "updatedAt": "2025-11-10T15:32:18.748Z",
+        "createdAt": "2025-11-10T03:21:08.872Z",
+        "id": "xDgj8rwVTQP3E9Cb",
+        "name": "Richard Mabbun <rmabbun@dakona.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "763ebc85-8160-4949-8238-c0ab68058111"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-27T02:44:02.457Z",
+      "createdAt": "2026-03-27T02:44:02.457Z",
+      "id": "EIql1CPs6WQ8Z9am",
+      "name": "DAX"
+    }
+  ],
+  "activeVersion": {
+    "updatedAt": "2026-03-27T23:22:15.002Z",
+    "createdAt": "2026-03-27T23:22:15.002Z",
+    "versionId": "447e4229-30f5-4a3a-b9f8-565f034978e3",
+    "workflowId": "3tniyxZREqfnAbfo",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "dax/chat/completions",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "239c8918-6c92-4b56-b4a7-30d965423032",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          272,
+          404
+        ],
+        "webhookId": "4d239fe4-a8ea-4a56-aace-d3e25bc1688e"
+      },
+      {
+        "parameters": {
+          "jsCode": "var body = $json.body || $json;\nvar rawMessages = body.messages || [];\nvar messages = [];\nfor (var i = 0; i < rawMessages.length; i++) {\n  var m = rawMessages[i];\n  if (!m || typeof m !== 'object') continue;\n  var role = String(m.role || '').trim();\n  if (!role) continue;\n  if (Array.isArray(m.content)) {\n    var hasContent = false;\n    for (var c = 0; c < m.content.length; c++) {\n      var part = m.content[c];\n      if (part.type === 'text' && part.text) hasContent = true;\n      if (part.type === 'image_url') hasContent = true;\n      if (part.type === 'image') hasContent = true;\n    }\n    if (hasContent) messages.push({ role: role, content: m.content });\n  } else if (typeof m.content === 'string' && m.content.trim()) {\n    messages.push({ role: role, content: m.content });\n  }\n}\nvar userText = '';\nfor (var j = messages.length - 1; j >= 0; j--) {\n  if (messages[j].role === 'user') {\n    if (typeof messages[j].content === 'string') { userText = messages[j].content; }\n    else if (Array.isArray(messages[j].content)) {\n      var parts = [];\n      for (var k = 0; k < messages[j].content.length; k++) {\n        if (messages[j].content[k].type === 'text') parts.push(messages[j].content[k].text || '');\n      }\n      userText = parts.join(' ');\n      if (!userText) userText = '[Image uploaded]';\n    }\n    break;\n  }\n}\nvar lcText = userText.toLowerCase();\nvar isTitle = lcText.indexOf('title for the conversation') >= 0 || lcText.indexOf('concise title') >= 0 || lcText.indexOf('5-word') >= 0;\nif (messages.length === 0) messages.push({ role: 'user', content: userText || 'Hello' });\nvar hasImage = false;\nfor (var x = 0; x < messages.length; x++) {\n  if (Array.isArray(messages[x].content)) {\n    for (var y = 0; y < messages[x].content.length; y++) {\n      if (messages[x].content[y].type === 'image_url' || messages[x].content[y].type === 'image') hasImage = true;\n    }\n  }\n}\nvar advisorEmail = $env.ADVISOR_EMAIL || 'rmabbun@dakona.com';\nvar librechatUserId = body.user || body.userId || '';\nvar emailSource = 'fallback';\nif (librechatUserId) {\n  try {\n    var cosmosUri = $env.COSMOS_LIBRECHAT_URI;\n    if (cosmosUri) {\n      var { MongoClient, ObjectId } = require('mongodb');\n      var mongoClient = new MongoClient(cosmosUri, { serverSelectionTimeoutMS: 5000 });\n      await mongoClient.connect();\n      var usersCol = mongoClient.db('librechat').collection('users');\n      var user = null;\n      try { user = await usersCol.findOne({ _id: new ObjectId(librechatUserId) }); } catch(e) { user = await usersCol.findOne({ _id: librechatUserId }); }\n      if (user && user.email) { advisorEmail = user.email; emailSource = 'cosmos'; }\n      await mongoClient.close();\n    }\n  } catch(e) { console.log('Cosmos user lookup failed: ' + e.message); }\n}\nconsole.log('advisorEmail source: ' + emailSource + ', email: ' + advisorEmail);\nvar advisorTimezone = $env.ADVISOR_TIMEZONE || 'America/New_York';\nvar currentDateTime = '';\nvar currentTime = '';\ntry {\n  var tenantId = $env.GRAPH_TENANT_ID;\n  var clientId = $env.GRAPH_CLIENT_ID;\n  var clientSecret = $env.GRAPH_CLIENT_SECRET;\n  if (tenantId && clientId && clientSecret) {\n    var tokenUrl = 'https://login.microsoftonline.com/' + tenantId + '/oauth2/v2.0/token';\n    var tokenBody = 'grant_type=client_credentials&client_id=' + clientId + '&client_secret=' + encodeURIComponent(clientSecret) + '&scope=https%3A%2F%2Fgraph.microsoft.com%2F.default';\n    var tokenResp = await fetch(tokenUrl, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: tokenBody });\n    var tokenData = await tokenResp.json();\n    if (tokenData.access_token) {\n      var mbResp = await fetch('https://graph.microsoft.com/v1.0/users/' + advisorEmail + '/mailboxSettings', { headers: { 'Authorization': 'Bearer ' + tokenData.access_token } });\n      if (mbResp.ok) {\n        var mbData = await mbResp.json();\n        if (mbData.timeZone) {\n          var winToIana = { 'Eastern Standard Time': 'America/New_York', 'Central Standard Time': 'America/Chicago', 'Mountain Standard Time': 'America/Denver', 'Pacific Standard Time': 'America/Los_Angeles', 'Alaska Standard Time': 'America/Anchorage', 'Hawaiian Standard Time': 'Pacific/Honolulu', 'Arizona': 'America/Phoenix', 'UTC': 'UTC' };\n          advisorTimezone = winToIana[mbData.timeZone] || mbData.timeZone;\n        }\n      }\n    }\n  }\n} catch(e) {}\ntry {\n  var now = new Date();\n  currentDateTime = now.toLocaleString('en-US', { timeZone: advisorTimezone, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });\n  currentTime = now.toLocaleTimeString('en-US', { timeZone: advisorTimezone, hour: 'numeric', minute: '2-digit', hour12: true });\n} catch(e) { currentDateTime = new Date().toISOString(); currentTime = new Date().toISOString(); }\nvar useProxy = isTitle || hasImage;\nreturn [{ json: { userText, isTitle, hasImage, useProxy, originalMessages: messages, originalBody: body, advisorTimezone, currentDateTime, currentTime, advisorEmail, librechatUserId, emailSource } }];"
+        },
+        "id": "extract-msg-001",
+        "name": "Extract Message",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          496,
+          404
+        ]
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json.userText }}",
+          "options": {
+            "systemMessage": "=You are DAX, an AI assistant built by Dakona LLC and deployed inside this firm's Microsoft Azure environment. Everything you do stays private — your data never leaves this tenant. You are general-purpose — help with absolutely anything. You also have special tools for RIA-specific tasks.\n\nVERSION AND IDENTITY:\nYou are DAX v0.5.0, build date 2026-03-26. Your system prompt version is v68.\nWhen asked what version you are, what build you are, or anything about your version — respond with this exact info: DAX v0.5.0, prompt v68, build 2026-03-26. Do not say \"latest version\" or be vague. Give the actual version numbers.\n\nTOOL USAGE — CRITICAL:\nWhen an advisor mentions ANY person's name — whether asking about them, saying they have a meeting with them, saying they are a client, or anything else — ALWAYS call get_client_info FIRST before responding. Do not answer from general knowledge about people. If someone says \"tell me about George Jetson\", \"I have a client named Homer Simpson\", \"what can you tell me about Clark Kent\" — call get_client_info immediately. Never assume you know who someone is from training data. Always check Wealthbox first.\nOnly skip get_client_info if the person is clearly a public figure being asked about in a general context — like \"tell me about Warren Buffett's investment philosophy\" or \"what did Jerome Powell say today.\"\nWhen in doubt — use the tool.\n\n- When an advisor asks to generate reports, review Schwab data, or create quarterly reviews — use the generate_quarterly_reports tool.\n- When an advisor asks about stock prices, market performance, treasury yields, the fed funds rate, gold/oil prices, or any current financial data — ALWAYS use the get_market_data tool.\n- When an advisor asks to see clients, list clients, or filter clients by name/tag/interest/risk — use the list_clients tool.\n- When an advisor asks to write, create, draft, save, or generate any document (essay, report, letter, memo, summary, article, analysis, plan, or any written content) — ALWAYS use the create_document tool to save it to SharePoint. Pass { \"title\": \"...\", \"content\": \"...\" }. Never say you cannot create or save documents.\n- When an advisor asks to research and write a long-form document, article, white paper, blog post, or research report on any topic — use the research_and_write tool. It generates a full multi-section document and saves it to SharePoint automatically.\nIMPORTANT: When the research_and_write tool responds, it returns a JSON object with status, message, folder, and folderUrl fields.\nAlways present this response to the advisor as:\n1. A natural sentence confirming the article is being written\n2. The SharePoint folder link formatted as a clickable markdown link: [Open DAX/Documents folder]({folderUrl})\n3. Tell them to expect it in about 2 minutes\nExample: \"Your article on RMDs is being written now. It will appear in your [DAX/Documents folder](https://dakonallc.sharepoint.com/Shared%20Documents/DAX/Documents) in about 2 minutes.\"\n- For everything else — answer directly from your knowledge.\n\nCOMPLIANCE GUIDELINES:\n- For serious compliance, legal, or regulatory questions, direct advisors to their compliance counsel.\n- All conversations are retained 7 years per SEC Rule 17a-4.\n- DAX supports RIA compliance requirements through its compliance-focused architecture — it does not guarantee regulatory compliance.\n- Authentication is Microsoft SSO only. Everything runs in the firm's own Azure tenant.\n\nSEARCH AND DATA PRIVACY:\nNEVER include client names, account numbers, dates of birth, SSNs, or any personally identifiable information in parameters passed to get_market_data or any future search tools. When researching a concept related to a client's situation, abstract the question first — search for the concept, not the person.\n\nTONE:\nWarm, real, and direct. No \"As an AI language model...\" ever. Just be a genuinely helpful, knowledgeable colleague. Never say you do not have access to something without trying the relevant tool first.\n\nIMAGE ANALYSIS:\nWhen an advisor uploads an image, analyze it fully. For PowerShell or terminal screenshots — read every line and explain what the commands did and what the output means. For financial charts — identify the security, timeframe, and describe the trend. For Schwab statements or documents — extract the key numbers and summarize. For error messages — diagnose the problem and suggest fixes. Never say you cannot see an image — always describe what you observe.\n\nCALENDAR DATA:\nWhen displaying calendar events, always use the EXACT dates and times returned by the get_calendar tool. Never infer, estimate, or guess dates. If the tool returns \"Wednesday, March 26, 2026 at 2:30 PM\" — display exactly that. Never convert or reformat calendar data. If asked about today's date, use the \"Today is...\" line returned by the tool.\n\nINVESTMENT ADVICE — HARD RULE:\nWhen asked if something is a \"good buy\", \"good investment\", \"should I buy/sell\", or any variation of investment recommendation — always respond with:\n\"I'm not able to make investment recommendations. That judgment belongs with you as the advisor. I can provide current price data, fundamentals, or pull up the client's risk profile to inform your decision — would either of those help?\"\nNever provide analysis that could be interpreted as a recommendation, even indirectly.\n\nDATA INTEGRITY — CRITICAL:\nWhen presenting client information from tools, ONLY display data that was explicitly returned by the tool. NEVER infer, guess, or fill in missing fields from general knowledge. If a field is empty or missing, say \"Not on file\" — never invent values. This is especially critical for client financial data, risk profiles, and meeting notes. Presenting invented client data is a compliance violation.\n\nERROR RECOVERY:\nIf a tool call fails or returns \"not found\", always retry once with a slightly different approach before giving up. For client lookups — if get_meeting_prep fails, try get_client_info first, then retry. Never tell the advisor a client doesn't exist after a single failed attempt.\n\nCRITICAL — MARKET COMMENTARY:\nNEVER generate market analysis or commentary from general knowledge.\n\"What is driving markets?\" → ALWAYS call get_market_summary\n\"Any market news?\" → ALWAYS call get_market_summary\nIf the tool returns no data → say \"I don't have current market news available right now\"\nNEVER say things like \"the Fed is watching inflation\" without calling the tool first.\n\nMARKET QUERIES — INDEX DEFAULTS:\nWhen asked about \"the market\", \"markets today\", \"how are markets doing\" with no specific ticker — always call get_market_summary which returns ALL major indices.\nNever respond to a general market question with only SPY.\nDefault index set: S&P 500, Dow, Nasdaq, Russell 2000, Treasuries, Gold, VIX, US Dollar\nNEVER generate market commentary, explanations, or analysis from general knowledge.\n- For live prices only → use get_market_data\n- For news, context, \"what's driving markets\", \"market update\" → use get_market_summary\n- NEVER say things like \"the Fed is driving markets\" or \"earnings are causing volatility\" without calling get_market_summary first\n- If get_market_summary returns no data — say \"I don't have current market news available\" not invented commentary\n\nCURRENT DATE AND TIME:\nToday is {{ $('Extract Message').first().json.currentDateTime }}.\nCurrent time: {{ $('Extract Message').first().json.currentTime }}.\nAdvisor timezone: {{ $('Extract Message').first().json.advisorTimezone }}.\n\nAlways use this timezone when displaying times to the advisor.\nNever say you don't know the current date or time.\nNever hardcode a timezone — always use the advisor's timezone from above.\n\nRESPONSE ENDINGS:\nEnd with the answer. That is the default. No sign-off, no closing line, no invitation to ask more questions.\nNever use phrases like: \"If you have any questions feel free to ask\", \"Let me know if you need anything else\", \"Happy to help with anything else\", \"Is there anything else I can assist you with\", or any variation of these.\nOnly add a brief natural closing if the conversation genuinely calls for one — like wrapping up a long back-and-forth. Otherwise just stop after the answer.",
+            "maxIterations": 15,
+            "returnIntermediateSteps": false
+          }
+        },
+        "id": "dax-agent-001",
+        "name": "DAX Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 1.7,
+        "position": [
+          1384,
+          596
+        ]
+      },
+      {
+        "parameters": {
+          "model": "gpt-4o",
+          "options": {
+            "temperature": 0.7,
+            "timeout": 120000
+          }
+        },
+        "id": "azure-llm-001",
+        "name": "Azure OpenAI GPT-4o",
+        "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+        "typeVersion": 1,
+        "position": [
+          944,
+          820
+        ],
+        "credentials": {
+          "azureOpenAiApi": {
+            "id": "REPLACE_WITH_CLIENT_CREDENTIAL_ID",
+            "name": "Azure Open AI account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "sessionIdType": "customKey",
+          "sessionKey": "dax_chat",
+          "contextWindowLength": 5
+        },
+        "id": "memory-001",
+        "name": "Chat Memory",
+        "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+        "typeVersion": 1.3,
+        "position": [
+          1072,
+          820
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.WEBHOOK_URL + 'webhook/schwab-processor' }}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "{ \"source\": \"dax_agent\" }",
+          "placeholderDefinitions": {
+            "values": []
+          }
+        },
+        "id": "tool-schwab-001",
+        "name": "Generate Reports Tool",
+        "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+        "typeVersion": 1.1,
+        "position": [
+          1200,
+          820
+        ]
+      },
+      {
+        "parameters": {
+          "name": "get_client_info",
+          "description": "Looks up a specific person in Wealthbox CRM. ALWAYS use this tool when an advisor mentions a person's name.",
+          "jsCode": "var advisorTimezone = $env.ADVISOR_TIMEZONE || $input.all()[0]?.json?.advisorTimezone || 'America/New_York';\nvar https = require('https');\nfunction get(hostname, path, hdrs) {\n  return new Promise(function(resolve) {\n    https.get({ hostname: hostname, path: path, headers: hdrs || {} }, function(res) {\n      var d = ''; res.on('data', function(c) { d += c; }); res.on('end', function() { try { resolve(JSON.parse(d)); } catch(e) { resolve({}); } });\n    }).on('error', function() { resolve({}); });\n  });\n}\nvar input = $input.all()[0].json || {};\nvar rawText = (input.userText || input.query || input.clientName || input.name || '').trim();\nvar clientName = rawText.replace(/tell me about/i,'').replace(/pull up/i,'').replace(/look up/i,'').replace(/show me/i,'').replace(/what can you tell me about/i,'').replace(/what do you know about/i,'').replace(/i have a client named/i,'').replace(/my client/i,'').replace(/'s risk.*$/i,'').replace(/'s profile.*$/i,'').replace(/[?.!,]/g,'').trim();\nif (!clientName) clientName = rawText.replace(/[?.!,]/g,'').trim();\nif (!clientName) return 'Please specify a client name.';\nvar wbData = await get('api.crmworkspace.com', '/v1/contacts?per_page=250', { 'ACCESS_TOKEN': (process.env.WEALTHBOX_API_KEY||'') });\nvar allContacts = wbData.contacts || [];\nvar lcName = clientName.toLowerCase();\nvar nameParts = lcName.split(' ').filter(function(p) { return p.length > 0; });\nvar contact = null;\nfor (var i = 0; i < allContacts.length; i++) { if ((allContacts[i].name||'').toLowerCase() === lcName) { contact = allContacts[i]; break; } }\nif (!contact && nameParts.length >= 2) { for (var j = 0; j < allContacts.length; j++) { var cn = (allContacts[j].name||'').toLowerCase(); var allMatch = true; for (var k = 0; k < nameParts.length; k++) { if (cn.indexOf(nameParts[k]) < 0) { allMatch = false; break; } } if (allMatch) { contact = allContacts[j]; break; } } }\nif (!contact) { var suggestions = allContacts.filter(function(c) { var cn = (c.name||'').toLowerCase(); return nameParts.some(function(p){return cn.indexOf(p)>=0;}); }).slice(0,5); return 'Could not find \"' + clientName + '\" in Wealthbox. Did you mean: ' + suggestions.map(function(c){return c.name;}).join(', ') + '?'; }\nvar bg = contact.background_info||''; var risk = contact.risk_tolerance||'Not specified'; var obj = contact.investment_objective||'Not specified'; var hor = contact.time_horizon||'Not specified';\nvar tagList = (contact.tags||[]).map(function(t){return typeof t==='object'?t.name:String(t);});\nvar acct = ''; var cf = contact.custom_fields||[]; for (var m=0;m<cf.length;m++){if(cf[m].name==='account_number'){acct=cf[m].value;break;}}\nvar notesData = await get('api.crmworkspace.com','/v1/notes?per_page=100',{'ACCESS_TOKEN':(process.env.WEALTHBOX_API_KEY||'')});\nvar notes = notesData.status_updates||[];\nvar verifiedNotes = []; for (var vn=0;vn<notes.length;vn++){var linkedTo=notes[vn].linked_to||[];var isLinked=false;for(var lt=0;lt<linkedTo.length;lt++){if(linkedTo[lt].id===contact.id){isLinked=true;break;}}if(isLinked)verifiedNotes.push(notes[vn]);}\nnotes=verifiedNotes; var noteContent=''; for(var vk=0;vk<notes.length;vk++){var vnTags=notes[vk].tags||[];for(var vl=0;vl<vnTags.length;vl++){if((vnTags[vl].name||vnTags[vl])==='Meeting'){noteContent=notes[vk].content||'';break;}}if(noteContent)break;}\nif(!noteContent&&notes.length>0)noteContent=notes[0].content||'';\nvar d2 = JSON.stringify({content:'[DAX] Client Profile Accessed\\nDate: '+new Date().toLocaleString('en-US',{timeZone:advisorTimezone})+'\\nAdvisor: Demo Advisor\\nClient: '+contact.name,linked_to:[{id:contact.id,type:'Contact'}],tags:['DAX','Automated']});\nvar req2 = https.request({hostname:'api.crmworkspace.com',path:'/v1/notes',method:'POST',headers:{'ACCESS_TOKEN':(process.env.WEALTHBOX_API_KEY||''),'Content-Type':'application/json','Content-Length':Buffer.byteLength(d2)}},function(){});\nreq2.on('error',function(){});req2.write(d2);req2.end();\nreturn [contact.name,'Account: '+(acct||'N/A'),'Risk: '+risk+' | Objective: '+obj+' | Horizon: '+hor,'Interests: '+(tagList.join(', ')||'None'),bg?'Background: '+bg.substring(0,300):'',noteContent?'\\nRecent Notes: '+noteContent.substring(0,400):''].filter(function(l){return l;}).join('\\n');"
+        },
+        "id": "tool-client-001",
+        "name": "Client Lookup Tool",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          1328,
+          816
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "var rawOutput = $json.output || $json.text || '';\n\n// Strip trailing filler — only check the LAST LINE, not last sentence\n// This preserves markdown links and multi-line content\nvar lines = rawOutput.trimEnd().split('\\n');\nif (lines.length > 1) {\n  var lastLine = lines[lines.length - 1].toLowerCase().trim();\n  var fillerStarts = [\n    'if you have any', 'if you need', 'if you want',\n    'feel free', \"don't hesitate\", 'do not hesitate',\n    \"i'm here to help\", 'i am here to help',\n    'let me know if', 'just let me know',\n    'happy to help', 'hope this helps',\n    'please let me know', 'please feel free',\n    'is there anything else', \"if there's anything\",\n    \"i'm always here\", \"i'm happy to\"\n  ];\n  var isFiller = false;\n  for (var f = 0; f < fillerStarts.length; f++) {\n    if (lastLine.indexOf(fillerStarts[f]) >= 0) { isFiller = true; break; }\n  }\n  if (isFiller) lines.pop();\n}\nvar agentOutput = lines.join('\\n').trimEnd();\n\nvar now = Math.floor(Date.now() / 1000);\nvar id = 'chatcmpl-dax-' + now;\n\nvar c1 = JSON.stringify({ id: id, object: 'chat.completion.chunk', created: now, model: 'gpt-4o', choices: [{ index: 0, delta: { role: 'assistant', content: '' }, finish_reason: null }] });\nvar c2 = JSON.stringify({ id: id, object: 'chat.completion.chunk', created: now, model: 'gpt-4o', choices: [{ index: 0, delta: { content: agentOutput }, finish_reason: null }] });\nvar c3 = JSON.stringify({ id: id, object: 'chat.completion.chunk', created: now, model: 'gpt-4o', choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] });\nvar sseBody = 'data: ' + c1 + '\\n\\ndata: ' + c2 + '\\n\\ndata: ' + c3 + '\\n\\ndata: [DONE]\\n\\n';\n\nvar _webhookInput = $('Webhook').first().json;\nvar _body = _webhookInput.body || _webhookInput;\nvar _msgs = _body.messages || [];\nvar _userMessage = _msgs.length > 0 ? (_msgs[_msgs.length - 1].content || '') : (_body.message || _body.text || '');\nreturn [{ json: { sseBody: sseBody, _userMessage: _userMessage, _agentOutput: agentOutput } }];\n"
+        },
+        "id": "format-resp-001",
+        "name": "Format Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2176,
+          596
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "text",
+          "responseBody": "={{ $json.sseBody }}",
+          "options": {
+            "responseCode": 200,
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Content-Type",
+                  "value": "text/event-stream"
+                },
+                {
+                  "name": "Cache-Control",
+                  "value": "no-cache"
+                },
+                {
+                  "name": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                }
+              ]
+            }
+          }
+        },
+        "id": "respond-001",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          2400,
+          596
+        ]
+      },
+      {
+        "parameters": {
+          "name": "get_market_data",
+          "description": "Fetches current stock prices, ETF prices, index levels, treasury yields, commodity prices, or crypto prices. Use when asked about current prices or how a stock is performing.",
+          "jsCode": "var https=require('https');\nvar input=$input.all()[0].json||{};\nvar rawSymbols=input.query||input.symbols||input.symbol||'';\nif(!rawSymbols&&input.userText){var text=input.userText;var lc=text.toLowerCase();var names={'apple':'AAPL','microsoft':'MSFT','google':'GOOGL','amazon':'AMZN','nvidia':'NVDA','tesla':'TSLA','meta':'META','s&p':'SPY','nasdaq':'QQQ','dow':'DIA','gold':'GC=F','oil':'CL=F','bitcoin':'BTC-USD','fed funds':'^IRX','10 year':'^TNX','vix':'^VIX'};for(var nm in names){if(lc.indexOf(nm)>=0){rawSymbols=names[nm];break;}}}\nif(!rawSymbols)rawSymbols='SPY';\nvar symbols=rawSymbols.split(',').map(function(s){return s.trim().toUpperCase();}).filter(Boolean).slice(0,10);\nfunction fetchQuote(symbol){return new Promise(function(resolve){https.get({hostname:'query1.finance.yahoo.com',path:'/v8/finance/chart/'+encodeURIComponent(symbol)+'?interval=1d&range=1d',headers:{'User-Agent':'Mozilla/5.0','Accept':'application/json','Referer':'https://finance.yahoo.com/'}},function(res){var data='';res.on('data',function(c){data+=c;});res.on('end',function(){try{var j=JSON.parse(data);var meta=j.chart&&j.chart.result&&j.chart.result[0]&&j.chart.result[0].meta;if(!meta){resolve({symbol:symbol,error:'No data'});return;}var price=meta.regularMarketPrice;var prev=meta.chartPreviousClose||meta.previousClose;var change=prev?(price-prev):0;var pct=prev?((change/prev)*100):0;resolve({symbol,name:meta.shortName||symbol,price:'$'+price.toFixed(2),changePct:(pct>=0?'+':'')+pct.toFixed(2)+'%'});}catch(e){resolve({symbol,error:'Parse error'});}});}).on('error',function(){resolve({symbol,error:'Connection error'});});});}\nvar results=await Promise.all(symbols.map(function(s){return fetchQuote(s);}));\nreturn results.map(function(r){if(r.error)return r.symbol+': '+r.error;return r.symbol+' ('+r.name+'): '+r.price+' ('+r.changePct+' today)';}).join('\\n');"
+        },
+        "id": "tool-market-001",
+        "name": "Market Data Tool",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          1456,
+          820
+        ]
+      },
+      {
+        "parameters": {
+          "name": "list_clients",
+          "description": "Lists and filters clients from Wealthbox CRM. Pass a search term to find clients by name, tag, risk profile, or interest.",
+          "jsCode": "var https=require('https');\nvar input=$input.all()[0].json||{};\nvar searchTerm=(input.query||input.searchTerm||input.filter||'').toLowerCase().trim();\nvar contacts=await new Promise(function(resolve){https.get({hostname:'api.crmworkspace.com',path:'/v1/contacts?per_page=250',headers:{'ACCESS_TOKEN':(process.env.WEALTHBOX_API_KEY||'')}},function(res){var data='';res.on('data',function(c){data+=c;});res.on('end',function(){try{resolve(JSON.parse(data).contacts||[]);}catch(e){resolve([]);}});}).on('error',function(){resolve([]);});});\nvar filtered=contacts;\nif(searchTerm){filtered=contacts.filter(function(c){var tags=(c.tags||[]).map(function(t){return(typeof t==='object'?t.name:String(t)).toLowerCase();});var all=(c.name||'').toLowerCase()+' '+(c.background_info||'').toLowerCase()+' '+(c.risk_tolerance||'').toLowerCase()+' '+(c.investment_objective||'').toLowerCase()+' '+tags.join(' ');return all.indexOf(searchTerm)>=0;});}\nvar list=filtered.map(function(c){var tags=(c.tags||[]).map(function(t){return typeof t==='object'?t.name:String(t);});return '- '+c.name+' | Risk: '+(c.risk_tolerance||'N/A')+' | Obj: '+(c.investment_objective||'N/A')+(tags.length?' | Tags: '+tags.join(', '):'');}).join('\\n');\nreturn filtered.length>0?'Found '+filtered.length+' clients'+(searchTerm?' matching \"'+searchTerm+'\"':'')+': \\n\\n'+list:'No clients found matching \"'+searchTerm+'\".';"
+        },
+        "id": "tool-list-code-001",
+        "name": "List Clients Tool",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          1584,
+          820
+        ]
+      },
+      {
+        "parameters": {
+          "name": "get_meeting_prep",
+          "description": "Generates a meeting preparation brief for a specific client.",
+          "jsCode": "var advisorEmail=$input.all()[0]?.json?.advisorEmail||$env.ADVISOR_EMAIL||'rmabbun@dakona.com';\nvar advisorTimezone=$env.ADVISOR_TIMEZONE||$input.all()[0]?.json?.advisorTimezone||'America/New_York';\nvar https=require('https');\nvar input=$input.all()[0].json||{};\nvar userText=input.userText||input.query||input.clientName||'';\nvar clientName=userText.replace(/prep me for (my )?meeting with/i,'').replace(/my meeting with/i,'').replace(/meeting with/i,'').replace(/pull up/i,'').replace(/tell me about/i,'').replace(/,?\\s*(the one |)(with |)(account|acct|acct\\.|#)\\s*\\d+/i,'').replace(/,?\\s*account\\s*\\d+/i,'').trim();\nif(!clientName)clientName=userText.trim();\nif(!clientName)return 'Please specify a client name.';\nfunction get(hostname,path,hdrs){return new Promise(function(resolve){https.get({hostname:hostname,path:path.split(' ').join('%20'),headers:hdrs||{}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({});}});}).on('error',function(){resolve({});});});}\nvar wbData=await get('api.crmworkspace.com','/v1/contacts?per_page=250',{'ACCESS_TOKEN':(process.env.WEALTHBOX_API_KEY||'')});\nvar contacts=wbData.contacts||[];\nvar contact=null;\nvar lcName=clientName.toLowerCase();\nfor(var i=0;i<contacts.length;i++){if((contacts[i].name||'').toLowerCase()===lcName){contact=contacts[i];break;}}\nif(!contact){for(var s=0;s<contacts.length;s++){if((contacts[s].name||'').toLowerCase().indexOf(lcName)>=0){contact=contacts[s];break;}}}\nif(!contact)return 'Could not find \"'+clientName+'\" in Wealthbox.';\nvar risk=contact.risk_tolerance||'Not specified';\nvar obj=contact.investment_objective||'Not specified';\nvar hor=contact.time_horizon||'Not specified';\nvar bg=contact.background_info||'';\nvar tagList=(contact.tags||[]).map(function(t){return typeof t==='object'?t.name:String(t);});\nvar notesData=await get('api.crmworkspace.com','/v1/notes?per_page=100',{'ACCESS_TOKEN':(process.env.WEALTHBOX_API_KEY||'')});\nvar notes=(notesData.status_updates||[]).filter(function(n){return(n.linked_to||[]).some(function(l){return l.id===contact.id;});});\nvar noteContent=notes.length>0?notes[0].content||'':'';\nvar spyData=await get('query1.finance.yahoo.com','/v8/finance/chart/SPY?interval=1d&range=1d',{});\nvar spyInfo='N/A';var ch=spyData.chart;if(ch&&ch.result&&ch.result[0]){var sm=ch.result[0].meta;spyInfo='$'+sm.regularMarketPrice.toFixed(2)+' ('+(((sm.regularMarketPrice-sm.previousClose)/sm.previousClose)*100).toFixed(2)+'% today)';}\nreturn ['MEETING PREP: '+contact.name.toUpperCase(),'Risk: '+risk+' | Objective: '+obj+' | Horizon: '+hor,'Interests: '+(tagList.join(', ')||'None'),bg?'Background: '+bg.substring(0,250):'','SPY: '+spyInfo,noteContent?'Last Notes: '+noteContent.substring(0,400):'No notes on file'].join('\\n');"
+        },
+        "id": "tool-prep-001",
+        "name": "Meeting Prep Tool",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          1712,
+          820
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.useProxy }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                },
+                "id": "title-check-001"
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-title-001",
+        "name": "Is Title?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          720,
+          404
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "var https=require('https');\nvar input=$input.all()[0].json;\nvar reqBody=JSON.stringify({messages:input.originalMessages||[{role:'user',content:input.userText||'Hello'}],max_tokens:input.isTitle?50:4096,temperature:0.7});\nvar result=await new Promise(function(resolve){var req=https.request({hostname:'oai-dax-dakona-pilot.openai.azure.com',path:'/openai/deployments/gpt-4o/chat/completions?api-version=2024-08-01-preview',method:'POST',headers:{'api-key':'635645200b2c4f90a1833de2bda6b753','Content-Type':'application/json','Content-Length':Buffer.byteLength(reqBody)}},function(res){var data='';res.on('data',function(c){data+=c;});res.on('end',function(){resolve(data);});});req.on('error',function(e){resolve(JSON.stringify({error:e.message}));});req.write(reqBody);req.end();});\nvar parsed={};try{parsed=JSON.parse(result);}catch(e){parsed={choices:[{message:{role:'assistant',content:'I had trouble processing that.'}}]};}\nif(input.isTitle){return [{json:{jsonResponse:parsed,isTitle:true}}];}else{var content=(parsed.choices&&parsed.choices[0]&&parsed.choices[0].message)?parsed.choices[0].message.content:'I could not analyze that image.';\nvar now=Math.floor(Date.now()/1000);var id='chatcmpl-dax-'+now;\nvar c1=JSON.stringify({id,object:'chat.completion.chunk',created:now,model:'gpt-4o',choices:[{index:0,delta:{role:'assistant',content:''},finish_reason:null}]});\nvar c2=JSON.stringify({id,object:'chat.completion.chunk',created:now,model:'gpt-4o',choices:[{index:0,delta:{content},finish_reason:null}]});\nvar c3=JSON.stringify({id,object:'chat.completion.chunk',created:now,model:'gpt-4o',choices:[{index:0,delta:{},finish_reason:'stop'}]});\nreturn [{json:{sseBody:'data: '+c1+'\\n\\ndata: '+c2+'\\n\\ndata: '+c3+'\\n\\ndata: [DONE]\\n\\n',isTitle:false}}];}"
+        },
+        "id": "title-proxy-001",
+        "name": "Direct GPT-4o Proxy",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1448,
+          256
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json.jsonResponse }}",
+          "options": {
+            "responseCode": 200,
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                }
+              ]
+            }
+          }
+        },
+        "id": "title-respond-001",
+        "name": "Respond Title",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          2400,
+          160
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.isTitle }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                },
+                "id": "title-resp-check"
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-title-resp-001",
+        "name": "Title or Image?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          2176,
+          256
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "text",
+          "responseBody": "={{ $json.sseBody }}",
+          "options": {
+            "responseCode": 200,
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Content-Type",
+                  "value": "text/event-stream"
+                },
+                {
+                  "name": "Cache-Control",
+                  "value": "no-cache"
+                },
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                }
+              ]
+            }
+          }
+        },
+        "id": "respond-image-001",
+        "name": "Respond Image",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          2400,
+          352
+        ]
+      },
+      {
+        "parameters": {
+          "name": "get_email",
+          "description": "Checks the advisor's Exchange email inbox.",
+          "jsCode": "var advisorEmail=$input.all()[0]?.json?.advisorEmail||$env.ADVISOR_EMAIL||'rmabbun@dakona.com';\nvar advisorTimezone=$env.ADVISOR_TIMEZONE||$input.all()[0]?.json?.advisorTimezone||'America/New_York';\nvar https=require('https');\nvar input=$input.all()[0].json||{};\nvar userText=(input.userText||input.query||'').toLowerCase();\nfunction graphGet(path,token){return new Promise(function(resolve){https.get({hostname:'graph.microsoft.com',path:path.split(' ').join('%20'),headers:{'Authorization':'Bearer '+token}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({error:'parse error'});}});}).on('error',function(){resolve({error:'connection error'});});});}\nvar tokenBody='client_id='+process.env.GRAPH_CLIENT_ID+'&client_secret='+process.env.GRAPH_CLIENT_SECRET+'&scope=https://graph.microsoft.com/.default&grant_type=client_credentials';\nvar tokenRes=await new Promise(function(resolve){var req=https.request({hostname:'login.microsoftonline.com',path:'/'+process.env.GRAPH_TENANT_ID+'/oauth2/v2.0/token',method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Content-Length':Buffer.byteLength(tokenBody)}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({});}});});req.on('error',function(){resolve({});});req.write(tokenBody);req.end();});\nvar token=tokenRes.access_token||'';\nif(!token)return 'Could not connect to email.';\nvar senderName='';\nvar fromMatch=userText.match(/from\\s+([a-z]+)/i);\nif(fromMatch)senderName=fromMatch[1];\nvar days=0;\nif(userText.indexOf('2 week')>=0)days=14;else if(userText.indexOf('last week')>=0)days=7;else if(userText.indexOf('month')>=0)days=30;else if(userText.indexOf('today')>=0)days=1;\nvar unreadOnly=userText.indexOf('unread')>=0;\nvar base='/v1.0/users/'+advisorEmail+'/mailFolders/inbox/messages';\nvar params='$top=25&$select=subject,from,receivedDateTime,isRead,bodyPreview&$orderby=receivedDateTime%20desc';\nif(senderName){params+='&$search=%22from:'+senderName+'%22';}\nif(!senderName){var filters=[];if(unreadOnly)filters.push('isRead%20eq%20false');if(days>0){var cutoff=new Date();cutoff.setDate(cutoff.getDate()-days);filters.push('receivedDateTime%20ge%20'+cutoff.toISOString().split('.')[0]+'Z');}if(filters.length>0)params+='&$filter='+filters.join('%20and%20');}\nvar mailData=await graphGet(base+'?'+params,token);\nvar messages=mailData.value||[];\nif(messages.length===0)return 'No emails found.';\nvar lines=messages.map(function(m,i){var fromName=(m.from&&m.from.emailAddress)?(m.from.emailAddress.name||m.from.emailAddress.address):'Unknown';var date=new Date(m.receivedDateTime).toLocaleString('en-US',{timeZone:advisorTimezone,dateStyle:'short',timeStyle:'short'});return (i+1)+'. '+m.subject+'\\n   From: '+fromName+' | '+date+' | '+(m.isRead?'Read':'Unread')+'\\n   '+(m.bodyPreview||'').substring(0,80);});\nreturn 'Found '+messages.length+' emails:\\n\\n'+lines.join('\\n\\n');"
+        },
+        "id": "tool-email-001",
+        "name": "Email Tool",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          1840,
+          820
+        ]
+      },
+      {
+        "parameters": {
+          "name": "get_calendar",
+          "description": "Checks the advisor's Exchange/Outlook calendar for upcoming meetings and events.",
+          "jsCode": "var advisorEmail=$input.all()[0]?.json?.advisorEmail||$env.ADVISOR_EMAIL||'rmabbun@dakona.com';\nvar advisorTimezone=$env.ADVISOR_TIMEZONE||$input.all()[0]?.json?.advisorTimezone||'America/New_York';\nvar https=require('https');\nvar input=$input.all()[0].json||{};\nvar userText=(input.userText||input.query||'').toLowerCase();\nvar TZ=advisorTimezone;\nvar tokenBody='client_id='+process.env.GRAPH_CLIENT_ID+'&client_secret='+process.env.GRAPH_CLIENT_SECRET+'&scope=https://graph.microsoft.com/.default&grant_type=client_credentials';\nvar tokenRes=await new Promise(function(resolve){var req=https.request({hostname:'login.microsoftonline.com',path:'/'+process.env.GRAPH_TENANT_ID+'/oauth2/v2.0/token',method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Content-Length':Buffer.byteLength(tokenBody)}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({});}});});req.on('error',function(){resolve({});});req.write(tokenBody);req.end();});\nvar token=tokenRes.access_token||'';\nif(!token)return 'Could not connect to calendar.';\nvar todayFormatted=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric',timeZone:TZ});\nvar now=new Date();\nvar timeMin,timeMax,period;\nif(userText.indexOf('tomorrow')>=0){var tom=new Date();tom.setDate(tom.getDate()+1);timeMin=tom.toISOString().split('T')[0]+'T00:00:00Z';timeMax=tom.toISOString().split('T')[0]+'T23:59:59Z';period='tomorrow';}else if(userText.indexOf('week')>=0){timeMin=now.toISOString();var weekEnd=new Date();weekEnd.setDate(weekEnd.getDate()+7);timeMax=weekEnd.toISOString();period='this week';}else{var todayStr=now.toISOString().split('T')[0];timeMin=todayStr+'T00:00:00Z';timeMax=todayStr+'T23:59:59Z';period='today';}\nvar path='/v1.0/users/'+advisorEmail+'/events?$top=20&$select=subject,start,end,location,attendees&$orderby=start/dateTime&$filter=start/dateTime%20ge%20\\''+encodeURIComponent(timeMin)+'\\''+'%20and%20end/dateTime%20le%20\\''+encodeURIComponent(timeMax)+'\\'';\nvar calData=await new Promise(function(resolve){https.get({hostname:'graph.microsoft.com',path:path.split(' ').join('%20'),headers:{'Authorization':'Bearer '+token}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({});}});}).on('error',function(){resolve({});});});\nvar events=calData.value||[];\nif(events.length===0)return 'Today is '+todayFormatted+'. No events found for '+period+'.';\nvar lines=events.map(function(e,i){var startDT=new Date(e.start.dateTime+'Z');var endDT=new Date(e.end.dateTime+'Z');var startTime=startDT.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:TZ});var endTime=endDT.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:TZ});var loc=(e.location&&e.location.displayName)||'No location';return (i+1)+'. '+e.subject+'\\n   '+startTime+' - '+endTime+' | '+loc;});\nreturn 'Today is '+todayFormatted+'.\\n\\n'+events.length+' event(s) '+period+':\\n\\n'+lines.join('\\n\\n');"
+        },
+        "id": "tool-calendar-001",
+        "name": "Calendar Tool",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          1968,
+          820
+        ]
+      },
+      {
+        "parameters": {
+          "name": "send_email",
+          "description": "Drafts or sends emails from the advisor's Exchange mailbox.",
+          "jsCode": "var advisorEmail=$input.all()[0]?.json?.advisorEmail||$env.ADVISOR_EMAIL||'rmabbun@dakona.com';\nvar https=require('https');\nvar input=$input.all()[0].json||{};\nvar userText=(input.userText||input.query||'').trim();\nfunction graphReq(method,path,body,token){return new Promise(function(resolve){var bodyStr=body?JSON.stringify(body):'';var opts={hostname:'graph.microsoft.com',path:path.split(' ').join('%20'),method:method,headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'}};if(bodyStr)opts.headers['Content-Length']=Buffer.byteLength(bodyStr);var req=https.request(opts,function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({status:res.statusCode});}});});req.on('error',function(e){resolve({error:e.message});});if(bodyStr)req.write(bodyStr);req.end();});}\nvar tokenBody='client_id='+process.env.GRAPH_CLIENT_ID+'&client_secret='+process.env.GRAPH_CLIENT_SECRET+'&scope=https://graph.microsoft.com/.default&grant_type=client_credentials';\nvar tokenRes=await new Promise(function(resolve){var req=https.request({hostname:'login.microsoftonline.com',path:'/'+process.env.GRAPH_TENANT_ID+'/oauth2/v2.0/token',method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Content-Length':Buffer.byteLength(tokenBody)}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({});}});});req.on('error',function(){resolve({});});req.write(tokenBody);req.end();});\nvar token=tokenRes.access_token||'';\nif(!token)return 'Could not connect to email.';\nvar toMatch=userText.match(/to\\s+([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+)/i);\nvar toEmail=toMatch?toMatch[1]:'';\nvar subjectMatch=userText.match(/(?:about|subject|re:?)\\s+(.+?)(?:\\.|$)/i);\nvar subject=subjectMatch?subjectMatch[1].trim():'Follow-up from your advisor';\nvar isDraft=userText.indexOf('send')<0;\nvar body2='Dear Client,\\n\\nThis is a follow-up from your advisor.\\n\\nBest regards,\\nDemo Advisor';\nif(isDraft||!toEmail){var msg={subject:subject,body:{contentType:'Text',content:body2}};if(toEmail)msg.toRecipients=[{emailAddress:{address:toEmail}}];var r=await graphReq('POST','/v1.0/users/'+advisorEmail+'/messages',msg,token);if(r.id)return 'Draft saved. Subject: '+subject+(toEmail?' | To: '+toEmail:' | Recipient not set')+'. Edit and send from Outlook.';return 'Could not save draft.';}\nvar sendMsg={message:{subject:subject,body:{contentType:'Text',content:body2},toRecipients:[{emailAddress:{address:toEmail}}]},saveToSentItems:true};\nvar r=await graphReq('POST','/v1.0/users/'+advisorEmail+'/sendMail',sendMsg,token);\nif(!r.error)return 'Email sent to '+toEmail+'. Subject: '+subject;\nreturn 'Could not send email: '+(r.error||'unknown error');"
+        },
+        "id": "tool-send-email-001",
+        "name": "Send Email Tool",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          2380,
+          520
+        ]
+      },
+      {
+        "parameters": {
+          "name": "manage_calendar",
+          "description": "Creates, updates, or cancels calendar events in the advisor's Exchange calendar.",
+          "jsCode": "var advisorEmail=$input.all()[0]?.json?.advisorEmail||$env.ADVISOR_EMAIL||'rmabbun@dakona.com';\nvar advisorTimezone=$env.ADVISOR_TIMEZONE||$input.all()[0]?.json?.advisorTimezone||'America/New_York';\nvar https=require('https');\nvar input=$input.all()[0].json||{};\nvar userText=(input.userText||input.query||'').trim();\nfunction graphReq(method,path,body,token){return new Promise(function(resolve){var bodyStr=body?JSON.stringify(body):'';var opts={hostname:'graph.microsoft.com',path:path.split(' ').join('%20'),method:method,headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'}};if(bodyStr)opts.headers['Content-Length']=Buffer.byteLength(bodyStr);var req=https.request(opts,function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({status:res.statusCode});}});});req.on('error',function(e){resolve({error:e.message});});if(bodyStr)req.write(bodyStr);req.end();});}\nvar tokenBody='client_id='+process.env.GRAPH_CLIENT_ID+'&client_secret='+process.env.GRAPH_CLIENT_SECRET+'&scope=https://graph.microsoft.com/.default&grant_type=client_credentials';\nvar tokenRes=await new Promise(function(resolve){var req=https.request({hostname:'login.microsoftonline.com',path:'/'+process.env.GRAPH_TENANT_ID+'/oauth2/v2.0/token',method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Content-Length':Buffer.byteLength(tokenBody)}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({});}});});req.on('error',function(){resolve({});});req.write(tokenBody);req.end();});\nvar token=tokenRes.access_token||'';\nif(!token)return 'Could not connect to calendar.';\nvar lc=userText.toLowerCase();\nvar timeMatch=lc.match(/(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)/i);\nif(!timeMatch)return 'Please specify a time for the meeting (e.g., \"at 2pm\").';\nvar hour=parseInt(timeMatch[1]);\nif(timeMatch[3]&&timeMatch[3].toLowerCase()==='pm'&&hour<12)hour+=12;\nif(timeMatch[3]&&timeMatch[3].toLowerCase()==='am'&&hour===12)hour=0;\nvar minute=timeMatch[2]?parseInt(timeMatch[2]):0;\nvar meetDate=new Date();\nif(lc.indexOf('tomorrow')>=0)meetDate.setDate(meetDate.getDate()+1);\nvar startDT=meetDate.toISOString().split('T')[0]+'T'+String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0')+':00';\nvar endDT=meetDate.toISOString().split('T')[0]+'T'+String(hour+1).padStart(2,'0')+':'+String(minute).padStart(2,'0')+':00';\nvar subjectMatch=userText.match(/(?:schedule|book|create|set up)\\s+(?:a\\s+)?(?:meeting|call|appointment)\\s+(?:with\\s+)?(.+?)(?:\\s+(?:on|for|at|next|tomorrow))/i);\nvar meetSubject=subjectMatch?'Meeting with '+subjectMatch[1].trim():'Meeting';\nvar event={subject:meetSubject,start:{dateTime:startDT,timeZone:advisorTimezone},end:{dateTime:endDT,timeZone:advisorTimezone},location:{displayName:'Zoom'}};\nvar r=await graphReq('POST','/v1.0/users/'+advisorEmail+'/events',event,token);\nif(r.id){var formatted=new Date(startDT).toLocaleString('en-US',{timeZone:advisorTimezone,dateStyle:'full',timeStyle:'short'});return 'Meeting scheduled: '+meetSubject+'\\n'+formatted+' | Location: Zoom';}\nreturn 'Could not create meeting: '+JSON.stringify(r.error||r).substring(0,200);"
+        },
+        "id": "tool-manage-cal-001",
+        "name": "Manage Calendar Tool",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          2560,
+          520
+        ]
+      },
+      {
+        "id": "flag-check-1774448149171",
+        "name": "Compliance Flag Check",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2346,
+          596
+        ],
+        "parameters": {
+          "jsCode": "var advisorTimezone=$env.ADVISOR_TIMEZONE||$input.all()[0]?.json?.advisorTimezone||'America/New_York';\nvar response=$input.all()[0].json;\nvar userMsg=response._userMessage||'';\nvar daxResp=response._agentOutput||'';\nvar combinedText=(userMsg+' '+daxResp).toLowerCase();\nvar triggers=[{phrase:'should i buy',severity:'HIGH',reason:'Potential investment recommendation request'},{phrase:'should i sell',severity:'HIGH',reason:'Potential investment recommendation request'},{phrase:'i recommend',severity:'HIGH',reason:'Explicit recommendation language'},{phrase:'guarantee',severity:'HIGH',reason:'Prohibited guarantee language'},{phrase:'guaranteed return',severity:'CRITICAL',reason:'Prohibited guarantee of returns'},{phrase:'risk-free',severity:'CRITICAL',reason:'Prohibited risk-free claim'},{phrase:'insider',severity:'CRITICAL',reason:'Potential insider information reference'},{phrase:'lawsuit',severity:'HIGH',reason:'Legal action reference'}];\nvar matches=triggers.filter(function(t){return combinedText.indexOf(t.phrase)>=0;});\nvar output={sseBody:response.sseBody,_flagged:false};\nif(matches.length>0){var severity=matches.some(function(m){return m.severity==='CRITICAL';})? 'CRITICAL':matches.some(function(m){return m.severity==='HIGH';})? 'HIGH':'MEDIUM';var flagDetails=matches.map(function(m){return '['+m.severity+'] \"'+m.phrase+'\" - '+m.reason;}).join('\\n');var ts=new Date().toLocaleString('en-US',{timeZone:advisorTimezone});output._flagged=true;output._noteContent='[DAX-REVIEW] Compliance Flag - '+severity+'\\nDate: '+ts+'\\nAdvisor: Demo Advisor\\nStatus: PENDING\\n\\nTRIGGERS:\\n'+flagDetails+'\\n\\nUSER: '+userMsg.substring(0,300)+'\\n\\nDAX: '+daxResp.substring(0,300)+'\\n\\nGenerated by DAX v0.5.0';output._severity=severity;}\nreturn [{json:output}];"
+        }
+      },
+      {
+        "id": "flag-if-1774448149171",
+        "name": "Flag IF",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          2516,
+          596
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": ""
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json._flagged }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        }
+      },
+      {
+        "id": "flag-post-1774448149171",
+        "name": "Flag Post to Wealthbox",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2686,
+          516
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.crmworkspace.com/v1/notes",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "ACCESS_TOKEN",
+                "value": "={{ $env.WEALTHBOX_API_KEY }}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({content: $json._noteContent, tags: [\"DAX\", \"DAX-REVIEW\", $json._severity]}) }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "mst-1774465121362",
+        "name": "Market Summary Tool",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          2224,
+          820
+        ],
+        "parameters": {
+          "name": "get_market_summary",
+          "description": "Gets today's real market news and index prices. ALWAYS use when asked about market news, market update, or what is driving markets.",
+          "jsCode": "var advisorTimezone=$env.ADVISOR_TIMEZONE||$input.all()[0]?.json?.advisorTimezone||'America/New_York';\nvar https=require('https');\nfunction httpGet(hostname,path){return new Promise(function(resolve){https.get({hostname:hostname,path:path,timeout:15000},function(res){var data='';res.on('data',function(c){data+=c;});res.on('end',function(){try{resolve(JSON.parse(data));}catch(e){resolve(null);}});}).on('error',function(){resolve(null);}).on('timeout',function(){resolve(null);});});}\nvar headlines=[];\nvar fhData=await httpGet('finnhub.io','/api/v1/news?category=general&token='+(process.env.FINNHUB_API_KEY||'')+'');\nif(fhData&&Array.isArray(fhData)){headlines=fhData.slice(0,6).map(function(n){return{title:n.headline||'',summary:(n.summary||'').substring(0,150),source:n.source||'Unknown',published:n.datetime?new Date(n.datetime*1000).toLocaleString('en-US',{timeZone:advisorTimezone,month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}):''};});}\nvar symbols=['SPY','DIA','QQQ','IWM','TLT','GLD','VIXY'];\nvar labelMap={SPY:'S&P 500',DIA:'Dow Jones',QQQ:'Nasdaq 100',IWM:'Russell 2000',TLT:'20yr Treasury',GLD:'Gold',VIXY:'VIX (VIXY)'};\nvar quoteLines=[];\nfor(var i=0;i<symbols.length;i++){var qd=await httpGet('finnhub.io','/api/v1/quote?symbol='+symbols[i]+'&token='+(process.env.FINNHUB_API_KEY||'')+'');if(qd&&qd.c>0){var pct=qd.pc>0?((qd.c-qd.pc)/qd.pc*100):0;quoteLines.push((labelMap[symbols[i]]||symbols[i])+': $'+qd.c.toFixed(2)+' ('+(pct>=0?'+':'')+pct.toFixed(2)+'%)');} }\nvar today=new Date().toLocaleDateString('en-US',{timeZone:advisorTimezone,weekday:'long',month:'long',day:'numeric',year:'numeric'});\nvar headlineText=headlines.length>0?headlines.map(function(h,i){return (i+1)+'. '+h.title+'\\n   '+(h.summary||'')+'\\n   '+h.source+' | '+h.published;}).join('\\n\\n'):'No market news available.';\nreturn 'MARKET SUMMARY - '+today+'\\n\\nKEY INDICES\\n'+(quoteLines.join('\\n')||'Price data unavailable')+'\\n\\nTOP MARKET STORIES\\n'+headlineText;"
+        }
+      },
+      {
+        "parameters": {
+          "name": "create_document",
+          "description": "Creates a Word document (.docx) and saves it to SharePoint. ALWAYS use this tool when an advisor asks to write, draft, create, save, or generate any document. Pass { \"title\": \"...\", \"content\": \"...\" }.",
+          "jsCode": "var https=require('https');\nvar PizZip=require('pizzip');\nvar input=$input.all()[0].json||{};\nvar title,content,folderPath;\nif(typeof input==='string'){title='Document';content=input;folderPath='DAX/Documents';}else{title=String(input.title||input.fileName||input.name||'Document').trim();content=String(input.content||input.body||input.text||'').trim();folderPath=String(input.folderPath||'DAX/Documents').trim();}\nif(!content||content.length<3)return 'create_document requires a content field.';\nvar tokenBody='client_id='+process.env.GRAPH_CLIENT_ID+'&client_secret='+process.env.GRAPH_CLIENT_SECRET+'&scope=https://graph.microsoft.com/.default&grant_type=client_credentials';\nvar tokenRes=await new Promise(function(resolve){var req=https.request({hostname:'login.microsoftonline.com',path:'/'+process.env.GRAPH_TENANT_ID+'/oauth2/v2.0/token',method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Content-Length':Buffer.byteLength(tokenBody)}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({});}});});req.on('error',function(){resolve({});});req.write(tokenBody);req.end();});\nvar token=tokenRes.access_token||'';\nif(!token)return 'SharePoint connection failed.';\nfunction esc(v){return String(v||'').split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;');}\nvar lines=content.split('\\n');\nvar paraXml=lines.map(function(line){if(!line.trim())return '<w:p><w:pPr><w:spacing w:after=\"120\"/></w:pPr></w:p>';return '<w:p><w:r><w:t xml:space=\"preserve\">'+esc(line)+'</w:t></w:r></w:p>';}).join('');\nvar documentXml='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><w:document xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:body><w:p><w:pPr><w:jc w:val=\"center\"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val=\"32\"/></w:rPr><w:t>'+esc(title)+'</w:t></w:r></w:p><w:p></w:p>'+paraXml+'<w:sectPr><w:pgSz w:w=\"12240\" w:h=\"15840\"/><w:pgMar w:top=\"1440\" w:right=\"1440\" w:bottom=\"1440\" w:left=\"1440\"/></w:sectPr></w:body></w:document>';\nvar zip=new PizZip();\nzip.file('[Content_Types].xml','<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/><Default Extension=\"xml\" ContentType=\"application/xml\"/><Override PartName=\"/word/document.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml\"/><Override PartName=\"/word/styles.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml\"/></Types>');\nzip.file('_rels/.rels','<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"word/document.xml\"/></Relationships>');\nzip.file('word/document.xml',documentXml);\nzip.file('word/_rels/document.xml.rels','<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"styles.xml\"/></Relationships>');\nzip.file('word/styles.xml','<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><w:styles xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii=\"Calibri\" w:hAnsi=\"Calibri\"/><w:sz w:val=\"22\"/></w:rPr></w:rPrDefault></w:docDefaults><w:style w:type=\"paragraph\" w:default=\"1\" w:styleId=\"Normal\"><w:name w:val=\"Normal\"/></w:style></w:styles>');\nvar docBuffer=zip.generate({type:'nodebuffer',compression:'DEFLATE'});\nvar fileName=title.replace(/[^a-zA-Z0-9 \\-_]/g,'').trim().replace(/ +/g,'_')+'.docx';\nvar uploadPath='/v1.0/sites/'+process.env.GRAPH_SITE_ID+'/drive/root:/'+encodeURIComponent(folderPath)+'/'+encodeURIComponent(fileName)+':/content';\nvar uploadResult=await new Promise(function(resolve){var req=https.request({hostname:'graph.microsoft.com',path:uploadPath,method:'PUT',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','Content-Length':docBuffer.length}},function(res){var d='';res.on('data',function(c){d+=c;});res.on('end',function(){try{resolve(JSON.parse(d));}catch(e){resolve({error:'parse'});}});});req.on('error',function(e){resolve({error:e.message});});req.write(docBuffer);req.end();});\nif(uploadResult.webUrl)return 'Document saved to SharePoint.\\nFile: '+fileName+'\\nLink: '+uploadResult.webUrl;\nreturn 'Upload failed: '+JSON.stringify(uploadResult).substring(0,300);"
+        },
+        "id": "tool-create-doc-001",
+        "name": "Create Document Tool",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          2096,
+          820
+        ]
+      },
+      {
+        "id": "tool-research-write-001",
+        "name": "Research and Write Tool",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          2352,
+          820
+        ],
+        "parameters": {
+          "name": "research_and_write",
+          "description": "Researches a topic and writes a complete professional long-form document saved to SharePoint. Use when an advisor asks to write an article, white paper, research report, blog post, or any multi-section document. Takes 60-90 seconds - tell the advisor it is generating.",
+          "jsCode": "var https = require(\"https\");\nvar input = $input.all()[0]?.json || {};\nvar userText = input.userText || input.query || \"\";\n\n// Extract topic - strip common request prefixes\nvar topic = userText\n  .replace(/^(can you |please |could you |i need you to |i want you to |go ahead and )/i, \"\")\n  .replace(/^(write|create|draft|generate|research|produce|compose)\\s+(a |an |me |us |)\\s*/i, \"\")\n  .replace(/^(\\d{3,5})\\s*word\\s+/i, \"\")\n  .replace(/^(article|report|white paper|whitepaper|blog post|blog|memo|document|piece|essay|newsletter|paper)\\s+(about|on|regarding|for|covering|discussing|analyzing|analysing)\\s+/i, \"\")\n  .replace(/\\s+(and |then |&)\\s*(save|upload|put|store|send)\\s+(it\\s+)?(to|on|in|into)\\s+sharepoint\\s*/i, \"\")\n  .replace(/\\s+to\\s+sharepoint\\s*$/i, \"\")\n  .trim();\nif (!topic || topic.length < 5) topic = userText.trim();\n\n// Extract word count if mentioned\nvar wcMatch = userText.match(/(\\d{3,5})\\s*word/i);\nvar wordCount = wcMatch ? parseInt(wcMatch[1]) : 1200;\n\n// Call the Research & Write webhook\nvar body = JSON.stringify({\n  topic: topic,\n  wordCount: wordCount,\n  keywords: \"\",\n  additionalInstructions: \"\"\n});\n\nvar resp = await new Promise(function(resolve) {\n  var req = https.request({\n    hostname: \"n8n.dakona.net\",\n    path: \"/webhook/dax/research-write\",\n    method: \"POST\",\n    headers: { \"Content-Type\": \"application/json\", \"Content-Length\": Buffer.byteLength(body) }\n  }, function(res) {\n    var data = \"\";\n    res.on(\"data\", function(c) { data += c; });\n    res.on(\"end\", function() { resolve(data); });\n  });\n  req.setTimeout(170000, function() { req.destroy(); resolve(JSON.stringify({error: \"Timed out after 170 seconds\"})); });\n  req.on(\"error\", function(e) { resolve(JSON.stringify({error: e.message})); });\n  req.write(body); req.end();\n});\n\nvar result = {};\ntry { result = JSON.parse(resp); } catch(e) { return \"Error parsing response from document generator\"; }\n\nif (result.success) {\n  return \"Document generated and saved to SharePoint:\\n- Topic: \" + topic + \"\\n- File: \" + result.fileName + \"\\n- Sections: \" + result.sectionCount + \"\\n- Words: \" + result.actualWordCount + \"\\n- URL: \" + result.webUrl;\n}\n\nreturn \"Error generating document: \" + (result.error || JSON.stringify(result).substring(0, 200));\n"
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Extract Message",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Message": {
+        "main": [
+          [
+            {
+              "node": "Is Title?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Azure OpenAI GPT-4o": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "DAX Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Chat Memory": {
+        "ai_memory": [
+          [
+            {
+              "node": "DAX Agent",
+              "type": "ai_memory",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Reports Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "DAX Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Client Lookup Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "DAX Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DAX Agent": {
+        "main": [
+          [
+            {
+              "node": "Format Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Response": {
+        "main": [
+          [
+            {
+              "node": "Compliance Flag Check",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Market Data Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "DAX Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "List Clients Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "DAX Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Meeting Prep Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "DAX Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is Title?": {
+        "main": [
+          [
+            {
+              "node": "Direct GPT-4o Proxy",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "DAX Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Direct GPT-4o Proxy": {
+        "main": [
+          [
+            {
+              "node": "Title or Image?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Title or Image?": {
+        "main": [
+          [
+            {
+              "node": "Respond Title",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Respond Image",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Email Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "DAX Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Calendar Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "DAX Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Email Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "DAX Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Manage Calendar Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "DAX Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Compliance Flag Check": {
+        "main": [
+          [
+            {
+              "node": "Flag IF",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Flag IF": {
+        "main": [
+          [
+            {
+              "node": "Flag Post to Wealthbox",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Flag Post to Wealthbox": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Market Summary Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "DAX Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create Document Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "DAX Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Research and Write Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "DAX Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Richard Mabbun",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-27T23:22:15.096Z",
+        "id": 1557,
+        "workflowId": "3tniyxZREqfnAbfo",
+        "versionId": "447e4229-30f5-4a3a-b9f8-565f034978e3",
+        "event": "activated",
+        "userId": "763ebc85-8160-4949-8238-c0ab68058111"
+      },
+      {
+        "createdAt": "2026-03-27T23:22:15.063Z",
+        "id": 1556,
+        "workflowId": "3tniyxZREqfnAbfo",
+        "versionId": "447e4229-30f5-4a3a-b9f8-565f034978e3",
+        "event": "deactivated",
+        "userId": "763ebc85-8160-4949-8238-c0ab68058111"
+      }
+    ]
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "updatedAt": "2026-03-24T17:27:19.868Z",
+  "createdAt": "2026-03-24T16:43:36.670Z",
+  "id": "ND29lraWyd3wsWKS",
+  "name": "DAX Market Data",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "market-data",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "mkt-webhook-001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nconst symbols = (body.symbols || 'SPY').split(',').map(s => s.trim().toUpperCase()).filter(Boolean).slice(0, 10);\nconsole.log('[Market] Fetching:', symbols.join(', '));\n\nconst https = require('https');\nfunction fetchChart(symbol) {\n  return new Promise((resolve) => {\n    const url = '/v8/finance/chart/' + encodeURIComponent(symbol) + '?interval=1d&range=1d';\n    https.get({\n      hostname: 'query1.finance.yahoo.com', path: url, method: 'GET',\n      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }\n    }, (res) => {\n      let data = '';\n      res.on('data', c => data += c);\n      res.on('end', () => {\n        try {\n          const j = JSON.parse(data);\n          const meta = j?.chart?.result?.[0]?.meta;\n          if (!meta) { resolve({ symbol, error: 'No data' }); return; }\n          const price = meta.regularMarketPrice;\n          const prev = meta.chartPreviousClose || meta.previousClose;\n          const change = prev ? (price - prev) : 0;\n          const pct = prev ? ((change / prev) * 100) : 0;\n          const name = meta.shortName || meta.longName || symbol;\n          const isRate = ['^IRX', '^TNX', '^FVX', '^TYX'].includes(symbol);\n          resolve({\n            symbol, name,\n            price: isRate ? price.toFixed(3) + '%' : '$' + price.toFixed(2),\n            change: (change >= 0 ? '+' : '') + (isRate ? change.toFixed(3) : change.toFixed(2)),\n            changePct: (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%',\n            marketState: meta.marketState || ''\n          });\n        } catch(e) { resolve({ symbol, error: e.message }); }\n      });\n      res.on('error', () => resolve({ symbol, error: 'fetch failed' }));\n    }).on('error', () => resolve({ symbol, error: 'connection failed' }));\n  });\n}\n\nconst results = await Promise.all(symbols.map(s => fetchChart(s)));\n\nconst formatted = results.map(r =>\n  r.error ? r.symbol + ': ' + r.error :\n  r.symbol + ' (' + r.name + '): ' + r.price + ' ' + r.changePct + ' today'\n).join('\\n');\n\nconst now = Math.floor(Date.now() / 1000);\nconst id = 'chatcmpl-dax-' + now;\nconst responseBody = { response: formatted, data: results };\n\nreturn [{ json: responseBody }];"
+      },
+      "id": "mkt-fetch-001",
+      "name": "Fetch Prices",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "mkt-respond-001",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        700,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Prices": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "e0cde3d7-da2f-4476-ac34-118fecb02ff9",
+  "activeVersionId": "e0cde3d7-da2f-4476-ac34-118fecb02ff9",
+  "versionCounter": 20,
+  "triggerCount": 1,
+  "tags": [
+    {
+      "id": "EIql1CPs6WQ8Z9am",
+      "name": "DAX"
+    }
+  ]
+}

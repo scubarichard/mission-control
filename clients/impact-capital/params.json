@@ -24,9 +24,10 @@
     "tenantName": "impactcapitalpartnersllc",
     "siteUrl": "https://impactcapitalpartnersllc.sharepoint.com/sites/ImpactCapitalPartners",
     "siteId": "impactcapitalpartnersllc.sharepoint.com,9408138e-0aa3-404e-b131-bc905b2d99d0,40e05979-6387-4bb6-8b8e-6638aa9c1e2f",
-    "templatesLibrary": "DAX Templates",
-    "reportsLibrary": "DAX Reports",
-    "documentsLibrary": "DAX Documents"
+    "library": "DAX",
+    "templateFolder": "Templates",
+    "reportsFolder": "Reports",
+    "documentsFolder": "Documents"
   },
   "integrations": {
     "wealthbox": false,

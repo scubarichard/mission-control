@@ -1,0 +1,127 @@
+{
+  "updatedAt": "2026-04-07T20:45:42.048Z",
+  "createdAt": "2026-03-14T16:10:31.316Z",
+  "id": "MtkxBYcyV1VYt02e",
+  "name": "DAX Document Generator",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "e6b5ac7b-d07b-4230-8edb-b3c6a7763c0e",
+      "name": "Webhook",
+      "parameters": {
+        "httpMethod": "POST",
+        "options": {},
+        "path": "generate-document",
+        "responseMode": "responseNode"
+      },
+      "position": [
+        19920,
+        -5616
+      ],
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "webhookId": "f0d92c5a-5a83-4c75-a861-4e349d1c6835"
+    },
+    {
+      "id": "0b032f41-679a-47fe-8a01-4ceb346bb402",
+      "name": "Route Input",
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst body = (raw.body && typeof raw.body === 'object') ? raw.body : raw;\nconst isStructured = !!(body.clientName && body.firmName);\nreturn [{ json: { ...body, _isStructured: isStructured, _inputText: body.message || body.text || body.input || '' } }];"
+      },
+      "position": [
+        20144,
+        -5616
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "id": "gen-upload-001",
+      "name": "Generate and Upload",
+      "parameters": {
+        "jsCode": "const https = require('https');\nconst { execFileSync } = require('child_process');\nconst fs = require('fs');\nconst path = require('path');\nconst os = require('os');\nconst d = $input.first().json;\nconsole.log('DocGen: clientName=' + d.clientName);\n\nasync function getToken() {\n  return new Promise((resolve, reject) => {\n    const body = 'client_id=' + process.env.GRAPH_CLIENT_ID + '&client_secret=' + process.env.GRAPH_CLIENT_SECRET + '&scope=https%3A%2F%2Fgraph.microsoft.com%2F.default&grant_type=client_credentials';\n    const req = https.request({ hostname: 'login.microsoftonline.com', path: '/' + process.env.GRAPH_TENANT_ID + '/oauth2/v2.0/token', method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body) } }, res => { let data = ''; res.on('data', c => data += c); res.on('end', () => { try { resolve(JSON.parse(data).access_token); } catch(e) { reject(e); } }); });\n    req.on('error', reject); req.write(body); req.end();\n  });\n}\nasync function downloadUrl(url) {\n  return new Promise((resolve, reject) => {\n    const follow = (u) => {\n      const mod = u.startsWith('https') ? https : require('http');\n      const parsed = require('url').parse(u);\n      mod.get({ hostname: parsed.hostname, path: parsed.pathname + parsed.search, headers: {} }, res => {\n        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) { follow(res.headers.location); return; }\n        const chunks = []; res.on('data', c => chunks.push(c)); res.on('end', () => resolve(Buffer.concat(chunks))); res.on('error', reject);\n      }).on('error', reject);\n    };\n    follow(url);\n  });\n}\nasync function uploadToSharePoint(token, folderPath, fileName, buffer) {\n  const sitePath = '/v1.0/sites/' + process.env.GRAPH_SITE_ID + '/drive/root:/';\n  const uploadPath = sitePath + folderPath.replace(/ /g, '%20') + '/' + fileName.replace(/ /g, '%20') + ':/content';\n  return new Promise((resolve, reject) => {\n    const req = https.request({ hostname: 'graph.microsoft.com', path: uploadPath, method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'Content-Length': buffer.length } }, res => {\n      let data = ''; res.on('data', c => data += c);\n      res.on('end', () => { try { resolve(JSON.parse(data)); } catch(e) { resolve({ error: 'parse', raw: data.substring(0, 200) }); } });\n    });\n    req.on('error', reject); req.write(buffer); req.end();\n  });\n}\n\nconst token = await getToken();\nconst tplMeta = await new Promise((resolve, reject) => {\n  https.get({ hostname: 'graph.microsoft.com', path: '/v1.0/sites/' + process.env.GRAPH_SITE_ID + '/drive/root:/DAX/Templates/Quarterly-Review-TEMPLATE.docx', headers: { 'Authorization': 'Bearer ' + token } }, res => {\n    let data = ''; res.on('data', c => data += c); res.on('end', () => { try { resolve(JSON.parse(data)); } catch(e) { resolve({}); } });\n  }).on('error', reject);\n});\nconst dlUrl = tplMeta['@microsoft.graph.downloadUrl'];\nif (!dlUrl) throw new Error('Template not found');\nconst tplBuffer = await downloadUrl(dlUrl);\nif (tplBuffer.length < 1000) throw new Error('Template too small: ' + tplBuffer.length);\n\nfunction dash(v) { return (v && String(v).trim()) ? String(v).trim() : '\\u2014'; }\nfunction esc(v) { return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }\n\nconst templateData = {\n  FIRM_NAME: d.firmName||'', CLIENT_NAME: d.clientName||'',\n  REPORT_PERIOD: d.reportPeriod||'', REPORT_DATE: d.reportDate||'',\n  ADVISOR_NAME: d.advisorName||'', ACCOUNT_NUMBER: d.accountNumber||'',\n  ACCOUNT_TYPE: dash(d.accountType), RISK_PROFILE: dash(d.riskProfile),\n  MEETING_DATE: d.meetingDate||'', MEETING_LOCATION: d.meetingLocation||'Zoom',\n  ATTENDEES: d.attendees||'', MEETING_DURATION: d.meetingDuration||'',\n  DISCUSSION_POINT_1: d.discussionPoint1||'', DISCUSSION_POINT_2: d.discussionPoint2||'', DISCUSSION_POINT_3: d.discussionPoint3||'',\n  ADVISOR_NOTES: d.advisorNotes||'',\n  PORTFOLIO_VALUE: d.portfolioValue||'', YTD_RETURN: d.ytdReturn||'',\n  BENCHMARK_RETURN: d.benchmarkReturn||'', VS_BENCHMARK: d.vsBenchmark||'',\n  TOP_HOLDING: dash(d.topHolding), INVESTMENT_OBJECTIVE: dash(d.investmentObjective),\n  TIME_HORIZON: dash(d.timeHorizon), BACKGROUND_INFO: dash(d.backgroundInfo),\n  GOALS_PROGRESS_NOTES: d.goalsProgressNotes||'',\n  ACTION_1: d.action1||'', ACTION_1_OWNER: d.action1Owner||'', ACTION_1_DUE: d.action1Due||'',\n  ACTION_2: d.action2||'', ACTION_2_OWNER: d.action2Owner||'', ACTION_2_DUE: d.action2Due||'',\n  ACTION_3: d.action3||'', ACTION_3_OWNER: d.action3Owner||'', ACTION_3_DUE: d.action3Due||'',\n  NEXT_MEETING_DATE: dash(d.nextMeetingDate), NEXT_MEETING_AGENDA: dash(d.nextMeetingAgenda),\n  actions: [\n    d.action1 ? { num: '1', text: d.action1, owner: d.action1Owner||'', due: d.action1Due||'TBD' } : null,\n    d.action2 ? { num: '2', text: d.action2, owner: d.action2Owner||'', due: d.action2Due||'TBD' } : null,\n    d.action3 ? { num: '3', text: d.action3, owner: d.action3Owner||'', due: d.action3Due||'TBD' } : null,\n  ].filter(Boolean),\n  discussions: [\n    d.discussionPoint1 ? { num: '1', text: d.discussionPoint1 } : null,\n    d.discussionPoint2 ? { num: '2', text: d.discussionPoint2 } : null,\n    d.discussionPoint3 ? { num: '3', text: d.discussionPoint3 } : null,\n  ].filter(Boolean),\n  goals: [],\n};\nif (!templateData.actions.length) templateData.actions = [{ num: '1', text: 'No action items', owner: '', due: '' }];\nif (!templateData.discussions.length) templateData.discussions = [{ num: '1', text: 'Discussion points to be covered' }];\n\n// Run pizzip+docxtemplater in a subprocess to avoid n8n sandbox restrictions\nconst ts = Date.now();\nconst tmpDir = os.tmpdir();\nconst tplPath = path.join(tmpDir, 'dg-tpl-' + ts + '.docx');\nconst dataPath = path.join(tmpDir, 'dg-data-' + ts + '.json');\nconst scriptPath = path.join(tmpDir, 'dg-script-' + ts + '.js');\n\nfs.writeFileSync(tplPath, tplBuffer);\nfs.writeFileSync(dataPath, JSON.stringify(templateData));\n\nconst script = `\nconst PizZip = require('pizzip');\nconst Docxtemplater = require('docxtemplater');\nconst fs = require('fs');\n\nconst tplBuf = fs.readFileSync(process.argv[2]);\nconst data = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));\n\nfunction esc(v) { return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }\n\nconst zip = new PizZip(tplBuf);\nconst doc = new Docxtemplater(zip, {\n  delimiters: { start: '{{', end: '}}' },\n  paragraphLoop: true,\n  linebreaks: true,\n  nullGetter() { return ''; },\n});\ndoc.render(data);\nlet docBuf = doc.getZip().generate({ type: 'nodebuffer', compression: 'DEFLATE' });\n\n// Post-process: fix placeholders and white text\nconst zip2 = new PizZip(docBuf);\nlet xml = zip2.file('word/document.xml').asText();\nxml = xml.split('Demo Advisor').join(esc(data.ADVISOR_NAME || 'Advisor'));\nxml = xml.split('Impact Capital Partners').join(esc(data.FIRM_NAME || 'Impact Capital Partners'));\nxml = xml.split('Key Discussion Points:').join('');\nxml = xml.replace(/(\\u003cw:color[^\\u003e]+w:val=\\\")(?:FFFFFF|ffffff)(\\\")/g, '\\$11F3864\\$2');\nzip2.file('word/document.xml', xml);\ndocBuf = zip2.generate({ type: 'nodebuffer', compression: 'DEFLATE' });\n\nprocess.stdout.write(docBuf.toString('base64'));\n`;\nfs.writeFileSync(scriptPath, script);\n\nlet outputBase64;\ntry {\n  outputBase64 = execFileSync('node', [scriptPath, tplPath, dataPath], {\n    maxBuffer: 50 * 1024 * 1024,\n    encoding: 'utf8',\n    stdio: ['pipe', 'pipe', 'pipe'],\n  });\n  console.log('Doc generated: ' + outputBase64.length + ' base64 chars');\n} catch (err) {\n  if (err.stderr) console.log('Script error: ' + err.stderr.toString().substring(0, 300));\n  throw new Error('Doc generation failed: ' + (err.stderr ? err.stderr.toString().substring(0,200) : err.message));\n} finally {\n  try { fs.unlinkSync(tplPath); } catch(_) {}\n  try { fs.unlinkSync(dataPath); } catch(_) {}\n  try { fs.unlinkSync(scriptPath); } catch(_) {}\n}\n\nconst docBuffer = Buffer.from(outputBase64, 'base64');\nconst parts = (d.clientName||'Client').trim().split(' ');\nconst lastName = parts[parts.length-1];\nconst firstName = parts.slice(0,-1).join(' ');\nconst folderPath = 'DAX/Reports/' + lastName + ' - ' + firstName;\nconst cName = (d.clientName||'Report').replace(/[^a-zA-Z0-9 -]/g,'').trim();\nconst rPeriod = (d.reportPeriod||'Report').replace(/[^a-zA-Z0-9 -]/g,'').trim();\nconst dateStr = new Date().toISOString().split('T')[0];\nconst fileName = cName + ' - ' + rPeriod + ' (' + dateStr + ').docx';\nconsole.log('Uploading: ' + folderPath + '/' + fileName);\nconst uploadResult = await uploadToSharePoint(token, folderPath, fileName, docBuffer);\nif (uploadResult.error && !uploadResult.webUrl) throw new Error('Upload failed: ' + JSON.stringify(uploadResult));\nreturn [{ json: { success: true, webUrl: uploadResult.webUrl||'', fileName: uploadResult.name||fileName, driveItemId: uploadResult.id||'', size: uploadResult.size||docBuffer.length, clientName: d.clientName, reportPeriod: d.reportPeriod } }];"
+      },
+      "position": [
+        21000,
+        -5616
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "id": "de0d24fc-d5e1-41dd-b034-5b81ed84b834",
+      "name": "Respond to Webhook",
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        },
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "position": [
+        21300,
+        -5616
+      ],
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1
+    }
+  ],
+  "connections": {
+    "Generate and Upload": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Respond to Webhook",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Route Input": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Generate and Upload",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Route Input",
+            "type": "main"
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "332d634b-4bf8-447c-a608-254dfd06af4a",
+  "activeVersionId": "332d634b-4bf8-447c-a608-254dfd06af4a",
+  "versionCounter": 301,
+  "triggerCount": 1,
+  "tags": [
+    {
+      "id": "EIql1CPs6WQ8Z9am",
+      "name": "DAX"
+    }
+  ]
+}

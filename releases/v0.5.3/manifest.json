@@ -1,0 +1,30 @@
+{
+  "version": "0.5.3",
+  "approved": "2026-04-07",
+  "approvedBy": "Richard Mabbun",
+  "description": "DAX v0.5.3 — Dakona pilot baseline. AI Agent Router, 4 tools, compliance flagging, document generation.",
+  "source": "dax.dakona.com (Dakona pilot)",
+  "artifacts": {
+    "libreChatImage": "acrdaxdakona.azurecr.io/librechat-dax:v0.5.3",
+    "n8nImage": "n8nio/n8n:latest",
+    "configTemplate": "librechat.yaml.template",
+    "workflows": [
+      "workflows/dax-router.json",
+      "workflows/dax-document-generator.json",
+      "workflows/dax-schwab-sharepoint.json",
+      "workflows/dax-research-write.json",
+      "workflows/dax-market-data.json",
+      "workflows/dax-market-summary.json",
+      "workflows/dax-compliance-flagging.json"
+    ],
+    "docTemplates": [
+      "templates/Quarterly-Review-TEMPLATE.docx",
+      "templates/Meeting-Prep-TEMPLATE.docx"
+    ]
+  },
+  "testResults": {
+    "t6Suite": "7/7 PASS",
+    "testedOn": "2026-04-07"
+  },
+  "notes": "All workflow credentials sanitized — use $env.* / process.env.* references. Azure OpenAI credential ID must be created per-client after import (placeholder: REPLACE_WITH_CLIENT_CREDENTIAL_ID)."
+}
