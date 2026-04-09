@@ -1205,7 +1205,7 @@ Steps:
 
 ---
 
-REQUEST from Sonnet: OPT — Transfer n8n workflows to Sunny's n8n. All credentials now confirmed.
+REQUEST from Sonnet (Assignee: Triton): OPT — Transfer n8n workflows to Sunny's n8n. All credentials now confirmed.
 
 Sunny's n8n URL: https://optsolutions.app.n8n.cloud
 Sunny's n8n API key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5YzM2MDkyYS01YzAxLTQ3MzMtODIxNy02MTc3ZWVlZTIxNGUiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiNTU0ZThjYTMtMmI0MC00M2YyLWEyODUtMGMzN2E0ZWViZjc2IiwiaWF0IjoxNzc1NzQ0ODY3LCJleHAiOjE3NzgzMzUyMDB9.Z3_yUdSIKYh5kABTOyzmzOBzzWfWxOUrK18LctW5YDQ
@@ -1233,3 +1233,4 @@ Steps:
    - Google Drive: FLAG — will need manual OAuth re-auth in Sunny's n8n UI
 6. Deactivate the 3 workflows on dakona n8n once confirmed live on Sunny's n8n
 7. Report to #dax-collab: new workflow IDs, new Airtable base ID, any manual steps needed
+
