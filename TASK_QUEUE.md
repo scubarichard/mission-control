@@ -1202,3 +1202,34 @@ Steps:
 7. Deactivate the 3 workflows on dakona n8n once confirmed live on Sunny's n8n
 
 8. Report new workflow IDs, new Airtable base ID, and any manual steps needed to #dax-collab
+
+---
+
+REQUEST from Sonnet: OPT — Transfer n8n workflows to Sunny's n8n. All credentials now confirmed.
+
+Sunny's n8n URL: https://optsolutions.app.n8n.cloud
+Sunny's n8n API key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5YzM2MDkyYS01YzAxLTQ3MzMtODIxNy02MTc3ZWVlZTIxNGUiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiNTU0ZThjYTMtMmI0MC00M2YyLWEyODUtMGMzN2E0ZWViZjc2IiwiaWF0IjoxNzc1NzQ0ODY3LCJleHAiOjE3NzgzMzUyMDB9.Z3_yUdSIKYh5kABTOyzmzOBzzWfWxOUrK18LctW5YDQ
+
+Dakona n8n: https://n8n.dakona.net
+Dakona n8n key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiM2UyNzA5OWItYTJkMy00MzM1LTgzYTAtOTFkYzk3MTIwM2EzIiwiaWF0IjoxNzczOTI2NzQ1fQ.-aJelQYwEppObYhbPmrr5Hp2U_g1lFy6EdiV6rMvWlw
+
+Workflows to transfer:
+- OPT - Tyro Commission Import: jAnB7P91n3QNs2f0
+- OPT - Nuvei Commission Import: tn5po4OsAjQ2S2HV
+- OPT - Merchant Sync: Li0JV6OZtE1e9Wui
+
+Steps:
+1. Export each workflow JSON from dakona n8n (GET /api/v1/workflows/{id})
+2. Import into Sunny's n8n (POST https://optsolutions.app.n8n.cloud/api/v1/workflows)
+3. Get new Airtable base ID — OPT Solutions base was moved from 1AltX workspace to Sunny's workspace:
+   GET https://api.airtable.com/v0/meta/bases
+   Auth: Bearer patkX3PmrObHeTNmn.78ae1da8f8cfd536c7d0f1403777be3e0be1110945dd82fa421b1932483ce9fa
+   Find "OPT Solutions" base and get its new ID
+4. Update all Airtable node URLs in both workflows to new base ID (old was appyQvY4H1brqHuRE)
+5. Set credentials in Sunny's n8n workflows:
+   - HubSpot token: pat-ap1-bade0484-dc08-4f11-b59f-15fca9255a9a
+   - Anthropic key: sk-ant-api03-Vf0qYGItvuIIny_LuUga5Ef0D343YacW07UFEe_OT-9QI6lOvj6mAXZl2LEG_sRZtl4WIAB-uidPs46M0FCMzw-zoR8JQAA
+   - Airtable key: patkX3PmrObHeTNmn.78ae1da8f8cfd536c7d0f1403777be3e0be1110945dd82fa421b1932483ce9fa
+   - Google Drive: FLAG — will need manual OAuth re-auth in Sunny's n8n UI
+6. Deactivate the 3 workflows on dakona n8n once confirmed live on Sunny's n8n
+7. Report to #dax-collab: new workflow IDs, new Airtable base ID, any manual steps needed
