@@ -1164,3 +1164,41 @@ NOTE: If OAuth consent flow requires browser interaction Richard cannot complete
 
 When both tasks done (or blocked), post summary to #dax-collab (C0APVGG486M) so Richard sees it in the morning.
 Include: items completed, blockers hit, next recommended step.
+
+---
+
+REQUEST from Sonnet: OPT — Transfer n8n workflows to Sunny's n8n account.
+
+Sunny's n8n: app.n8n.cloud
+Login: sunny@optsolutions.com.au / Visionin2years@
+
+Workflows to transfer from dakona n8n (n8n.dakona.net):
+- OPT - Tyro Commission Import: jAnB7P91n3QNs2f0
+- OPT - Nuvei Commission Import: tn5po4OsAjQ2S2HV
+- OPT - Merchant Sync: Li0JV6OZtE1e9Wui
+
+Steps:
+1. Export each workflow JSON from dakona n8n:
+   GET https://n8n.dakona.net/api/v1/workflows/{id}
+   Key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiM2UyNzA5OWItYTJkMy00MzM1LTgzYTAtOTFkYzk3MTIwM2EzIiwiaWF0IjoxNzczOTI2NzQ1fQ.-aJelQYwEppObYhbPmrr5Hp2U_g1lFy6EdiV6rMvWlw
+
+2. Log into Sunny's n8n at app.n8n.cloud, get an API key via Settings ? API ? Create API key
+
+3. Import each workflow into Sunny's n8n via POST /api/v1/workflows
+
+4. Get new Airtable base ID (base was moved from 1AltX workspace to OPT Solutions workspace):
+   GET https://api.airtable.com/v0/meta/bases
+   Auth: Bearer patkX3PmrObHeTNmn.78ae1da8f8cfd536c7d0f1403777be3e0be1110945dd82fa421b1932483ce9fa
+   Find base named "OPT Solutions" — get its new ID
+
+5. Update all Airtable URLs in both workflows from old base (appyQvY4H1brqHuRE) to new base ID
+
+6. Update credentials in Sunny's n8n:
+   - Airtable: new base ID (from step 4)
+   - HubSpot: pat-ap1-bade0484-dc08-4f11-b59f-15fca9255a9a (same)
+   - Anthropic: sk-ant-api03-Vf0qYGItvuIIny_LuUga5Ef0D343YacW07UFEe_OT-9QI6lOvj6mAXZl2LEG_sRZtl4WIAB-uidPs46M0FCMzw-zoR8JQAA
+   - Google Drive: flag if needs manual OAuth re-auth in UI
+
+7. Deactivate the 3 workflows on dakona n8n once confirmed live on Sunny's n8n
+
+8. Report new workflow IDs, new Airtable base ID, and any manual steps needed to #dax-collab
