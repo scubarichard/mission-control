@@ -1234,3 +1234,32 @@ Steps:
 6. Deactivate the 3 workflows on dakona n8n once confirmed live on Sunny's n8n
 7. Report to #dax-collab: new workflow IDs, new Airtable base ID, any manual steps needed
 
+
+---
+
+## TASK-20260410-OPT-001
+- **Assignee:** Triton
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Sonnet (Richard)
+- **Task:** Transfer 3 OPT n8n workflows from dakona n8n to Sunny's n8n account at optsolutions.app.n8n.cloud
+
+Sunny's n8n URL: https://optsolutions.app.n8n.cloud
+Sunny's n8n API key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5YzM2MDkyYS01YzAxLTQ3MzMtODIxNy02MTc3ZWVlZTIxNGUiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiNTU0ZThjYTMtMmI0MC00M2YyLWEyODUtMGMzN2E0ZWViZjc2IiwiaWF0IjoxNzc1NzQ0ODY3LCJleHAiOjE3NzgzMzUyMDB9.Z3_yUdSIKYh5kABTOyzmzOBzzWfWxOUrK18LctW5YDQ
+
+Dakona n8n: https://n8n.dakona.net
+Dakona n8n key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiM2UyNzA5OWItYTJkMy00MzM1LTgzYTAtOTFkYzk3MTIwM2EzIiwiaWF0IjoxNzczOTI2NzQ1fQ.-aJelQYwEppObYhbPmrr5Hp2U_g1lFy6EdiV6rMvWlw
+
+Workflows: jAnB7P91n3QNs2f0, tn5po4OsAjQ2S2HV, Li0JV6OZtE1e9Wui
+
+Steps:
+1. Export each workflow JSON from dakona n8n (GET /api/v1/workflows/{id})
+2. Import into Sunny's n8n (POST https://optsolutions.app.n8n.cloud/api/v1/workflows)
+3. Get new Airtable base ID: GET https://api.airtable.com/v0/meta/bases with Bearer patkX3PmrObHeTNmn.78ae1da8f8cfd536c7d0f1403777be3e0be1110945dd82fa421b1932483ce9fa — find "OPT Solutions" base
+4. Update all Airtable URLs from old base (appyQvY4H1brqHuRE) to new base ID
+5. Wire credentials: HubSpot pat-ap1-bade0484-dc08-4f11-b59f-15fca9255a9a, Anthropic sk-ant-api03-Vf0qYGItvuIIny_LuUga5Ef0D343YacW07UFEe_OT-9QI6lOvj6mAXZl2LEG_sRZtl4WIAB-uidPs46M0FCMzw-zoR8JQAA, Airtable key above
+6. FLAG: Google Drive will need manual OAuth re-auth in Sunny's n8n UI — note which workflow needs it
+7. Deactivate the 3 workflows on dakona n8n once confirmed live
+8. Report new workflow IDs + new Airtable base ID to #dax-collab
+
+- **Done When:** 3 workflows live on optsolutions.app.n8n.cloud, old ones deactivated on dakona, report posted to Slack
