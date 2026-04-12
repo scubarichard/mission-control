@@ -13,6 +13,9 @@ param containerAppsSubnetPrefix string = '10.0.0.0/23'
 @description('Private endpoints subnet.')
 param privateEndpointsSubnetPrefix string = '10.0.2.0/24'
 
+@description('App Service VNet integration subnet.')
+param appServiceSubnetPrefix string = '10.0.4.0/24'
+
 @description('Azure OpenAI account resource ID for private endpoint.')
 param openAiAccountId string
 
@@ -50,6 +53,20 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
         name: 'snet-private-endpoints'
         properties: {
           addressPrefix: privateEndpointsSubnetPrefix
+        }
+      }
+      {
+        name: 'snet-app-service'
+        properties: {
+          addressPrefix: appServiceSubnetPrefix
+          delegations: [
+            {
+              name: 'app-service'
+              properties: {
+                serviceName: 'Microsoft.Web/serverFarms'
+              }
+            }
+          ]
         }
       }
     ]
@@ -187,3 +204,4 @@ resource peCosmosDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGrou
 output vnetId string = vnet.id
 output containerAppsSubnetId string = vnet.properties.subnets[0].id
 output privateEndpointsSubnetId string = peSubnetId
+output appServiceSubnetId string = vnet.properties.subnets[2].id

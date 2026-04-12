@@ -29,6 +29,7 @@ const SECRET_MAP = {
   "cosmos-connection-string": "MONGO_URI",
   "ghl-api-token":         "GHL_API_TOKEN",
   "telegram-bot-token":    "TELEGRAM_BOT_TOKEN",
+  "descript-api-token":    "DESCRIPT_API_TOKEN",
 };
 
 // ── Live credential store — seeded from env vars ──────────────────────────────
@@ -49,6 +50,8 @@ export const creds = {
   GHL_LOCATION_ID:      process.env.GHL_LOCATION_ID      || "",
   TELEGRAM_BOT_TOKEN:   process.env.TELEGRAM_BOT_TOKEN   || "",
   TELEGRAM_CHAT_ID:     process.env.TELEGRAM_CHAT_ID     || "7337480629",
+  // Descript
+  DESCRIPT_API_TOKEN:   process.env.DESCRIPT_API_TOKEN   || "",
   // Static — never auto-rotated (used in Claude.ai URL)
   GATEWAY_TOKEN:        process.env.MCP_GATEWAY_TOKEN    || process.env.MCP_AUTH_TOKEN || "",
   DESKTOP_BRIDGE_URL:   process.env.DESKTOP_BRIDGE_URL   || "",

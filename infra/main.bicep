@@ -31,6 +31,9 @@ param logRetentionDays int = 90
 @description('VNet address space (CIDR).')
 param vnetAddressPrefix string = '10.0.0.0/16'
 
+@description('SharePoint site ID for document operations (format: domain,guid,guid).')
+param graphSiteId string = ''
+
 @description('Tags applied to all resources.')
 param tags object = {
   product: 'dax'
@@ -136,6 +139,36 @@ module containerApp 'modules/container-app.bicep' = {
   }
 }
 
+module n8nAppService 'modules/n8n-app-service.bicep' = {
+  name: 'n8nAppService'
+  scope: rg
+  params: {
+    nameSuffix: nameSuffix
+    location: location
+    keyVaultName: keyVault.outputs.keyVaultName
+    logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
+    appServiceSubnetId: vnet.outputs.appServiceSubnetId
+    privateEndpointSubnetId: vnet.outputs.privateEndpointsSubnetId
+    vnetId: vnet.outputs.vnetId
+    identityId: containerApp.outputs.identityId
+    identityPrincipalId: containerApp.outputs.identityPrincipalId
+    graphTenantId: clientTenantId
+    graphSiteId: graphSiteId
+    tags: tags
+  }
+}
+
+module complianceArchive 'modules/compliance-archive.bicep' = {
+  name: 'complianceArchive'
+  scope: rg
+  params: {
+    nameSuffix: nameSuffix
+    location: location
+    logAnalyticsWorkspaceId: logAnalytics.outputs.workspaceId
+    tags: tags
+  }
+}
+
 // ============================================================================
 // Outputs
 // ============================================================================
@@ -145,3 +178,6 @@ output libreChatUrl string = containerApp.outputs.fqdn
 output openAiEndpoint string = openAi.outputs.endpoint
 output keyVaultName string = keyVault.outputs.keyVaultName
 output logAnalyticsWorkspaceId string = logAnalytics.outputs.workspaceId
+output n8nWebAppName string = n8nAppService.outputs.webAppName
+output n8nHostname string = n8nAppService.outputs.webAppDefaultHostname
+output complianceArchiveName string = complianceArchive.outputs.storageAccountName
