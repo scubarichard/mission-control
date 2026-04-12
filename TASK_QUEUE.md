@@ -5,37 +5,14 @@
 STATUS: DONE
 COMPLETED_DATE: 2026-04-11
 
-## TASK-1ALTX-001
+## TASK-1ALTX-001 through 007
 STATUS: DONE
 COMPLETED_DATE: 2026-04-12
 
-## TASK-1ALTX-002
+## TASK-1ALTX-008
 STATUS: DONE
-COMPLETED_DATE: 2026-04-12
-
-## TASK-1ALTX-003
-STATUS: DONE
-COMPLETED_DATE: 2026-04-12
-
-## TASK-1ALTX-004
-STATUS: DONE
-COMPLETED_DATE: 2026-04-12
-WORKFLOW_ID: Duntf6YYeKZhrGFQ
-
-## TASK-1ALTX-005
-STATUS: DONE
-COMPLETED_DATE: 2026-04-12
-WORKFLOW_ID: F3Guu9iZlnbJuhRY
-
-## TASK-1ALTX-006
-STATUS: DONE
-COMPLETED_DATE: 2026-04-12
-
-## TASK-1ALTX-007
-STATUS: DONE
-TITLE: Build 7A-API — Upwork API-based job fetcher
+TITLE: Fix column mapping — restore Video column at V, shift scoring to W+
 COMPLETED_BY: FORGE
 COMPLETED_DATE: 2026-04-12
-WORKFLOW_ID: gtQBqsGSbfWddnAV
-RESULTS_FILE: RESULTS/task_1altx_007_results.md
-NOTES: Workflow created INACTIVE. 10 nodes, 6 search terms, budget filter, dedup, Slack alerts. Waiting for Upwork API key approval + OAuth browser auth by Richard.
+RESULTS_FILE: RESULTS/task_1altx_008_results.md
+NOTES: Inserted column V=Video, shifted scoring columns W-AJ. 8 Descript URLs restored. No workflow changes needed — header-name mapping is position-independent.
