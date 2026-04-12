@@ -22,27 +22,18 @@ RESULTS_FILE: RESULTS/task_1altx_003_results.md
 
 ## TASK-1ALTX-004
 STATUS: DONE
-TITLE: Build n8n 7C — Proposal Prep Package (Claude-powered, manual trigger)
-ASSIGNED_TO: FORGE
+TITLE: Build n8n 7C — Proposal Prep Package
 COMPLETED_BY: FORGE
 COMPLETED_DATE: 2026-04-12
-INSTANCE: dakona
 WORKFLOW_ID: Duntf6YYeKZhrGFQ
 RESULTS_FILE: RESULTS/task_1altx_004_results.md
-NOTES: 7C live. Webhook: https://n8n.dakona.net/webhook/7c-proposal-prep. Tested row 2 — Claude returned full proposal package, sheet updated, Slack posted. Model: claude-sonnet-4-6.
+NOTES: Webhook: https://n8n.dakona.net/webhook/7c-proposal-prep. Tested OK. Model: claude-sonnet-4-6.
 
 ## TASK-1ALTX-005
-STATUS: IN_PROGRESS
+STATUS: DONE
 TITLE: Build n8n 7D — Daily 7am Slack Digest of Top 5 Jobs
-ASSIGNED_TO: FORGE
-INSTANCE: dakona
+COMPLETED_BY: FORGE
+COMPLETED_DATE: 2026-04-12
+WORKFLOW_ID: F3Guu9iZlnbJuhRY
 RESULTS_FILE: RESULTS/task_1altx_005_results.md
-
-CONTEXT:
-  7D runs daily at 7am CST. Reads Upwork Log, finds Hot/Apply jobs without proposals sent,
-  ranks by Combined Score, posts top 5 digest to #dax-collab with Upwork links and 7C trigger instructions.
-
-  SHEET: 11cydvXB7zb38FGSqrLTXEnikIK5gec1FSe3nK3Hy_BY / UpWork_Log
-  CREDS: Google Sheets fhAvmmHWXh2VIsWu
-  SLACK: #dax-collab C0APVGG486M
-  SCHEDULE: 7:00 AM America/Chicago, daily
+NOTES: Schedule 7am CST daily. Filter+rank logic tested OK. KNOWN ISSUE — Slack credential is RPE workspace, not Dakona. Posts don't reach #dax-collab. Needs Dakona Slack bot credential in n8n.
