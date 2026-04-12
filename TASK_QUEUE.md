@@ -8,34 +8,34 @@ COMPLETED_DATE: 2026-04-11
 ## TASK-1ALTX-001
 STATUS: DONE
 COMPLETED_DATE: 2026-04-12
-RESULTS_FILE: RESULTS/task_1altx_001_results.md
 
 ## TASK-1ALTX-002
 STATUS: DONE
 COMPLETED_DATE: 2026-04-12
-RESULTS_FILE: RESULTS/task_1altx_002_results.md
 
 ## TASK-1ALTX-003
 STATUS: DONE
 COMPLETED_DATE: 2026-04-12
-RESULTS_FILE: RESULTS/task_1altx_003_results.md
 
 ## TASK-1ALTX-004
 STATUS: DONE
 COMPLETED_DATE: 2026-04-12
 WORKFLOW_ID: Duntf6YYeKZhrGFQ
-RESULTS_FILE: RESULTS/task_1altx_004_results.md
 
 ## TASK-1ALTX-005
 STATUS: DONE
 COMPLETED_DATE: 2026-04-12
 WORKFLOW_ID: F3Guu9iZlnbJuhRY
-RESULTS_FILE: RESULTS/task_1altx_005_results.md
 
 ## TASK-1ALTX-006
 STATUS: DONE
-TITLE: Fix Slack channel in 7C and 7D — switch to 1AltX #alerts channel
+COMPLETED_DATE: 2026-04-12
+
+## TASK-1ALTX-007
+STATUS: DONE
+TITLE: Build 7A-API — Upwork API-based job fetcher
 COMPLETED_BY: FORGE
 COMPLETED_DATE: 2026-04-12
-RESULTS_FILE: RESULTS/task_1altx_006_results.md
-NOTES: Switched to Dip Buyer credential (TONShNUzuumr22CY) + #alerts (C0A20U1HDUM). 7C tested OK — message appeared in #alerts.
+WORKFLOW_ID: gtQBqsGSbfWddnAV
+RESULTS_FILE: RESULTS/task_1altx_007_results.md
+NOTES: Workflow created INACTIVE. 10 nodes, 6 search terms, budget filter, dedup, Slack alerts. Waiting for Upwork API key approval + OAuth browser auth by Richard.
