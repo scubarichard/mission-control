@@ -30,6 +30,8 @@ const SECRET_MAP = {
   "ghl-api-token":         "GHL_API_TOKEN",
   "telegram-bot-token":    "TELEGRAM_BOT_TOKEN",
   "descript-api-token":    "DESCRIPT_API_TOKEN",
+  "upwork-api-key":        "UPWORK_API_KEY",
+  "upwork-api-secret":     "UPWORK_API_SECRET",
 };
 
 // ── Live credential store — seeded from env vars ──────────────────────────────
@@ -52,6 +54,9 @@ export const creds = {
   TELEGRAM_CHAT_ID:     process.env.TELEGRAM_CHAT_ID     || "7337480629",
   // Descript
   DESCRIPT_API_TOKEN:   process.env.DESCRIPT_API_TOKEN   || "",
+  // Upwork (OAuth 2.0 — callback: n8n.dakona.net/webhook/upwork-oauth)
+  UPWORK_API_KEY:       process.env.UPWORK_API_KEY       || "",
+  UPWORK_API_SECRET:    process.env.UPWORK_API_SECRET    || "",
   // Static — never auto-rotated (used in Claude.ai URL)
   GATEWAY_TOKEN:        process.env.MCP_GATEWAY_TOKEN    || process.env.MCP_AUTH_TOKEN || "",
   DESKTOP_BRIDGE_URL:   process.env.DESKTOP_BRIDGE_URL   || "",
