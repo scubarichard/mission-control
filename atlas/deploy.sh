@@ -13,7 +13,7 @@ if [ ! -f "$ENV_FILE" ]; then
 echo "[deploy] Writing $ENV_FILE template..."
 cat > "$ENV_FILE" << ENV
 INSTANTLY_API_KEY=82378a2f-45a9-4c1d-a938-84241722b126:LcyOSsWxTtru
-SLACK_BOT_TOKEN=
+SLACK_WEBHOOK_URL=https://n8n.dakona.net/webhook/atlas-slack
 SLACK_CHANNEL=C0APVGG486M
 GITHUB_TOKEN=
 GIT_USER_EMAIL=atlas@dakona.net
@@ -28,6 +28,6 @@ sudo systemctl enable atlas-agent
 
 echo ""
 echo "=== Deploy complete ==="
-echo "Set SLACK_BOT_TOKEN + GITHUB_TOKEN in $ENV_FILE then:"
+echo "Set GITHUB_TOKEN in $ENV_FILE then:"
 echo "  sudo systemctl start atlas-agent"
 echo "  journalctl -u atlas-agent -f"

@@ -11,7 +11,7 @@ POLL_OFFSET_SEC = 4 * 60
 POLL_INTERVAL = 5 * 60
 MORNING_HOUR = 8
 INSTANTLY_API_KEY = os.environ.get("INSTANTLY_API_KEY", "")
-SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN", "")
+SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL", "https://n8n.dakona.net/webhook/atlas-slack")
 SLACK_CHANNEL = os.environ.get("SLACK_CHANNEL", "C0APVGG486M")
 GIT_USER_EMAIL = os.environ.get("GIT_USER_EMAIL", "atlas@dakona.net")
 GIT_USER_NAME = os.environ.get("GIT_USER_NAME", "Atlas")
@@ -69,15 +69,15 @@ def self_assign(content, task_name, body, priority="High"):
     return content + block, tid
 
 def slack_post(text):
-    if not SLACK_BOT_TOKEN: log.warning("No SLACK_BOT_TOKEN"); return
-    payload = json.dumps({"channel": SLACK_CHANNEL, "text": text,
-                           "username": "Atlas", "icon_emoji": ":robot_face:"}).encode()
-    req = urllib.request.Request("https://slack.com/api/chat.postMessage", data=payload,
-        headers={"Authorization": "Bearer " + SLACK_BOT_TOKEN, "Content-Type": "application/json"})
+    if not SLACK_WEBHOOK_URL: log.warning("No SLACK_WEBHOOK_URL"); return
+    payload = json.dumps({"channel": SLACK_CHANNEL, "text": text}).encode()
+    req = urllib.request.Request(SLACK_WEBHOOK_URL, data=payload,
+        headers={"Content-Type": "application/json",
+                 "User-Agent": "Mozilla/5.0 (compatible; Atlas/1.0)"})
     try:
         with urllib.request.urlopen(req, timeout=10) as r:
             resp = json.loads(r.read())
-            if not resp.get("ok"): log.error("Slack error: " + str(resp.get("error")))
+            log.info("Slack bridge: " + str(resp.get("message")))
     except Exception as e: log.error("Slack failed: " + str(e))
 
 def instantly(path, method="GET", body=None):
