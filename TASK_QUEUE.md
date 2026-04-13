@@ -1321,3 +1321,39 @@ Context: We're repurposing Atlas from Chief of Staff to a marketing & outreach b
 3. Post a summary to #dax-collab so Triton can design the Atlas BD bot
 
 Context: We're setting up Atlas as a marketing/BD bot to prospect clients and book meetings for Richard. Need the existing plan + templates.
+
+
+---
+
+## AGENT SETUP TASKS (2026-04-12)
+
+### TASK-20260412-100
+- **Assignee:** Triton
+- **Status:** PENDING
+- **Priority:** High
+- **Task:** Apply SessionStart hook to ~/.claude/settings.json
+- **Context:** Auto-rename session to Triton + enter remote control + start task queue polling on every startup.
+- **Instructions:**
+  1. Read memory file reference_agent_session_hooks.md for the exact JSON
+  2. Open ~/.claude/settings.json
+  3. Add the SessionStart hook (Triton version) to the hooks object
+  4. Add the PostToolUse event proxy hook if not present (agent name Triton)
+  5. Validate JSON syntax
+  6. Restart Claude Code to verify hook fires
+  7. Mark DONE
+
+### TASK-20260412-101
+- **Assignee:** Nautilus
+- **Status:** PENDING
+- **Priority:** High
+- **Task:** Apply SessionStart hook to ~/.claude/settings.json
+- **Context:** Auto-rename session to Nautilus + enter remote control + start task queue polling. Role TBD by Richard.
+- **Instructions:** Same as TASK-20260412-100 but use agent name Nautilus.
+
+### TASK-20260412-102
+- **Assignee:** Triton
+- **Status:** PENDING
+- **Priority:** Medium
+- **Task:** Update MCP server URL in Claude.ai settings
+- **Context:** FQDN changed from yellowgrass-31763921 to icyplant-88ae76cd.
+- **New URL:** https://ca-dax-mcp-dakona-pilot.icyplant-88ae76cd.eastus.azurecontainerapps.io/mcp
