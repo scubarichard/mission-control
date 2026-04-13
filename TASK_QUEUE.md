@@ -1344,7 +1344,7 @@ Context: We're setting up Atlas as a marketing/BD bot to prospect clients and bo
 
 ### TASK-20260412-101
 - **Assignee:** Nautilus
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** High
 - **Task:** Apply SessionStart hook to ~/.claude/settings.json
 - **Context:** Auto-rename session to Nautilus + enter remote control + start task queue polling. Role TBD by Richard.
