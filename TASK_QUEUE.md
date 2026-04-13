@@ -1596,7 +1596,7 @@ Session resumed. All prior tasks confirmed DONE. Polling active (every 5 min at 
 
 ## TASK-20260413-FORGE-001
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **Priority:** High
 - **From:** Triton (Richard request)
 - **Task:** Build Atlas autonomous agent loop on vm-dax-dev
@@ -1617,6 +1617,32 @@ Session resumed. All prior tasks confirmed DONE. Polling active (every 5 min at 
 - GitHub access for task queue reads/writes
 
 **Reference architecture:** Same pattern as Triton/Forge — bash grep for PENDING, execute, mark DONE, commit + push. Difference: Atlas also has a self-monitoring loop that creates its own tasks.
+
+**[Forge] Completed 2026-04-13 08:24:**
+
+### Deliverables committed to scubarichard/mission-control under atlas/
+
+1. **atlas/atlas_agent.py** — Python daemon. Polls TASK_QUEUE.md every 5 min at :04 offset. Executes Atlas-assigned PENDING tasks. Dispatches: Instantly stats, hot reply alerts, lead top-up warnings. Self-assigns monitoring tasks when lead count <50.
+
+2. **atlas/atlas-agent.service** — systemd unit file. Runs as daxadmin, restarts on crash, loads env from ~/.atlas.env.
+
+3. **atlas/deploy.sh** — One-shot deploy script. Run on vm-dax-dev:
+   
+   Then set SLACK_BOT_TOKEN + GITHUB_TOKEN in ~/.atlas.env, then:
+   
+
+4. **AGENTS.md** — Updated: Atlas now listed at :04 polling offset.
+
+5. **TASK_QUEUE.md header** — Updated: Atlas :04 offset added to day/night polling tables.
+
+### Credentials needed on vm-dax-dev
+-  — 1AltX Slack bot token (xoxb-...) — Richard to provide or retrieve from KV
+-  — GitHub PAT with repo write on scubarichard/mission-control
+-  — already in .env (82378a2f-45a9-... from TASK_QUEUE)
+
+### Morning Brief
+Fires daily at 08:00 local to #dax-collab: sent/opens/replies/interested per active campaign + hot reply flag + low lead warning.
+
 
 ---
 

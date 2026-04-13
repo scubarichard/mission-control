@@ -10,7 +10,7 @@ The 1AltX/Dakona AI agent team.
 | **Forge** | Builder / Deployer | Claude Code | RICHARD-WS (Windows) | Richard's desktop |
 | **Triton** | Builder / Deployer | Claude Sonnet 4.6 | Surface Laptop Gen2 (Linux) | Richard's mobile laptop |
 | **Nautilus** | Builder / Deployer | Claude Sonnet 4.6 | LAN Workstation (Ubuntu 24.04, i7-4790, 16GB) | 192.168.1.186 |
-| **Atlas** | Infrastructure Bot | GPT-4o / OpenClaw | vm-dax-dev (Azure Linux VM) | Cloud |
+| **Atlas** | Infrastructure Bot + Monitoring | GPT-4o / OpenClaw + atlas_agent.py | vm-dax-dev (Azure Linux VM) | Cloud — polls :04 |
 
 ## Hierarchy
 
@@ -19,7 +19,7 @@ Richard (Director)
 ├── Forge    (Claude Code / Windows — builds, deploys, desktop bridge)
 ├── Triton   (Claude Code / Linux Surface — builds, deploys, mobile)
 │     └── Nautilus (Claude Code / LAN workstation — reports to Triton)
-└── Atlas    (Clawbot / vm-dax-dev — scheduled jobs, monitoring, maintenance only)
+└── Atlas    (Clawbot + atlas_agent.py / vm-dax-dev — polls :04, monitoring, self-assigns tasks)
 ```
 
 ## How Work Gets Done
