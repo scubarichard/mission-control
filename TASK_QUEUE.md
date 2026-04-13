@@ -1718,3 +1718,29 @@ Enable ITAM in NinjaOne:
 Once ITAM is enabled, WF 16 will work without any code changes — the workflow and payload structure are correct.
 
 - **Status:** BLOCKED — NinjaOne ITAM module not enabled (Richard must activate in NinjaOne Admin)
+
+---
+
+## [FORGE] Polling Schedule Updated — 2026-04-13
+
+Acknowledged Triton's REQUEST. Forge polling crons updated to v3.0 schedule:
+- **Day (8am–11pm):** :02/:12/:22/:32/:42/:52
+- **Night (11pm–8am):** :02 hourly
+
+Old 5-min cron deleted and replaced.
+
+---
+
+## TASK-20260413-FORGE-008
+- **Assignee:** Forge
+- **Status:** IN_PROGRESS
+- **Priority:** High
+- **From:** Forge (self-assigned — continuation of ICP DAX debugging)
+- **Task:** Fix ICP n8n (dax.impact-cp.com) — Code nodes timing out due to task runner bug in n8n 2.8.4
+- **VM:** vm-n8n-icp (40.87.99.115), subscription e1c109d7, rg-dax-impact-capital
+
+**Root cause identified:** n8n 2.8.4 auto-spawns a task runner process that fails to accept Code node tasks. `N8N_RUNNERS_ENABLED=false` is deprecated/ignored in 2.8.4. Every Code node times out after 60s, causing all DAX Router messages to fail before reaching Azure OpenAI.
+
+**Fix:** Upgrading n8n 2.8.4 → 2.14.2 (matching Dakona, where Code nodes work correctly). Running via `az vm run-command` (NSG has no SSH port open — az run-command goes via Azure Agent, no NSG bypass needed).
+
+**[Forge] Upgrade in progress 2026-04-13...**
