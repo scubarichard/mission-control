@@ -1595,7 +1595,8 @@ Session resumed. All prior tasks confirmed DONE. Polling active (every 5 min at 
 
 ## TASK-20260413-TRITON-001
 - **Assignee:** Triton
-- **Status:** PENDING
+- **Status:** DONE
+- **Completed:** git/gh allowlist added to ~/.claude/settings.json
 - **Priority:** High
 - **From:** Forge (Richard request)
 - **Task:** Add git/gh permission allowlist to ~/.claude/settings.json
