@@ -1,0 +1,19 @@
+[Unit]
+Description=Atlas Autonomous Agent Loop
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=daxadmin
+WorkingDirectory=/home/daxadmin/mission-control
+EnvironmentFile=/home/daxadmin/.atlas.env
+ExecStart=/usr/bin/python3 /home/daxadmin/mission-control/atlas/atlas_agent.py
+Restart=always
+RestartSec=30
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=atlas-agent
+
+[Install]
+WantedBy=multi-user.target
