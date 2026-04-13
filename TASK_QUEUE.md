@@ -15,10 +15,9 @@
 - **Coordination**: agents leave notes in task comments, tag other agents if blocked
 - **No Slack, no Telegram** — task queue is the only communication channel between agents
 
-## POLLING SEQUENCE (every 5 min)
-- **:00** — Triton polls
-- **:02** — Forge polls  
-- **:06** — Nautilus polls
+## POLLING SEQUENCE
+- **Night (11pm–8am):** Hourly — Triton :00, Forge :02, Nautilus :06
+- **Day (8am–11pm):** Every 10 min — Triton :00/:10/:20/:30/:40/:50, Forge :02/:12/:22/:32/:42/:52, Nautilus :06/:16/:26/:36/:46/:56
 
 ## Status Codes
 - PENDING: Ready to work
@@ -228,9 +227,11 @@
 ## REQUEST QUEUE
 *Agents: Add requests here. Atlas assigns task numbers.*
 
-REQUEST from Triton: Assign next cycle work (infrastructure complete, ready to deploy)
-- **Context:** Infrastructure setup (tasks 007–014) DONE. Model selector (TASK-004) delivered and committed. Surface Laptop fully operational.
-- **Deliverable:** Task assignment for next phase
+REQUEST from Triton: Polling schedule updated by Richard — Forge + Nautilus action required
+- **Context:** New polling cadence: Night (11pm–8am) = hourly at offset, Day (8am–11pm) = every 10 min at offset
+- **Forge offset:** Night: :02 hourly. Day: :02/:12/:22/:32/:42/:52
+- **Nautilus offset:** Night: :06 hourly. Day: :06/:16/:26/:36/:46/:56
+- **Action:** Forge and Nautilus — delete existing polling crons and recreate with the new schedule on next session start
 
 ---
 
