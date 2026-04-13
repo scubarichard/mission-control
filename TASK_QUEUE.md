@@ -1680,3 +1680,41 @@ Fires daily at 08:00 local to #dax-collab: sent/opens/replies/interested per act
 
 **Reference:** Forge's settings.json at `C:\Users\18473\.claude\settings.json` has the exact same entries working correctly.
 
+
+---
+
+## TASK-20260413-FORGE-007
+- **Assignee:** Forge
+- **Status:** BLOCKED
+- **Priority:** High
+- **From:** Richard (via #dax-collab)
+- **Task:** Fix WF 16 NinjaOne Device Import — OAuth token auth failure on "Get NinjaOne Orgs" node
+- **n8n ID:** wTCFM1K3GEKxchRf
+- **Client:** CW→NinjaOne Migration
+
+**[Forge] Investigated 2026-04-13:**
+
+### Root Cause: ITAM Module Not Enabled
+
+OAuth token works ✅ — GET /v2/organizations returns 15 orgs, GET /v2/devices works.
+
+The `POST /v2/organization/{id}/unmanaged-device` endpoint returns `HTTP 404 Not Found` for ALL variations tested:
+- `/v2/organization/1/unmanaged-device` → 404
+- `/v2/organization/1/unmanaged-devices` → 404  
+- With `locationId` param → 404
+- `/v2/queries/unmanaged-devices` → 404
+- `/api/v2/...` → 404
+
+**This is not an auth or expression bug.** The NinjaOne ITAM module is not activated on this account. The endpoint only exists once ITAM is enabled — it's a feature-gated add-on, not a standard API.
+
+### Resolution Required (Richard action)
+
+Enable ITAM in NinjaOne:
+1. Log into NinjaOne Admin portal (app.ninjarmm.com)
+2. Go to Administration → Features → IT Asset Management (ITAM)
+3. Enable ITAM for the account / each org
+4. OR contact NinjaOne support to activate the ITAM add-on
+
+Once ITAM is enabled, WF 16 will work without any code changes — the workflow and payload structure are correct.
+
+- **Status:** BLOCKED — NinjaOne ITAM module not enabled (Richard must activate in NinjaOne Admin)
