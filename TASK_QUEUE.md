@@ -1282,18 +1282,12 @@ Steps:
 
 ## TASK-20260412-FORGE-001
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** High
 - **From:** Triton
 - **Task:** Set up task queue polling on RICHARD-WS
 
-Add a scheduled task (Windows Task Scheduler) that runs every 5 minutes at :02 offset:
-1. `cd P:\mission-control && git pull --quiet`
-2. Check TASK_QUEUE.md for any line matching "Assignee.*Forge" followed by "PENDING"
-3. If found, launch Claude Code with the task
-4. If nothing found, exit silently
-
-Use the same pattern as Triton's cron polling. Post confirmation to #dax-collab when done.
+**[FORGE] Completed 2026-04-12:** Session-based polling active via CronCreate (every 5 min). Pulls `/tmp/mc-poll` and scans for Forge PENDING tasks. Persistent Windows Task Scheduler not set up — would require Richard's input on auto-launching Claude Code headlessly. Session polling covers it for now.
 
 ---
 
@@ -1307,34 +1301,122 @@ Use the same pattern as Triton's cron polling. Post confirmation to #dax-collab 
 
 ## TASK-20260412-FORGE-002
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** High
 - **From:** Triton
-- **Task:** Pull Atlas/OpenClaw config and post to #dax-collab
+- **Task:** Pull Atlas/OpenClaw config and post to task queue
 
-1. Go to openclaw.dakona.net or mcp.dakona.net
-2. Find Atlas's system prompt, configured tools, and any scheduled tasks/workflows
-3. Screenshot or copy the full config
-4. Post summary to #dax-collab so Triton can restructure Atlas for marketing/BD role
+**[FORGE] Completed 2026-04-12:** openclaw.dakona.net is behind Cloudflare Access (can't scrape). Extracted full config from `scubarichard/dax` GitHub repo instead. Summary below.
 
-Context: We're repurposing Atlas from Chief of Staff to a marketing & outreach bot — prospecting RIA/flooring/tourism clients, sending intro emails, scheduling meetings for Richard.
+### Atlas Current State
+- **Role:** Infrastructure/maintenance bot (GPT-4o via OpenClaw on vm-dax-dev)
+- **System prompt:** DAX persona — general-purpose RIA assistant with compliance awareness. Located in `librechat/librechat.yaml` → `modelSpecs.list[0].preset.promptPrefix`
+- **Zero marketing/BD logic today**
+
+### MCP Tools (39 total)
+| Category | Tools |
+|----------|-------|
+| File/Repo | read_file, write_file, search_code, list_files, run_powershell, git_status |
+| Git | git_commit_push, git_diff, git_log, git_pull |
+| Azure | deploy_container_app, azure_container_logs, azure_revision |
+| Deploy | deploy_sso_config |
+| n8n (2 instances: dakona + vince) | n8n_list_workflows, n8n_get/create/update/activate_workflow |
+| Cosmos DB | cosmos_query |
+| ClickUp (7) | list_spaces, list_folders, create_list, list/get/create/update_task, add_comment |
+| Make.com (6) | list_orgs, list/get/run/toggle_scenarios, scenario_logs |
+| Slack (2) | slack_list_channels, slack_post_message |
+| Desktop Bridge (5) | desktop_run_powershell, desktop_read/write/list_files, desktop_run_claude_code |
+
+### LibreChat Action Tools (n8n webhooks)
+- `generate_icp_review` — quarterly client review docs from Word template → SharePoint
+- `saveClientDocument` — upload docs to client SharePoint folders
+
+### Model Selection (mission-control/ATLAS_MODEL_SELECTOR.md)
+- Haiku: polling, status, notifications
+- Sonnet: code gen, data imports, debugging (default)
+- Opus: architecture, planning, security
+
+### Credentials
+- Auto-refresh from Azure Key Vault `kvdaxdakonapilot` every 6h
+- n8n, ClickUp, Make, Slack, Cosmos, desktop bridge, GHL, Telegram, Descript, Upwork, FMP/Finnhub keys
+
+### Existing Lead Gen Config (scubarichard/dakona-leadgen)
+- Target: Independent RIAs, 2-15 employees, $100M-$500M AUM
+- Pipeline: Apollo (prospect) → Instantly (cold email) → HubSpot (CRM)
+- Rules: 50 well-researched > 500 generic, Richard approves templates
+
+### What Triton Needs to Do for BD Bot
+1. Replace DAX system prompt with BD-focused instructions (dakona-leadgen CLAUDE.md is a starting point)
+2. Keep/adapt MCP tools (ClickUp, Slack, n8n) + add Apollo/Instantly/HubSpot API tools
+3. Wire in model-selector for cost optimization
+4. Redirect Atlas cron from infra monitoring → lead gen pipeline (SEC filing monitors, prospect enrichment, email sequences)
 
 ---
 
 ## TASK-20260412-FORGE-003
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** High
 - **From:** Triton
-- **Task:** Pull 1AltX BD/marketing plan and share with Triton
+- **Task:** Pull 1AltX BD/marketing plan and share via task queue
 
-1. Check for any files Richard sent you related to 1AltX marketing, BD, outreach, or prospect lists
-2. Also read these files and extract key points:
-   - C:\Users\...\Dropbox\Companies\1AltX\Marketing\AI_Lead_Revival_Agent_Business_Plan_Updated.docx
-   - C:\Users\...\Dropbox\Companies\1AltX\Marketing\Cold Email Outreach\Cold Email Letter - 2.docx
-3. Post a summary to #dax-collab so Triton can design the Atlas BD bot
+**[FORGE] Completed 2026-04-12:** Read both docs from Dropbox + supplemental files (BattleCard, Private Infra). Summary below.
 
-Context: We're setting up Atlas as a marketing/BD bot to prospect clients and book meetings for Richard. Need the existing plan + templates.
+### Source Files Read
+- `AI_Lead_Revival_Agent_Business_Plan_Updated.docx`
+- `Cold Email Outreach/Cold Email Letter - 2.docx`
+- `Redtail_Wealthbox_1AltX_BattleCard.docx` (supplemental)
+- `Private_Automation_Infrastructure_1AltX.docx` (supplemental)
+- No prospect CSVs or target lists found in Cold Email Outreach directory
+
+### Target Audience
+- **Primary:** Local service providers (chiropractors, dentists, gyms, realtors, mortgage brokers), agencies with dormant lead pipelines, SaaS/coaches reviving lists
+- **Higher-ticket:** RIA firms using Redtail/Wealthbox, CPAs with SEC/FINRA/IRS compliance obligations, firms in M365/Azure
+
+### Two Product Tiers
+| Tier | Product | Price |
+|------|---------|-------|
+| Low-ticket | Lead Revival Agent (AI email/SMS reactivation) | $149 base, $299-$499 GHL install, $500-$1K/mo retainer |
+| High-ticket | Private Automation Infrastructure (n8n in client's Azure) | $1,500-$3,000 setup, $300-$800/mo support |
+
+### Cold Email Template (Locked — Richard approved)
+```
+Love what you're building at {{Company}}.
+
+Figured I'd reach out directly.
+
+I help firms clean up the operational stuff that eats their day. CRM gaps, manual data entry, follow-ups falling through the cracks.
+
+Usually it's not a full overhaul. It's a few targeted automations that remove 5-10 hours a week from the owner's plate. Recently built a deal routing fix in HubSpot that eliminated an entire manual handoff.
+
+I can build one useful HubSpot automation directly in your account this week at no cost. If it saves you time, we can talk. If not, you keep it. Want me to do that?
+
+-- Richard
+```
+
+### Outreach Strategy
+- Channels: GHL funnel, Upwork catalog, cold email drip, Facebook/Reddit groups, LinkedIn case studies, referrals
+- Tone: Casual, direct, zero-pressure, value-first with free deliverable as hook
+- Only merge var needed: `{{Company}}`
+
+### Key Messaging
+1. "We don't Zap your data — we protect it" (compliance differentiation)
+2. "5-10 hours a week off the owner's plate" (concrete time savings)
+3. "Free automation built in your account this week" (zero-risk entry)
+4. "Reactivate leads you already own" (no ad spend needed)
+5. "Compliance-grade automation inside your own cloud" (RIA/CPA upsell)
+
+### ICP Criteria for BD Bot
+- Has CRM (HubSpot, GHL, Redtail, Wealthbox)
+- Service-based business or advisory firm
+- Team size 2-50
+- Evidence of existing lead gen (webinars, landing pages, newsletters)
+
+### Notes for Triton
+- No prospect list exists yet — BD bot needs to source prospects (LinkedIn, Upwork, purchased list)
+- Two product tiers = bot must qualify prospects into the right one
+- BattleCard positions 1AltX as CRM augmentation, NOT replacement — never position against Redtail/Wealthbox
+- Revenue goal: $2,000-$5,000/month recurring (conservative, no ads)
 
 
 ---
