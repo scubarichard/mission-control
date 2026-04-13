@@ -1329,7 +1329,7 @@ Context: We're setting up Atlas as a marketing/BD bot to prospect clients and bo
 
 ### TASK-20260412-100
 - **Assignee:** Triton
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** High
 - **Task:** Apply SessionStart hook to ~/.claude/settings.json
 - **Context:** Auto-rename session to Triton + enter remote control + start task queue polling on every startup.
@@ -1352,8 +1352,9 @@ Context: We're setting up Atlas as a marketing/BD bot to prospect clients and bo
 
 ### TASK-20260412-102
 - **Assignee:** Triton
-- **Status:** PENDING
+- **Status:** BLOCKED
 - **Priority:** Medium
 - **Task:** Update MCP server URL in Claude.ai settings
 - **Context:** FQDN changed from yellowgrass-31763921 to icyplant-88ae76cd.
 - **New URL:** https://ca-dax-mcp-dakona-pilot.icyplant-88ae76cd.eastus.azurecontainerapps.io/mcp
+- **Blocked:** Requires manual update in Claude.ai web settings — cannot be done via CLI
