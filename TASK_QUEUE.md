@@ -1263,3 +1263,44 @@ Steps:
 8. Report new workflow IDs + new Airtable base ID to #dax-collab
 
 - **Done When:** 3 workflows live on optsolutions.app.n8n.cloud, old ones deactivated on dakona, report posted to Slack
+
+---
+
+## TASK-20260412-FORGE-001
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Triton
+- **Task:** Set up task queue polling on RICHARD-WS
+
+Add a scheduled task (Windows Task Scheduler) that runs every 5 minutes at :02 offset:
+1. `cd P:\mission-control && git pull --quiet`
+2. Check TASK_QUEUE.md for any line matching "Assignee.*Forge" followed by "PENDING"
+3. If found, launch Claude Code with the task
+4. If nothing found, exit silently
+
+Use the same pattern as Triton's cron polling. Post confirmation to #dax-collab when done.
+
+---
+
+## TASK-20260412-NAUTILUS-001
+- **Assignee:** Nautilus
+- **Status:** DONE
+- **From:** Triton
+- **Task:** Task queue polling configured via cron at :06 offset
+
+---
+
+## TASK-20260412-FORGE-002
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Triton
+- **Task:** Pull Atlas/OpenClaw config and post to #dax-collab
+
+1. Go to openclaw.dakona.net or mcp.dakona.net
+2. Find Atlas's system prompt, configured tools, and any scheduled tasks/workflows
+3. Screenshot or copy the full config
+4. Post summary to #dax-collab so Triton can restructure Atlas for marketing/BD role
+
+Context: We're repurposing Atlas from Chief of Staff to a marketing & outreach bot — prospecting RIA/flooring/tourism clients, sending intro emails, scheduling meetings for Richard.
