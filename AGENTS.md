@@ -16,10 +16,10 @@ The 1AltX/Dakona AI agent team.
 
 ```
 Richard (Director)
-├── Forge   (Claude Code / Windows — builds, deploys, desktop bridge)
-├── Triton  (Claude Code / Linux Surface — builds, deploys, mobile)
-├── Nautilus (Claude Code / LAN workstation — parallel execution)
-└── Atlas   (Clawbot / vm-dax-dev — scheduled jobs, monitoring, maintenance)
+├── Forge    (Claude Code / Windows — builds, deploys, desktop bridge)
+├── Triton   (Claude Code / Linux Surface — builds, deploys, mobile)
+│     └── Nautilus (Claude Code / LAN workstation — reports to Triton)
+└── Atlas    (Clawbot / vm-dax-dev — scheduled jobs, monitoring, maintenance only)
 ```
 
 ## How Work Gets Done
