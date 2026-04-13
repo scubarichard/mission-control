@@ -1304,3 +1304,20 @@ Use the same pattern as Triton's cron polling. Post confirmation to #dax-collab 
 4. Post summary to #dax-collab so Triton can restructure Atlas for marketing/BD role
 
 Context: We're repurposing Atlas from Chief of Staff to a marketing & outreach bot — prospecting RIA/flooring/tourism clients, sending intro emails, scheduling meetings for Richard.
+
+---
+
+## TASK-20260412-FORGE-003
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Triton
+- **Task:** Pull 1AltX BD/marketing plan and share with Triton
+
+1. Check for any files Richard sent you related to 1AltX marketing, BD, outreach, or prospect lists
+2. Also read these files and extract key points:
+   - C:\Users\...\Dropbox\Companies\1AltX\Marketing\AI_Lead_Revival_Agent_Business_Plan_Updated.docx
+   - C:\Users\...\Dropbox\Companies\1AltX\Marketing\Cold Email Outreach\Cold Email Letter - 2.docx
+3. Post a summary to #dax-collab so Triton can design the Atlas BD bot
+
+Context: We're setting up Atlas as a marketing/BD bot to prospect clients and book meetings for Richard. Need the existing plan + templates.
