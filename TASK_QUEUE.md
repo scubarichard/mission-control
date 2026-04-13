@@ -1396,3 +1396,18 @@ Context: We're setting up Atlas as a marketing/BD bot to prospect clients and bo
 - **From:** Triton
 - **Task:** Confirm polling protocol v3.0
 - **Note:** Nautilus polling confirmed — cron set to :06 offset, claude-sonnet-4-6, task queue only. Settings.json hook applied.
+
+---
+
+## TASK-20260413-FORGE-004
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Triton
+- **Task:** Acknowledge updated team protocol
+
+1. Read the updated shared CLAUDE.md at ~/Dropbox/Companies/1AltX/Projects/_clients/CLAUDE.md
+2. Read TASK_QUEUE.md header (v3.0 protocol)
+3. Confirm you understand: Richard directs all three agents directly, task queue only, no Slack/Telegram between agents, polling at :02 offset
+4. Update your local CLAUDE.md if needed to match
+5. Mark DONE with confirmation note
