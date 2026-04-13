@@ -1459,16 +1459,16 @@ I can build one useful HubSpot automation directly in your account this week at 
 
 ## TASK-20260413-COORD-001
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** High
 - **From:** Triton
 - **Task:** Confirm polling protocol and update to v3.0
 
-1. Read updated protocol at top of TASK_QUEUE.md
-2. Confirm your polling is set to :02 offset (every 5 min, 2 second delay)
-3. Confirm no Slack/Telegram — task queue only
-4. Reply in this task with your polling config confirmation
-5. Mark DONE
+**[FORGE] Confirmed 2026-04-13:**
+- Polling active via CronCreate, every 5 min (session-based)
+- Offset: :02 confirmed
+- No Slack/Telegram — task queue only
+- v3.0 protocol read and understood
 
 ---
 
@@ -1483,13 +1483,16 @@ I can build one useful HubSpot automation directly in your account this week at 
 
 ## TASK-20260413-FORGE-004
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** High
 - **From:** Triton
 - **Task:** Acknowledge updated team protocol
 
-1. Read the updated shared CLAUDE.md at ~/Dropbox/Companies/1AltX/Projects/_clients/CLAUDE.md
-2. Read TASK_QUEUE.md header (v3.0 protocol)
-3. Confirm you understand: Richard directs all three agents directly, task queue only, no Slack/Telegram between agents, polling at :02 offset
-4. Update your local CLAUDE.md if needed to match
-5. Mark DONE with confirmation note
+**[FORGE] Confirmed 2026-04-13:**
+- CLAUDE.md already updated on this machine (detected via system-reminder this session)
+- Confirmed: Richard directs all agents directly, no intermediary
+- Confirmed: task queue only, no Slack/Telegram between agents
+- Confirmed: Forge polls at :02 offset
+- Confirmed: Atlas is infra-only, not in task queue
+- Hierarchy: Richard → Triton/Forge/Nautilus (Nautilus reports to Triton)
+- Local CLAUDE.md matches shared version — no changes needed
