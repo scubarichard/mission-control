@@ -1496,3 +1496,37 @@ I can build one useful HubSpot automation directly in your account this week at 
 - Confirmed: Atlas is infra-only, not in task queue
 - Hierarchy: Richard → Triton/Forge/Nautilus (Nautilus reports to Triton)
 - Local CLAUDE.md matches shared version — no changes needed
+
+---
+
+## TASK-20260413-FORGE-005
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** High
+- **From:** Richard (via #dax-collab)
+- **Task:** 7B Upwork Scorer updates — age filter, availability filter, auto-delete, bulk cleanup
+
+**[FORGE] Completed 2026-04-13:**
+
+### Changes to 7B workflow (vuzR69FaM306OVWK)
+
+**1. Age Filter (added to prompt)**
+- If DateSubmitted > 2 days old → status=Ignore, all scores=0, priority_flag=⏭ Skip, notes="Job older than 2 days — skipped"
+- DateSubmitted now passed through from Filter Unprocessed Rows → Build Anthropic Request → prompt
+- Applied as FIRST check before all other scoring
+
+**2. "No longer available" Filter (added to prompt)**
+- If description contains "This job is no longer available" or "Not available" → same Ignore treatment
+- Applied as SECOND check, before budget filter
+
+**3. Auto-delete Skip rows after every 7B run**
+- Added 4 new nodes after batch loop: Get Rows for Cleanup → Find Skip Rows → Has Skip Rows? → Delete Skip Row
+- Uses native Google Sheets nodes with existing OAuth credential (fhAvmmHWXh2VIsWu)
+- Deletes bottom-up to avoid row shifting
+- Workflow now 18 nodes (was 14), still active
+
+**4. Bulk cleanup executed**
+- Created temp webhook workflow, ran 8 iterations
+- Deleted 8 rows total (Skip/Ignore/pre-Apr 10)
+- Temp workflow cleaned up after use
+- Sheet is clean — 0 remaining Skip/Ignore rows
