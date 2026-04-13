@@ -1787,3 +1787,35 @@ Old 5-min cron deleted and replaced.
 **Prompts fixed:** Draft a client letter + Generate a one-pager now work on dax.impact-cp.com
 
 **ICP v0.6.1 ready for Brett.** Pending: da@dakona.com email before onboarding.
+
+---
+
+## TASK-20260413-FORGE-009
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** High
+- **From:** Richard
+- **Task:** Build DAX Email Inbox automation — dax@dakona.com M365 monitoring, AI ack, confirm-and-execute, NinjaOne ticketing, Slack alerts
+
+**[Forge] Completed 2026-04-13:**
+
+### What Was Built
+
+**WF1 — DAX Inbox Inbound Handler** (`7oO2kNtb19TbnBcR`)
+- Polls dax@dakona.com every 2 min via Microsoft Graph API
+- For each new unread email: calls Claude Sonnet 4.6 to summarize + propose resolution + draft ack reply
+- Sends ack reply to sender asking them to reply "Confirmed" if assessment is correct
+- Marks email read, saves state to Airtable (base: app6lhrz0MSMj95Dp, table: tblvzMc7CjOrKAo01)
+
+**WF2 — DAX Inbox Confirm and Execute** (`GOPVkS4Pfb2PwYHE`)
+- Polls Airtable every 2 min for records with status=ack_sent or clarifying
+- Checks conversationId for unread replies from original sender
+- Claude Haiku classifies reply as confirmed or not
+- On confirmed: creates NinjaOne ticket, posts Slack #alerts (C0A20U1HDUM) with sender + request + resolution + Outlook link + ticket #, sends confirmation reply to sender
+- On not confirmed: updates Airtable status to clarifying
+
+**Bug Fixed:** OData `$filter` with `from/emailAddress/address ne 'dax@dakona.com'` silently returns 0 results in Graph API — removed server-side filter, exclusion handled in JS code instead.
+
+**First Run (2026-04-13 21:54 UTC):** 3 emails processed, ack replies sent. Awaiting "Confirmed" reply to complete WF2 E2E test.
+
+**Airtable fields:** MessageId, ConversationId, WebLink, From, FromName, Subject, OriginalBody, AISummary, ProposedResolution, Status, NinjaTicketId, ReceivedAt, AckSentAt, ResolvedAt
