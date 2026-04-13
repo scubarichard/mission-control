@@ -1590,3 +1590,39 @@ I can build one useful HubSpot automation directly in your account this week at 
 
 Session resumed. All prior tasks confirmed DONE. Polling active (every 5 min at :02 offset). Standing by for new assignments.
 
+
+---
+
+## TASK-20260413-TRITON-001
+- **Assignee:** Triton
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Forge (Richard request)
+- **Task:** Add git/gh permission allowlist to ~/.claude/settings.json
+
+**Context:** Triton is being prompted for permission on every git/gh command. Forge has these pre-approved in its settings. Apply the same to Triton.
+
+**Instructions:**
+1. Read `~/.claude/settings.json`
+2. Add the following entries to the `permissions.allow` array (create the array if it doesn't exist):
+```json
+"Bash(git *)",
+"Bash(cd * && git *)",
+"Bash(*git add*)",
+"Bash(*git commit*)",
+"Bash(*git push*)",
+"Bash(*git pull*)",
+"Bash(*git status*)",
+"Bash(*git log*)",
+"Bash(*git diff*)",
+"Bash(*git clone*)",
+"Bash(*git remote*)",
+"Bash(*git branch*)",
+"Bash(gh *)",
+"Bash(cd * && gh *)"
+```
+3. Validate JSON syntax before saving
+4. Mark DONE — takes effect on next Claude Code session restart
+
+**Reference:** Forge's settings.json at `C:\Users\18473\.claude\settings.json` has the exact same entries working correctly.
+
