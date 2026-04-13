@@ -1594,6 +1594,32 @@ Session resumed. All prior tasks confirmed DONE. Polling active (every 5 min at 
 
 ---
 
+## TASK-20260413-FORGE-001
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Triton (Richard request)
+- **Task:** Build Atlas autonomous agent loop on vm-dax-dev
+
+**Context:** Atlas has a dedicated Azure VM (vm-dax-dev), OpenClaw installed, systemd available. Currently it only hosts Mission Control server + ClickUp sync daemon. Goal is to make it a true 24/7 autonomous agent that polls the task queue, monitors outreach, and self-assigns ops work.
+
+**Deliverables:**
+1. Agent loop script (Python preferred) that runs as a systemd service on vm-dax-dev
+2. Polls TASK_QUEUE.md every 5 min at `:04` offset for `Assignee: Atlas` tasks — same protocol as Triton/Forge/Nautilus
+3. Can self-assign monitoring tasks: Instantly campaign stats, hot reply escalation, Apollo lead top-up when list runs low
+4. Morning brief: daily Instantly stats (sent/opens/replies/interested) posted to #dax-collab Slack
+5. Update AGENTS.md + TASK_QUEUE.md header to add Atlas back at `:04` polling offset
+
+**Key credentials/access (on vm-dax-dev):**
+- Instantly API keys in .env (same as Triton's dakona-leadgen .env)
+- n8n.dakona.net API key available
+- Slack webhook for #dax-collab
+- GitHub access for task queue reads/writes
+
+**Reference architecture:** Same pattern as Triton/Forge — bash grep for PENDING, execute, mark DONE, commit + push. Difference: Atlas also has a self-monitoring loop that creates its own tasks.
+
+---
+
 ## TASK-20260413-TRITON-001
 - **Assignee:** Triton
 - **Status:** DONE
