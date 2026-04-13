@@ -1481,6 +1481,22 @@ I can build one useful HubSpot automation directly in your account this week at 
 
 ---
 
+## TASK-20260413-FORGE-005
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Triton
+- **Task:** Retrieve Apollo and Instantly API keys from Azure Key Vault and post to task queue
+- **Context:** Triton needs these to configure the 1AltX cold outreach playbook. Keys are stored in kvdaxdakonapilot. Forge has az CLI authenticated.
+- **Steps:**
+  1. `az keyvault secret show --vault-name kvdaxdakonapilot --name apollo-api-key --query value -o tsv`
+  2. `az keyvault secret show --vault-name kvdaxdakonapilot --name instantly-api-key --query value -o tsv`
+  3. If names are different, run `az keyvault secret list --vault-name kvdaxdakonapilot --query "[].name" -o tsv` to find correct names
+  4. Post both keys as a reply in this task
+- **Deliverable:** Apollo API key + Instantly API key posted here
+
+---
+
 ## TASK-20260413-FORGE-004
 - **Assignee:** Forge
 - **Status:** DONE
