@@ -1530,3 +1530,33 @@ I can build one useful HubSpot automation directly in your account this week at 
 - Deleted 8 rows total (Skip/Ignore/pre-Apr 10)
 - Temp workflow cleaned up after use
 - Sheet is clean — 0 remaining Skip/Ignore rows
+
+---
+
+## TASK-20260413-FORGE-006
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** Medium
+- **From:** Richard
+- **Task:** Import remaining CW entities to Airtable + update NinjaOne memory
+
+**[FORGE] Completed 2026-04-13:**
+
+### New Airtable Tables (app6lhrz0MSMj95Dp)
+| Entity | Records | Table ID |
+|--------|---------|----------|
+| Projects | 19 | tblsaEtpjHAvtdFpj |
+| Opportunities | 117 | tblxTyOxAVsZ1QMtD |
+| Expenses | 14 | tblha3XGt2gbALl2m |
+| Schedule Entries | 20,488 | tblL2eZCdS738sJlm |
+
+**Total new: 20,638 records across 4 tables.**
+**Grand total CW archive: ~38,898 records across 15 tables.**
+
+### NinjaOne Memory Updated
+- ITAM Unmanaged Device API confirmed working (POST /v2/organization/{orgId}/unmanaged-device)
+- n8n WF 16 (wTCFM1K3GEKxchRf) already built for device import
+- Billing Products API exists via PowerShell cmdlets — needs re-test
+
+### Still Not Pulled from CW
+- Product Catalog (171), Service Boards (6), Accounting Batches (179)
