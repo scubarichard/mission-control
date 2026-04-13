@@ -1733,7 +1733,7 @@ Old 5-min cron deleted and replaced.
 
 ## TASK-20260413-FORGE-008
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **Priority:** High
 - **From:** Forge (self-assigned — continuation of ICP DAX debugging)
 - **Task:** Fix ICP n8n (dax.impact-cp.com) — Code nodes timing out due to task runner bug in n8n 2.8.4
@@ -1772,3 +1772,18 @@ Old 5-min cron deleted and replaced.
 - Dakona's wrapper at /home/dkn8n/sp_upload_wrapper.sh is the template
 
 **SSH note:** NSG rule allow-ssh-temp (port 22, priority 200) is open on nsg-n8n-icp-temp — CLOSE when done.
+
+---
+
+## [FORGE] Session Update — 2026-04-13 (continued)
+
+### ICP DAX — Create Document Tool Fix
+**Root cause:** Create Document Tool description said `Pass { "title": "...", "content": "..." }` — LLM passed an object but langchain DynamicTool validates input as a string. Error: `Expected string, received object at input`.
+
+**Fix applied to ICP + Dakona:**
+1. Description updated to say pass a JSON-encoded string
+2. jsCode updated to JSON.parse() when input is a string, with fallback
+
+**Prompts fixed:** Draft a client letter + Generate a one-pager now work on dax.impact-cp.com
+
+**ICP v0.6.1 ready for Brett.** Pending: da@dakona.com email before onboarding.
