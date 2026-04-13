@@ -1819,3 +1819,56 @@ Old 5-min cron deleted and replaced.
 **First Run (2026-04-13 21:54 UTC):** 3 emails processed, ack replies sent. Awaiting "Confirmed" reply to complete WF2 E2E test.
 
 **Airtable fields:** MessageId, ConversationId, WebLink, From, FromName, Subject, OriginalBody, AISummary, ProposedResolution, Status, NinjaTicketId, ReceivedAt, AckSentAt, ResolvedAt
+
+---
+
+## TASK-20260413-FORGE-010
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** High
+- **From:** Richard (via #dax-collab 15:53 CDT)
+- **Task:** PNT S4 Phase 4b + Phase 5 — Invoice_Items schema, pricing rebuild, 8 Diana fixes
+
+**[Forge] Completed 2026-04-13:**
+
+### Phase 4b — Airtable Schema (base: appDqWxcM86CpBHoQ)
+- **Booking_Hotels**: Added `EBD Percent` (number, precision 1) → `fldsDWXzA88IhVgUq`
+- **Expenses**: Added `VAT Treatment` (singleSelect: With deductible VAT / Without deductible VAT / N/A) → `fldlZg1ED5HlgvnhM`
+- **Expenses**: Added `Payment Method` (singleSelect: Bank Transfer / Cash / Card) → `fld3eVD6sMVfGWPa2`
+- **Invoice_Items table created** (`tblFcCOJBFm6wqHzK`) — fields: Item ID (primary), Type (9 choices), Description, Unit Price (€), Quantity, PVP (€), Commission Percent, Invoice (link), Booking (link)
+- **Gate 4b PASS**: test record created (Type=Tour, Unit Price=1450, Qty=2), read back, deleted ✓
+
+### Phase 5 — booking-intake.html + JS (dev branch, commit a37f584)
+**Section A — Tour Pricing (page7-pricing.js rewrite):**
+- Base Price Per Person, Season/Solo/Bike/Nights/Upgrade/Transfer/Other Supplements
+- Commission % — auto-fills from Partner.Commission Rate (percent→number conversion)
+- Billing Entity — auto-fills from Partner.Billing Entity / Default Entity
+- Deposit Amount defaults to 0 for Agent/Partner booking type
+- Live read-only calcs: Total Per Person, Total Booking, Net Revenue
+
+**Section B — Invoice Tracking:**
+- Deposit Amount, Due/Asked/Paid dates; Balance Due/Asked/Paid dates
+- Fat CN Number, Fat PNT Number, Invoice Notes
+
+**Section C — Status dropdowns:**
+- Booking Manager filter: added Ongoing, PR-DT, PR-GP, Canceled
+- Hotel Status options: added Not Requested, Ongoing, Canceled, Phone, Booking.com, Self-Booked
+
+**Diana fixes:**
+- Fix 3: End date picker now sets `minDate` from start date (was incorrectly jumping to start)
+- Fix 8/23: Checkbox alignment — flex row layout with aligned labels
+- Fix 16: PAX counter shows "X of Y registered" (added `traveler-registered` span)
+- Fix 28: Emergency Contact Relationship field added to primary traveler (t0-emergrel)
+- Fix 33: Review page — Booking Basics now appears before Travelers section
+
+**Note:** Fixes 13, 15, 17 confirmed already working (no code change needed)
+
+### Gate 5 PASS
+- Schema: all 3 Phase 4b changes verified in Airtable ✓
+- Math: Base 1200 + Season 150 = Total/Person 1350 × 2 PAX = 2700, Net Revenue @15% = 2295 ✓
+- Regression: 81/81 PASS ✓
+- Committed to `dev` branch → push to origin ✓
+- **Awaiting Richard confirmation to merge dev → main**
+
+### Note on Booking Status Airtable update
+Airtable Metadata API rejected choice modification (422 on singleSelect PATCH). New values (Ongoing, PR-DT, PR-GP, Canceled) will be auto-created in Airtable when first used via the data API — this is standard Airtable behavior.
