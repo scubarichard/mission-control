@@ -1744,3 +1744,31 @@ Old 5-min cron deleted and replaced.
 **Fix:** Upgrading n8n 2.8.4 → 2.14.2 (matching Dakona, where Code nodes work correctly). Running via `az vm run-command` (NSG has no SSH port open — az run-command goes via Azure Agent, no NSG bypass needed).
 
 **[Forge] Upgrade in progress 2026-04-13...**
+
+---
+
+## TASK-20260413-FORGE-008 — DONE
+
+**[Forge] Completed 2026-04-13:**
+
+### ICP DAX n8n Upgrade + Document Reading
+
+**n8n upgrade:**
+- Upgraded n8n 2.8.4 → 2.14.2 (Node.js 20.20.2 → 22.22.2)
+- Root cause of task runner timeout: n8n 2.8.4 auto-spawns task runner that fails to accept Code node tasks
+- Fix required Node.js 22 (n8n 2.14.2 requires >=22.16), then `npm rebuild` for native modules
+- dax.impact-cp.com "hello" now works
+
+**Document reading enabled:**
+- PyPDF2 + openpyxl installed on vm-n8n-icp
+- /mnt/dax-uploads/processing/ + /mnt/dax-uploads/uploads/ created (writable by daxadmin)
+- sp_upload_wrapper.sh stub created at /home/daxadmin/ (SharePoint wiring pending)
+- Env vars added to n8n service: COSMOS_LIBRECHAT_URI, ADVISOR_EMAIL, ADVISOR_TIMEZONE
+- Extract Message node already had full file extraction code (was broken by task runner timeout)
+
+**SharePoint upload — PENDING:**
+- ICP has Graph API creds in n8n service (GRAPH_TENANT_ID/CLIENT_ID/CLIENT_SECRET/SITE_ID)
+- Need to create DAX Documents folder in ICP SharePoint + implement sp_upload_wrapper.sh
+- Dakona's wrapper at /home/dkn8n/sp_upload_wrapper.sh is the template
+
+**SSH note:** NSG rule allow-ssh-temp (port 22, priority 200) is open on nsg-n8n-icp-temp — CLOSE when done.
