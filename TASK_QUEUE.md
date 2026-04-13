@@ -1,10 +1,24 @@
-# Agent Task Queue - v2.0
-**Protocol Updated: 2026-04-01**
+# Agent Task Queue - v3.0
+**Protocol Updated: 2026-04-13**
 
-## NEW PROTOCOL
-- **ATLAS assigns ALL task numbers** (format: TASK-YYYYMMDD-NNN)
-- **Agents REQUEST tasks** via: "REQUEST: <description>"
-- **Never create your own task numbers**
+## TEAM
+- **Richard** — Director (assigns tasks)
+- **Triton** — Builder, Surface Laptop Linux (polls :00)
+- **Forge** — Builder, Windows desktop (polls :02)
+- **Nautilus** — Builder, LAN workstation Linux (polls :06)
+- **Atlas** — Infrastructure bot only (maintenance/cron, not in task queue)
+
+## PROTOCOL
+- **Richard assigns tasks** directly to Triton, Forge, or Nautilus
+- **Task numbers**: TASK-YYYYMMDD-[AGENT]-[NNN] (agents create their own when needed)
+- **On PENDING task**: mark IN_PROGRESS → execute → mark DONE → commit + push
+- **Coordination**: agents leave notes in task comments, tag other agents if blocked
+- **No Slack, no Telegram** — task queue is the only communication channel between agents
+
+## POLLING SEQUENCE (every 5 min)
+- **:00** — Triton polls
+- **:02** — Forge polls  
+- **:06** — Nautilus polls
 
 ## Status Codes
 - PENDING: Ready to work
@@ -1358,3 +1372,27 @@ Context: We're setting up Atlas as a marketing/BD bot to prospect clients and bo
 - **Context:** FQDN changed from yellowgrass-31763921 to icyplant-88ae76cd.
 - **New URL:** https://ca-dax-mcp-dakona-pilot.icyplant-88ae76cd.eastus.azurecontainerapps.io/mcp
 - **Blocked:** Requires manual update in Claude.ai web settings — cannot be done via CLI
+
+---
+
+## TASK-20260413-COORD-001
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Triton
+- **Task:** Confirm polling protocol and update to v3.0
+
+1. Read updated protocol at top of TASK_QUEUE.md
+2. Confirm your polling is set to :02 offset (every 5 min, 2 second delay)
+3. Confirm no Slack/Telegram — task queue only
+4. Reply in this task with your polling config confirmation
+5. Mark DONE
+
+---
+
+## TASK-20260413-COORD-002
+- **Assignee:** Nautilus
+- **Status:** DONE
+- **From:** Triton
+- **Task:** Confirm polling protocol v3.0
+- **Note:** Nautilus polling confirmed — cron set to :06 offset, claude-sonnet-4-6, task queue only. Settings.json hook applied.
