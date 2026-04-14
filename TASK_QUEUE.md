@@ -1927,3 +1927,53 @@ Airtable Metadata API rejected choice modification (422 on singleSelect PATCH). 
 - `selectRecentBooking(id)` — sidebar only, no form data (DO NOT USE for testing)
 - `editSelectedBooking()` — writes `Status: 'Inquiry'` to Airtable (AVOID IN TESTS)
 
+
+---
+
+## TASK-20260413-FORGE-013
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Richard
+- **Task:** Fix `Cannot set properties of null (setting 'value')` errors in PNT UI — get E2E test to 0 console errors across all 79 bookings
+
+### Context
+The Puppeteer E2E test (`scripts/test_ui_e2e.js`) runs 79/79 PASS but captures browser console errors on 78/79 bookings:
+
+```
+⚠ ERR: TypeError: Cannot set properties of null (setting 'value')
+```
+
+These appear in `RESULTS/ui-e2e/report.html` as red error blocks under each booking card.
+
+### Root Cause (suspected)
+Phase 5 pricing page (`js/pages/page7-pricing.js`) was rebuilt with new fields. On `loadDraft()`, the JS initialization tries to set `.value` on a DOM element by ID that is either:
+1. Conditionally rendered (hidden until user interaction) — e.g. an invoice date field that only appears when a checkbox is checked
+2. Or referenced before the element is injected into the DOM
+
+The error is consistent across almost all bookings, suggesting it's in the page init path (not booking-data-specific).
+
+### Steps to Fix
+1. Read `js/pages/page7-pricing.js` — find any `document.getElementById('...').value = ...` or `el.value = ...` patterns that don't guard against null
+2. Check `booking-intake.html` — verify every field ID referenced in page7-pricing.js exists in the HTML at page load time (not just when visible)
+3. Add null guards: `const el = document.getElementById('foo'); if (el) el.value = val;`
+4. Re-run E2E test: `node scripts/test_ui_e2e.js --all` from `C:\Users\18473\pnt-central-brain\`
+5. Verify 0 ERR lines in `RESULTS/ui-e2e/report.html`
+6. Commit fix to `dev` branch in `scubarichard/pnt-central-brain`, push
+
+### Also check
+- P4 Bikes: 138 `pg.warn` instances where `#bikes-content hidden` and `#bike-rows hidden` — these are yellow warnings (not red). Investigate if bikes page should be visible for cycling tours (PAX > 0 with bike rental). If the page is intentionally hidden for some bookings, suppress the warning in the test. If it's a bug, fix the show/hide logic in `js/pages/page4-bikes.js`.
+- P6 Reservations: `#service-rows hidden` on many bookings — same question, intentional or bug?
+
+### File Locations
+- Pricing JS: `C:\Users\18473\pnt-central-brain\js\pages\page7-pricing.js`
+- Bikes JS: `C:\Users\18473\pnt-central-brain\js\pages\page4-bikes.js`
+- HTML: `C:\Users\18473\pnt-central-brain\booking-intake.html`
+- E2E test: `C:\Users\18473\pnt-central-brain\scripts\test_ui_e2e.js`
+- Report: `C:\Users\18473\pnt-central-brain\RESULTS\ui-e2e\report.html`
+
+### Done When
+- `node scripts/test_ui_e2e.js --all` completes with 0 ERR lines in report
+- All 79 bookings show no red error blocks
+- Fix committed to dev branch and pushed
+
