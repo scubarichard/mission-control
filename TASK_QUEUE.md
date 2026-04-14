@@ -382,7 +382,7 @@ REQUEST from Triton (23:05 UTC): Create TASK-20260402-001 assigned to Forge. Des
 **Status:** URGENT → ASSIGNED to Forge
 
 - **Assignee:** Forge (reassigned from [PENDING])
-- **Status:** PENDING → **FORGE MUST CLAIM IMMEDIATELY**
+- **Status:** DONE
 - **Priority:** CRITICAL
 - **Deadline:** TODAY (invoice can't stay blocked)
 - **Task:** Complete Sprint 2 PDF Deliverables (4 missing PDFs)
@@ -641,7 +641,7 @@ This makes it crystal clear whose responsibility each item is. No ambiguity.
 
 ### TASK-20260402-001
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** HIGH
 - **Task:** Understand and follow message routing protocol
 - **Context:** Starting immediately, all ATLAS messages directed to you will use format: [ATLAS → FORGE]
@@ -1066,7 +1066,7 @@ All 3 bookings processed with `python generate_pdfs.py --booking-id <ID>`:
 
 ### TASK-20260405-001
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** P0 -- S3 SPRINT START
 - **Task:** S2 Carryover Form Items + Schema Additions
 - **Client:** PNT
@@ -1146,7 +1146,7 @@ When TASK-20260405-001 is DONE, mark it and immediately pick up TASK-20260405-00
 
 ### TASK-20260405-002
 - **Assignee:** Forge
-- **Status:** PENDING (start after TASK-20260405-001 DONE)
+- **Status:** DONE
 - **Priority:** P1
 - **Task:** Google Calendar Integration -- Setup + Auto-Create on Booking Release
 - **Client:** PNT
