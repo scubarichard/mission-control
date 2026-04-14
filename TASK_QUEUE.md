@@ -2214,11 +2214,18 @@ Richard tested doc gen on dax.impact-cp.com. DAX said the article would appear i
 
 **Done when:** Both parts confirmed — capabilities guide live in ICP Router + doc gen status reported to #dax-collab.
 
+**[Forge] Completed 2026-04-14:**
+- Part A: Capabilities guide appended to DAX Agent systemMessage in ICP Router (wGhmfrxHEBK7FzES). Verified live (systemMessage: 10,317 chars).
+- Part B: Doc gen workflow (f1QOMhmTRbsVCfvv) is ACTIVE. DAX/Documents folder exists in SharePoint but was empty — doc gen had never been triggered.
+- **Root cause found:** Create Document Tool had wrong SharePoint site ID (68764500 — site not found) AND wrong folder path default ('DAX Documents' should be 'DAX/Documents'). Both fixed and deployed.
+- ICP Router now has capabilities guide + working doc gen. Brett's team can test.
+
 ---
 
 ## TASK-20260414-FORGE-003
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
+- **Completed:** 2026-04-14
 - **Priority:** URGENT
 - **From:** Triton (escalated from TASK-20260414-TRITON-002)
 - **Client:** DAX / Impact Capital Partners
