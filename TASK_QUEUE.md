@@ -2382,3 +2382,47 @@ Rebuilt workflow uy4psNKXnwGhpHBf with new RICHARD-WS architecture per Richard's
 ### Status
 - Webhook returns 200 immediately. Smoke test passed.
 - Full E2E requires Chrome open on RICHARD-WS during n8n execution.
+
+----
+
+## TASK-20260414-FORGE-006
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Date:** 2026-04-14
+- **Title:** TASK-1ALTX-011: Build Task Queue Writer webhook
+
+**[Forge] Completed 2026-04-14:**
+
+### Task Queue Writer Webhook
+- **n8n ID:** 15zCr7LP3Qbya19Z
+- **Webhook:** POST https://n8n.dakona.net/webhook/task-queue-write
+- **Auth:** x-api-key header
+- **API key:** Stored in KV `task-queue-api-key`
+
+### Usage
+```json
+POST https://n8n.dakona.net/webhook/task-queue-write
+x-api-key: <from KV task-queue-api-key>
+{
+  "task_id": "TASK-20260414-FORGE-007",
+  "title": "Task title",
+  "assigned_to": "Forge|Triton|Nautilus",
+  "content": "Markdown task body"
+}
+```
+
+### Response
+`{"status": "ok", "task_id": "...", "commit": "abc1234"}`
+
+### How it works
+1. Auth check (x-api-key vs KV secret)
+2. Fetch TASK_QUEUE.md from GitHub API (gets SHA)
+3. Append new task block (Status: PENDING)
+4. PUT back to GitHub with commit message
+5. Return status + commit SHA
+
+### Smoke test
+- TASK-TEST-001 added and committed (c56c09c) ✓
+- This task entry was self-committed via the webhook (6a88119) ✓
+
+**Note:** Remove TASK-TEST-001 from queue (it was a test entry).
