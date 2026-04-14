@@ -1994,7 +1994,7 @@ Root cause was NOT in page7-pricing.js (suspected). Actual cause: `tf-arrival-st
 
 ## TASK-20260414-FORGE-001
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **Priority:** Medium
 - **From:** Triton
 - **Client:** PNT
