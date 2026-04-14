@@ -2035,3 +2035,62 @@ admin.html (new Administration page in PNT portal) has a "Run Sweep" button that
 2. node scripts/test_ui_e2e.js --all
 3. git add RESULTS/sweep_report.json && git commit -m "chore: sweep 2026-04-14 15:19:25 UTC" && git push origin main
 4. Mark DONE
+---
+
+## TASK-20260414-FORGE-002
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Triton
+- **Client:** PNT
+- **Task:** Set up pnt-central-brain sweep on n8n VM + update sweep workflow to run immediately (no Forge dependency)
+
+**Context:**
+The current sweep workflow writes a TASK_QUEUE entry and waits for Forge to run it. The goal is to run the sweep immediately on the n8n VM when the button is clicked in admin.html.
+
+**Key finding (Triton verified):**
+- n8n Code node supports `require('child_process')` — commands run as user `dkn8n` on the n8n VM
+- Node v22.22.2 and git are available
+- No Chromium and no repo yet — needs one-time setup
+- n8n VM hostname: n8n.taild50f03.ts.net (Tailscale), internal user: dkn8n
+
+**Step 1 — One-time setup via n8n Code node (run via probe workflow g8nmLnIjDTzIPEmu):**
+```js
+const { execSync } = require('child_process');
+const GH_TOKEN = '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';
+
+// Clone repo
+execSync(`git clone https://${GH_TOKEN}@github.com/scubarichard/pnt-central-brain.git /home/dkn8n/pnt-central-brain`, {encoding:'utf8'});
+
+// Configure git credentials
+execSync(`cd /home/dkn8n/pnt-central-brain && git config user.email "forge@dakona.com" && git config user.name "Forge"`, {encoding:'utf8'});
+
+// Install npm deps (Puppeteer downloads Chromium ~170MB)
+execSync(`cd /home/dkn8n/pnt-central-brain && npm install`, {encoding:'utf8', timeout: 300000});
+```
+
+**Step 2 — Update the sweep workflow (jxE6kW101frm93JU) to replace the GitHub API approach with:**
+```js
+const { execSync } = require('child_process');
+const GH_TOKEN = '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';
+const REPO = '/home/dkn8n/pnt-central-brain';
+const ts = new Date().toISOString();
+
+execSync(`cd ${REPO} && git pull`, {encoding:'utf8'});
+execSync(`cd ${REPO} && AGENT_NAME=n8n node scripts/test_ui_e2e.js --all`, {encoding:'utf8', timeout:600000});
+execSync(`cd ${REPO} && git add RESULTS/sweep_report.json && git commit -m "chore: sweep ${ts}" && git push https://${GH_TOKEN}@github.com/scubarichard/pnt-central-brain.git main`, {encoding:'utf8'});
+
+return [{ json: { ok: true, timestamp: ts } }];
+```
+
+**Step 3 — Test:**
+- Trigger `POST https://n8n.dakona.net/webhook/pnt-run-sweep`
+- Verify sweep_report.json is updated in GitHub within ~10 min
+- Delete probe workflow g8nmLnIjDTzIPEmu when done
+
+**Note:** Puppeteer on Linux needs `--no-sandbox` flag — already set in test_ui_e2e.js. Should work without Chromium system install since Puppeteer bundles its own.
+
+**Done when:**
+- Clicking "Run Sweep" in admin.html triggers immediate execution on n8n VM
+- sweep_report.json updates on GitHub within ~10 min
+- admin.html shows fresh results on reload
