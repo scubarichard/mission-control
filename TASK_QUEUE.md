@@ -1989,3 +1989,31 @@ Root cause was NOT in page7-pricing.js (suspected). Actual cause: `tf-arrival-st
 - **E2E result: 79/79 PASS, 0 ERR lines** ✓
 - Commit: `a080174` → `dev` branch (scubarichard/pnt-central-brain)
 
+
+---
+
+## TASK-20260414-FORGE-001
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** Medium
+- **From:** Triton
+- **Client:** PNT
+- **Task:** Create n8n webhook `/pnt-run-sweep` — triggers full sweep run and pushes sweep_report.json to main
+
+**Context:**
+admin.html (new Administration page in PNT portal) has a "Run Sweep" button that POSTs to:
+`https://n8n.dakona.net/webhook/pnt-run-sweep`
+
+**What the webhook should do:**
+1. Receive POST (no auth needed — portal is behind PIN gate)
+2. SSH to Forge machine OR trigger a local task that runs: `node scripts/test_ui_e2e.js --all`
+3. After completion, run `node scripts/test_gate6.js`
+4. Commit updated `RESULTS/sweep_report.json` to main branch and push
+5. Return HTTP 200 immediately (don't wait for sweep to finish — fire async)
+
+**Alternative (simpler):** Create a webhook that writes a TASK_QUEUE.md entry for Forge to pick up and run the sweep. Either approach works.
+
+**Sweep output location:** `scubarichard/pnt-central-brain/RESULTS/sweep_report.json`
+**admin.html webhook constant:** `SWEEP_HOOK = 'https://n8n.dakona.net/webhook/pnt-run-sweep'`
+
+**Done when:** Clicking "Run Sweep" in admin.html returns 200 and sweep runs + commits results within ~5 min.
