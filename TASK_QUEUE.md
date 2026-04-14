@@ -2347,7 +2347,7 @@ scp /home/richard/talking-head.mp4 dkn8n@n8n.taild50f03.ts.net:/home/dkn8n/talki
 
 ## TASK-TEST-001
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Date:** 2026-04-14
 - **Title:** Test task via webhook
 
@@ -2357,7 +2357,7 @@ scp /home/richard/talking-head.mp4 dkn8n@n8n.taild50f03.ts.net:/home/dkn8n/talki
 
 ## TASK-20260414-FORGE-005
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Date:** 2026-04-14
 - **Title:** Rebuild 7E Video Pipeline � RICHARD-WS desktop bridge architecture
 
