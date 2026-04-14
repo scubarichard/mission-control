@@ -1898,6 +1898,11 @@ Airtable Metadata API rejected choice modification (422 on singleSelect PATCH). 
 - **Airtable OPT** (`xvAwqGiNHApqLJdR`): updated `accessToken` → Sunny's `patI9LeUPChfuPxVM...` ✓
 - **HubSpot OPT** (`gwyHUPyL4ZAqYplS`): updated `apiKey` → Sunny's `pat-ap1-adb325cd...` ✓
 
+**[Forge] Code node inline tokens also updated 2026-04-14:**
+- **Tyro** (`3zCmxNSmYqaryNXy`): 4 Code nodes — old `patkX3PmrObHeTNmn...` → `patI9LeUPChfuPxVM...` ✓
+- **Nuvei** (`iMGHM4Ok78ECYLFA`): 3 Code nodes — same replacement ✓
+- Both workflows remain active=True
+
 ### Anthropic Credential
 - **Not present** in Sunny's n8n credential list (only: Google Drive OPT, HubSpot OPT, Airtable OPT)
 - Community node `@n8n/n8n-nodes-langchain` needs to be installed first (Settings → Community Nodes in Sunny's n8n UI)
