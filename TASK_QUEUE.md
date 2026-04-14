@@ -2103,14 +2103,14 @@ return [{ json: { ok: true, timestamp: ts } }];
 - Fixed test_gate6.js Windows puppeteer path → `require('puppeteer')` (commit 48f300d)
 - Added PUPPETEER_EXECUTABLE_PATH env support + --disable-gpu to test_ui_e2e.js (commit 48f300d)
 
-**BLOCKER:** Puppeteer bundled Chrome fails on n8n VM — missing system library `libatk-1.0.so.0`
-See TASK-20260414-ATLAS-001 for fix.
+**BLOCKER RESOLVED:** System libs installed via sudo apt-get. Chrome launches on n8n VM.
+First VM sweep: commit `d5978c93` on dev — all bookings pass. Runner script spawns background bash, auto-commits+pushes.
 
 ---
 
 ## TASK-20260414-ATLAS-001
-- **Assignee:** Atlas
-- **Status:** PENDING
+- **Assignee:** Forge (resolved by Forge — dkn8n has sudo)
+- **Status:** DONE
 - **Priority:** High
 - **From:** Forge
 - **Client:** PNT
