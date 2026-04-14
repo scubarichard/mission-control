@@ -2352,3 +2352,33 @@ scp /home/richard/talking-head.mp4 dkn8n@n8n.taild50f03.ts.net:/home/dkn8n/talki
 - **Title:** Test task via webhook
 
 **Test only** � please ignore. Added by Forge to verify task-queue-writer endpoint.
+
+----
+
+## TASK-20260414-FORGE-005
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Date:** 2026-04-14
+- **Title:** Rebuild 7E Video Pipeline � RICHARD-WS desktop bridge architecture
+
+**[Forge] Completed 2026-04-14:**
+
+Rebuilt workflow uy4psNKXnwGhpHBf with new RICHARD-WS architecture per Richard's #dax-collab corrections.
+
+### New Flow
+
+
+### Key Changes
+- **Removed:** Puppeteer headless / n8n VM FFmpeg
+- **Added:** Desktop bridge (bridge.dakona.net) for all media ops on RICHARD-WS
+  - Open Chrome: 
+  - Record: 
+  - Composite: ffmpeg overlay with talking head from Dropbox
+  - Upload: PowerShell  PUT to Descript signed URL
+  - Poll: n8n Code node polls Descript until 
+- Talking head path: 
+- Bridge secret stored in KV 
+
+### Status
+- Webhook returns 200 immediately. Smoke test passed.
+- Full E2E requires Chrome open on RICHARD-WS during n8n execution.
