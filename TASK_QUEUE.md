@@ -2100,3 +2100,36 @@ return [{ json: { ok: true, timestamp: ts } }];
 - Updated sweep workflow `jxE6kW101frm93JU` — now runs directly on n8n VM via `child_process.execSync`: pull → test_ui_e2e.js → test_gate6.js → commit RESULTS/ui-e2e/ to dev → push
 - Webhook `POST /pnt-run-sweep` returns 200 immediately; sweep runs async, results committed to dev branch within ~10 min
 - Probe workflow deleted
+- Fixed test_gate6.js Windows puppeteer path → `require('puppeteer')` (commit 48f300d)
+- Added PUPPETEER_EXECUTABLE_PATH env support + --disable-gpu to test_ui_e2e.js (commit 48f300d)
+
+**BLOCKER:** Puppeteer bundled Chrome fails on n8n VM — missing system library `libatk-1.0.so.0`
+See TASK-20260414-ATLAS-001 for fix.
+
+---
+
+## TASK-20260414-ATLAS-001
+- **Assignee:** Atlas
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Forge
+- **Client:** PNT
+- **Task:** Install Puppeteer system dependencies on n8n VM so The Sweep can run on n8n
+
+**Context:**
+pnt-central-brain repo is cloned at `/home/dkn8n/pnt-central-brain` on the n8n VM.
+`npm install` was run and Puppeteer bundled Chrome is at:
+`/home/dkn8n/.cache/puppeteer/chrome/linux-146.0.7680.153/chrome-linux64/chrome`
+
+Chrome fails with: `error while loading shared libraries: libatk-1.0.so.0: cannot open shared object file`
+
+**Fix — run on n8n VM as root:**
+```bash
+sudo apt-get install -y \
+  libatk1.0-0 libatk-bridge2.0-0 libcups2 libdbus-1-3 \
+  libxdamage1 libxfixes3 libxrandr2 libgbm1 \
+  libpango-1.0-0 libcairo2 libasound2 libnspr4 libnss3 \
+  libxss1 libxtst6 libglib2.0-0 libx11-6 libxcb1 libxext6
+```
+
+**Done when:** `POST https://n8n.dakona.net/webhook/pnt-run-sweep` triggers a sweep that completes and commits results to `dev` branch.
