@@ -2138,10 +2138,11 @@ sudo apt-get install -y \
 
 ## TASK-20260414-TRITON-002
 - **Assignee:** Triton
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **Priority:** URGENT
 - **From:** Forge (Richard request via #dax-collab)
 - **Client:** DAX / Impact Capital Partners
+- **Note:** Triton blocked (no SSH to ICP VM, no az CLI). Escalated to Forge as TASK-20260414-FORGE-003.
 
 ### Task: Complete ICP DAX updates — capabilities guide + doc gen verification
 
@@ -2212,3 +2213,83 @@ Richard tested doc gen on dax.impact-cp.com. DAX said the article would appear i
 **Why urgent:** Brett's team is logging in today. Richard is about to send the launch email.
 
 **Done when:** Both parts confirmed — capabilities guide live in ICP Router + doc gen status reported to #dax-collab.
+
+---
+
+## TASK-20260414-FORGE-003
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** URGENT
+- **From:** Triton (escalated from TASK-20260414-TRITON-002)
+- **Client:** DAX / Impact Capital Partners
+
+### Task: ICP DAX — capabilities guide + doc gen verification (Triton blocked — no SSH/az CLI)
+
+Triton cannot reach ICP n8n API (SSH port closed, no az CLI). Forge has az CLI + can use `az vm run-command` on vm-n8n-icp.
+
+**Part A — Add capabilities guide to ICP Router system prompt**
+
+Workflow ID: `wGhmfrxHEBK7FzES` on ICP n8n (40.87.99.115:5678)
+
+Get the API key first:
+```bash
+az keyvault secret show --vault-name kvdaximpactcapital --name n8n-api-key --query value -o tsv
+```
+
+Then GET the workflow, append the following to `systemMessage` in ALL "DAX Agent" nodes (before closing quote before `","maxIterations"`):
+
+```
+YOUR CAPABILITIES - know these and proactively offer them when asked:
+
+GENERAL AI:
+- Answer any question, write content, research topics, brainstorm ideas
+- Draft emails, articles, blog posts, client letters, marketing copy
+- Explain complex financial concepts in plain language
+- Help with spreadsheet formulas, presentations, and analysis
+- Try: "Write a 500-word article on rising interest rates"
+
+MARKET DATA (live):
+- Real-time stock quotes, ETF prices, market data
+- Works with any ticker symbol
+- Try: "What is SPY trading at?" or "Price of AAPL"
+
+CLIENT MANAGEMENT (requires Wealthbox connection):
+- Look up any client by name - profile, risk tolerance, goals
+- Search clients by tags or interests
+- If not connected yet, let them know: "Client lookup requires your Wealthbox CRM to be connected. Contact your administrator to enable it."
+
+MEETING PREP (requires Wealthbox connection):
+- Generate a full meeting brief - profile, portfolio, notes, action items
+- Same connection note as above if not available
+
+DOCUMENT GENERATION (requires SharePoint connection):
+- Write and save documents directly to the firm's SharePoint
+- Generate quarterly client reviews
+- If not connected, say so clearly
+
+DOCUMENT READING:
+- Read and summarize uploaded PDF, Word, and CSV files
+- Read files from SharePoint DAX Documents folder
+- Try: Upload a file and ask "Summarize this document"
+
+EMAIL & CALENDAR (requires Outlook connection):
+- Read emails, check calendar, draft and send emails
+- If not connected, let them know
+
+When someone asks "what can you do?" or "help" or "get started" - walk them through these with examples. Be enthusiastic. If a feature requires a connection that isn't set up, say clearly: "That feature requires [system] to be connected - your administrator can enable it" rather than failing silently.
+```
+
+Reference: Already applied to Dakona Router (`3tniyxZREqfnAbfo`) on n8n.dakona.net — use that as the verified pattern.
+
+**Part B — Verify ICP Document Generation**
+
+1. Is Document Generator sub-workflow (`f1QOMhmTRbsVCfvv`) active on ICP n8n?
+2. Check ICP SharePoint DAX Documents folder via Graph API:
+   - Site ID: `impactcapitalpartnersllc.sharepoint.com,9408138e-0aa3-404e-b131-bc905b2d99d0,40e05979-6387-4bb6-8b8e-6638aa9c1e2f`
+   - GET `https://graph.microsoft.com/v1.0/sites/{siteId}/drive/root:/DAX Documents:/children`
+   - Graph creds in n8n service env on vm-n8n-icp (GRAPH_TENANT_ID/CLIENT_ID/CLIENT_SECRET)
+3. If folder empty or workflow inactive, check ICP n8n execution logs and fix.
+
+**Why urgent:** Brett's team is logging in today. Richard is about to send launch email.
+
+**Done when:** Capabilities guide live in ICP Router + doc gen status confirmed.
