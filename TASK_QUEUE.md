@@ -2300,3 +2300,25 @@ Reference: Already applied to Dakona Router (`3tniyxZREqfnAbfo`) on n8n.dakona.n
 **Why urgent:** Brett's team is logging in today. Richard is about to send launch email.
 
 **Done when:** Capabilities guide live in ICP Router + doc gen status confirmed.
+
+---
+
+## TASK-20260414-FORGE-004
+- **Assignee:** Forge
+- **Status:** BLOCKED
+- **Priority:** High
+- **From:** Richard (via #dax-collab)
+- **Task:** Build 1AltX 07E: Video Pipeline — n8n workflow on dakona
+
+**[Forge] Pre-flight 2026-04-14:**
+
+Webhook scaffold created: `POST https://n8n.dakona.net/webhook/7e-video-pipeline`
+Descript credential in n8n: `YWD0Y4J5NUUmC7Nv`
+
+**Pre-flight findings:**
+- FFmpeg: NOT on n8n VM → workflow will auto-install on first run
+- Chromium: ✅ linux-146.0.7680.153 (Puppeteer available)
+- talking-head.mp4: NOT on n8n VM → **Richard must upload to `/home/dkn8n/talking-head.mp4`** (SCP or VM console)
+- Cloudflare: Upwork blocks headless browsers → workflow handles gracefully
+
+**BLOCKED — waiting for Richard to upload talking-head.mp4 to n8n VM before Forge can complete build.**
