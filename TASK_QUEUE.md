@@ -2342,3 +2342,13 @@ scp /home/richard/talking-head.mp4 dkn8n@n8n.taild50f03.ts.net:/home/dkn8n/talki
 - FFmpeg: ✅ `/usr/bin/ffmpeg` (6.1.1)
 - Chromium: ✅ `/home/dkn8n/.cache/puppeteer/chrome/linux-146.0.7680.153/`
 - talking-head: ❌ Upload needed to `/home/dkn8n/talking-head.mp4`
+
+----
+
+## TASK-TEST-001
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Date:** 2026-04-14
+- **Title:** Test task via webhook
+
+**Test only** � please ignore. Added by Forge to verify task-queue-writer endpoint.
