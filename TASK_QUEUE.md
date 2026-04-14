@@ -2218,7 +2218,7 @@ Richard tested doc gen on dax.impact-cp.com. DAX said the article would appear i
 
 ## TASK-20260414-FORGE-003
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **Priority:** URGENT
 - **From:** Triton (escalated from TASK-20260414-TRITON-002)
 - **Client:** DAX / Impact Capital Partners
