@@ -1994,7 +1994,7 @@ Root cause was NOT in page7-pricing.js (suspected). Actual cause: `tf-arrival-st
 
 ## TASK-20260414-FORGE-001
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **Priority:** Medium
 - **From:** Triton
 - **Client:** PNT
@@ -2023,7 +2023,7 @@ admin.html (new Administration page in PNT portal) has a "Run Sweep" button that
 
 ## TASK-20260414-FORGE-SWEEP
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** High
 - **From:** PNT Admin Portal
 - **Client:** PNT
@@ -2039,7 +2039,7 @@ admin.html (new Administration page in PNT portal) has a "Run Sweep" button that
 
 ## TASK-20260414-FORGE-002
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** High
 - **From:** Triton
 - **Client:** PNT
@@ -2094,3 +2094,9 @@ return [{ json: { ok: true, timestamp: ts } }];
 - Clicking "Run Sweep" in admin.html triggers immediate execution on n8n VM
 - sweep_report.json updates on GitHub within ~10 min
 - admin.html shows fresh results on reload
+
+**[Forge] Completed 2026-04-14:**
+- Cloned pnt-central-brain to n8n VM (`/home/dkn8n/pnt-central-brain`), ran `npm install` (Puppeteer bundled Chromium installed)
+- Updated sweep workflow `jxE6kW101frm93JU` — now runs directly on n8n VM via `child_process.execSync`: pull → test_ui_e2e.js → test_gate6.js → commit RESULTS/ui-e2e/ to dev → push
+- Webhook `POST /pnt-run-sweep` returns 200 immediately; sweep runs async, results committed to dev branch within ~10 min
+- Probe workflow deleted
