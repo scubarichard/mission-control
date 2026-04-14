@@ -2138,7 +2138,7 @@ sudo apt-get install -y \
 
 ## TASK-20260414-TRITON-002
 - **Assignee:** Triton
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **Priority:** URGENT
 - **From:** Forge (Richard request via #dax-collab)
 - **Client:** DAX / Impact Capital Partners
