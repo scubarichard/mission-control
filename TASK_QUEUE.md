@@ -2017,3 +2017,21 @@ admin.html (new Administration page in PNT portal) has a "Run Sweep" button that
 **admin.html webhook constant:** `SWEEP_HOOK = 'https://n8n.dakona.net/webhook/pnt-run-sweep'`
 
 **Done when:** Clicking "Run Sweep" in admin.html returns 200 and sweep runs + commits results within ~5 min.
+
+
+---
+
+## TASK-20260414-FORGE-SWEEP
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** PNT Admin Portal
+- **Client:** PNT
+- **Task:** Run The Sweep — full E2E test suite + commit sweep_report.json to main
+- **Requested:** 2026-04-14 15:19:25 UTC
+
+**Instructions:**
+1. cd to pnt-central-brain repo root
+2. node scripts/test_ui_e2e.js --all
+3. git add RESULTS/sweep_report.json && git commit -m "chore: sweep 2026-04-14 15:19:25 UTC" && git push origin main
+4. Mark DONE
