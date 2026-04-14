@@ -1882,3 +1882,48 @@ Airtable Metadata API rejected choice modification (422 on singleSelect PATCH). 
 - **Priority:** Medium
 - **Description:** Add Audit_Log viewer tab to portal/reports.html. Filter by date range, user, action type, booking. Pairs with S5 Google OAuth so user identities are real. Airtable table `tbliXEx1DeivsUfBw` already live and capturing all write actions.
 - **Dependencies:** S5 Google OAuth (replaces email prompt with real identity)
+
+---
+
+## TASK-20260413-FORGE-011
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** High
+- **From:** Richard (via #dax-collab 22:13 CDT)
+- **Task:** Update OPT credentials in Sunny's n8n + check Anthropic credential
+
+**[Forge] Completed 2026-04-14:**
+
+### Credential Updates (optsolutions.app.n8n.cloud)
+- **Airtable OPT** (`xvAwqGiNHApqLJdR`): updated `accessToken` → Sunny's `patI9LeUPChfuPxVM...` ✓
+- **HubSpot OPT** (`gwyHUPyL4ZAqYplS`): updated `apiKey` → Sunny's `pat-ap1-adb325cd...` ✓
+
+### Anthropic Credential
+- **Not present** in Sunny's n8n credential list (only: Google Drive OPT, HubSpot OPT, Airtable OPT)
+- Community node `@n8n/n8n-nodes-langchain` needs to be installed first (Settings → Community Nodes in Sunny's n8n UI)
+- After install, Sunny can add Anthropic credential manually with key from task queue or Richard can supply via Sunny's UI session
+- Credential type name: `anthropicApi`
+
+---
+
+## TASK-20260413-FORGE-012
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** Medium
+- **From:** Forge (continuation of PNT E2E testing)
+- **Task:** PNT UI E2E test — Puppeteer headless walk through all 79 bookings, 8 pages each
+
+**[Forge] Completed 2026-04-14:**
+
+### Results
+- **79/79 PASSED, 0 FAILED**
+- Script: `scripts/test_ui_e2e.js` — committed to `dev` branch (commit `623b912`)
+- Walks each booking via `loadDraft(recordId)` through P2→P8+P10
+- Screenshots every page to `RESULTS/ui-e2e/`, HTML report generated
+- Non-fatal console warnings: `Cannot set properties of null` on optional fields — no impact on test pass
+
+### Key Discovery: Correct Booking Load Function
+- `loadDraft(recordId)` — full form load, all linked data, no Airtable writes ✓
+- `selectRecentBooking(id)` — sidebar only, no form data (DO NOT USE for testing)
+- `editSelectedBooking()` — writes `Status: 'Inquiry'` to Airtable (AVOID IN TESTS)
+
