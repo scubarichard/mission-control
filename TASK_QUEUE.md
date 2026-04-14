@@ -1932,7 +1932,7 @@ Airtable Metadata API rejected choice modification (422 on singleSelect PATCH). 
 
 ## TASK-20260413-FORGE-013
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** High
 - **From:** Richard
 - **Task:** Fix `Cannot set properties of null (setting 'value')` errors in PNT UI — get E2E test to 0 console errors across all 79 bookings
@@ -1976,4 +1976,11 @@ The error is consistent across almost all bookings, suggesting it's in the page 
 - `node scripts/test_ui_e2e.js --all` completes with 0 ERR lines in report
 - All 79 bookings show no red error blocks
 - Fix committed to dev branch and pushed
+
+**[Forge] Completed 2026-04-14:**
+
+Root cause was NOT in page7-pricing.js (suspected). Actual cause: `tf-arrival-status` and `tf-departure-status` were referenced in `setupTransfersPage()` (and already in `saveTransfers()` with null fallbacks) but missing from `booking-intake.html`. Added both selects (Pending/Confirmed/Completed/Cancelled) to page-10 transfers section.
+
+- **E2E result: 79/79 PASS, 0 ERR lines** ✓
+- Commit: `a080174` → `dev` branch (scubarichard/pnt-central-brain)
 
