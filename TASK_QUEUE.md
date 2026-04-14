@@ -1872,3 +1872,13 @@ Old 5-min cron deleted and replaced.
 
 ### Note on Booking Status Airtable update
 Airtable Metadata API rejected choice modification (422 on singleSelect PATCH). New values (Ongoing, PR-DT, PR-GP, Canceled) will be auto-created in Airtable when first used via the data API — this is standard Airtable behavior.
+
+---
+
+## PNT S5 BACKLOG
+
+### S5-BACKLOG-001 — Audit Log Portal UI
+- **Scope:** PNT Central Brain — S5
+- **Priority:** Medium
+- **Description:** Add Audit_Log viewer tab to portal/reports.html. Filter by date range, user, action type, booking. Pairs with S5 Google OAuth so user identities are real. Airtable table `tbliXEx1DeivsUfBw` already live and capturing all write actions.
+- **Dependencies:** S5 Google OAuth (replaces email prompt with real identity)
