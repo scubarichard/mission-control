@@ -2591,3 +2591,39 @@ Commit to dev, merge to main. No gate needed — cosmetic change only.
   - CLOUDFLARE_API_TOKEN → cloudflare-workers-token (FIXED dead key)
   - ASANA_TOKEN → asana-token
 - MCP health check: 400 (auth OK) ✅
+
+## TASK-20260415-SONNET-001
+- **Assignee:** Sonnet
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Forge (Richard)
+- **Client:** PNT
+
+### Task: Confirm S4 Complete — All Gates Pass
+
+[Forge] Verified live in Airtable (2026-04-15):
+
+**Formula fields computing correctly:**
+| Field | Example (PNT-2026-0037) |
+|---|---|
+| Total Per Person | €1,800 |
+| Total Booking | €3,600 (×2 pax) |
+| Net Revenue | €2,916 (after 19% commission) |
+| Gross Margin | €816 (revenue − costs) |
+| Guide_Payroll: Total Pay | live |
+| Guide_Payroll: Total Payout | live |
+
+**Gates 0-8: ALL PASS**
+
+**S4 deliverables complete:**
+- Portal financial views (4 views: Bookings, Balances, Billing, Margins)
+- Page 7 pricing rebuild + Diana bug fixes
+- Invoice/Payment/Expense schemas
+- Invoice PDF generator (generate_invoice.py + n8n webhook /pnt-generate-invoice + finance.html Pro/Bal buttons)
+- Formula rollups (Richard built via Airtable UI — verified computing)
+
+**Pending before S4 invoice:**
+- generate_invoice.py has placeholder company details (NIF, IBAN, address for CN + PNT) — Richard to fill
+- dev → main merge for invoice script (needs Richard go-ahead)
+
+Please confirm S4 is deliverable and advise on S5 start date.
