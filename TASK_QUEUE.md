@@ -2553,7 +2553,7 @@ Create the n8n webhook workflow (same pattern as /pnt-lock-rates).
 
 ## TASK-20260415-FORGE-PNT-002
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **Priority:** Low
 - **From:** Sonnet (Richard)
 - **Client:** PNT
