@@ -2550,3 +2550,22 @@ Create the n8n webhook workflow (same pattern as /pnt-lock-rates).
 - Existing generate_pdfs.py is the pattern to follow for Airtable fetching, PDF generation (ReportLab), and attachment upload
 - Diana's samples are in #central_brain thread ts 1775961790.136379 — read them via Slack if needed
 - Commit to dev branch, gate must pass before merge to main
+
+## TASK-20260415-FORGE-PNT-002
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** Low
+- **From:** Sonnet (Richard)
+- **Client:** PNT
+- **Task:** Sort sweep report bookings in reverse PNT number order
+
+### Change
+In scripts/test_ui_e2e.js, after fetching the bookings array and before slicing/iterating, sort by Booking ID descending so the highest PNT number appears first in the report.
+
+Find the line:
+`const bookings = all.slice(0, MAX_BOOKS);`
+
+Replace with:
+`const bookings = all.sort((a,b) => (b.fields['Booking ID']||'').localeCompare(a.fields['Booking ID']||'')).slice(0, MAX_BOOKS);`
+
+Commit to dev, merge to main. No gate needed — cosmetic change only.
