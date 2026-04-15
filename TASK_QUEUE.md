@@ -2426,3 +2426,31 @@ x-api-key: <from KV task-queue-api-key>
 - This task entry was self-committed via the webhook (6a88119) ✓
 
 **Note:** Remove TASK-TEST-001 from queue (it was a test entry).
+
+----
+
+## TASK-20260415-FORGE-001
+- **Assignee:** Triton
+- **Status:** PENDING
+- **Date:** 2026-04-15
+- **Title:** 7E Video Pipeline architecture review — gdigrab fails, needs rethink
+
+## Problem
+7E Video Pipeline (n8n `uy4psNKXnwGhpHBf`) does not work. Chrome opens via desktop bridge but FFmpeg gdigrab fails with FAILED:no_output_file.
+
+Root cause: Desktop bridge runs as Windows SYSTEM account which has no display session — gdigrab cannot capture the screen from SYSTEM context.
+
+## What 7E was supposed to do
+1. Open Chrome on RICHARD-WS to Upwork job URL
+2. Record screen 30s with FFmpeg gdigrab
+3. Composite recording + talking head (Talking Head - Live.mp4 in Dropbox)
+4. Upload to Descript, write URL to sheet col V, post to #alerts
+
+## Options to consider
+1. Fix bridge account — run bridge service as user 18473 (not SYSTEM) so gdigrab works
+2. Manual drop — Richard records, drops MP4 to watched folder, bridge handles composite + Descript
+3. No screen capture — generate video with talking head + FFmpeg drawtext (job title from sheet)
+4. Scrap 7E entirely
+
+## Richard's note
+"what a waste of time" — wants practical solution or to scrap it.
