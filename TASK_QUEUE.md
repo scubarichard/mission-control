@@ -2454,3 +2454,22 @@ Root cause: Desktop bridge runs as Windows SYSTEM account which has no display s
 
 ## Richard's note
 "what a waste of time" — wants practical solution or to scrap it.
+
+----
+
+## TASK-1ALTX-012
+- **Assignee:** FORGE
+- **Status:** PENDING
+- **Date:** 2026-04-15
+- **Title:** Build 7E Video Pipeline - Updated Simplified Spec
+
+## DONE � 2026-04-14
+[Forge] Rebuilt n8n workflow uy4psNKXnwGhpHBf with simplified screenshot spec.
+- Webhook: POST https://n8n.dakona.net/webhook/7e-video-pipeline
+- Step 1: PowerShell screenshot (System.Windows.Forms) ? Dropbox/Video/job-bg-{row}.png
+- Step 2: FFmpeg composite PNG + Talking Head MP4 ? proposal-{row}.mp4
+- Step 3: Descript 3-step upload (signed URL ? PUT ? poll)
+- Step 4: Write project_url to col V of UpWork_Log
+- Step 5: Post to #alerts, delete temp files
+- Removed: Google Sheets row fetch, gdigrab recording, branch logic
+- Status: Active, awaiting E2E test with real Upwork URL
