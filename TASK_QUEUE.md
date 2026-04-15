@@ -2486,7 +2486,7 @@ Root cause: Desktop bridge runs as Windows SYSTEM account which has no display s
 
 ## TASK-20260415-FORGE-PNT-001
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **Priority:** High
 - **From:** Sonnet (Richard)
 - **Client:** PNT
