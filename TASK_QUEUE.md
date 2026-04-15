@@ -2553,7 +2553,7 @@ Create the n8n webhook workflow (same pattern as /pnt-lock-rates).
 
 ## TASK-20260415-FORGE-PNT-002
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **Priority:** Low
 - **From:** Sonnet (Richard)
 - **Client:** PNT
@@ -2569,3 +2569,6 @@ Replace with:
 `const bookings = all.sort((a,b) => (b.fields['Booking ID']||'').localeCompare(a.fields['Booking ID']||'')).slice(0, MAX_BOOKS);`
 
 Commit to dev, merge to main. No gate needed — cosmetic change only.
+
+### Completion
+[Forge] One-liner added to test_ui_e2e.js:163. Committed dev → merged main. Commit: 67e7009 (dev) / 41d73e5 (main).
