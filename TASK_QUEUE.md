@@ -2572,3 +2572,22 @@ Commit to dev, merge to main. No gate needed — cosmetic change only.
 
 ### Completion
 [Forge] One-liner added to test_ui_e2e.js:163. Committed dev → merged main. Commit: 67e7009 (dev) / 41d73e5 (main).
+
+## TASK-20260415-FORGE-MCP-001 — MCP Key Cleanup
+**Status:** DONE
+**Agent:** Forge
+**Completed:** 2026-04-15
+
+### Summary
+- Audited MCP container app (ca-dax-mcp-dakona-pilot) env vars
+- Found 1 dead key: CLOUDFLARE_API_TOKEN (stale cfut_z0V... token, KV has newer cfut_QgJ...)
+- Migrated 8 hardcoded env vars to KV secretRefs:
+  - CLICKUP_API_KEY → clickup-api-token
+  - DESKTOP_BRIDGE_SECRET → desktop-bridge-secret
+  - MCP_AUTH_TOKEN → desktop-bridge-secret (same value, shared ref)
+  - WEALTHBOX_API_KEY → wealthbox-api-key
+  - FMP_API_KEY → fmp-api-key
+  - FINNHUB_API_KEY → finnhub-api-key
+  - CLOUDFLARE_API_TOKEN → cloudflare-workers-token (FIXED dead key)
+  - ASANA_TOKEN → asana-token
+- MCP health check: 400 (auth OK) ✅
