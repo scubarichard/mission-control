@@ -153,6 +153,16 @@
 - **Context:** Review page button → n8n webhook QmEZWdoT0OS4t6my. Rate lock workflow updated. PDF links on Review page.
 - **Client:** PNT
 
+### TASK-20260415-FORGE-001
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** High
+- **Task:** OPT final credential swap — update Anthropic API key in AI Transform node
+- **Context:** Replaced hardcoded CLAUDE_KEY in jsCode of AI Transform node in both OPT workflows on optsolutions.app.n8n.cloud
+  - Tyro (3zCmxNSmYqaryNXy): key updated ✓ active ✓
+  - Nuvei (iMGHM4Ok78ECYLFA): key updated ✓ active ✓
+- **Client:** OPT
+
 ### TASK-20260404-005
 - **Assignee:** Forge
 - **Status:** DONE
