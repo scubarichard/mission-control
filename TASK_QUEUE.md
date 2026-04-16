@@ -1263,3 +1263,130 @@ Steps:
 8. Report new workflow IDs + new Airtable base ID to #dax-collab
 
 - **Done When:** 3 workflows live on optsolutions.app.n8n.cloud, old ones deactivated on dakona, report posted to Slack
+
+
+---
+
+### TASK-20260416-001
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **Client:** Inflection Capital Management (Justin Kunz)
+- **Task:** Provision Azure VM + AI Foundry for Claude Code deployment
+- **Authorized by:** Richard Mabbun
+
+## CONTEXT
+
+Justin Kunz is a Dakona MSP RIA client. He wants a dedicated Azure environment to run Claude Code CLI, connected to Azure AI Foundry (Claude Serverless endpoint) for compliance — all traffic stays inside his Azure tenant. His Python scripts (written via Cowork) will run on this VM and access Sharefile via API. No client data passes to AI at runtime.
+
+We are the CSP. Access is via AOBO — no service principal needed.
+
+**Subscription:** f71cc48a-33ca-46e1-8483-b3171ea1dd5e (Inflection Capital Management LLC)
+
+## ARCHITECTURE
+
+`
+Justin's team -> AVD (existing, RDP)
+                      |
+              Windows 11 VM (private IP, no public IP)
+                      |
+              Claude Code CLI
+                      |
+              ANTHROPIC_BASE_URL = AI Foundry endpoint (private)
+                      |
+              Sharefile API (Python scripts)
+`
+
+## BUILD SEQUENCE
+
+### Step 1 — Survey existing environment
+- List existing VNets, subnets, resource groups in subscription f71cc48a-33ca-46e1-8483-b3171ea1dd5e
+- Identify existing VNet name and next available /28 address block
+- Do NOT create anything until survey is complete
+
+### Step 2 — Create dedicated subnet
+- Name: snet-claudecode
+- Size: /28
+- Place inside existing VNet
+
+### Step 3 — Create NSG
+- Name: nsg-claudecode
+- Allow RDP from existing AVD subnet only (internal, no public IP exposure)
+- Deny all other inbound
+- Associate with snet-claudecode
+
+### Step 4 — Provision VM
+- Name: vm-claudecode-inflection
+- OS: Windows 11 Pro (latest)
+- Size: Standard_B2s
+- No public IP
+- Place in snet-claudecode
+- Admin user: daxadmin
+- Tag all resources: client=inflection, project=claudecode, managed-by=dakona
+
+### Step 5 — Install NinjaOne Agent
+- Use Dakona Windows installer
+- Confirm VM appears in NinjaOne dashboard before proceeding
+
+### Step 6 — Configure patching
+- Enable Azure Update Manager or Windows Update policy
+- Monthly patch schedule
+
+### Step 7 — Create Azure AI Foundry Hub
+- Name: inflection-ai
+- Region: East US
+- Link to existing subscription and resource group
+- Note: Anthropic ToS acceptance in portal is a MANUAL STEP — flag this for Richard to complete
+
+### Step 8 — Deploy Claude Sonnet (Serverless API)
+- Model: Claude Sonnet (latest available in AI Foundry)
+- Deployment type: Serverless API
+- Capture endpoint URL and API key
+- Note: ToS acceptance must happen before this step — flag if not yet accepted
+
+### Step 9 — Private Endpoint for AI Foundry
+- Deploy private endpoint so AI Foundry endpoint never touches public internet
+- Associate with existing VNet
+
+### Step 10 — Entra ID Role Assignments
+- Scope AI Foundry access to Justin's Inflection users only
+- Assign Cognitive Services User role to appropriate Entra group or users
+
+### Step 11 — Install Claude Code CLI on VM
+- Install Node.js 20.x on Windows VM
+- Install Claude Code CLI: npm install -g @anthropic-ai/claude-code
+- Configure environment variables:
+  - ANTHROPIC_BASE_URL = AI Foundry endpoint URL (from Step 8)
+  - ANTHROPIC_API_KEY = AI Foundry API key (from Step 8)
+- Store as system environment variables, not hardcoded in scripts
+- Verify: claude --version
+
+### Step 12 — Sharefile Python SDK
+- Install Python 3.x on VM
+- Install pip packages: sharefile-api, requests
+- Create placeholder config: C:\Scripts\sharefile_config.py (chmod equivalent — restrict to daxadmin)
+- Placeholders only — Justin provides real Sharefile credentials
+- Document where Justin pastes his credentials
+
+### Step 13 — End to end test
+- Confirm Claude Code CLI runs and connects to AI Foundry endpoint
+- Confirm Python + Sharefile imports work
+- Confirm outbound to AI Foundry private endpoint resolves correctly
+
+## MANUAL STEPS FOR RICHARD (Flag these — do not block on them)
+1. Accept Anthropic ToS in Azure AI Foundry portal (required before model deployment)
+2. Justin to provide Sharefile credentials for config file
+3. Justin to provide Entra user/group to scope AI Foundry access
+
+## DELIVERABLES
+- [ ] VM online, hardened, visible in NinjaOne
+- [ ] AI Foundry hub deployed with Claude Sonnet serverless endpoint
+- [ ] Private endpoint configured
+- [ ] Entra role assignments in place
+- [ ] Claude Code CLI installed and pointing to AI Foundry endpoint
+- [ ] Sharefile Python SDK installed, placeholder config created
+- [ ] All resources tagged: client=inflection, project=claudecode, managed-by=dakona
+- [ ] Handoff doc: how Justin's team RDPs in via AVD and runs Claude Code
+- [ ] Flag any manual steps that require Richard or Justin action
+
+Post completion status and any blockers to #dax-collab (C0APVGG486M).
