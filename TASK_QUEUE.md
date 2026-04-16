@@ -2,11 +2,13 @@
 
 ## TASK-20260416-FORGE-PNT-001
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **Priority:** High
 - **From:** Sonnet (Richard)
 - **Client:** PNT
 - **Task:** Rebuild PNT_Sprint4_Delivery_Report.docx — match S3 format exactly
+- **Completed:** 2026-04-16
+- **Result:** Rebuilt from scratch using python-docx. US Letter, 1" margins, running header with PNT green (#1E3D2F) bottom border, green project info table, all 8 screenshots embedded, page breaks between sections, cumulative sprint table with COMPLETE row shading. Committed ca42ba9 → merged to main 4f29f62.
 
 ### Context
 The current S4 report does not match the S3 format. Rebuild it from scratch using docx-js following the SKILL.md at /mnt/skills/public/docx/SKILL.md.
