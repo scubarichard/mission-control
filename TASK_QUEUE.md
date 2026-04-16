@@ -2718,3 +2718,5 @@ Use docs/PNT_Sprint3_Delivery_Report.docx as the template. Build docs/PNT_Sprint
 **Done when:** docs/PNT_Sprint4_Delivery_Report.docx exists on main with all screenshots embedded.
 
 **[Forge] TASK-20260415-FORGE-PNT-003 Completed 2026-04-16:** Screenshots 19-21 captured. PNT_Sprint4_Delivery_Report.docx built (8 screenshots, S4 phases 0-8). dev->main merged.
+
+**[Forge] TASK-20260415-FORGE-PNT-003 Completed 2026-04-16:** Screenshots 19-21 captured, PNT_Sprint4_Delivery_Report.docx built (8 screenshots, all S4 phases 0-8). dev 44e19ba -> main d4811cb.
