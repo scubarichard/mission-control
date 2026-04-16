@@ -2668,3 +2668,51 @@ Forge az CLI is authenticated to Dakona tenant (`d2a3c346`). ICP tenant is `eaf1
 - **Option A:** Open https://login.microsoft.com/device on any browser, enter code `BSAY3222T` to auth Forge into ICP tenant — then Forge can pull logs
 - **Option B:** Check Azure Portal → Entra ID → Sign-in logs for app `7822f093-9c83-4b1a-83db-29517d29ac89` directly
 - **Option C:** If Cosmos DB tool points to ICP Cosmos — result was empty = no ICP users have logged in yet (answer is "nobody")
+
+## TASK-20260415-FORGE-PNT-003
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Sonnet (Richard)
+- **Client:** PNT
+- **Task:** S4 Delivery Report — screenshots + docx
+
+### Part 1 — Missing Screenshots
+Capture the following and save to docs/screenshots/s4/:
+
+1. 19_invoice_proforma_CN.png — open outputs/pdf/invoices/draft_proforma_CN.pdf and screenshot it
+2. 20_invoice_balance_PNT.png — open outputs/pdf/invoices/draft_balance_PNT.pdf and screenshot it
+3. 21_finance_generate_button.png — screenshot the finance.html Booking Financials tab showing the Generate Invoice (Pro) and (Bal) buttons. Use the existing portal URL: https://scubarichard.github.io/pnt-central-brain/finance.html (auth: inject sessionStorage pnt_auth=1 via Puppeteer)
+
+### Part 2 — Build Delivery Report
+Use docs/PNT_Sprint3_Delivery_Report.docx as the template. Build docs/PNT_Sprint4_Delivery_Report.docx covering S4 deliverables.
+
+**Report structure (mirror S3 format):**
+- Header: Sprint 4 — Financial Layer | Due April 25, 2026 | Invoice ,550
+- Executive Summary: what was built in S4
+- Deliverables section per phase:
+  - Phase 0: 11 form fixes (Gate PASS)
+  - Phase 1: Bookings pricing schema — 9 currency fields + 4 formula fields (Total Per Person, Total Booking, Net Revenue, Gross Margin)
+  - Phase 2: Invoices table (11 fields, Fat.CN/PNT tracking)
+  - Phase 3: Payments table (10 fields, CN/PNT split, Total Paid + Outstanding Balance on Bookings)
+  - Phase 4: Expenses + Guide_Payroll tables
+  - Phase 4b: Invoice_Items table + EBD Percent + VAT Treatment + Payment Method
+  - Phase 5: Form Page 7 (Pricing) rebuild — base price, supplements, commission, billing entity, live calculations, invoice tracking section. Plus 8 Diana bug fixes.
+  - Phase 6: Financial portal — 4 views: Booking Financials, Outstanding Balances, Monthly Billing Summary, Tour Margins
+  - Phase 8: Invoice PDF generator — generate_invoice.py + n8n webhook /pnt-generate-invoice + Generate Invoice buttons in portal
+- Screenshots section: embed all images from docs/screenshots/s4/ (14–21)
+- What's next: S5 Staff Interfaces & Data Admin (due May 9)
+
+**Notes:**
+- Use S3 report as style/format reference — match fonts, heading styles, colour scheme
+- No signature block
+- Page breaks between major sections
+- Include all screenshots inline in the relevant section
+
+### Gate
+- Both PDF screenshots captured and look correct
+- finance.html Generate Invoice button visible in screenshot
+- Docx opens cleanly, all screenshots embedded, no broken image links
+- Commit everything to dev branch, merge to main
+
+**Done when:** docs/PNT_Sprint4_Delivery_Report.docx exists on main with all screenshots embedded.
