@@ -2627,3 +2627,44 @@ Commit to dev, merge to main. No gate needed — cosmetic change only.
 - dev → main merge for invoice script (needs Richard go-ahead)
 
 Please confirm S4 is deliverable and advise on S5 start date.
+
+----
+
+## TASK-20260415-FORGE-002 — PNT Calendar Fix
+- **Assignee:** Forge (covering Triton — offline)
+- **Status:** DONE
+- **Date:** 2026-04-15
+- **Title:** Fix PNT Google Calendar recurring error
+
+### Root Cause
+`google_credentials.json` was missing from VM at `/home/dkn8n/pnt-pdfs/`. n8n code node was also swallowing Python stdout (only logging `e.message`, not `e.stdout`), so error was invisible.
+
+### Fix
+Updated n8n workflow `Tv7TnPLia85fFExR`:
+1. Code node now logs `e.stdout + e.stderr || e.message` — real error visible in Slack going forward
+2. Added self-healing: writes `google_credentials.json` and `google_token.json` from base64 if missing on VM
+3. Tested: calendar event created for booking `recrtefSVW5WHauWz` (BOK00092777 Louise Collenette). Token refreshed, event posted to `demo@1altx.com`, Airtable updated.
+
+### Note
+Calendar currently posts to `demo@1altx.com` (dev account). CLAUDE.md notes "rewire to PNT's own at S6".
+
+----
+
+## TASK-20260415-FORGE-003 — DAX-ICP Entra Sign-in Logs
+- **Assignee:** Forge
+- **Status:** BLOCKED
+- **Date:** 2026-04-15
+- **Title:** Pull Entra audit logs for DAX-ICP SSO app (Richard request via Sonnet)
+
+### What was tried
+1. `az account set --subscription e1c109d7-...` → FAILED: ICP subscription not in Forge's az context (Dakona tenant only: `d2a3c346`)
+2. Cosmos DB `users` collection query → empty (tool may point to Dakona Cosmos, or no ICP users exist)
+3. `az keyvault secret show --vault-name kvdaximpactcapital` → UNAUTHORIZED (wrong tenant)
+
+### Blocker
+Forge az CLI is authenticated to Dakona tenant (`d2a3c346`). ICP tenant is `eaf1a864-97ff-451c-87e7-88cf7512e98c`. Needs interactive device-code login to access ICP resources.
+
+### Options for Richard
+- **Option A:** Open https://login.microsoft.com/device on any browser, enter code `BSAY3222T` to auth Forge into ICP tenant — then Forge can pull logs
+- **Option B:** Check Azure Portal → Entra ID → Sign-in logs for app `7822f093-9c83-4b1a-83db-29517d29ac89` directly
+- **Option C:** If Cosmos DB tool points to ICP Cosmos — result was empty = no ICP users have logged in yet (answer is "nobody")
