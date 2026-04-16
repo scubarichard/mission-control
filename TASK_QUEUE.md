@@ -2671,7 +2671,7 @@ Forge az CLI is authenticated to Dakona tenant (`d2a3c346`). ICP tenant is `eaf1
 
 ## TASK-20260415-FORGE-PNT-003
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** High
 - **From:** Sonnet (Richard)
 - **Client:** PNT
@@ -2716,3 +2716,5 @@ Use docs/PNT_Sprint3_Delivery_Report.docx as the template. Build docs/PNT_Sprint
 - Commit everything to dev branch, merge to main
 
 **Done when:** docs/PNT_Sprint4_Delivery_Report.docx exists on main with all screenshots embedded.
+
+**[Forge] TASK-20260415-FORGE-PNT-003 Completed 2026-04-16:** Screenshots 19-21 captured. PNT_Sprint4_Delivery_Report.docx built (8 screenshots, S4 phases 0-8). dev->main merged.
