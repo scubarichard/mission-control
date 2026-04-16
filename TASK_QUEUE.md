@@ -2,7 +2,7 @@
 
 ## TASK-20260416-FORGE-PNT-001
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **Priority:** High
 - **From:** Sonnet (Richard)
 - **Client:** PNT
