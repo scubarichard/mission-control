@@ -2720,3 +2720,40 @@ Use docs/PNT_Sprint3_Delivery_Report.docx as the template. Build docs/PNT_Sprint
 **[Forge] TASK-20260415-FORGE-PNT-003 Completed 2026-04-16:** Screenshots 19-21 captured. PNT_Sprint4_Delivery_Report.docx built (8 screenshots, S4 phases 0-8). dev->main merged.
 
 **[Forge] TASK-20260415-FORGE-PNT-003 Completed 2026-04-16:** Screenshots 19-21 captured, PNT_Sprint4_Delivery_Report.docx built (8 screenshots, all S4 phases 0-8). dev 44e19ba -> main d4811cb.
+
+---
+
+## TASK-20260416-FORGE-ICP-001 — Inflection Capital Azure VM + AI Foundry Build
+- **Assignee:** Forge
+- **Status:** IN_PROGRESS (blockers — see below)
+- **Date:** 2026-04-16
+- **Title:** Deploy Windows 11 VM + AI Foundry Hub in ICP Azure tenant
+- **Subscription:** e1c109d7-9232-4e26-bed7-b1e1b5a6f611 (CSP, tenant: eaf1a864)
+
+### Completed
+- NSG nsg-dak-mgmt created (Impact-Vnet RG, southcentralus)
+- Subnet snet-dak-mgmt (10.0.3.0/28) in Impact-Vnet — isolated, DC reachable
+- RG rg-icp-ai-workstation created (southcentralus)
+- VM vm-icp-ai-ws01 provisioned — Win11 24H2 Pro, Standard_D2s_v3, no public IP
+- AADDS DC reachable: U5085XP29R9X4GV.Az.Impact.com
+- AI Foundry Hub hub-icp-ai created (eastus)
+- AI Foundry Project proj-icp-ai created under hub
+
+### Blockers — needs Paul Mabbun or Justin Kunz
+
+**Blocker 1 — Domain join: admin account locked**
+- admin@impactcapitalpartnersllc.onmicrosoft.com locked out (failed join attempts)
+- KV akv-15-tpxpugxqrh7o41 secret LocalAD--Password may be wrong
+- Action: Paul/Justin unlock account + confirm/reset domain join password, then Forge re-runs extension
+
+**Blocker 2 — Claude Sonnet blocked on CSP subscription**
+- Subscription type CSP_2015-05-01 blocks Anthropic marketplace models in AI Foundry
+- Hub + Project live, but serverless Claude deployment fails: ServerlessModelNotAvailable
+- Option A: Dakona enables Marketplace third-party for this CSP sub (CSP partner admin)
+- Option B: Justin uses direct Anthropic API key via Claude Code CLI on VM (simplest)
+- Option C: Azure OpenAI (first-party, CSP-compatible)
+
+### Cleanup needed
+- Revoke Forge's get/list on akv-15-tpxpugxqrh7o41 (object 530a7f05) after domain join complete
+
+**[Forge] 2026-04-16:** Infrastructure deployed. VM running, AI Foundry live. Awaiting Paul/Justin.
