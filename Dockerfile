@@ -48,6 +48,12 @@ RUN node /app/patches/patch-tool-choice.js
 COPY patches/patch-agent-null-guards.js /app/patches/patch-agent-null-guards.js
 RUN node /app/patches/patch-agent-null-guards.js
 
+# ---------- Patch: normalize OpenID email to lowercase ----------
+# Entra returns mixed-case emails (e.g. Brett@impact-cp.com). Lowercasing at
+# extraction prevents "user not found" warnings on every SSO login.
+COPY patches/patch-openid-lowercase.js /app/patches/patch-openid-lowercase.js
+RUN node /app/patches/patch-openid-lowercase.js
+
 # ---------- Compliance Portal route ----------
 COPY patches/compliance-route.js /app/patches/compliance-route.js
 # Insert compliance routes BEFORE the catch-all route (module.exports = app)
