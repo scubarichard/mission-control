@@ -1,0 +1,13 @@
+node_modules
+.git
+.claude
+*.md
+releases
+deployments
+RESULTS
+scripts
+infra
+n8n
+mcp
+docs/deployment
+clients
