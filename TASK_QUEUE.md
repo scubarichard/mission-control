@@ -157,3 +157,27 @@ Save to `docs/PNT_Sprint4_Delivery_Report.docx`. Replace existing file. Commit t
 - All 8 screenshots embedded and visible (no 404s)
 - Page breaks between major sections
 - Cumulative table shows S4 as COMPLETE
+---
+
+## TASK-20260417-FORGE-OPT-001 - OPT Turnover Documentation Screenshots
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-04-17
+- **Title:** OPT Solutions turnover documentation — 10 screenshots
+
+### Completed
+All 10 screenshots captured and committed to scubarichard/opt-solutions main (632e495):
+- 01_hubspot_companies.png — 30 companies via HubSpot API (portal 441994755)
+- 02_hubspot_company_detail.png — NewsXpress record (Tyro, MID: NEWSXPRESS)
+- 03_hubspot_dashboard_commission.png — Commission Overview dashboard
+- 04_hubspot_dashboard_merchant.png — Merchant Performance dashboard
+- 05_airtable_merchants.png — Merchants table, 30 records (base appyQvY4H1brqHuRE)
+- 06_airtable_transactions.png — Transactions table, 20 records
+- 07_google_drive_folders.png — OPT Commission Imports folder (Tyro + Nuvei)
+- 08_n8n_workflows.png — 3 published workflows list
+- 09_n8n_tyro_workflow.png — OPT - Tyro Commission Import canvas
+- 10_n8n_nuvei_workflow.png — OPT - Nuvei Commission Import canvas
+
+**Note:** HubSpot dashboards (03/04) and Google Drive (07) rendered via API/HTML — no active browser session for OPT portal (sunny@optsolutions.com.au). Airtable via PAT. n8n via sunny@optsolutions.com.au login. All screenshots in P:\_clients\opt-solutions\screenshots\.
+
+**[Forge] 2026-04-17:** DONE — 10 screenshots committed 632e495 ? main.
