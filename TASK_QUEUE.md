@@ -163,25 +163,45 @@ Save to `docs/PNT_Sprint4_Delivery_Report.docx`. Replace existing file. Commit t
 - **Assignee:** Forge
 - **Status:** DONE
 - **Date:** 2026-04-17
-- **Title:** OPT Solutions turnover documentation — 10 screenshots
+- **Title:** OPT Solutions turnover documentation ï¿½ 10 screenshots
 
 ### Completed
 All 10 screenshots captured and committed to scubarichard/opt-solutions main (632e495):
-- 01_hubspot_companies.png — 30 companies via HubSpot API (portal 441994755)
-- 02_hubspot_company_detail.png — NewsXpress record (Tyro, MID: NEWSXPRESS)
-- 03_hubspot_dashboard_commission.png — Commission Overview dashboard
-- 04_hubspot_dashboard_merchant.png — Merchant Performance dashboard
-- 05_airtable_merchants.png — Merchants table, 30 records (base appyQvY4H1brqHuRE)
-- 06_airtable_transactions.png — Transactions table, 20 records
-- 07_google_drive_folders.png — OPT Commission Imports folder (Tyro + Nuvei)
-- 08_n8n_workflows.png — 3 published workflows list
-- 09_n8n_tyro_workflow.png — OPT - Tyro Commission Import canvas
-- 10_n8n_nuvei_workflow.png — OPT - Nuvei Commission Import canvas
+- 01_hubspot_companies.png ï¿½ 30 companies via HubSpot API (portal 441994755)
+- 02_hubspot_company_detail.png ï¿½ NewsXpress record (Tyro, MID: NEWSXPRESS)
+- 03_hubspot_dashboard_commission.png ï¿½ Commission Overview dashboard
+- 04_hubspot_dashboard_merchant.png ï¿½ Merchant Performance dashboard
+- 05_airtable_merchants.png ï¿½ Merchants table, 30 records (base appyQvY4H1brqHuRE)
+- 06_airtable_transactions.png ï¿½ Transactions table, 20 records
+- 07_google_drive_folders.png ï¿½ OPT Commission Imports folder (Tyro + Nuvei)
+- 08_n8n_workflows.png ï¿½ 3 published workflows list
+- 09_n8n_tyro_workflow.png ï¿½ OPT - Tyro Commission Import canvas
+- 10_n8n_nuvei_workflow.png ï¿½ OPT - Nuvei Commission Import canvas
 
-**Note:** HubSpot dashboards (03/04) and Google Drive (07) rendered via API/HTML — no active browser session for OPT portal (sunny@optsolutions.com.au). Airtable via PAT. n8n via sunny@optsolutions.com.au login. All screenshots in P:\_clients\opt-solutions\screenshots\.
+**Note:** HubSpot dashboards (03/04) and Google Drive (07) rendered via API/HTML ï¿½ no active browser session for OPT portal (sunny@optsolutions.com.au). Airtable via PAT. n8n via sunny@optsolutions.com.au login. All screenshots in P:\_clients\opt-solutions\screenshots\.
 
-**[Forge] 2026-04-17:** DONE — 10 screenshots committed 632e495 ? main.
+**[Forge] 2026-04-17:** DONE ï¿½ 10 screenshots committed 632e495 ? main.
 
+
+## TASK-20260417-FORGE-DAX-001 - OpenID email case-sensitivity fix
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-04-17
+- **Title:** Patch LibreChat OpenID strategy to normalize email to lowercase
+
+### Completed
+Entra was returning mixed-case emails (Brett@impact-cp.com, Jonathan@impact-cp.com) causing "user not found" warnings on every SSO login. Fixed by patching `openidStrategy.js` to lowercase the email at extraction time.
+
+- `patches/patch-openid-lowercase.js` added to DAX repo
+- `Dockerfile` updated with new patch step
+- Committed b1f85f3 + ad763d3 â†’ scubarichard/dax master
+- **Dakona pilot** â€” built `v0.5.3-hotfix1` â†’ `acrdaxdakona`, deployed to `ca-dax-dakona-pilot` revision `--0000090` âœ…
+- **ICP** â€” built `v0.6.2-hotfix1` â†’ `acrdaximpactcapital` (ACR run ca3), deployed to `ca-dax-impact-capital` revision `--0000021` âœ…
+- Root cause during deploy: `acrdaxdakona` (Dakona tenant) can't be pulled from ICP tenant via managed identity â€” cross-tenant ACR auth fails. Resolved by building to ICP's own ACR and removing the cross-tenant registry entry.
+
+**[Forge] 2026-04-17:** DONE â€” both containers live with email patch.
+
+---
 
 ## TASK-20260417-FORGE-OPT-002 - OPT Handover Documentation (docx)
 - **Assignee:** Forge
