@@ -1,0 +1,21 @@
+﻿{
+  "location": "eastus",
+  "properties": {
+    "description": "DAX ICP LibreChat error rate alert",
+    "severity": 2,
+    "enabled": true,
+    "evaluationFrequency": "PT5M",
+    "windowSize": "PT15M",
+    "scopes": ["/subscriptions/e1c109d7-9232-4e26-bed7-b1e1b5a6f611/resourceGroups/rg-dax-impact-capital/providers/Microsoft.OperationalInsights/workspaces/law-dax-impact-capital"],
+    "criteria": {
+      "allOf": [{
+        "query": "ContainerAppConsoleLogs_CL | where ContainerName_s == 'dax' and Log_s has_any('ERROR','error','Error','unhandled','exception','Exception','FATAL') | where Log_s !contains 'DeprecationWarning' | summarize count() by bin(TimeGenerated, 5m)",
+        "timeAggregation": "Count",
+        "operator": "GreaterThan",
+        "threshold": 5,
+        "failingPeriods": { "numberOfEvaluationPeriods": 1, "minFailingPeriodsToAlert": 1 }
+      }]
+    },
+    "actions": { "actionGroups": ["/subscriptions/E1C109D7-9232-4E26-BED7-B1E1B5A6F611/resourceGroups/rg-dax-impact-capital/providers/microsoft.insights/actionGroups/ag-dax-icp-alerts"] }
+  }
+}
