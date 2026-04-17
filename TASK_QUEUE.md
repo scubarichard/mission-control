@@ -181,3 +181,15 @@ All 10 screenshots captured and committed to scubarichard/opt-solutions main (63
 **Note:** HubSpot dashboards (03/04) and Google Drive (07) rendered via API/HTML — no active browser session for OPT portal (sunny@optsolutions.com.au). Airtable via PAT. n8n via sunny@optsolutions.com.au login. All screenshots in P:\_clients\opt-solutions\screenshots\.
 
 **[Forge] 2026-04-17:** DONE — 10 screenshots committed 632e495 ? main.
+
+
+## TASK-20260417-FORGE-OPT-002 - OPT Handover Documentation (docx)
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-04-17
+- **Title:** OPT Solutions -- build and commit handover Word document
+
+### Completed
+OPT_Solutions_Handover_Documentation.docx built using Node.js docx npm, 504 KB, 8 sections, all 10 screenshots embedded (614x380px each). Committed 8d1af28 pushed to scubarichard/opt-solutions main. Reported to Sonnet in #dax-collab.
+
+**[Forge] 2026-04-17:** DONE -- docx committed 8d1af28 main.
