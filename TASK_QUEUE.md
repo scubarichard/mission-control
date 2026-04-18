@@ -1128,3 +1128,131 @@ Richard reviewed `phase-c-walkthrough-v5.mp4` and approved. PR #2 merged to main
 - Audio+video sync merge (FFmpeg with audio-authoritative duration)
 
 **Next phase queued:** Phase E (Claude-generated narration from scenario JSONs).
+
+---
+
+## TASK-20260418-FORGE-AUTOVID-006
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Sonnet (Richard, autonomous mode)
+- **Project:** 1AltX AutoVid — Phase E architecture
+- **Repo:** `scubarichard/1altx-autovid`
+- **Branch:** Create `phase-e-architecture` from `main`
+- **PR:** open new PR against main when ready
+
+### Context
+
+Richard has asked for a full autonomous build of Phase E to produce a multi-scene OPT Solutions walkthrough video. This task builds the architecture pieces. Subsequent tasks (007, 008, 009) will use these.
+
+Phase C is merged to main: ElevenLabs TTS with atempo post-processing + Puppeteer capture + FFmpeg merge. Do NOT break those.
+
+### BUILD
+
+#### 1. Expand `config/scenario.schema.json` to v2
+
+Each scene needs these fields (extend existing schema):
+
+```json
+{
+  "id": "scene-01",
+  "title": "System Overview",
+  "auth_profile": null | "hubspot" | "airtable" | "n8n" | "google_drive",
+  "capture": {
+    "type": "url" | "title_card",
+    "url": "https://...",
+    "duration_seconds": 25,
+    "scroll_behavior": "none" | "top_to_bottom" | "element",
+    "scroll_target_selector": "optional CSS selector for element scroll",
+    "wait_for_selector": "optional CSS selector to wait for before capture",
+    "actions": [
+      { "type": "click|hover|wait", "selector": "...", "delay_ms": 500 }
+    ]
+  },
+  "narration": {
+    "prompt": "Claude prompt describing what to narrate for this scene",
+    "max_words": 80,
+    "override_text": "optional hardcoded narration"
+  }
+}
+```
+
+Scenario root level:
+```json
+{
+  "id": "opt-walkthrough-v1",
+  "title": "OPT Solutions Commission Tracking — System Walkthrough",
+  "client": "opt",
+  "output_filename": "opt-walkthrough-v1.mp4",
+  "scenes": [ ... ]
+}
+```
+
+#### 2. Create `src/auth/cookies.js`
+
+Module that loads platform cookies from Azure Key Vault and injects into a Puppeteer page.
+
+- Read secret named `COOKIES-<PLATFORM>` (e.g. `COOKIES-HUBSPOT`) from kvdaximpactcapital
+- Secret value is JSON array of `{ name, value, domain, path, expires, httpOnly, secure, sameSite }`
+- Use `page.setCookie(...cookies)` before `page.goto`
+- Handle missing secrets gracefully (return no-op for auth_profile: null)
+- Export function `applyAuth(page, authProfile)`
+
+#### 3. Create `src/generate/narrate.js`
+
+Module that generates narration text for a scene via Anthropic API.
+
+- Use `@anthropic-ai/sdk`, model `claude-sonnet-4-5-20250929`
+- System prompt: "You are writing narration for a product walkthrough video. Write in the client's own voice — direct, competent, no marketing fluff. Target length: {max_words} words. Do not say 'In this video' or similar meta-statements."
+- User message: scene's narration_prompt
+- Return plain text
+- Anthropic API key from Azure Key Vault secret `ANTHROPIC-API-KEY` (create this secret if it doesn't exist yet — I will populate it)
+
+#### 4. Upgrade `src/capture/screen.js` to support scene config
+
+Refactor so it accepts either CLI args (current behavior for Phase B compatibility) or a scene object. When given a scene:
+- If `type: "title_card"` → render scene as an HTML title card (simple page with title, subtitle, 1altx.ai branding) instead of navigating to URL
+- If `type: "url"` → apply auth cookies via `src/auth/cookies.js`, navigate, wait_for_selector, perform actions, scroll per scroll_behavior, capture for duration
+- Return path to silent MP4
+
+#### 5. Create `src/compose/scene.js` — per-scene merge
+
+Wrapper around existing `src/compose/merge.js` logic. Takes scene narration MP3 + scene silent MP4, produces scene MP4 with audio.
+
+#### 6. Create `src/compose/concat.js` — final concat
+
+Takes array of scene MP4 paths, produces final walkthrough MP4 via FFmpeg concat demuxer. Ensures consistent codec (H.264/AAC) across segments.
+
+#### 7. Create `src/pipeline/run.js` — orchestrator
+
+Entry point:
+```
+node src/pipeline/run.js scenarios/opt-walkthrough.json
+```
+
+Executes: for each scene → generate narration → TTS → capture screen → merge → (collect). After all scenes → concat → final MP4.
+
+Write artifacts to `artifacts/` dir with scene-level intermediate files kept for debugging.
+
+### ACCEPTANCE CRITERIA
+
+1. All modules compile and have basic self-tests (e.g. CLI --help output)
+2. `config/scenario.schema.json` v2 is valid JSON Schema
+3. Architecture doc updated at `docs/PHASE_E.md` describing the data flow
+4. Title card renderer produces a valid silent MP4 from a simple HTML template
+5. Cookie loader returns no-op when auth_profile is null, without errors
+6. PR opened: `[Phase E] Multi-scene pipeline with auth + Claude narration`
+7. Post GATE RESULTS with: module list, self-test outputs, PR link
+
+### OUT OF SCOPE
+
+- OPT scenario JSON — that's TASK-007
+- Cookie extraction from Richard's browser — that's TASK-008
+- Actually generating the OPT video — that's TASK-009
+- Running end-to-end with real auth — await cookies in TASK-008
+
+### NOTES
+
+- `ANTHROPIC-API-KEY` secret in Azure Key Vault `kvdaximpactcapital` — if missing, flag as blocker in GATE RESULTS and Sonnet will populate
+- Title card design: dark background, 1altx.ai subtle logo bottom-right, big centered title + subtitle, consistent with 1altx.ai visual style
+- Keep per-scene intermediate files — debugging depends on them
