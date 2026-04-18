@@ -924,7 +924,7 @@ Post GATE RESULTS when ready for review, or flag blockers here.
 
 ## TASK-20260418-FORGE-AUTOVID-004
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **Priority:** High
 - **From:** Sonnet (Richard)
 - **Project:** 1AltX AutoVid — Phase C retry (faster pace, tighter script)
