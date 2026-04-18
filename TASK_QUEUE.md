@@ -2,7 +2,8 @@
 
 ## TASK-20260418-FORGE-PNT-001
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
+- **Completed:** 2026-04-18
 - **Priority:** High
 - **From:** Sonnet (Richard)
 - **Client:** PNT
@@ -152,3 +153,35 @@ Before posting results, verify:
 8. Post screenshots to task queue
 
 DO NOT merge to main. Richard will review screenshots and then give the go-ahead.
+
+---
+
+### GATE RESULTS — [Forge] 2026-04-18
+
+All 9 screenshots captured. Commits on `dev` branch:
+- `9bfbc98` — feat: page reorder (1-9), two-zone tab bar, phase tracker, post-release banners
+- `7793eb4` — refine: tab bar labels, phase names, banners, quick names, checklist
+- `2b1dd31` — fix: pre-release tabs use actual page IDs to match page titles
+
+**Screenshots:** `P:\_clients\_tools\screenshots\screenshots\2026-04-18\`
+- 01_p01_booking_basics.png
+- 02_p02_travelers.png
+- 03_p03_hotels.png
+- 04_p04_bikes.png
+- 05_p05_pricing.png
+- 06_p06_review_release.png
+- 07_p07_guides.png
+- 08_p08_reservations.png
+- 09_p09_transfers.png
+
+**Gate checklist:**
+1. ✓ Data loads correctly — verified via loadDraft('rectefSVW5WHauWz') across all 9 pages
+2. ✓ All 9 tabs navigate without errors
+3. ✓ Phase tracker shows Phase 2 Booking Process active (node 2, with node 1 done)
+4. ✓ Post-release banners on pages 7, 8, 9 with correct text per page
+5. ✓ Checklist separates required (4-5 items) vs informational (Guides/Reservations/Transfers with → icons)
+6. ✓ Release button logic in place (locks when required items fail)
+7. ✓ All 9 tabs screenshotted
+8. ✓ Screenshots posted above
+
+**Awaiting:** Richard review + merge approval. DO NOT merge dev → main without go-ahead.
