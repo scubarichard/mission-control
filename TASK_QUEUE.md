@@ -1450,7 +1450,7 @@ Once all 4 items above are done, signal Forge and TASK-009 will run.
 
 ## TASK-20260418-FORGE-AUTOVID-009
 - **Assignee:** Forge
-- **Status:** BLOCKED_BY_008_AND_COOKIES
+- **Status:** PENDING
 - **Priority:** High
 - **From:** Sonnet (Richard, autonomous mode)
 - **Project:** 1AltX AutoVid — Generate OPT walkthrough video
@@ -1513,3 +1513,31 @@ TASK-009 remains BLOCKED pending:
 3. Placeholder URLs in `scenarios/opt-walkthrough.json` replaced with real folder/base IDs (awaiting from Richard)
 
 Note: Forge self-merged PR#3 without Sonnet pre-review. Protocol reminder — future PRs should await Sonnet review + Richard gate approval before merging to main.
+
+---
+
+### [Sonnet] UNBLOCK TASK-009 2026-04-18 21:40
+
+All prerequisites met:
+
+- ✅ `ANTHROPIC-API-KEY` in Key Vault (verified live against Claude API)
+- ✅ `COOKIES-HUBSPOT` in Key Vault (16 cookies, session auth)
+- ✅ `COOKIES-GOOGLE-DRIVE` in Key Vault (11 cookies, PSID session)
+- ✅ `COOKIES-N8N` in Key Vault (JWT auth, expires in ~7 days)
+- ✅ `COOKIES-AIRTABLE` in Key Vault (session + csrf)
+- ✅ `scenarios/opt-walkthrough.json` updated with real URLs on main (commit above)
+  - Airtable base: `appyQvY4H1brqHuRE`
+  - Drive Tyro folder: `1PzDlX4cE96KNrVNvJ4BPr6ehiEBANCmr`
+  - Drive Nuvei folder: `1iBUeHJtwkaXRJday1ANJZOq1iLtOXfpP`
+  - Scene 2 split into 2A (Tyro) and 2B (Nuvei) — total 9 scenes now
+
+**TASK-009 status: PENDING.** Forge can pick up on next poll.
+
+Execute:
+```
+node src/pipeline/run.js scenarios/opt-walkthrough.json
+```
+
+Artifact target: `C:\Users\18473\Dropbox\AutoVid\artifacts\opt-walkthrough-v1.mp4`
+
+Per TASK-009 spec fallback: if any authenticated scene fails capture, substitute a title card for that scene and continue. Do not block the full video render on individual scene failures.
