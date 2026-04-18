@@ -2,7 +2,7 @@
 
 ## TASK-20260417-TRITON-PNT-001 - New PNT Form Tester for S5
 - **Assignee:** Triton
-- **Status:** PENDING
+- **Status:** CANCELLED — superseded by TASK-20260417-1ALTX-001 (FormDriver)
 - **Priority:** High
 - **From:** Richard
 - **Client:** PNT
