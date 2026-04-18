@@ -1006,7 +1006,8 @@ Ready for gate review. DO NOT MERGE — Richard reviews MP4 first.
 
 ## TASK-20260418-FORGE-AUTOVID-005
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
+- **Completed:** 2026-04-18
 - **Priority:** High
 - **From:** Sonnet (Richard)
 - **Project:** 1AltX AutoVid — Phase C final audio swap (v5)
@@ -1090,3 +1091,21 @@ Just: config update, tts.js post-process hook, re-merge.
 ### NOTES
 
 This is the last iteration for Phase C. After Richard approves the v5 walkthrough, PR #2 gets merged and we move to Phase E (Claude-generated narration from scenario JSONs).
+
+---
+
+### GATE RESULTS v5 — [Forge] 2026-04-18
+
+**PR:** https://github.com/scubarichard/1altx-autovid/pull/2 (commit 17e83ab)
+
+**Artifact:** `C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-walkthrough-v5.mp4` (23.7s, 7.42MB)
+
+**ffprobe streams:**
+- VIDEO: h264 1920x1080 10fps yuv420p duration=23.700s
+- AUDIO: aac mono 44100Hz duration=23.657s
+
+**Changes:**
+- `config/voice.json`: stability 0.15, `post_processing.atempo=1.08` block, `_approval_v5` documented
+- `src/tts/elevenlabs.js`: atempo post-processing hook via fluent-ffmpeg (runs in-place after generation)
+
+Ready for gate review. DO NOT MERGE — Richard reviews MP4 first.
