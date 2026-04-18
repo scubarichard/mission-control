@@ -1580,7 +1580,8 @@ Per TASK-009 spec fallback: if any authenticated scene fails capture, substitute
 
 ## TASK-20260418-FORGE-AUTOVID-010
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
+- **Completed:** 2026-04-18
 - **Priority:** High
 - **From:** Sonnet (Richard authorized "surprise me")
 - **Project:** 1AltX AutoVid — OPT walkthrough v2 (fix auth, change voice)
@@ -1698,3 +1699,39 @@ Keep v1 intact for comparison. Also keep scene-level intermediates.
 - Charlotte voice ID `gEdKKVxVhNCulBgRQ9GW` is a shared library voice, not a private clone. No Key Vault secret needed.
 - Richard approved voice choice as "surprise me" — Sonnet picked Charlotte based on ElevenLabs' own `informative_educational` use-case tag matching the walkthrough purpose.
 - If this still has auth issues after fallback, v3 will switch to screen-recorded inputs from Richard's desktop (deferred).
+
+---
+
+### GATE RESULTS — [Forge] 2026-04-18
+
+**PR:** https://github.com/scubarichard/1altx-autovid/pull/4 (branch: `opt-walkthrough-v2`, commit `3ad1463`)
+
+**Artifact:** `C:\Users\18473\Dropbox\AutoVid\artifacts\opt-walkthrough-v2.mp4`
+**Direct URL (temp):** http://tmpfiles.org/dl/34298415/opt-walkthrough-v2.mp4
+
+**ffprobe:** h264 1920x1080 + aac 44100Hz, duration 290.5s, 6.63MB
+
+**Voice:** Charlotte — Friendly & Professional (AU), via new `_profiles` block in `config/voice.json` (default `charlotte-opt`) ✓
+
+**Scene-by-scene status (9 scenes):**
+| # | Scene | Dur | Auth | Render |
+|---|---|---|---|---|
+| 01 | scene-01-overview | 31.0s | — | Title card (intended) ✓ |
+| 02 | scene-02a-drive-tyro | 24.4s | google_drive | **Fallback** — Google login URL detected, swapped to "Google Drive — Tyro Folder" card |
+| 03 | scene-02b-drive-nuvei | 22.9s | google_drive | **Fallback** — same Google SSO redirect |
+| 04 | scene-03-n8n-workflows | 35.5s | n8n | **Fallback** — n8n.cloud/signin detected |
+| 05 | scene-04-nuvei-calculation | 40.7s | n8n | **Fallback** — same n8n signin |
+| 06 | scene-05-airtable | 37.9s | airtable | **Real render** ✓ (0.38MB screen content) |
+| 07 | scene-06-hubspot-merchants | 27.4s | hubspot | **Fallback** — hubspot.com/login (401 Unauthorized) |
+| 08 | scene-07-hubspot-dashboards | 22.5s | hubspot | **Fallback** — same HS login |
+| 09 | scene-08-monthly-process | 48.2s | — | Title card (intended) ✓ |
+
+**Auth conclusion:**
+- Cookie injection via KV secrets still insufficient for SSO-protected platforms (Google, HubSpot, n8n) despite UA spoofing — Cloudflare/fingerprint checks invalidate sessions from headless Puppeteer launch.
+- Airtable worked — simpler cookie/session model.
+- Auth detection heuristic worked **100%** — zero login screens leaked into the video; all redirects caught + replaced.
+- Informative fallback cards carry scene-specific facts (e.g. "30 merchant companies · portal 441994755") so narration+visual still communicate meaning.
+
+**If Richard wants real live captures for failing scenes:** v3 needs a persisted Chrome profile on the VM (per task note about `n8n.dakona.net` userDataDir approach) with one-time headed login. Deferred.
+
+**Status:** Ready for Richard review. DO NOT MERGE PR#4 without approval.
