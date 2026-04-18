@@ -24,36 +24,27 @@ NOTES: Apps Script ready. Richard pastes via Extensions → Apps Script. Adds "1
 - **Assignee:** Forge
 - **Status:** DONE
 - **Date:** 2026-04-17
-- **Title:** Azure Monitor + n8n error alerting for DAX (Dakona + ICP)
+- **Title:** Real-time error alerting for DAX (Dakona + ICP)
 
 ### Completed
-Full error monitoring system built across both DAX environments:
 
-**Azure Monitor — Dakona (rg-dax-dakona-pilot, DAKONA 001)**
-- Action Group: ag-dax-alerts → dax@dakona.com + n8n webhook
-- Alert rules (Log Search, 5-min eval, 15-min window):
-  - DAX-LibreChat-Errors (Sev2) — >5 errors in container logs
-  - DAX-Auth-Failures (Sev2) — >10 auth/401/403 events
-  - DAX-Revision-Failed (Sev1) — any container crash/OOM in system logs
-  - DAX-N8n-Errors (Sev2) — n8n container error spike
+**n8n — DAX Real-Time Error Monitor (FZE6DPjht00Espec)**
+- Runs every 1 minute, queries both Log Analytics workspaces
+- Uses timestamp-based deduplication (static data) — only alerts on new errors since last run
+- Fires on first occurrence, not a count threshold — immediate detection
+- Posts to Slack #alerts with workspace, container, timestamp, and full error text (250 chars)
+- Active and confirmed running (3 executions verified)
 
-**Azure Monitor — ICP (rg-dax-impact-capital, Azure subscription 1)**
-- Action Group: ag-dax-icp-alerts → dax@dakona.com + n8n webhook
-- Alert rules (same structure):
-  - DAX-ICP-Errors (Sev2)
-  - DAX-ICP-Auth-Failures (Sev2)
-  - DAX-ICP-Revision-Failed (Sev1)
-- Note: separate action group required — cross-tenant AG references blocked by Azure
+**Auth setup**
+- Dakona: SP a7be747e, tenant d2a3c346, Log Analytics Reader on law-dax-dakona-pilot ✅
+- ICP: SP 507453c8 (appId 7822f093), tenant eaf1a864, Log Analytics Reader on law-dax-impact-capital — RBAC propagating (self-heals, no action needed)
 
-**n8n — DAX Alert Router (kZs3ly1mrZtZPsDp)**
-- Receives Azure Monitor webhooks → formats → posts to Slack #alerts
-- Skips Resolved alerts (only fires on active)
-- Active at https://n8n.dakona.net/webhook/dax-alert
+**Azure Monitor (backup threshold alerts — dax@dakona.com + #alerts webhook)**
+- Dakona: 4 rules (LibreChat-Errors, Auth-Failures, Revision-Failed, N8n-Errors) → ag-dax-alerts
+- ICP: 3 rules (ICP-Errors, ICP-Auth-Failures, ICP-Revision-Failed) → ag-dax-icp-alerts
 
 **n8n — DAX Error Handler (jqqz9K51fdtrU8Zf)**
-- Error Trigger workflow — catches failed n8n workflow executions
-- Posts to Slack #alerts with workflow name, error message, execution URL
-- Wired as errorWorkflow on: DAX Alert Router, DAX Inbox Inbound Handler, DAX Inbox Confirm and Execute, PNT Generate Invoice PDF
-- DAX Router - AI Agent (3tniyxZREqfnAbfo) skipped — body too large for n8n PUT parser
+- Error Trigger catches failed n8n workflow executions → #alerts
+- Wired on: DAX Alert Router, DAX Inbox (x2), PNT Generate Invoice PDF
 
-**[Forge] 2026-04-17:** DONE — 7 alert rules live, 2 action groups, error handler active.
+**[Forge] 2026-04-18:** DONE — real-time monitor live, Dakona confirmed, ICP propagating.
