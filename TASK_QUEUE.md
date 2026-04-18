@@ -1,308 +1,245 @@
 
 
-## TASK-20260417-TRITON-PNT-001 - New PNT Form Tester for S5
-- **Assignee:** Triton
-- **Status:** PENDING
-- **Priority:** High
-- **From:** Richard
-- **Client:** PNT
-- **Task:** Build a new form tester for PNT S5 — scope to be confirmed with Richard before starting. Likely covers new staff interfaces and admin forms added in S5. Reference existing sweep at `scripts/test_ui_e2e.js` and admin at `admin.html`.
-
----
-
-## TASK-20260416-FORGE-DAX-004 - ICP Sign-in Log Check
+## TASK-20260417-1ALTX-001
 - **Assignee:** Forge
-- **Status:** PENDING
-- **Priority:** Low
-- **From:** Sonnet (Richard)
-- **Client:** internal/ICP
-- **Task:** Pull Entra sign-in logs for DAX-ICP SSO Enterprise Application (Object ID: 7822f093-9c83-4b1a-83db-29517d29ac89) in ICP tenant (eaf1a864-97ff-451c-87e7-88cf7512e98c). Show user email, sign-in time, success/failure for last 48 hours. Command in #dax-collab Apr 15. Report back to channel.
-
----
-
-## TASK-20260416-FORGE-DAX-003 - DAX PWA v0.5.4-pwa
-- **Assignee:** Forge
-- **Status:** PENDING
-- **Priority:** Medium
-- **From:** Sonnet (Richard)
-- **Client:** internal/DAX
-- **Task:** Build DAX as installable PWA for iPhone/Android home screen. Full instructions at `/repo/librechat/pwa/DEPLOY.md`.
-  1. Create 3 PNG icons (192x192, 512x512, 180x180) — dark navy (#1F3864) background, white "DAX" text
-  2. Add manifest.json + icons to LibreChat container
-  3. Add 5 meta tags to index.html (per DEPLOY.md)
-  4. Rebuild and push tagged `librechat-dax:v0.5.4-pwa`
-  5. Deploy to Dakona pilot + ICP instance
-  6. Test on iPhone Safari and Android Chrome — confirm Add to Home Screen works
-
----
-
-## TASK-20260416-FORGE-DAX-002 - DAX Three-Stage Deployment Pipeline
-- **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DO NOT EXECUTE — REVIEW WITH RICHARD FIRST
 - **Priority:** High
 - **From:** Sonnet (Richard)
-- **Client:** internal/DAX
-- **Task:** Build DAX three-stage deployment pipeline. Full plan at `/repo/docs/DEPLOYMENT-PIPELINE.md`. Priority order:
-  1. Dev environment — `ca-dax-dev` container app + `dev-n8n.dakona.net` in new `rg-dax-dev` resource group on Dakona subscription (~$70/mo, can stop nights/weekends)
-  2. `New-DAXClient.ps1` — add `-release <tag>` parameter, always deploy from verified git tag
-  3. `Update-DAXClient.ps1` — push new releases to existing clients
-  4. Release checklist doc — 10-step process, in repo
-  Rules: no direct staging changes without dev first; T6 must be 7/7 PASS before any release tag; Richard approves staging before production; production always from git tag.
+- **Client:** 1AltX (reusable tool — first deployment: PNT)
+- **Task:** Build Form Data Entry & Stress Test Program — "FormDriver"
 
 ---
 
-## TASK-20260416-FORGE-DAX-001 - Inflection Capital Azure VM + AI Foundry Build
-- **Assignee:** Forge
-- **Status:** PENDING
-- **Priority:** High
-- **From:** Sonnet (Richard)
-- **Client:** Inflection Capital
-- **Task:** Full 13-step Azure build for Justin Kunz. Subscription: f71cc48a-33ca-46e1-8483-b3171ea1dd5e (Dakona CSP/AOBO). Full instructions posted to #dax-collab Apr 16. Summary:
-  - Survey existing VNets/subnets first — do NOT create anything until complete
-  - Subnet: snet-claudecode /28
-  - NSG: nsg-claudecode (RDP from AVD subnet only)
-  - VM: vm-claudecode-inflection (Win11 Pro, Standard_B2s, no public IP)
-  - NinjaOne agent, Azure Update Manager
-  - AI Foundry Hub: inflection-ai (East US) + Claude Sonnet Serverless endpoint
-  - Private endpoint for AI Foundry (no public internet)
-  - Entra: Cognitive Services User role for Inflection users
-  - Claude Code CLI + env vars (ANTHROPIC_BASE_URL, ANTHROPIC_API_KEY)
-  - Python + sharefile SDK with placeholder config
-  Manual flags for Richard: Anthropic ToS acceptance in portal, Sharefile credentials, Entra user/group assignment.
+### CONCEPT SUMMARY
+
+Richard's idea: replace manual QA and the current read-only sweep with a program that actually drives the booking form like a real user — entering data field by field, page by page, from a fixture table — then verifies what was saved to Airtable matches what was entered. Run 10–20 scenarios in parallel or sequence to stress test the entire form. Capture errors, fix them, re-run until clean. The output is proof that the system works end to end under real data entry conditions, not just read-only inspection.
+
+This is a 1AltX product — a reusable test harness that can be pointed at any form + any Airtable base, not just PNT. PNT is the first client it will be used for.
 
 ---
 
-## TASK-20260417-FORGE-INFRA-001 - Wire cost tracking into poll script
-- **Assignee:** Forge
-- **Status:** PENDING
-- **Priority:** Medium
-- **From:** Triton
-- **Client:** internal
-- **Task:** Update Forge's task poll script to log token usage after each task execution using log-cost.js from mission-control.
-
-### Instructions
-1. Pull latest mission-control — `log-cost.js` is now in the repo root
-2. Update the Forge poll script (wherever it lives on RICHARD-WS) to:
-   - Instruct Claude at end of each task to output: `TOKENS: input=NNNN output=NNNN`
-   - Parse that line from the output
-   - Call `node ~/mission-control/log-cost.js --task TASK-ID --model sonnet --input N --output N --agent Forge --client CLIENT`
-3. Test by running a dummy task and verifying an entry appears in `mission-control/cost-log.json`
-4. Commit cost-log.json (gitignore-exempt) and push
-
-See Nautilus's `/home/richard/poll-tasks.sh` on 192.168.1.184 as reference implementation.
+### PRODUCT NAME
+**FormDriver** — Data-driven E2E form filler and stress tester
 
 ---
 
-## TASK-20260416-FORGE-PNT-001
-- **Assignee:** Forge
-- **Status:** DONE
-- **Priority:** High
-- **From:** Sonnet (Richard)
-- **Client:** PNT
-- **Task:** Rebuild PNT_Sprint4_Delivery_Report.docx — match S3 format exactly
-- **Completed:** 2026-04-16
-- **Result:** Rebuilt from scratch using python-docx. US Letter, 1" margins, running header with PNT green (#1E3D2F) bottom border, green project info table, all 8 screenshots embedded, page breaks between sections, cumulative sprint table with COMPLETE row shading. Committed ca42ba9 → merged to main 4f29f62.
+### ARCHITECTURE OVERVIEW
 
-### Context
-The current S4 report does not match the S3 format. Rebuild it from scratch using docx-js following the SKILL.md at /mnt/skills/public/docx/SKILL.md.
+**Three components:**
 
-The S3 report (reference: docs/PNT_Sprint3_Delivery_Report.docx) has this exact structure:
+1. **Fixture Engine** — reads test scenarios from a JSON fixture file. Each scenario is a complete, realistic booking with all fields populated across all pages. Scenarios are categorized by type (simple hiking, cycling with bikes, agency booking with commission, tailor-made, etc.).
 
-**Page layout:** US Letter (12240 x 15840 DXA), 1 inch margins
+2. **Driver Engine** — Puppeteer-based form driver that reads a scenario and executes it page by page. Fills every input, dropdown, date picker, checkbox, and repeating row (hotels, travelers, bikes, guides, reservations, transfers) exactly as a human would. Saves each page and handles any errors that surface.
 
-**Header (every page):** Two-column using tab stop — left: "PNT Central Brain | Sprint 4 Delivery Report" | right: "1AltX LLC | April 2026" — separated by a bottom border line in PNT green (#1E3D2F)
-
-**Page 1:**
-- Bold large text: "SPRINT 4 DELIVERY REPORT"
-- Subtitle: "Financial Layer"
-- Project info table (2 columns, no visible borders, green header shading #1E3D2F with white text):
-  | Project | PNT Central Brain — AtlasPerk SL / Portugal Nature Trails |
-  | Contractor | 1AltX LLC — Richard Mabbun |
-  | Sprint | Sprint 4 of 6 |
-  | Completed | April 25, 2026 |
-  | Invoice | $2,550.00 USD |
-  | Commit | d4811cb — merged to main |
-- Page break
-
-**Executive Summary** (Heading 1 in PNT green)
-Sprint 4 delivered the complete financial layer of the PNT Central Brain — pricing schema, invoicing, payments, expenses, guide payroll, and a live financial portal. This sprint introduced full cost and revenue tracking per booking with real-time margin calculations, on-demand invoice PDF generation (CN Proforma + PNT Balance), and four financial reporting views in the portal. All deliverables have been tested against live booking data and are live on the production system.
-[embed screenshot: docs/screenshots/s4/14_portal_finance_bookings.png]
-Caption: Financial portal — Booking Financials view
-- Page break
-
-**Deliverables** (Heading 1)
-
-**Phase 0 — Form Fixes** (Heading 2)
-11 form bug fixes applied and merged to main. Fixes include: 24h time fields, hotel edit/delete swap, Source field 422 error, UTF-8 encoding, transfer location expansion, and more. Gate 0: PASS.
-
-**Phase 1 — Booking Pricing Schema** (Heading 2)
-Table:
-| Total Per Person | Base price + all supplements, calculated automatically |
-| Total Booking | Total Per Person × PAX |
-| Net Revenue | Total Booking after commission deduction |
-| Gross Margin | Net Revenue minus supplier costs |
-9 currency/number fields added. 4 formula fields built in Airtable UI. All in EUR with European formatting. Gate 1: PASS.
-
-**Phase 2 — Invoices Table** (Heading 2)
-11-field Invoices table. Tracks Fat.CN Number, Fat.PNT Number, Issue Date, Due Date, Amount, Status (Draft/Sent/Paid/Overdue/Canceled), Billing Entity (CN/PNT), and Type. Gate 2: PASS.
-
-**Phase 3 — Payments Table** (Heading 2)
-10-field Payments table. Tracks individual payments per booking with CN/PNT split, payment method, reference, and date. Total Paid (rollup) and Outstanding Balance (formula) added to Bookings table. Gate 3: PASS.
-
-**Phase 4 — Expenses & Guide Payroll** (Heading 2)
-Table:
-| Expenses | Category, Description, Amount, Date, Paid By, VAT Treatment, Payment Method, Status |
-| Guide_Payroll | Days Worked, Day Rate, Total Pay, Expenses link, Total Reimbursement, Total Payout, Payment Date |
-| Invoice_Items | Line items per invoice: Type, Description, Unit Price, Quantity, PVP, Commission % |
-Gate 4 + 4b: PASS.
-
-**Phase 5 — Form Page 7 Pricing Rebuild** (Heading 2)
-Page 7 was rebuilt from scratch to support the full financial layer:
-Bullet list:
-- Base price per person with live total calculation
-- Season, Solo, Bike, Extra Nights, Hotel Upgrade, Extra Transfer, and Other supplements
-- Commission % field with net revenue preview
-- Billing entity selector (CN / PNT)
-- Invoice tracking section (Fat.CN / Fat.PNT numbers, issue/due dates)
-- Invoice status dropdown
-- 8 Diana bug fixes applied during rebuild
-[embed screenshot: docs/screenshots/s4/18_form_07_pricing.png]
-Caption: Page 7 — Pricing rebuild with live calculations and invoice tracking
-Gate 5: PASS — regression 142/142.
-
-**Phase 6 — Financial Portal (4 Views)** (Heading 2)
-A new Finance section added to the portal with four data views:
-Table:
-| Booking Financials | Per-booking revenue, costs, and margin table. Filterable by date range and billing entity. Pro/Bal invoice generation buttons per row. |
-| Outstanding Balances | Bookings with unpaid amounts. Shows Total Paid vs Total Booking and Outstanding Balance. |
-| Monthly Billing Summary | Revenue aggregated by month and billing entity (CN vs PNT split). |
-| Tour Margins | Gross margin by tour type — identifies most and least profitable tours. |
-[embed screenshot: docs/screenshots/s4/15_portal_finance_balances.png]
-Caption: Outstanding Balances view
-[embed screenshot: docs/screenshots/s4/16_portal_finance_billing.png]
-Caption: Monthly Billing Summary — CN vs PNT split
-[embed screenshot: docs/screenshots/s4/17_portal_finance_margins.png]
-Caption: Tour Margins view
-Gate 6: 13/13 PASS.
-
-**Phase 8 — Invoice PDF Generator** (Heading 2)
-Table:
-| CN Proforma | Generated on demand for deposit requests — Caminhos da Natureza billing entity. Matches Diana's Proforma format. |
-| PNT Balance | Generated on demand for balance requests — Portugal Nature Trails billing entity. Matches Zoho Invoice format. |
-| Portal trigger | "Generate Invoice" (Pro) and (Bal) buttons in the Booking Financials portal view. |
-| n8n webhook | /pnt-generate-invoice — runs generate_invoice.py on VM, attaches PDF to Airtable Invoices record. |
-[embed screenshot: docs/screenshots/s4/19_invoice_proforma_CN.png]
-Caption: CN Proforma invoice — generated on demand
-[embed screenshot: docs/screenshots/s4/20_invoice_balance_PNT.png]
-Caption: PNT Balance invoice
-[embed screenshot: docs/screenshots/s4/21_finance_generate_button.png]
-Caption: Finance portal — Generate Invoice buttons
-- Page break
-
-**Schema & Data Updates** (Heading 1)
-Table:
-| Bookings | 9 pricing fields + 4 formula fields + Outstanding Balance + Total Paid |
-| Invoices | New table — 11 fields, CN/PNT tracking |
-| Payments | New table — 10 fields, multiple payments per booking |
-| Expenses | New table — cost tracking per booking |
-| Guide_Payroll | New table — guide compensation and reimbursement |
-| Invoice_Items | New table — line items per invoice |
-| Total schema | 27 tables, 74 linked relationships, 15,800+ records |
-| Bookings with pricing data | 79 bookings seeded with realistic pricing data |
-- Page break
-
-**Cumulative Sprint Progress** (Heading 1)
-Table (match S3 style exactly — green shading on COMPLETE rows):
-| S1 | Foundation & Schema | COMPLETE — 27 tables, all data imported, booking form live |
-| S2 | Automations & PDF Generation | COMPLETE — 3 n8n automations, 4 PDFs, form deployed |
-| S3 | Operations & Tour Masters | COMPLETE — Calendar, Tour Masters, Guides, 3 new PDFs |
-| S4 | Financial Layer | COMPLETE — Pricing, invoicing, payments, payroll, financial portal |
-| S5 | Staff Interfaces | IN PROGRESS — Due May 9, 2026 |
-| S6 | Polish & Handoff | Planned — Due May 23, 2026 |
-
-**Sprint 5 Preview** (Heading 1)
-Sprint 5 introduces role-based staff interfaces: an Operations portal view with daily manifest, guides, taxis, and vehicles; a Bookings view for tour list and task assignment; a Finance view; a Mechanics view for bike prep; and an Admin module covering Hotels, Tours, Bikes, Taxis, and Guides management. Sprint 5 is currently in planning and due May 9, 2026.
-
-### Screenshots to embed (all in docs/screenshots/s4/ on main branch — copy to VM before building)
-- 14_portal_finance_bookings.png
-- 15_portal_finance_balances.png
-- 16_portal_finance_billing.png
-- 17_portal_finance_margins.png
-- 18_form_07_pricing.png
-- 19_invoice_proforma_CN.png
-- 20_invoice_balance_PNT.png
-- 21_finance_generate_button.png
-
-### Colors
-- PNT green: #1E3D2F
-- Table header shading: #1E3D2F (white text)
-- Alternating table row: #F2F7F4
-- Body font: Arial 12pt
-- Heading 1: Arial 16pt bold, PNT green
-- Heading 2: Arial 13pt bold, PNT green
-
-### Output
-Save to `docs/PNT_Sprint4_Delivery_Report.docx`. Replace existing file. Commit to main.
-
-### Gate
-- Open in Word — header appears on every page
-- Project info table renders with green header row
-- All 8 screenshots embedded and visible (no 404s)
-- Page breaks between major sections
-- Cumulative table shows S4 as COMPLETE
----
-
-## TASK-20260417-FORGE-OPT-001 - OPT Turnover Documentation Screenshots
-- **Assignee:** Forge
-- **Status:** DONE
-- **Date:** 2026-04-17
-- **Title:** OPT Solutions turnover documentation � 10 screenshots
-
-### Completed
-All 10 screenshots captured and committed to scubarichard/opt-solutions main (632e495):
-- 01_hubspot_companies.png � 30 companies via HubSpot API (portal 441994755)
-- 02_hubspot_company_detail.png � NewsXpress record (Tyro, MID: NEWSXPRESS)
-- 03_hubspot_dashboard_commission.png � Commission Overview dashboard
-- 04_hubspot_dashboard_merchant.png � Merchant Performance dashboard
-- 05_airtable_merchants.png � Merchants table, 30 records (base appyQvY4H1brqHuRE)
-- 06_airtable_transactions.png � Transactions table, 20 records
-- 07_google_drive_folders.png � OPT Commission Imports folder (Tyro + Nuvei)
-- 08_n8n_workflows.png � 3 published workflows list
-- 09_n8n_tyro_workflow.png � OPT - Tyro Commission Import canvas
-- 10_n8n_nuvei_workflow.png � OPT - Nuvei Commission Import canvas
-
-**Note:** HubSpot dashboards (03/04) and Google Drive (07) rendered via API/HTML � no active browser session for OPT portal (sunny@optsolutions.com.au). Airtable via PAT. n8n via sunny@optsolutions.com.au login. All screenshots in P:\_clients\opt-solutions\screenshots\.
-
-**[Forge] 2026-04-17:** DONE � 10 screenshots committed 632e495 ? main.
-
-
-## TASK-20260417-FORGE-DAX-001 - OpenID email case-sensitivity fix
-- **Assignee:** Forge
-- **Status:** DONE
-- **Date:** 2026-04-17
-- **Title:** Patch LibreChat OpenID strategy to normalize email to lowercase
-
-### Completed
-Entra was returning mixed-case emails (Brett@impact-cp.com, Jonathan@impact-cp.com) causing "user not found" warnings on every SSO login. Fixed by patching `openidStrategy.js` to lowercase the email at extraction time.
-
-- `patches/patch-openid-lowercase.js` added to DAX repo
-- `Dockerfile` updated with new patch step
-- Committed b1f85f3 + ad763d3 → scubarichard/dax master
-- **Dakona pilot** — built `v0.5.3-hotfix1` → `acrdaxdakona`, deployed to `ca-dax-dakona-pilot` revision `--0000090` ✅
-- **ICP** — built `v0.6.2-hotfix1` → `acrdaximpactcapital` (ACR run ca3), deployed to `ca-dax-impact-capital` revision `--0000021` ✅
-- Root cause during deploy: `acrdaxdakona` (Dakona tenant) can't be pulled from ICP tenant via managed identity — cross-tenant ACR auth fails. Resolved by building to ICP's own ACR and removing the cross-tenant registry entry.
-
-**[Forge] 2026-04-17:** DONE — both containers live with email patch.
+3. **Verifier Engine** — after each scenario completes and the booking is submitted/released, reads the created Airtable record back via API and compares every field value against what the fixture specified. Reports mismatches, missing saves, and field mapping errors.
 
 ---
 
-## TASK-20260417-FORGE-OPT-002 - OPT Handover Documentation (docx)
-- **Assignee:** Forge
-- **Status:** DONE
-- **Date:** 2026-04-17
-- **Title:** OPT Solutions -- build and commit handover Word document
+### FIXTURE FILE STRUCTURE
 
-### Completed
-OPT_Solutions_Handover_Documentation.docx built using Node.js docx npm, 504 KB, 8 sections, all 10 screenshots embedded (614x380px each). Committed 8d1af28 pushed to scubarichard/opt-solutions main. Reported to Sonnet in #dax-collab.
+`scripts/fixtures/pnt_test_scenarios.json`
 
-**[Forge] 2026-04-17:** DONE -- docx committed 8d1af28 main.
+Each scenario is a complete booking object:
+
+```json
+{
+  "id": "TC-001",
+  "name": "Simple Hiking Self-Guided — Direct Client",
+  "description": "Basic SG hiking tour, 2 pax, direct client, no bikes",
+  "tags": ["hiking", "self-guided", "direct", "simple"],
+  "pages": {
+    "page1_travelers": {
+      "travelers": [
+        {
+          "firstName": "James",
+          "lastName": "Mueller",
+          "email": "james.mueller@test.com",
+          "phone": "+44 7700 900123",
+          "nationality": "British",
+          "dob": "1975-03-15",
+          "dietaryRestrictions": "None",
+          "roomType": "Double",
+          "emergencyName": "Sarah Mueller",
+          "emergencyPhone": "+44 7700 900124"
+        },
+        {
+          "firstName": "Sarah",
+          "lastName": "Mueller",
+          "email": "sarah.mueller@test.com",
+          "nationality": "British",
+          "dob": "1978-07-22",
+          "dietaryRestrictions": "Vegetarian",
+          "roomType": "Double"
+        }
+      ]
+    },
+    "page2_booking": {
+      "brand": "Portugal Nature Trails",
+      "tour": "Rota Vicentina Historical Way SG",
+      "region": "SW",
+      "tourType": "Hiking",
+      "guideType": "Self-Guided",
+      "bookingType": "Direct",
+      "beginDate": "2026-06-15",
+      "endDate": "2026-06-22",
+      "bookingOwner": "Diana Freire",
+      "status": "Confirmed"
+    },
+    "page3_hotels": {
+      "hotels": [
+        {
+          "name": "Vicentina Hotel",
+          "checkIn": "2026-06-15",
+          "checkOut": "2026-06-18",
+          "roomType": "Standard",
+          "rooms": 1,
+          "mealPlan": "Breakfast",
+          "status": "Confirmed"
+        },
+        {
+          "name": "Zmar Eco Campo Resort",
+          "checkIn": "2026-06-18",
+          "checkOut": "2026-06-22",
+          "roomType": "Standard",
+          "rooms": 1,
+          "mealPlan": "Breakfast",
+          "status": "Confirmed"
+        }
+      ]
+    },
+    "page4_bikes": null,
+    "page5_guides": null,
+    "page6_reservations": {
+      "reservations": [
+        {
+          "type": "Restaurant",
+          "name": "Pont'a Pé",
+          "date": "2026-06-17",
+          "time": "19:30",
+          "partySize": 2,
+          "status": "Confirmed"
+        }
+      ]
+    },
+    "page7_pricing": {
+      "basePricePerPerson": 1350,
+      "seasonSupplement": 150,
+      "soloSupplement": 0,
+      "bikeRentalFee": 0,
+      "commissionPercent": 0,
+      "billingEntity": "PNT",
+      "depositAmount": 500,
+      "depositDueDate": "2026-04-15",
+      "fatPNTNumber": "FAT-TEST-001"
+    },
+    "page10_transfers": {
+      "arrivalTransfer": true,
+      "arrivalFrom": "Aero LIS",
+      "flightIn": "TP1234",
+      "flightInDate": "2026-06-15",
+      "flightInTime": "10:30",
+      "departureTransfer": true,
+      "departureTo": "Aero LIS",
+      "flightOut": "TP5678",
+      "flightOutDate": "2026-06-22",
+      "flightOutTime": "14:00"
+    }
+  },
+  "expected_airtable": {
+    "Pax": 2,
+    "Booking Type": "Direct",
+    "Billing Entity": "PNT",
+    "Base Price Per Person": 1350,
+    "Season Supplement": 150,
+    "Total Per Person": 1500,
+    "Total Booking": 3000,
+    "Fat PNT Number": "FAT-TEST-001"
+  }
+}
+```
+
+---
+
+### TEST SCENARIO MATRIX (10 scenarios minimum)
+
+| ID | Scenario | Key Coverage |
+|---|---|---|
+| TC-001 | Simple hiking SG, 2 pax, direct | Baseline happy path |
+| TC-002 | Cycling SG, 4 pax, 4 bikes, direct | Bikes page, bike allocation |
+| TC-003 | Hiking guided, 6 pax, guide assigned | Guides page |
+| TC-004 | Agency booking, commission 20%, CN billing | Commission calc, CN entity |
+| TC-005 | Multi-hotel, 8 nights, 3 hotels | Hotel date chaining |
+| TC-006 | Tailor-made, non-standard hotels | Tailor Made checkbox |
+| TC-007 | Solo traveler, solo supplement | Solo supplement pricing |
+| TC-008 | Large group, 12 pax, multiple travelers | Travelers page stress |
+| TC-009 | Full booking — all pages populated | Every field in play |
+| TC-010 | Edge case — minimal data entry | Required field validation |
+
+---
+
+### BUILD PLAN (phases)
+
+**Phase A — Fixture engine + single scenario runner**
+- Build `scripts/form_driver/driver.js` — Puppeteer script that reads one scenario JSON and drives the form
+- Start with TC-001 (simplest) — get one scenario running end to end
+- Handle auth (sessionStorage inject), page navigation, field filling
+- Log every action and every error to console + JSON report
+
+**Phase B — Verifier**
+- After form submission, read the created Airtable record
+- Compare every `expected_airtable` field against actual Airtable values
+- Output PASS/FAIL per field with expected vs actual
+- Produce a `RESULTS/form_driver/TC-001_result.json` report
+
+**Phase C — Fixture file**
+- Write all 10 scenario JSONs in `scripts/fixtures/pnt_test_scenarios.json`
+- Use realistic PNT data — real tour names, real hotel names from the Airtable base
+- Cover the full scenario matrix above
+
+**Phase D — Batch runner**
+- `scripts/form_driver/run_all.js` — runs all scenarios sequentially
+- 30-second gap between scenarios to avoid Airtable rate limits
+- Produces aggregate report: scenarios passed, failed, errors per field
+- HTML report matching the existing sweep report style
+
+**Phase E — Cleanup**
+- After each run, delete all test bookings from Airtable (using a `test_` prefix on booking names or a `Is Test` checkbox field)
+- Ensure no test data pollutes production records
+
+**Phase F — Integration**
+- Add "Run FormDriver" button to admin.html alongside "Run Sweep"
+- Webhook on n8n: `/pnt-run-formdriver` triggers batch run on VM
+- Results committed to `RESULTS/form_driver/` and visible in admin page
+
+---
+
+### REUSABILITY DESIGN (1AltX product)
+
+FormDriver is built as a configurable tool from day one:
+
+- `formdriver.config.json` — points to any form URL, any Airtable base, any fixture file
+- Page driver modules are pluggable — swap out `page3_hotels.js` for a different form's hotel page
+- Verifier reads from config — field mappings are declared, not hardcoded
+- CLI: `node run_all.js --config pnt.config.json --scenarios TC-001,TC-002`
+- Future clients: swap config + fixture file, reuse all driver/verifier infrastructure
+
+---
+
+### OUTPUT
+
+- `RESULTS/form_driver/run_YYYYMMDD_HHMMSS/`
+  - `summary.json` — overall pass/fail counts
+  - `TC-001_result.json` — per-scenario detail
+  - `TC-001_screenshots/` — screenshot of each page after fill
+  - `report.html` — visual report matching sweep report style
+- Admin page shows latest run results inline
+
+---
+
+### NOTES FOR MORNING REVIEW
+- Do NOT execute until Richard reviews and approves
+- Discuss: should test bookings be deleted after each run, or kept for review?
+- Discuss: run sequentially (safer) or parallel (faster)?
+- Discuss: should this live in the pnt-central-brain repo or a separate 1altx-formdriver repo?
+- Discuss: n8n VM execution vs Forge desktop execution
+- Estimated build time: 2–3 Forge sessions across phases A–D. Phase E–F lighter.
