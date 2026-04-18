@@ -634,3 +634,135 @@ Post here if `1altx.ai` doesn't render (unlikely — already verified 200 OK) or
 - File size 0.08 MB (static v1) → 6.55 MB (v2 with motion) — confirms scroll working
 
 Ready for gate review. DO NOT MERGE — Richard reviews MP4 first.
+
+---
+
+## TASK-20260418-FORGE-AUTOVID-003
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Sonnet (Richard)
+- **Project:** 1AltX AutoVid — Phase C: Voice + video sync
+- **Repo:** `scubarichard/1altx-autovid`
+- **Branch:** Create `phase-c-audio-sync` from `main`
+
+### Context
+
+Phases A (ElevenLabs voice) and B (Puppeteer scroll capture) are approved and merged. Phase C merges them: take a narration MP3 and a silent MP4, produce a final MP4 where the voice plays over the video.
+
+This is the **first end-to-end walkthrough artifact** — narrated screen capture. Milestone deliverable.
+
+Phase D (talking head overlay) is CUT. Voice-only.
+
+---
+
+### PART 1 — Generate the Phase C narration MP3
+
+Before merging, generate a narration MP3 using the locked Phase A config. This will play over the 1altx.ai scroll video.
+
+**Narration text** (copy exactly — ~30 seconds at natural pace):
+
+```
+Welcome to 1AltX. We're an AI automation consultancy that turns your messiest operational bottlenecks into reliable, running systems. Whether it's custom workflows, dashboards, client onboarding, or back office automation — we build what you need, integrate it with what you already use, and make sure it actually runs in production. This is what we do. Let's build something together.
+```
+
+Save the MP3 as: `C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-narration.mp3`
+
+Use the existing `src/tts/elevenlabs.js` module — do NOT modify voice settings.
+
+---
+
+### PART 2 — Build `src/compose/merge.js`
+
+**Goal:** FFmpeg merges an MP3 + MP4 into a single MP4 where:
+- Audio track is the MP3
+- Video track is the silent MP4
+- **Final duration matches the AUDIO, not the video**
+  - If audio is shorter than video: truncate video to audio length
+  - If audio is longer than video: loop or freeze last video frame (freeze is simpler, pick that)
+
+**CLI:**
+```
+node src/compose/merge.js <audio.mp3> <video.mp4> <output.mp4>
+```
+
+**FFmpeg approach (fluent-ffmpeg):**
+```js
+// Sketch - adapt as needed
+ffmpeg()
+  .input(videoPath)
+  .input(audioPath)
+  .outputOptions([
+    '-map 0:v:0',           // video from first input
+    '-map 1:a:0',           // audio from second input
+    '-c:v copy',            // don't re-encode video (fast)
+    '-c:a aac',             // encode audio as AAC (MP4 standard)
+    '-b:a 192k',
+    '-shortest',            // end when shorter stream ends (audio-led works if audio is shorter or equal)
+    '-movflags +faststart'
+  ])
+  .output(outputPath)
+```
+
+**If audio is longer than video:** use `-vf tpad=stop_mode=clone:stop_duration=N` to freeze the last frame. Calculate N from ffprobe durations. Or use `-stream_loop -1` on video input. Pick whichever is cleaner.
+
+Log to console:
+- Audio duration (ffprobe)
+- Video duration (ffprobe)
+- Which stream won (`-shortest` vs freeze vs truncate)
+- Final MP4 duration + file size
+
+---
+
+### PART 3 — Integration test
+
+Run Phase C end-to-end on the real artifacts:
+
+```bash
+node src/compose/merge.js \
+  C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-narration.mp3 \
+  C:\Users\18473\Dropbox\AutoVid\artifacts\phase-b-silent-v2.mp4 \
+  C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-final.mp4
+```
+
+---
+
+### ACCEPTANCE CRITERIA
+
+1. New branch `phase-c-audio-sync` off `main`
+2. `src/compose/merge.js` implemented
+3. Artifact `phase-c-narration.mp3` generated (Phase A module still works post-merge)
+4. Artifact `phase-c-final.mp4` in Dropbox: Richard's voice narrating the 1altx.ai scroll
+5. Audio is clearly audible, video is visible, they're in sync (reasonable alignment — doesn't need frame-perfect)
+6. PR opened against `main`: `[Phase C] Voice + video sync`
+7. GATE RESULTS posted in this task: PR link, artifact path, ffprobe durations for all 3 files
+
+**DO NOT MERGE.** Richard reviews the final MP4 first.
+
+---
+
+### OUT OF SCOPE
+
+- Scenario JSON parsing (Phase E)
+- Multi-scene concatenation (Phase D/E)
+- Claude narration generation (Phase E)
+- Timing adjustments / scene-level sync (Phase E)
+- Scroll speed synced to narration (Phase E)
+- Admin UI (Phase F)
+
+Phase C is **one audio file + one video file = one merged MP4.** That's it.
+
+---
+
+### NOTES
+
+- Video duration from Phase B v2: ~30s (reports 0:19 in Media Player display but ffprobe should show actual)
+- Narration is ~30s at Phase A v5 pace
+- If they don't match perfectly, prefer audio duration wins — video freezes last frame if it runs out
+- The `-shortest` flag works when audio ≤ video. If audio > video, fall back to freeze-frame approach
+
+---
+
+### QUESTIONS / BLOCKERS
+
+Post here if ffmpeg complains about codec compatibility or if Phase A module has regression after main merge.
