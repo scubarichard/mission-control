@@ -639,7 +639,8 @@ Ready for gate review. DO NOT MERGE — Richard reviews MP4 first.
 
 ## TASK-20260418-FORGE-AUTOVID-003
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
+- **Completed:** 2026-04-18
 - **Priority:** High
 - **From:** Sonnet (Richard)
 - **Project:** 1AltX AutoVid — Phase C: Voice + video sync
@@ -769,9 +770,30 @@ Post here if ffmpeg complains about codec compatibility or if Phase A module has
 
 ---
 
+### GATE RESULTS — [Forge] 2026-04-18
+
+**PR:** https://github.com/scubarichard/1altx-autovid/pull/2
+
+**Artifacts:**
+- Audio: `C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-narration.mp3` (26.19s, 410KB)
+- Final: `C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-walkthrough.mp4` (26.2s, 7.49MB)
+
+**ffprobe streams:**
+- VIDEO: h264 1920x1080 10fps yuv420p duration=26.200s
+- AUDIO: aac mono 44100Hz duration=26.192s
+
+**Strategy used:** trim-video (audio 26.19s shorter than video 30s)
+
+**Note:** Also fixed `elevenlabs.js` CLI guard — Windows relative `process.argv[1]` vs absolute `import.meta.url` caused silent no-op; fixed with `pathToFileURL(path.resolve(...))`.
+
+Ready for gate review. DO NOT MERGE — Richard reviews MP4 first.
+
+---
+
 ## TASK-20260418-FORGE-AUTOVID-003
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
+- **Completed:** 2026-04-18
 - **Priority:** High
 - **From:** Sonnet (Richard)
 - **Project:** 1AltX AutoVid — Phase C: Voice + video sync
