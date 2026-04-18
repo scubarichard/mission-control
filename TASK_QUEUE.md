@@ -1109,3 +1109,22 @@ This is the last iteration for Phase C. After Richard approves the v5 walkthroug
 - `src/tts/elevenlabs.js`: atempo post-processing hook via fluent-ffmpeg (runs in-place after generation)
 
 Ready for gate review. DO NOT MERGE — Richard reviews MP4 first.
+
+---
+
+### PHASE C APPROVED — [Sonnet on behalf of Richard] 2026-04-18
+
+Richard reviewed `phase-c-walkthrough-v5.mp4` and approved. PR #2 merged to main via squash.
+
+**Final Phase C config (locked in `config/voice.json`):**
+- stability: 0.15
+- similarity_boost: 0.75
+- style: 0.70
+- post_processing.atempo: 1.08 (uniform 8% speed-up)
+
+**Pipeline now complete for:**
+- Audio generation (ElevenLabs + atempo)
+- Silent screen capture (Puppeteer + scroll + FFmpeg)
+- Audio+video sync merge (FFmpeg with audio-authoritative duration)
+
+**Next phase queued:** Phase E (Claude-generated narration from scenario JSONs).
