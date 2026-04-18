@@ -1256,3 +1256,175 @@ Write artifacts to `artifacts/` dir with scene-level intermediate files kept for
 - `ANTHROPIC-API-KEY` secret in Azure Key Vault `kvdaximpactcapital` — if missing, flag as blocker in GATE RESULTS and Sonnet will populate
 - Title card design: dark background, 1altx.ai subtle logo bottom-right, big centered title + subtitle, consistent with 1altx.ai visual style
 - Keep per-scene intermediate files — debugging depends on them
+
+---
+
+## TASK-20260418-FORGE-AUTOVID-007
+- **Assignee:** Forge
+- **Status:** BLOCKED_BY_006
+- **Priority:** High
+- **From:** Sonnet (Richard, autonomous mode)
+- **Project:** 1AltX AutoVid — OPT Solutions scenario JSON
+- **Repo:** `scubarichard/1altx-autovid`
+- **Branch:** `phase-e-architecture` (continue from TASK-006)
+
+### DO NOT START until TASK-006 is merged
+
+Depends on the v2 scenario schema from TASK-006.
+
+### BUILD
+
+Create `scenarios/opt-walkthrough.json` implementing an 8-scene walkthrough mapping to Sunny Ghimire's delivered handover documentation.
+
+Use this exact scene structure (Sonnet has drafted this from the actual handover doc at `C:\Users\18473\Dropbox\Companies\1AltX\Clients\OPT Solutions\OPT_Solutions_Handover_Documentation.docx`):
+
+**Scene 1: System Overview** — title card, 20s
+- Title: "OPT Solutions"
+- Subtitle: "Commission Tracking System"
+- Narration prompt: "Introduce OPT Solutions Commission Tracking. Four platforms: Google Drive file intake, n8n automation, Airtable transaction database, HubSpot CRM/reporting. High-level flow: drop file in Drive, n8n detects within hour, AI agent calculates commission, data flows to Airtable and HubSpot. This video walks through each piece."
+- Max words: 75
+
+**Scene 2: Google Drive Intake** — auth_profile "google_drive", 25s
+- URL: [Richard will populate actual folder URL during cookie extraction]
+- Placeholder: `https://drive.google.com/drive/folders/OPT_FOLDER_ID`
+- Narration: Drive folder structure, Tyro/Nuvei subfolders, hourly check frequency, xlsx format, don't rename files, duplicates skipped. Max 70 words.
+
+**Scene 3: n8n Workflows** — auth_profile "n8n", 35s, scroll top_to_bottom
+- URL: `https://optsolutions.app.n8n.cloud/workflows`
+- Narration: Three published workflows — Tyro Import (AI agent reads), Nuvei Import (calculates with adjustments), Merchant Sync (keeps MIDs in sync between Airtable and HubSpot). Max 90 words.
+
+**Scene 4: Nuvei Calculation** — auth_profile "n8n", 40s, no scroll
+- URL: `https://optsolutions.app.n8n.cloud/workflows` (same page, different narration)
+- Narration: Three named adjustments. Residual Adjustment flat -$30 if monthly volume under $3,000. Velocity Points -0.10% of volume, opted-in merchants only. Same-Day Funding -0.10% of volume, opted-in merchants only. Net Payout = Gross Profit - all adjustments. Max 90 words.
+
+**Scene 5: Airtable Transaction DB** — auth_profile "airtable", 30s, scroll top_to_bottom
+- URL: [Richard will populate during cookie extraction]
+- Placeholder: `https://airtable.com/OPT_BASE_ID`
+- Narration: Sunny owns this base. Two tables: Merchants (MID, provider, name, HubSpot ID, status) and Transactions (Volume, Income, Expense, Gross Profit, Adjustment Total, Commission). Unique key: MID + YYYY-MM + provider. Max 85 words.
+
+**Scene 6: HubSpot Merchant Records** — auth_profile "hubspot", 30s, scroll top_to_bottom
+- URL: `https://app-ap1.hubspot.com/contacts/441994755/objects/0-2/views/all/list`
+- Narration: 30 merchants as Company records in portal 441994755. Legal name, trading name, MID for Tyro/Nuvei, provider, activation date, surcharge rate, linked contact. Sales rep attribution tracked via custom property. Max 75 words.
+
+**Scene 7: HubSpot Dashboards** — auth_profile "hubspot", 35s, scroll top_to_bottom
+- URL: `https://app-ap1.hubspot.com/reports-dashboard/441994755`
+- Narration: Two primary dashboards — Commission Overview (total monthly commission, by provider, month-over-month trends) and Merchant Performance (per-merchant commission, volume, transaction counts). Open at start of each month to verify new data. Max 65 words.
+
+**Scene 8: Monthly Process & Support** — title card, 30s
+- Title: "Monthly Process"
+- Subtitle: "1. Upload Tyro  ·  2. Upload Nuvei  ·  3. Wait 1 hour  ·  4. Verify in HubSpot"
+- Eyebrow: "Support: richard@1altx.com"
+- Narration: Four monthly steps. If something fails, check n8n Executions for red runs, email richard@1altx.com with filename + error. Managed support available at $199/month: daily monitoring, prompt resolution, adjustments when processor report formats change. Thanks for the opportunity. Max 120 words.
+
+### ACCEPTANCE CRITERIA
+
+1. File committed at `scenarios/opt-walkthrough.json`
+2. Validates against `config/scenario.schema.json` v2
+3. Title cards for scenes 1 and 8 have correct title/subtitle/eyebrow text
+4. Placeholder URLs for Google Drive and Airtable marked with `OPT_FOLDER_ID` and `OPT_BASE_ID` (Richard will replace during cookie extraction step)
+5. All narration_prompt fields match specs above
+6. Commit message: `[Phase E] OPT Solutions scenario JSON`
+7. Post GATE RESULTS: file path, line count, schema validation output
+
+### OUT OF SCOPE
+
+- Running the scenario (TASK-009)
+- Cookie extraction (TASK-008)
+- Modifying pipeline code (TASK-006)
+
+---
+
+## TASK-20260418-FORGE-AUTOVID-008
+- **Assignee:** Forge
+- **Status:** BLOCKED_BY_007
+- **Priority:** High
+- **From:** Sonnet (Richard, autonomous mode)
+- **Project:** 1AltX AutoVid — Cookie extraction utility
+
+### DO NOT START until TASK-007 is merged
+
+### BUILD
+
+Create `tools/extract-cookies.html` + `tools/upload-cookies.js` — a utility that helps Richard extract browser cookies for HubSpot, Airtable, n8n cloud, and Google Drive, then stores them in Azure Key Vault.
+
+**Approach:**
+
+1. `tools/extract-cookies.html` — static page Richard opens in Chrome while logged into the target platform. Shows copy-paste instructions for DevTools → Application → Cookies → select all → copy as JSON. Provides a text area to paste results.
+
+2. `tools/upload-cookies.js` — Node script that reads a cookie JSON file (exported format from step 1) and writes to Azure Key Vault secret `COOKIES-<PLATFORM>` in kvdaximpactcapital.
+
+   CLI: `node tools/upload-cookies.js <platform> <cookies.json>`
+   
+   Where platform is one of: `hubspot`, `airtable`, `n8n`, `google_drive`
+
+3. Also update `tools/README.md` with step-by-step instructions:
+   - Per platform: which URL to be logged into, how to export via DevTools
+   - How to run upload-cookies.js
+
+4. Validate cookie structure: must have `name`, `value`, `domain`. Log warnings for missing `expires`, `httpOnly`, `secure` fields but don't fail.
+
+### ACCEPTANCE CRITERIA
+
+1. `tools/extract-cookies.html` renders in a browser with clear per-platform instructions
+2. `tools/upload-cookies.js` runs and writes to Key Vault (test with fake cookies file first, verify secret was created)
+3. `tools/README.md` written with complete instructions for all 4 platforms
+4. Commit: `[Phase E] Cookie extraction utility`
+5. Post GATE RESULTS: tool files, example upload output (with fake data)
+
+### OUT OF SCOPE
+
+- Running the actual cookie extraction (Richard does that with TASK-009 prerequisite)
+- Auto-refreshing expired cookies (future work)
+
+---
+
+## TASK-20260418-FORGE-AUTOVID-009
+- **Assignee:** Forge
+- **Status:** BLOCKED_BY_008_AND_COOKIES
+- **Priority:** High
+- **From:** Sonnet (Richard, autonomous mode)
+- **Project:** 1AltX AutoVid — Generate OPT walkthrough video
+
+### DO NOT START until:
+1. TASK-008 is merged
+2. Richard has extracted cookies for HubSpot, Airtable, n8n, Google Drive (Sonnet will coordinate this step)
+3. Richard has replaced placeholder URLs in `scenarios/opt-walkthrough.json` (`OPT_FOLDER_ID` → real Google Drive folder ID, `OPT_BASE_ID` → real Airtable base ID)
+
+### BUILD
+
+Execute:
+```bash
+node src/pipeline/run.js scenarios/opt-walkthrough.json
+```
+
+This runs the full Phase E pipeline for the OPT scenario. Each scene gets:
+- Narration generated by Claude based on the prompt
+- Narration MP3 via ElevenLabs + atempo post-processing
+- Silent scene MP4 via Puppeteer (with cookie auth where applicable)
+- Per-scene merge (audio + video)
+- Final concat of all 8 scenes
+
+### ACCEPTANCE CRITERIA
+
+1. `C:\Users\18473\Dropbox\AutoVid\artifacts\opt-walkthrough-v1.mp4` exists
+2. Video duration approximately 4 minutes
+3. All 8 scenes visible in correct order with correct narration
+4. No auth failures (all auth'd scenes loaded successfully)
+5. ffprobe shows H.264 + AAC, 1920x1080
+6. Also keep per-scene artifacts in `artifacts/scenes/` for debugging
+7. Post GATE RESULTS: ffprobe output, scene-by-scene duration breakdown, any warnings or auth issues
+
+### FALLBACK PLAN
+
+If any authenticated scene fails capture (blank page, redirect to login, bot detection):
+- Flag it clearly in GATE RESULTS
+- For that specific scene, substitute a title card with text "[Platform name] — refer to handover documentation"
+- Do NOT block the full video render on individual scene failures
+- Richard can manually record failed scenes later
+
+### OUT OF SCOPE
+
+- Narration quality review (Richard will review final video)
+- Cookie refresh (will revisit if cookies expired)
+
+---
