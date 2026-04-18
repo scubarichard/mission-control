@@ -1001,3 +1001,92 @@ Post here if the new MP3 file isn't accessible or if config change has issues.
 **config/voice.json:** stability 0.3 → 0.2, `_approval_v2` block added
 
 Ready for gate review. DO NOT MERGE — Richard reviews MP4 first.
+
+---
+
+## TASK-20260418-FORGE-AUTOVID-005
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Sonnet (Richard)
+- **Project:** 1AltX AutoVid — Phase C final audio swap (v5)
+- **Repo:** `scubarichard/1altx-autovid`
+- **Branch:** CONTINUE on existing `phase-c-audio-sync`
+- **PR:** #2 (add new commit)
+
+### Why
+
+Richard iterated on narration pacing. Final approved audio is **v5**: v3 (stability 0.15) processed with `ffmpeg atempo=1.08` for uniform 8% speed-up. This solves the "slow beginning, rushed end" problem that low-stability native generation causes.
+
+Sonnet has already generated and validated v5 at `C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-narration-v5.mp3` (23.69s).
+
+### CHANGES
+
+#### 1. Update `config/voice.json`
+
+- Revert stability back to `0.15` (not 0.2)
+- Add a new top-level block `post_processing`:
+
+```json
+"post_processing": {
+  "description": "ffmpeg atempo filter applied after generation for uniform pacing",
+  "atempo": 1.08,
+  "_rationale": "Uniform 8% speed-up avoids front-heavy/tail-rushed cadence that low-stability native generation produces"
+}
+```
+
+- Update `_approval` to document v5 approval with today's date and this task ID.
+
+#### 2. Update `src/tts/elevenlabs.js` to apply post-processing
+
+After the MP3 is written, if `voice.post_processing.atempo` is set and != 1.0, run the file through ffmpeg with that atempo value, replacing the file in place. Use `fluent-ffmpeg`:
+
+```js
+// After fs.writeFileSync(outputPath, response.data):
+if (voiceConfig.post_processing?.atempo && voiceConfig.post_processing.atempo !== 1.0) {
+  const tempPath = outputPath + '.raw.mp3';
+  fs.renameSync(outputPath, tempPath);
+  await new Promise((resolve, reject) => {
+    ffmpeg(tempPath)
+      .audioFilters(`atempo=${voiceConfig.post_processing.atempo}`)
+      .output(outputPath)
+      .on('end', resolve)
+      .on('error', reject)
+      .run();
+  });
+  fs.unlinkSync(tempPath);
+}
+```
+
+Test this works by regenerating any throwaway MP3 — duration should land ~8% shorter than a v3-style native gen.
+
+#### 3. Re-run the merge with v5 audio
+
+```bash
+node src/compose/merge.js ^
+  C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-narration-v5.mp3 ^
+  C:\Users\18473\Dropbox\AutoVid\artifacts\phase-b-silent-v2.mp4 ^
+  C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-walkthrough-v5.mp4
+```
+
+Audio 23.69s, video 30s → trim-video path triggers again. Expected final: ~23.7s MP4.
+
+### ACCEPTANCE CRITERIA
+
+1. `config/voice.json` updated: stability 0.15, new `post_processing` block, `_approval.v5` note
+2. `src/tts/elevenlabs.js` post-processes MP3 via ffmpeg atempo when config present
+3. Artifact at `C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-walkthrough-v5.mp4`
+4. Commits on existing `phase-c-audio-sync` branch, same PR #2
+5. Post GATE RESULTS: ffprobe output, artifact path, PR link
+
+### OUT OF SCOPE
+
+- Don't regenerate `phase-c-narration-v5.mp3` (Sonnet already did it, it's the approved version)
+- Don't modify `compose/merge.js` logic (working correctly)
+- Don't touch Phase B video
+
+Just: config update, tts.js post-process hook, re-merge.
+
+### NOTES
+
+This is the last iteration for Phase C. After Richard approves the v5 walkthrough, PR #2 gets merged and we move to Phase E (Claude-generated narration from scenario JSONs).
