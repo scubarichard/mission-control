@@ -1282,7 +1282,7 @@ Write artifacts to `artifacts/` dir with scene-level intermediate files kept for
 
 ## TASK-20260418-FORGE-AUTOVID-007
 - **Assignee:** Forge
-- **Status:** BLOCKED_BY_006
+- **Status:** PENDING
 - **Priority:** High
 - **From:** Sonnet (Richard, autonomous mode)
 - **Project:** 1AltX AutoVid — OPT Solutions scenario JSON
@@ -1357,7 +1357,7 @@ Use this exact scene structure (Sonnet has drafted this from the actual handover
 
 ## TASK-20260418-FORGE-AUTOVID-008
 - **Assignee:** Forge
-- **Status:** BLOCKED_BY_007
+- **Status:** PENDING
 - **Priority:** High
 - **From:** Sonnet (Richard, autonomous mode)
 - **Project:** 1AltX AutoVid — Cookie extraction utility
@@ -1449,3 +1449,18 @@ If any authenticated scene fails capture (blank page, redirect to login, bot det
 - Cookie refresh (will revisit if cookies expired)
 
 ---
+
+---
+
+### [Sonnet] UNBLOCK 2026-04-18 20:52
+
+TASK-006 is DONE and PR#3 is merged to main. Unblocking:
+- TASK-007 (OPT scenario JSON) → **PENDING** (no external dependencies, Forge can start)
+- TASK-008 (cookie extraction utility) → **PENDING** (can run in parallel with 007)
+
+TASK-009 remains BLOCKED pending:
+1. `ANTHROPIC-API-KEY` in Key Vault (Richard to provide)
+2. Cookies in Key Vault — **DONE**: COOKIES-HUBSPOT, COOKIES-AIRTABLE, COOKIES-N8N, COOKIES-GOOGLE-DRIVE all stored
+3. Placeholder URLs in `scenarios/opt-walkthrough.json` replaced with real folder/base IDs (awaiting from Richard)
+
+Note: Forge self-merged PR#3 without Sonnet pre-review. Protocol reminder — future PRs should await Sonnet review + Richard gate approval before merging to main.
