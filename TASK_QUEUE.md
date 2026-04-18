@@ -766,3 +766,134 @@ Phase C is **one audio file + one video file = one merged MP4.** That's it.
 ### QUESTIONS / BLOCKERS
 
 Post here if ffmpeg complains about codec compatibility or if Phase A module has regression after main merge.
+
+---
+
+## TASK-20260418-FORGE-AUTOVID-003
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Sonnet (Richard)
+- **Project:** 1AltX AutoVid — Phase C: Voice + video sync
+- **Repo:** `scubarichard/1altx-autovid`
+- **Branch:** Create `phase-c-audio-sync` from `main` (PR #1 merged, main has scaffolding + Phase B)
+
+### Context
+
+Phase B approved by Richard. v2 artifact at `C:\Users\18473\Dropbox\AutoVid\artifacts\phase-b-silent-v2.mp4` (30s silent MP4 of 1altx.ai scrolling) is the locked example output.
+
+Phase C merges an ElevenLabs MP3 with a silent Puppeteer MP4 to produce the first end-to-end narrated walkthrough. No scenario JSON yet. Hardcoded test inputs.
+
+---
+
+### BUILD
+
+Create `src/compose/merge.js` — a module that takes an audio file + video file and produces a single MP4 with synced audio.
+
+**Requirements:**
+
+1. CLI signature:
+   ```
+   node src/compose/merge.js <audio_path> <video_path> <output_path>
+   ```
+
+2. Behavior:
+   - Load audio duration via ffprobe (`fluent-ffmpeg`'s `ffprobe`)
+   - Load video duration via ffprobe
+   - **Duration handling:** If audio and video differ in length, extend/trim the video to match the audio. Audio length is authoritative (the narration drives pacing).
+     - If video is shorter than audio: hold the last frame until audio ends
+     - If video is longer than audio: trim video to audio length
+   - Merge: video stream + audio stream → single MP4, H.264 + AAC, yuv420p, `+faststart`
+   - Output file ready to stream/share
+
+3. FFmpeg approach (sketch):
+   ```js
+   ffmpeg(videoPath)
+     .input(audioPath)
+     .complexFilter([
+       // If video shorter: tpad to hold last frame to audio duration
+       // If video longer: -t audioDuration trims
+     ])
+     .outputOptions([
+       '-c:v libx264',
+       '-c:a aac',
+       '-b:a 192k',
+       '-pix_fmt yuv420p',
+       '-movflags +faststart',
+       '-shortest' // safety backstop
+     ])
+     .output(outputPath);
+   ```
+
+4. Log output:
+   - Audio duration (s)
+   - Video duration (s)
+   - Chosen strategy (trim / pad / exact)
+   - Final MP4 duration
+   - Output file size
+
+---
+
+### TEST RUN
+
+**Step 1:** Generate a fresh narration MP3 to pair with the scrolling 1altx.ai video.
+
+Use the existing `src/tts/elevenlabs.js`. Generate with this exact text (matches the Phase B video content — a scroll through 1altx.ai):
+
+> "Welcome to 1AltX. We help small and mid-sized teams automate the repetitive work that eats their days, using AI agents and workflow tools like n8n, Make, and custom integrations. Whether you run a services firm, an agency, or an in-house ops team, our job is to find the bottlenecks that don't scale and replace them with systems that do. Let me walk you through what we build."
+
+Run:
+```bash
+node src/tts/elevenlabs.js "<text above>" C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-narration.mp3
+```
+
+Check the resulting MP3 duration — it will likely be ~25-30 seconds given the ~90-word script.
+
+**Step 2:** Merge with the existing Phase B v2 video.
+
+```bash
+node src/compose/merge.js ^
+  C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-narration.mp3 ^
+  C:\Users\18473\Dropbox\AutoVid\artifacts\phase-b-silent-v2.mp4 ^
+  C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-walkthrough.mp4
+```
+
+---
+
+### ACCEPTANCE CRITERIA
+
+1. Branch `phase-c-audio-sync` created from main, PR opened against main
+2. `src/compose/merge.js` exists and runs successfully
+3. Artifact at `C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-walkthrough.mp4`
+4. Also committed: `phase-c-narration.mp3` in the Dropbox artifacts folder (reference)
+5. When played, the MP4 has:
+   - Richard's voice narrating
+   - 1altx.ai scrolling visually
+   - Both in sync (video holds or trims to match audio length)
+6. ffprobe confirms: video stream (H.264, 1920x1080) + audio stream (AAC, stereo)
+7. Post GATE RESULTS in this task: PR link, artifact path, ffprobe output showing both streams, duration matches
+
+---
+
+### OUT OF SCOPE
+
+- Scenario JSON parsing (Phase E)
+- Multi-scene merging (Phase E — per-scene MP3s + per-scene video segments)
+- Claude-generated narration (Phase E)
+- Auth-gated pages (pinned — Richard will revisit)
+- Admin UI trigger (Phase F)
+- Talking head overlay (CUT)
+
+Phase C is **one MP3 + one MP4 → one synced MP4**. Period.
+
+---
+
+### NOTES
+
+- ElevenLabs key and voice ID are in Azure Key Vault `kvdaximpactcapital`. The Phase A `elevenlabs.js` already handles this — you shouldn't need to touch it.
+- If the 1altx.ai scroll video is shorter than the narration (likely — narration is ~25-30s, video is 30s exact), you'll hit the "trim video" path. Good — Phase C should exercise that code path.
+- If you hit the opposite (audio shorter than video), your tpad path kicks in. Either is fine for this gate.
+
+### QUESTIONS / BLOCKERS
+
+Post GATE RESULTS when ready for review, or flag blockers here.
