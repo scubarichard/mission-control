@@ -1282,7 +1282,8 @@ Write artifacts to `artifacts/` dir with scene-level intermediate files kept for
 
 ## TASK-20260418-FORGE-AUTOVID-007
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
+- **Completed:** 2026-04-18
 - **Priority:** High
 - **From:** Sonnet (Richard, autonomous mode)
 - **Project:** 1AltX AutoVid — OPT Solutions scenario JSON
@@ -1352,6 +1353,23 @@ Use this exact scene structure (Sonnet has drafted this from the actual handover
 - Running the scenario (TASK-009)
 - Cookie extraction (TASK-008)
 - Modifying pipeline code (TASK-006)
+
+---
+
+### GATE RESULTS — [Forge] 2026-04-18
+
+**Commit:** `0f8ebcc` on `main` — `scubarichard/1altx-autovid`
+
+**File:** `scenarios/opt-walkthrough.json` (130 lines)
+
+**Schema validation:** PASS
+- 8 scenes, all required fields present
+- Title cards: Scene 1 → "OPT Solutions" / Scene 8 → "Monthly Process" ✓
+- Placeholder URLs: `scene-02-google-drive` (OPT_FOLDER_ID) + `scene-05-airtable-db` (OPT_BASE_ID) ✓
+- auth_profile set: google_drive (2), n8n (3, 4), airtable (5), hubspot (6, 7), null (1, 8) ✓
+- All narration prompts and max_words match spec ✓
+
+**Next:** TASK-008 (cookie extraction utility) is now PENDING.
 
 ---
 
