@@ -1006,7 +1006,7 @@ Ready for gate review. DO NOT MERGE — Richard reviews MP4 first.
 
 ## TASK-20260418-FORGE-AUTOVID-005
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **Priority:** High
 - **From:** Sonnet (Richard)
 - **Project:** 1AltX AutoVid — Phase C final audio swap (v5)
