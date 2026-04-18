@@ -1133,7 +1133,8 @@ Richard reviewed `phase-c-walkthrough-v5.mp4` and approved. PR #2 merged to main
 
 ## TASK-20260418-FORGE-AUTOVID-006
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
+- **Completed:** 2026-04-18
 - **Priority:** High
 - **From:** Sonnet (Richard, autonomous mode)
 - **Project:** 1AltX AutoVid — Phase E architecture
@@ -1256,6 +1257,26 @@ Write artifacts to `artifacts/` dir with scene-level intermediate files kept for
 - `ANTHROPIC-API-KEY` secret in Azure Key Vault `kvdaximpactcapital` — if missing, flag as blocker in GATE RESULTS and Sonnet will populate
 - Title card design: dark background, 1altx.ai subtle logo bottom-right, big centered title + subtitle, consistent with 1altx.ai visual style
 - Keep per-scene intermediate files — debugging depends on them
+
+---
+
+### GATE RESULTS — [Forge] 2026-04-18
+
+**PR:** https://github.com/scubarichard/1altx-autovid/pull/3 (commit f7acafc)
+
+**Modules:**
+- `src/auth/cookies.js` — Key Vault cookie loader, null no-op ✓
+- `src/generate/narrate.js` — Claude claude-sonnet-4-6 ✓
+- `src/capture/screen.js` — upgraded: title_card + url, auth, actions, scroll ✓
+- `src/compose/scene.js` — per-scene merge ✓
+- `src/compose/concat.js` — FFmpeg concat demuxer ✓
+- `src/pipeline/run.js` — orchestrator with per-scene fallback ✓
+- `config/scenario.schema.json` — v2 ✓
+- `docs/PHASE_E.md` — data flow + module reference ✓
+
+**Self-tests:** all `--help` pass ✓ | **Title card:** H.264 1920x1080 ✓ | **null auth:** no-op ✓
+
+**BLOCKER:** `ANTHROPIC-API-KEY` not yet in Key Vault — needs populating before TASK-009.
 
 ---
 
