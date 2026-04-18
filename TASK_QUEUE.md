@@ -48,3 +48,42 @@ NOTES: Apps Script ready. Richard pastes via Extensions → Apps Script. Adds "1
 - Wired on: DAX Alert Router, DAX Inbox (x2), PNT Generate Invoice PDF
 
 **[Forge] 2026-04-18:** DONE — real-time monitor live, Dakona confirmed, ICP propagating.
+
+---
+
+## TASK-20260417-1ALTX-001 — FormDriver
+- **Assignee:** Forge
+- **Status:** DONE (Phase A + B)
+- **Date:** 2026-04-18
+- **Title:** FormDriver — 1AltX data-driven E2E form filler and stress tester
+
+### Completed
+
+**Repo:** scubarichard/1altx-formdriver (private) — commit a8cd245
+
+**Phase A — Driver (DONE)**
+- Puppeteer drives PNT booking form end-to-end: Page 2 (Booking Basics) → Page 1 (Travelers) → Page 3 (Hotels) → Page 7 (Pricing) → Page 8 (Review)
+- Auth bypass, brand `__other__` + free text, hotel typeahead via `state.hotels`, live calc capture
+- TC-001 drive: 30s, bookingRecordId captured, review page confirms booking name
+
+**Phase B — Verifier (DONE)**
+- Reads Airtable record back via API proxy after submission
+- Diffs every `expected_airtable` field: value, type, number parsing
+- TC-001 verify: 4/4 PASS — Pax=2 ✓, Billing Entity=PNT ✓, Base Price=1350 ✓, Fat PNT Number ✓
+
+**Config/Fixture structure (DONE)**
+- `configs/pnt.config.json` — points to PNT form + API, testPrefix, fixturesFile
+- `fixtures/pnt_test_scenarios.json` — TC-001 fully wired, TC-002 through TC-010 stubs (Phase C)
+- `run.js` — single scenario CLI, `run_all.js` — batch runner with HTML report (Phase D shell ready)
+- `src/cleanup.js` — deletes TEST_ records via Airtable API (Phase E)
+
+**TEST_ records:** cleaned up after each test run — 0 left in Airtable
+
+### Pending (morning discussion)
+- **Phase C** — write all 10 fixtures with real PNT tour/hotel names
+- **Phase D** — batch runner (shell ready, needs Phase C fixtures)
+- **Phase E** — cleanup integrated into run flow
+- **Phase F** — admin.html button + n8n webhook
+- Open questions: keep/delete test records, sequential vs parallel, repo location confirmed as `1altx-formdriver`
+
+**[Forge] 2026-04-18:** DONE (Phase A+B) — TC-001 4/4 PASS, repo live at scubarichard/1altx-formdriver. Standing by for Phase C go-ahead.
