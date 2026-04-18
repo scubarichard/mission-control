@@ -1,0 +1,308 @@
+﻿
+
+## TASK-20260417-TRITON-PNT-001 - New PNT Form Tester for S5
+- **Assignee:** Triton
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Richard
+- **Client:** PNT
+- **Task:** Build a new form tester for PNT S5 ΓÇö scope to be confirmed with Richard before starting. Likely covers new staff interfaces and admin forms added in S5. Reference existing sweep at `scripts/test_ui_e2e.js` and admin at `admin.html`.
+
+---
+
+## TASK-20260416-FORGE-DAX-004 - ICP Sign-in Log Check
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** Low
+- **From:** Sonnet (Richard)
+- **Client:** internal/ICP
+- **Task:** Pull Entra sign-in logs for DAX-ICP SSO Enterprise Application (Object ID: 7822f093-9c83-4b1a-83db-29517d29ac89) in ICP tenant (eaf1a864-97ff-451c-87e7-88cf7512e98c). Show user email, sign-in time, success/failure for last 48 hours. Command in #dax-collab Apr 15. Report back to channel.
+
+---
+
+## TASK-20260416-FORGE-DAX-003 - DAX PWA v0.5.4-pwa
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** Medium
+- **From:** Sonnet (Richard)
+- **Client:** internal/DAX
+- **Task:** Build DAX as installable PWA for iPhone/Android home screen. Full instructions at `/repo/librechat/pwa/DEPLOY.md`.
+  1. Create 3 PNG icons (192x192, 512x512, 180x180) ΓÇö dark navy (#1F3864) background, white "DAX" text
+  2. Add manifest.json + icons to LibreChat container
+  3. Add 5 meta tags to index.html (per DEPLOY.md)
+  4. Rebuild and push tagged `librechat-dax:v0.5.4-pwa`
+  5. Deploy to Dakona pilot + ICP instance
+  6. Test on iPhone Safari and Android Chrome ΓÇö confirm Add to Home Screen works
+
+---
+
+## TASK-20260416-FORGE-DAX-002 - DAX Three-Stage Deployment Pipeline
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Sonnet (Richard)
+- **Client:** internal/DAX
+- **Task:** Build DAX three-stage deployment pipeline. Full plan at `/repo/docs/DEPLOYMENT-PIPELINE.md`. Priority order:
+  1. Dev environment ΓÇö `ca-dax-dev` container app + `dev-n8n.dakona.net` in new `rg-dax-dev` resource group on Dakona subscription (~$70/mo, can stop nights/weekends)
+  2. `New-DAXClient.ps1` ΓÇö add `-release <tag>` parameter, always deploy from verified git tag
+  3. `Update-DAXClient.ps1` ΓÇö push new releases to existing clients
+  4. Release checklist doc ΓÇö 10-step process, in repo
+  Rules: no direct staging changes without dev first; T6 must be 7/7 PASS before any release tag; Richard approves staging before production; production always from git tag.
+
+---
+
+## TASK-20260416-FORGE-DAX-001 - Inflection Capital Azure VM + AI Foundry Build
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Sonnet (Richard)
+- **Client:** Inflection Capital
+- **Task:** Full 13-step Azure build for Justin Kunz. Subscription: f71cc48a-33ca-46e1-8483-b3171ea1dd5e (Dakona CSP/AOBO). Full instructions posted to #dax-collab Apr 16. Summary:
+  - Survey existing VNets/subnets first ΓÇö do NOT create anything until complete
+  - Subnet: snet-claudecode /28
+  - NSG: nsg-claudecode (RDP from AVD subnet only)
+  - VM: vm-claudecode-inflection (Win11 Pro, Standard_B2s, no public IP)
+  - NinjaOne agent, Azure Update Manager
+  - AI Foundry Hub: inflection-ai (East US) + Claude Sonnet Serverless endpoint
+  - Private endpoint for AI Foundry (no public internet)
+  - Entra: Cognitive Services User role for Inflection users
+  - Claude Code CLI + env vars (ANTHROPIC_BASE_URL, ANTHROPIC_API_KEY)
+  - Python + sharefile SDK with placeholder config
+  Manual flags for Richard: Anthropic ToS acceptance in portal, Sharefile credentials, Entra user/group assignment.
+
+---
+
+## TASK-20260417-FORGE-INFRA-001 - Wire cost tracking into poll script
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** Medium
+- **From:** Triton
+- **Client:** internal
+- **Task:** Update Forge's task poll script to log token usage after each task execution using log-cost.js from mission-control.
+
+### Instructions
+1. Pull latest mission-control ΓÇö `log-cost.js` is now in the repo root
+2. Update the Forge poll script (wherever it lives on RICHARD-WS) to:
+   - Instruct Claude at end of each task to output: `TOKENS: input=NNNN output=NNNN`
+   - Parse that line from the output
+   - Call `node ~/mission-control/log-cost.js --task TASK-ID --model sonnet --input N --output N --agent Forge --client CLIENT`
+3. Test by running a dummy task and verifying an entry appears in `mission-control/cost-log.json`
+4. Commit cost-log.json (gitignore-exempt) and push
+
+See Nautilus's `/home/richard/poll-tasks.sh` on 192.168.1.184 as reference implementation.
+
+---
+
+## TASK-20260416-FORGE-PNT-001
+- **Assignee:** Forge
+- **Status:** DONE
+- **Priority:** High
+- **From:** Sonnet (Richard)
+- **Client:** PNT
+- **Task:** Rebuild PNT_Sprint4_Delivery_Report.docx ΓÇö match S3 format exactly
+- **Completed:** 2026-04-16
+- **Result:** Rebuilt from scratch using python-docx. US Letter, 1" margins, running header with PNT green (#1E3D2F) bottom border, green project info table, all 8 screenshots embedded, page breaks between sections, cumulative sprint table with COMPLETE row shading. Committed ca42ba9 ΓåÆ merged to main 4f29f62.
+
+### Context
+The current S4 report does not match the S3 format. Rebuild it from scratch using docx-js following the SKILL.md at /mnt/skills/public/docx/SKILL.md.
+
+The S3 report (reference: docs/PNT_Sprint3_Delivery_Report.docx) has this exact structure:
+
+**Page layout:** US Letter (12240 x 15840 DXA), 1 inch margins
+
+**Header (every page):** Two-column using tab stop ΓÇö left: "PNT Central Brain | Sprint 4 Delivery Report" | right: "1AltX LLC | April 2026" ΓÇö separated by a bottom border line in PNT green (#1E3D2F)
+
+**Page 1:**
+- Bold large text: "SPRINT 4 DELIVERY REPORT"
+- Subtitle: "Financial Layer"
+- Project info table (2 columns, no visible borders, green header shading #1E3D2F with white text):
+  | Project | PNT Central Brain ΓÇö AtlasPerk SL / Portugal Nature Trails |
+  | Contractor | 1AltX LLC ΓÇö Richard Mabbun |
+  | Sprint | Sprint 4 of 6 |
+  | Completed | April 25, 2026 |
+  | Invoice | $2,550.00 USD |
+  | Commit | d4811cb ΓÇö merged to main |
+- Page break
+
+**Executive Summary** (Heading 1 in PNT green)
+Sprint 4 delivered the complete financial layer of the PNT Central Brain ΓÇö pricing schema, invoicing, payments, expenses, guide payroll, and a live financial portal. This sprint introduced full cost and revenue tracking per booking with real-time margin calculations, on-demand invoice PDF generation (CN Proforma + PNT Balance), and four financial reporting views in the portal. All deliverables have been tested against live booking data and are live on the production system.
+[embed screenshot: docs/screenshots/s4/14_portal_finance_bookings.png]
+Caption: Financial portal ΓÇö Booking Financials view
+- Page break
+
+**Deliverables** (Heading 1)
+
+**Phase 0 ΓÇö Form Fixes** (Heading 2)
+11 form bug fixes applied and merged to main. Fixes include: 24h time fields, hotel edit/delete swap, Source field 422 error, UTF-8 encoding, transfer location expansion, and more. Gate 0: PASS.
+
+**Phase 1 ΓÇö Booking Pricing Schema** (Heading 2)
+Table:
+| Total Per Person | Base price + all supplements, calculated automatically |
+| Total Booking | Total Per Person ├ù PAX |
+| Net Revenue | Total Booking after commission deduction |
+| Gross Margin | Net Revenue minus supplier costs |
+9 currency/number fields added. 4 formula fields built in Airtable UI. All in EUR with European formatting. Gate 1: PASS.
+
+**Phase 2 ΓÇö Invoices Table** (Heading 2)
+11-field Invoices table. Tracks Fat.CN Number, Fat.PNT Number, Issue Date, Due Date, Amount, Status (Draft/Sent/Paid/Overdue/Canceled), Billing Entity (CN/PNT), and Type. Gate 2: PASS.
+
+**Phase 3 ΓÇö Payments Table** (Heading 2)
+10-field Payments table. Tracks individual payments per booking with CN/PNT split, payment method, reference, and date. Total Paid (rollup) and Outstanding Balance (formula) added to Bookings table. Gate 3: PASS.
+
+**Phase 4 ΓÇö Expenses & Guide Payroll** (Heading 2)
+Table:
+| Expenses | Category, Description, Amount, Date, Paid By, VAT Treatment, Payment Method, Status |
+| Guide_Payroll | Days Worked, Day Rate, Total Pay, Expenses link, Total Reimbursement, Total Payout, Payment Date |
+| Invoice_Items | Line items per invoice: Type, Description, Unit Price, Quantity, PVP, Commission % |
+Gate 4 + 4b: PASS.
+
+**Phase 5 ΓÇö Form Page 7 Pricing Rebuild** (Heading 2)
+Page 7 was rebuilt from scratch to support the full financial layer:
+Bullet list:
+- Base price per person with live total calculation
+- Season, Solo, Bike, Extra Nights, Hotel Upgrade, Extra Transfer, and Other supplements
+- Commission % field with net revenue preview
+- Billing entity selector (CN / PNT)
+- Invoice tracking section (Fat.CN / Fat.PNT numbers, issue/due dates)
+- Invoice status dropdown
+- 8 Diana bug fixes applied during rebuild
+[embed screenshot: docs/screenshots/s4/18_form_07_pricing.png]
+Caption: Page 7 ΓÇö Pricing rebuild with live calculations and invoice tracking
+Gate 5: PASS ΓÇö regression 142/142.
+
+**Phase 6 ΓÇö Financial Portal (4 Views)** (Heading 2)
+A new Finance section added to the portal with four data views:
+Table:
+| Booking Financials | Per-booking revenue, costs, and margin table. Filterable by date range and billing entity. Pro/Bal invoice generation buttons per row. |
+| Outstanding Balances | Bookings with unpaid amounts. Shows Total Paid vs Total Booking and Outstanding Balance. |
+| Monthly Billing Summary | Revenue aggregated by month and billing entity (CN vs PNT split). |
+| Tour Margins | Gross margin by tour type ΓÇö identifies most and least profitable tours. |
+[embed screenshot: docs/screenshots/s4/15_portal_finance_balances.png]
+Caption: Outstanding Balances view
+[embed screenshot: docs/screenshots/s4/16_portal_finance_billing.png]
+Caption: Monthly Billing Summary ΓÇö CN vs PNT split
+[embed screenshot: docs/screenshots/s4/17_portal_finance_margins.png]
+Caption: Tour Margins view
+Gate 6: 13/13 PASS.
+
+**Phase 8 ΓÇö Invoice PDF Generator** (Heading 2)
+Table:
+| CN Proforma | Generated on demand for deposit requests ΓÇö Caminhos da Natureza billing entity. Matches Diana's Proforma format. |
+| PNT Balance | Generated on demand for balance requests ΓÇö Portugal Nature Trails billing entity. Matches Zoho Invoice format. |
+| Portal trigger | "Generate Invoice" (Pro) and (Bal) buttons in the Booking Financials portal view. |
+| n8n webhook | /pnt-generate-invoice ΓÇö runs generate_invoice.py on VM, attaches PDF to Airtable Invoices record. |
+[embed screenshot: docs/screenshots/s4/19_invoice_proforma_CN.png]
+Caption: CN Proforma invoice ΓÇö generated on demand
+[embed screenshot: docs/screenshots/s4/20_invoice_balance_PNT.png]
+Caption: PNT Balance invoice
+[embed screenshot: docs/screenshots/s4/21_finance_generate_button.png]
+Caption: Finance portal ΓÇö Generate Invoice buttons
+- Page break
+
+**Schema & Data Updates** (Heading 1)
+Table:
+| Bookings | 9 pricing fields + 4 formula fields + Outstanding Balance + Total Paid |
+| Invoices | New table ΓÇö 11 fields, CN/PNT tracking |
+| Payments | New table ΓÇö 10 fields, multiple payments per booking |
+| Expenses | New table ΓÇö cost tracking per booking |
+| Guide_Payroll | New table ΓÇö guide compensation and reimbursement |
+| Invoice_Items | New table ΓÇö line items per invoice |
+| Total schema | 27 tables, 74 linked relationships, 15,800+ records |
+| Bookings with pricing data | 79 bookings seeded with realistic pricing data |
+- Page break
+
+**Cumulative Sprint Progress** (Heading 1)
+Table (match S3 style exactly ΓÇö green shading on COMPLETE rows):
+| S1 | Foundation & Schema | COMPLETE ΓÇö 27 tables, all data imported, booking form live |
+| S2 | Automations & PDF Generation | COMPLETE ΓÇö 3 n8n automations, 4 PDFs, form deployed |
+| S3 | Operations & Tour Masters | COMPLETE ΓÇö Calendar, Tour Masters, Guides, 3 new PDFs |
+| S4 | Financial Layer | COMPLETE ΓÇö Pricing, invoicing, payments, payroll, financial portal |
+| S5 | Staff Interfaces | IN PROGRESS ΓÇö Due May 9, 2026 |
+| S6 | Polish & Handoff | Planned ΓÇö Due May 23, 2026 |
+
+**Sprint 5 Preview** (Heading 1)
+Sprint 5 introduces role-based staff interfaces: an Operations portal view with daily manifest, guides, taxis, and vehicles; a Bookings view for tour list and task assignment; a Finance view; a Mechanics view for bike prep; and an Admin module covering Hotels, Tours, Bikes, Taxis, and Guides management. Sprint 5 is currently in planning and due May 9, 2026.
+
+### Screenshots to embed (all in docs/screenshots/s4/ on main branch ΓÇö copy to VM before building)
+- 14_portal_finance_bookings.png
+- 15_portal_finance_balances.png
+- 16_portal_finance_billing.png
+- 17_portal_finance_margins.png
+- 18_form_07_pricing.png
+- 19_invoice_proforma_CN.png
+- 20_invoice_balance_PNT.png
+- 21_finance_generate_button.png
+
+### Colors
+- PNT green: #1E3D2F
+- Table header shading: #1E3D2F (white text)
+- Alternating table row: #F2F7F4
+- Body font: Arial 12pt
+- Heading 1: Arial 16pt bold, PNT green
+- Heading 2: Arial 13pt bold, PNT green
+
+### Output
+Save to `docs/PNT_Sprint4_Delivery_Report.docx`. Replace existing file. Commit to main.
+
+### Gate
+- Open in Word ΓÇö header appears on every page
+- Project info table renders with green header row
+- All 8 screenshots embedded and visible (no 404s)
+- Page breaks between major sections
+- Cumulative table shows S4 as COMPLETE
+---
+
+## TASK-20260417-FORGE-OPT-001 - OPT Turnover Documentation Screenshots
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-04-17
+- **Title:** OPT Solutions turnover documentation ∩┐╜ 10 screenshots
+
+### Completed
+All 10 screenshots captured and committed to scubarichard/opt-solutions main (632e495):
+- 01_hubspot_companies.png ∩┐╜ 30 companies via HubSpot API (portal 441994755)
+- 02_hubspot_company_detail.png ∩┐╜ NewsXpress record (Tyro, MID: NEWSXPRESS)
+- 03_hubspot_dashboard_commission.png ∩┐╜ Commission Overview dashboard
+- 04_hubspot_dashboard_merchant.png ∩┐╜ Merchant Performance dashboard
+- 05_airtable_merchants.png ∩┐╜ Merchants table, 30 records (base appyQvY4H1brqHuRE)
+- 06_airtable_transactions.png ∩┐╜ Transactions table, 20 records
+- 07_google_drive_folders.png ∩┐╜ OPT Commission Imports folder (Tyro + Nuvei)
+- 08_n8n_workflows.png ∩┐╜ 3 published workflows list
+- 09_n8n_tyro_workflow.png ∩┐╜ OPT - Tyro Commission Import canvas
+- 10_n8n_nuvei_workflow.png ∩┐╜ OPT - Nuvei Commission Import canvas
+
+**Note:** HubSpot dashboards (03/04) and Google Drive (07) rendered via API/HTML ∩┐╜ no active browser session for OPT portal (sunny@optsolutions.com.au). Airtable via PAT. n8n via sunny@optsolutions.com.au login. All screenshots in P:\_clients\opt-solutions\screenshots\.
+
+**[Forge] 2026-04-17:** DONE ∩┐╜ 10 screenshots committed 632e495 ? main.
+
+
+## TASK-20260417-FORGE-DAX-001 - OpenID email case-sensitivity fix
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-04-17
+- **Title:** Patch LibreChat OpenID strategy to normalize email to lowercase
+
+### Completed
+Entra was returning mixed-case emails (Brett@impact-cp.com, Jonathan@impact-cp.com) causing "user not found" warnings on every SSO login. Fixed by patching `openidStrategy.js` to lowercase the email at extraction time.
+
+- `patches/patch-openid-lowercase.js` added to DAX repo
+- `Dockerfile` updated with new patch step
+- Committed b1f85f3 + ad763d3 ΓåÆ scubarichard/dax master
+- **Dakona pilot** ΓÇö built `v0.5.3-hotfix1` ΓåÆ `acrdaxdakona`, deployed to `ca-dax-dakona-pilot` revision `--0000090` Γ£à
+- **ICP** ΓÇö built `v0.6.2-hotfix1` ΓåÆ `acrdaximpactcapital` (ACR run ca3), deployed to `ca-dax-impact-capital` revision `--0000021` Γ£à
+- Root cause during deploy: `acrdaxdakona` (Dakona tenant) can't be pulled from ICP tenant via managed identity ΓÇö cross-tenant ACR auth fails. Resolved by building to ICP's own ACR and removing the cross-tenant registry entry.
+
+**[Forge] 2026-04-17:** DONE ΓÇö both containers live with email patch.
+
+---
+
+## TASK-20260417-FORGE-OPT-002 - OPT Handover Documentation (docx)
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-04-17
+- **Title:** OPT Solutions -- build and commit handover Word document
+
+### Completed
+OPT_Solutions_Handover_Documentation.docx built using Node.js docx npm, 504 KB, 8 sections, all 10 screenshots embedded (614x380px each). Committed 8d1af28 pushed to scubarichard/opt-solutions main. Reported to Sonnet in #dax-collab.
+
+**[Forge] 2026-04-17:** DONE -- docx committed 8d1af28 main.
