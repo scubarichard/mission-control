@@ -520,3 +520,98 @@ Post GATE RESULTS in this task when ready for review (PR link + artifact path) o
 - `ba2b083` — [Phase B] Puppeteer screen capture → silent MP4
 
 Ready for gate review. DO NOT MERGE — Richard reviews MP4 first.
+
+---
+
+## TASK-20260418-FORGE-AUTOVID-002
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Sonnet (Richard)
+- **Project:** 1AltX AutoVid — Phase B retry with scroll
+- **Repo:** `scubarichard/1altx-autovid`
+- **Branch:** CONTINUE on existing `phase-b-puppeteer-capture` (do NOT create new branch)
+- **PR:** #1 (add a new commit, do not close)
+
+### Why this retry
+
+Richard reviewed the Phase B artifact and it shows a GitHub Pages 404 — the test URL `rpe-systems.1altx.ai` is dead (not a code issue). Also, a static 30-second capture doesn't exercise motion, which matters for Phase C audio sync. So this retry does two things:
+
+1. **Swap test URL** to `https://1altx.ai` (confirmed live, 200 OK)
+2. **Add scroll motion** during capture so the MP4 shows meaningful movement
+
+Code quality on your first pass was clean. This is a scope addition, not a rewrite.
+
+---
+
+### CHANGES
+
+#### 1. Modify `src/capture/screen.js` to support scroll motion
+
+Add an optional scroll behavior so the page scrolls from top to bottom over the duration of the capture. Keep it simple — no scenario JSON yet.
+
+**Recommended approach:** After `page.goto()`, kick off a `page.evaluate()` that scrolls the window smoothly from scrollY=0 to scrollY=scrollHeight over `duration_seconds` using `requestAnimationFrame`. Then capture frames as before.
+
+```js
+// Sketch — adapt as needed
+await page.evaluate((durationMs) => {
+  const start = performance.now();
+  const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+  function step(now) {
+    const t = Math.min(1, (now - start) / durationMs);
+    window.scrollTo(0, maxScroll * t);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}, duration * 1000);
+```
+
+Do NOT await this — let it run in parallel with the capture loop.
+
+#### 2. Test command
+
+```bash
+node src/capture/screen.js https://1altx.ai 30 C:\Users\18473\Dropbox\AutoVid\artifacts\phase-b-silent-v2.mp4
+```
+
+Name the new artifact `phase-b-silent-v2.mp4` — keep the original `phase-b-silent.mp4` for comparison. Don't overwrite.
+
+#### 3. Also: drift fix (bonus, low effort)
+
+The original uses `setTimeout(intervalMs)` which drifts — over 300 frames at 10fps, the capture takes longer than 30s. Switch to an absolute schedule so frame N fires at `startTime + N * intervalMs` regardless of previous delay.
+
+```js
+const startTime = Date.now();
+for (let i = 0; i < totalFrames; i++) {
+  const framePath = path.join(tmpDir, `frame-${String(i).padStart(5, '0')}.png`);
+  await page.screenshot({ path: framePath, type: 'png' });
+  const nextFrameTime = startTime + (i + 1) * intervalMs;
+  const sleepMs = Math.max(0, nextFrameTime - Date.now());
+  if (i < totalFrames - 1) await new Promise(r => setTimeout(r, sleepMs));
+}
+```
+
+This keeps the MP4's declared duration matching real-world capture time, which Phase C will need for audio sync.
+
+---
+
+### ACCEPTANCE CRITERIA
+
+1. Commit on existing `phase-b-puppeteer-capture` branch (not a new branch)
+2. Same PR #1 gets the new commit — do NOT open a new PR
+3. Artifact at `C:\Users\18473\Dropbox\AutoVid\artifacts\phase-b-silent-v2.mp4`
+4. MP4 is exactly 30 seconds (verify with ffprobe)
+5. Video shows `1altx.ai` page scrolling from top to bottom smoothly
+6. Post GATE RESULTS v2 in this task with: PR link, artifact path, ffprobe duration output
+
+---
+
+### OUT OF SCOPE
+
+Same as TASK-001: no audio, no scenarios, no multi-URL, no auth. Just one URL + scroll + silent MP4.
+
+---
+
+### QUESTIONS / BLOCKERS
+
+Post here if `1altx.ai` doesn't render (unlikely — already verified 200 OK) or if the scroll evaluate has issues.
