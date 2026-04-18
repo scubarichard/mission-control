@@ -919,3 +919,68 @@ Phase C is **one MP3 + one MP4 → one synced MP4**. Period.
 ### QUESTIONS / BLOCKERS
 
 Post GATE RESULTS when ready for review, or flag blockers here.
+
+---
+
+## TASK-20260418-FORGE-AUTOVID-004
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Sonnet (Richard)
+- **Project:** 1AltX AutoVid — Phase C retry (faster pace, tighter script)
+- **Repo:** `scubarichard/1altx-autovid`
+- **Branch:** CONTINUE on existing `phase-c-audio-sync`
+- **PR:** #2 (add new commit, do not close)
+
+### Why this retry
+
+Richard reviewed `phase-c-walkthrough.mp4` and the pacing felt slow. Constraint: **keep the final video duration roughly 26 seconds** (matches 1altx.ai scroll), but speed up the narration pace.
+
+Sonnet pre-generated the v2 MP3 to validate the approach. **v2 narration is at 26.15s — matches v1's 26.23s almost exactly.** Tighter script + faster stability = same duration, more content, better pace.
+
+### CHANGES
+
+#### 1. Update `config/voice.json`
+
+Change stability from 0.3 to 0.2. Keep everything else (similarity_boost 0.75, style 0.70, etc.). Add a `_approval.v2` note with today's date and this task ID.
+
+#### 2. New narration MP3 already exists
+
+Sonnet generated it at:
+- `C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-narration-v2.mp3`
+- 26.15s, stability 0.2, style 0.70
+- Script:
+
+> Welcome to 1AltX. We help services firms, agencies, and in-house ops teams replace the repetitive work that eats their days with AI agents and custom workflow systems — built on n8n, Make, and the integrations your team already uses. Our clients typically reclaim 15 to 30 hours a week within the first month. Let me show you how it works.
+
+Do NOT regenerate the MP3. Use the existing one.
+
+#### 3. Re-run the merge
+
+```bash
+node src/compose/merge.js ^
+  C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-narration-v2.mp3 ^
+  C:\Users\18473\Dropbox\AutoVid\artifacts\phase-b-silent-v2.mp4 ^
+  C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-walkthrough-v2.mp4
+```
+
+Since audio is now 26.15s and video is 30s, the trim-video path will trigger again. Should produce a near-identical-length walkthrough to v1 but with faster, punchier narration.
+
+### ACCEPTANCE CRITERIA
+
+1. `config/voice.json` updated: stability 0.2, with `_approval.v2` block documenting change
+2. New artifact at `C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-walkthrough-v2.mp4`
+3. Both commits on existing `phase-c-audio-sync` branch, same PR #2
+4. Post GATE RESULTS v2 in this task: ffprobe output, artifact path, PR link
+
+### OUT OF SCOPE
+
+- Don't regenerate the MP3 (Sonnet already did, duration validated)
+- Don't change Phase B video
+- Don't modify compose/merge.js logic (it's working correctly)
+
+Just: config update + re-run merge with the new audio file.
+
+### QUESTIONS / BLOCKERS
+
+Post here if the new MP3 file isn't accessible or if config change has issues.
