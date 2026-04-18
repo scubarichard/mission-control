@@ -1,5 +1,26 @@
 
 
+## TASK-20260417-FORGE-INFRA-001 - Wire cost tracking into poll script
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** Medium
+- **From:** Triton
+- **Client:** internal
+- **Task:** Update Forge's task poll script to log token usage after each task execution using log-cost.js from mission-control.
+
+### Instructions
+1. Pull latest mission-control — `log-cost.js` is now in the repo root
+2. Update the Forge poll script (wherever it lives on RICHARD-WS) to:
+   - Instruct Claude at end of each task to output: `TOKENS: input=NNNN output=NNNN`
+   - Parse that line from the output
+   - Call `node ~/mission-control/log-cost.js --task TASK-ID --model sonnet --input N --output N --agent Forge --client CLIENT`
+3. Test by running a dummy task and verifying an entry appears in `mission-control/cost-log.json`
+4. Commit cost-log.json (gitignore-exempt) and push
+
+See Nautilus's `/home/richard/poll-tasks.sh` on 192.168.1.184 as reference implementation.
+
+---
+
 ## TASK-20260416-FORGE-PNT-001
 - **Assignee:** Forge
 - **Status:** DONE
