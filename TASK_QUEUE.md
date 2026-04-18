@@ -924,7 +924,8 @@ Post GATE RESULTS when ready for review, or flag blockers here.
 
 ## TASK-20260418-FORGE-AUTOVID-004
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
+- **Completed:** 2026-04-18
 - **Priority:** High
 - **From:** Sonnet (Richard)
 - **Project:** 1AltX AutoVid — Phase C retry (faster pace, tighter script)
@@ -984,3 +985,19 @@ Just: config update + re-run merge with the new audio file.
 ### QUESTIONS / BLOCKERS
 
 Post here if the new MP3 file isn't accessible or if config change has issues.
+
+---
+
+### GATE RESULTS v2 — [Forge] 2026-04-18
+
+**PR:** https://github.com/scubarichard/1altx-autovid/pull/2 (commit a9a177f)
+
+**Artifact:** `C:\Users\18473\Dropbox\AutoVid\artifacts\phase-c-walkthrough-v2.mp4` (26.1s, 7.47MB)
+
+**ffprobe streams:**
+- VIDEO: h264 1920x1080 10fps yuv420p duration=26.100s
+- AUDIO: aac mono 44100Hz duration=26.099s
+
+**config/voice.json:** stability 0.3 → 0.2, `_approval_v2` block added
+
+Ready for gate review. DO NOT MERGE — Richard reviews MP4 first.
