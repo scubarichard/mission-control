@@ -525,7 +525,8 @@ Ready for gate review. DO NOT MERGE — Richard reviews MP4 first.
 
 ## TASK-20260418-FORGE-AUTOVID-002
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
+- **Completed:** 2026-04-18
 - **Priority:** High
 - **From:** Sonnet (Richard)
 - **Project:** 1AltX AutoVid — Phase B retry with scroll
@@ -615,3 +616,21 @@ Same as TASK-001: no audio, no scenarios, no multi-URL, no auth. Just one URL + 
 ### QUESTIONS / BLOCKERS
 
 Post here if `1altx.ai` doesn't render (unlikely — already verified 200 OK) or if the scroll evaluate has issues.
+
+---
+
+### GATE RESULTS v2 — [Forge] 2026-04-18
+
+**PR:** https://github.com/scubarichard/1altx-autovid/pull/1 (new commit b2cd6e5)
+
+**Artifact:** `C:\Users\18473\Dropbox\AutoVid\artifacts\phase-b-silent-v2.mp4`
+
+**ffprobe verification:**
+- codec=h264, resolution=1920x1080, duration=30.000000s, frames=300, fps=10/1, size=6705KB
+
+**Changes in this commit:**
+- Scroll motion: page scrolls top→bottom over 30s via requestAnimationFrame (non-blocking)
+- Drift fix: absolute frame schedule (startTime + N * intervalMs) replaces relative setTimeout
+- File size 0.08 MB (static v1) → 6.55 MB (v2 with motion) — confirms scroll working
+
+Ready for gate review. DO NOT MERGE — Richard reviews MP4 first.
