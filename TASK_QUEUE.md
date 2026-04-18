@@ -190,7 +190,7 @@ All 9 screenshots captured. Commits on `dev` branch:
 
 ## TASK-20260418-FORGE-AUTOVID-001
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **Priority:** High
 - **From:** Sonnet (Richard)
 - **Project:** 1AltX AutoVid — automated client walkthrough video generator
