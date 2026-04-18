@@ -1,5 +1,77 @@
 
 
+## TASK-20260417-TRITON-PNT-001 - New PNT Form Tester for S5
+- **Assignee:** Triton
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Richard
+- **Client:** PNT
+- **Task:** Build a new form tester for PNT S5 — scope to be confirmed with Richard before starting. Likely covers new staff interfaces and admin forms added in S5. Reference existing sweep at `scripts/test_ui_e2e.js` and admin at `admin.html`.
+
+---
+
+## TASK-20260416-FORGE-DAX-004 - ICP Sign-in Log Check
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** Low
+- **From:** Sonnet (Richard)
+- **Client:** internal/ICP
+- **Task:** Pull Entra sign-in logs for DAX-ICP SSO Enterprise Application (Object ID: 7822f093-9c83-4b1a-83db-29517d29ac89) in ICP tenant (eaf1a864-97ff-451c-87e7-88cf7512e98c). Show user email, sign-in time, success/failure for last 48 hours. Command in #dax-collab Apr 15. Report back to channel.
+
+---
+
+## TASK-20260416-FORGE-DAX-003 - DAX PWA v0.5.4-pwa
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** Medium
+- **From:** Sonnet (Richard)
+- **Client:** internal/DAX
+- **Task:** Build DAX as installable PWA for iPhone/Android home screen. Full instructions at `/repo/librechat/pwa/DEPLOY.md`.
+  1. Create 3 PNG icons (192x192, 512x512, 180x180) — dark navy (#1F3864) background, white "DAX" text
+  2. Add manifest.json + icons to LibreChat container
+  3. Add 5 meta tags to index.html (per DEPLOY.md)
+  4. Rebuild and push tagged `librechat-dax:v0.5.4-pwa`
+  5. Deploy to Dakona pilot + ICP instance
+  6. Test on iPhone Safari and Android Chrome — confirm Add to Home Screen works
+
+---
+
+## TASK-20260416-FORGE-DAX-002 - DAX Three-Stage Deployment Pipeline
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Sonnet (Richard)
+- **Client:** internal/DAX
+- **Task:** Build DAX three-stage deployment pipeline. Full plan at `/repo/docs/DEPLOYMENT-PIPELINE.md`. Priority order:
+  1. Dev environment — `ca-dax-dev` container app + `dev-n8n.dakona.net` in new `rg-dax-dev` resource group on Dakona subscription (~$70/mo, can stop nights/weekends)
+  2. `New-DAXClient.ps1` — add `-release <tag>` parameter, always deploy from verified git tag
+  3. `Update-DAXClient.ps1` — push new releases to existing clients
+  4. Release checklist doc — 10-step process, in repo
+  Rules: no direct staging changes without dev first; T6 must be 7/7 PASS before any release tag; Richard approves staging before production; production always from git tag.
+
+---
+
+## TASK-20260416-FORGE-DAX-001 - Inflection Capital Azure VM + AI Foundry Build
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Sonnet (Richard)
+- **Client:** Inflection Capital
+- **Task:** Full 13-step Azure build for Justin Kunz. Subscription: f71cc48a-33ca-46e1-8483-b3171ea1dd5e (Dakona CSP/AOBO). Full instructions posted to #dax-collab Apr 16. Summary:
+  - Survey existing VNets/subnets first — do NOT create anything until complete
+  - Subnet: snet-claudecode /28
+  - NSG: nsg-claudecode (RDP from AVD subnet only)
+  - VM: vm-claudecode-inflection (Win11 Pro, Standard_B2s, no public IP)
+  - NinjaOne agent, Azure Update Manager
+  - AI Foundry Hub: inflection-ai (East US) + Claude Sonnet Serverless endpoint
+  - Private endpoint for AI Foundry (no public internet)
+  - Entra: Cognitive Services User role for Inflection users
+  - Claude Code CLI + env vars (ANTHROPIC_BASE_URL, ANTHROPIC_API_KEY)
+  - Python + sharefile SDK with placeholder config
+  Manual flags for Richard: Anthropic ToS acceptance in portal, Sharefile credentials, Entra user/group assignment.
+
+---
+
 ## TASK-20260417-FORGE-INFRA-001 - Wire cost tracking into poll script
 - **Assignee:** Forge
 - **Status:** PENDING
