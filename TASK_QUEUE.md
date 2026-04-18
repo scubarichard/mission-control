@@ -1575,3 +1575,126 @@ node src/pipeline/run.js scenarios/opt-walkthrough.json
 Artifact target: `C:\Users\18473\Dropbox\AutoVid\artifacts\opt-walkthrough-v1.mp4`
 
 Per TASK-009 spec fallback: if any authenticated scene fails capture, substitute a title card for that scene and continue. Do not block the full video render on individual scene failures.
+
+---
+
+## TASK-20260418-FORGE-AUTOVID-010
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Sonnet (Richard authorized "surprise me")
+- **Project:** 1AltX AutoVid — OPT walkthrough v2 (fix auth, change voice)
+- **Repo:** `scubarichard/1altx-autovid`
+- **Branch:** Create `opt-walkthrough-v2` from `main`
+
+### Why v2
+
+TASK-009 rendered successfully but **6 of 9 scenes captured login screens** instead of authenticated views. Cookie injection from Richard's Chrome failed for Google Drive, n8n cloud, HubSpot (probably IP/fingerprint mismatch vs. Cloudflare + Google session invalidation). Only Airtable and the title cards rendered correctly.
+
+Also: voice change. The video is for an Australian client (Sunny Ghimire / OPT Solutions). Using Richard's voice reads as "outsourcer talking" — a native Australian voice reads as "your system narrating."
+
+### CHANGES
+
+#### 1. Voice config update — use shared voice "Charlotte — Friendly & Professional"
+
+Update `config/voice.json` — replace Richard's voice with Charlotte for this render only. Keep `post_processing.atempo: 1.08`. Don't delete Richard's config — add a `_profiles` block so we can switch between voices per project in the future.
+
+Proposed structure:
+```json
+{
+  "default_profile": "charlotte-opt",
+  "post_processing": { "atempo": 1.08, ... },
+  "_profiles": {
+    "richard": {
+      "voice_id_secret": "ELEVENLABS-VOICE-ID-RICHARD",
+      "voice_name": "Richard's Voice",
+      "model_id": "eleven_multilingual_v2",
+      "voice_settings": { "stability": 0.15, "similarity_boost": 0.75, "style": 0.70, "use_speaker_boost": true }
+    },
+    "charlotte-opt": {
+      "voice_id_literal": "gEdKKVxVhNCulBgRQ9GW",
+      "voice_name": "Charlotte - Friendly & Professional (AU)",
+      "model_id": "eleven_multilingual_v2",
+      "voice_settings": { "stability": 0.15, "similarity_boost": 0.75, "style": 0.70, "use_speaker_boost": true }
+    }
+  }
+}
+```
+
+Update `src/tts/elevenlabs.js` to read the `default_profile` and load that profile's voice settings. `voice_id_secret` reads from Key Vault, `voice_id_literal` uses the value directly (for shared library voices).
+
+The scenario JSON can optionally override with a `voice_profile` field at root level (future work — don't need to implement yet).
+
+#### 2. Auth fix — use VM's native Chrome profile
+
+Instead of injecting cookies into a fresh headless Puppeteer, use Puppeteer with `userDataDir` pointing at a real Chrome profile directory on the n8n VM. The VM is at `n8n.dakona.net` (Richard's self-hosted n8n) and has a Chrome session already logged into Google and HubSpot for other automations.
+
+Approach:
+- Launch Puppeteer with `executablePath: '/usr/bin/google-chrome-stable'` and `userDataDir: '/home/dkn8n/.autovid-chrome-profile'`
+- First run: launch headed/visible, manually log into each platform (one-time setup)
+- Subsequent runs: launch headless, use the persisted profile
+
+Since this is an autonomous build and Richard isn't available to log in manually: **try the cookie injection approach one more time with an additional tweak** — spoof the User-Agent and viewport to match a realistic desktop Chrome session. Add these to Puppeteer launch:
+
+```js
+await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36');
+await page.setExtraHTTPHeaders({
+  'Accept-Language': 'en-US,en;q=0.9',
+  'sec-ch-ua': '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
+  'sec-ch-ua-mobile': '?0',
+  'sec-ch-ua-platform': '"Windows"'
+});
+```
+
+If this still fails for a given platform, fall back to **title card substitution** per TASK-009 spec — but make the title card informative, not just "refer to handover." Example for HubSpot failure:
+
+> Title: **HubSpot CRM**
+> Subtitle: "30 merchant companies · portal 441994755 · commission dashboards"
+> (Voice over still plays the narration, card provides visual context)
+
+Build a `src/capture/title-fallback.js` helper that generates these informative cards from scene metadata.
+
+#### 3. Auth detection
+
+After page load, run a quick heuristic to detect if we landed on a login page:
+- Check page title for words like "Sign in", "Log in", "Login"
+- Check for common login form selectors (`input[type="password"]`, `#email`, `.login-form`)
+- Check URL for login redirects (`/login`, `/signin`, `accounts.google.com`)
+
+If detected → log WARNING, substitute informative title card for that scene, continue. This is the missing piece from TASK-009 that let login screens render.
+
+### TEST RUN
+
+```bash
+node src/pipeline/run.js scenarios/opt-walkthrough.json
+```
+
+Output: `C:\Users\18473\Dropbox\AutoVid\artifacts\opt-walkthrough-v2.mp4`
+
+Keep v1 intact for comparison. Also keep scene-level intermediates.
+
+### ACCEPTANCE CRITERIA
+
+1. `config/voice.json` has `_profiles` block, defaults to `charlotte-opt`
+2. `src/tts/elevenlabs.js` loads profile from config
+3. Auth detection heuristic implemented in `src/capture/screen.js`
+4. Informative title card fallback renders when login detected
+5. Output MP4 at `opt-walkthrough-v2.mp4`
+6. Voice is Charlotte (Australian female) across all scenes
+7. For each previously-failing scene (2a, 2b, 3, 4, 6, 7), either:
+   - Scene now renders real authenticated content (preferred), OR
+   - Scene shows informative title card with the scene title, subtitle with key facts, and narration voiceover still plays
+8. Post GATE RESULTS: scene-by-scene status (real render vs. fallback), per-scene file sizes, ffprobe summary
+
+### OUT OF SCOPE
+
+- Do NOT wait for Richard to log in via VM's headed Chrome — he's away from desk
+- Do NOT change the scenario JSON content (narration prompts stay)
+- Do NOT remove v1 MP4 or its scene artifacts
+- Do NOT modify the ElevenLabs atempo post-processing (stays at 1.08)
+
+### NOTES
+
+- Charlotte voice ID `gEdKKVxVhNCulBgRQ9GW` is a shared library voice, not a private clone. No Key Vault secret needed.
+- Richard approved voice choice as "surprise me" — Sonnet picked Charlotte based on ElevenLabs' own `informative_educational` use-case tag matching the walkthrough purpose.
+- If this still has auth issues after fallback, v3 will switch to screen-recorded inputs from Richard's desktop (deferred).
