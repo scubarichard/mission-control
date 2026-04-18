@@ -185,3 +185,316 @@ All 9 screenshots captured. Commits on `dev` branch:
 8. ✓ Screenshots posted above
 
 **Awaiting:** Richard review + merge approval. DO NOT merge dev → main without go-ahead.
+
+---
+
+## TASK-20260418-FORGE-AUTOVID-001
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Sonnet (Richard)
+- **Project:** 1AltX AutoVid — automated client walkthrough video generator
+- **Repo:** `scubarichard/1altx-autovid` (currently empty except auto-generated README)
+- **Branch:** Create `phase-b-puppeteer-capture` from `main`
+
+### Context
+
+Building a pipeline: scenario JSON → Claude narration → ElevenLabs TTS → Puppeteer screen capture → FFmpeg composition → finished walkthrough MP4.
+
+**Phase A (ElevenLabs voice) is COMPLETE.** Voice settings locked below. Approved artifact: `phase-a-v5-style70.mp3` in Richard's Dropbox. Do not redo.
+
+**Phase D (talking head overlay) is CUT.** Voice-only walkthroughs. No avatar or face overlay.
+
+This task is **repo scaffolding + Phase B in one shot**.
+
+---
+
+### PART 1 — Repo scaffolding (commit first)
+
+Create these files, then proceed to Part 2. Scaffold commit message: `[Scaffold] Initial repo structure with Phase A reference impl`
+
+Files to create:
+- `README.md` (replace stub) — see content below
+- `.gitignore` — see content below
+- `.env.example` — see content below
+- `package.json` — see content below
+- `config/voice.json` — LOCKED, copy exactly
+- `config/scenario.schema.json` — minimal stub, will expand in Phase E
+- `docs/ORCHESTRATION.md` — brief, see content below
+- `src/tts/elevenlabs.js` — Phase A reference impl, working code
+
+---
+
+### PART 2 — Phase B: Puppeteer → silent MP4
+
+Build `src/capture/screen.js`.
+
+**Requirements:**
+1. CLI args: `node src/capture/screen.js <url> <duration_seconds> <output_path>`
+2. Puppeteer headless at **1920x1080**
+3. Navigate to URL, wait for `networkidle2`
+4. Capture screenshots at **10 fps** for specified duration
+5. FFmpeg (via `fluent-ffmpeg`) stitches screenshots into silent MP4 (H.264, 10fps, 1920x1080)
+6. Clean up temp screenshot folder after MP4 creation
+7. Log: screenshot count, MP4 duration, file size
+
+**Test command:**
+```bash
+node src/capture/screen.js https://rpe-systems.1altx.ai 30 C:\Users\18473\Dropbox\AutoVid\artifacts\phase-b-silent.mp4
+```
+
+Use `rpe-systems.1altx.ai` as test URL — live 1AltX dashboard, no auth required, renders cleanly.
+
+---
+
+### ACCEPTANCE CRITERIA (gate)
+
+1. Repo has all Part 1 scaffolding, committed on `phase-b-puppeteer-capture` branch
+2. `src/capture/screen.js` runs and produces MP4
+3. Artifact at `C:\Users\18473\Dropbox\AutoVid\artifacts\phase-b-silent.mp4`
+4. MP4 is 30 seconds, 1920x1080, plays smoothly
+5. PR opened against `main`: `[Phase B] Puppeteer screen capture → silent MP4`
+6. GATE RESULTS posted in this task with PR link + artifact path + "Ready for gate review"
+
+**DO NOT MERGE.** Richard reviews MP4 first.
+
+---
+
+### OUT OF SCOPE
+
+- Scenario JSON parsing (Phase E)
+- Multi-scene support (Phase C+)
+- Audio integration (Phase C)
+- Auth bypass logic (Phase C+)
+- Admin UI (Phase F)
+- Claude narration generation (Phase E)
+- Talking head overlay (CUT)
+
+Phase B is **one URL → one silent video**.
+
+---
+
+### FILE CONTENTS
+
+#### `config/voice.json` — LOCKED
+
+```json
+{
+  "description": "Locked ElevenLabs voice config — Phase A v5 approved 2026-04-18",
+  "provider": "elevenlabs",
+  "voice_id_secret": "ELEVENLABS-VOICE-ID-RICHARD",
+  "voice_name": "Richard's Voice",
+  "model_id": "eleven_multilingual_v2",
+  "voice_settings": {
+    "stability": 0.3,
+    "similarity_boost": 0.75,
+    "style": 0.70,
+    "use_speaker_boost": true
+  },
+  "api": {
+    "base_url": "https://api.elevenlabs.io/v1",
+    "endpoint": "/text-to-speech/{voice_id}",
+    "api_key_secret": "ELEVENLABS-API-KEY",
+    "secret_source": "azure_keyvault",
+    "keyvault_name": "kvdaximpactcapital"
+  },
+  "output": { "format": "mp3_44100_128", "file_extension": ".mp3" },
+  "_approval": {
+    "phase": "A",
+    "approved_by": "Richard",
+    "approved_date": "2026-04-18",
+    "test_artifact": "phase-a-v5-style70.mp3"
+  }
+}
+```
+
+#### `package.json`
+
+```json
+{
+  "name": "1altx-autovid",
+  "version": "0.1.0-phase-b",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "phase-a": "node src/tts/elevenlabs.js",
+    "phase-b": "node src/capture/screen.js"
+  },
+  "dependencies": {
+    "@azure/identity": "^4.0.1",
+    "@azure/keyvault-secrets": "^4.8.0",
+    "axios": "^1.7.0",
+    "dotenv": "^16.4.5",
+    "fluent-ffmpeg": "^2.1.3",
+    "puppeteer": "^23.0.0"
+  },
+  "engines": { "node": ">=20.0.0" }
+}
+```
+
+#### `.gitignore`
+
+```
+artifacts/
+*.mp3
+*.mp4
+*.wav
+.env
+.env.local
+node_modules/
+.puppeteer_cache/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+tmp/
+temp/
+```
+
+#### `.env.example`
+
+```
+ELEVENLABS_API_KEY=
+ELEVENLABS_VOICE_ID=
+AZURE_KEYVAULT_NAME=kvdaximpactcapital
+USE_KEYVAULT=true
+ANTHROPIC_API_KEY=
+PUPPETEER_HEADLESS=true
+CAPTURE_RESOLUTION=1920x1080
+CAPTURE_FPS=10
+OUTPUT_DIR=./artifacts
+```
+
+#### `src/tts/elevenlabs.js` (Phase A reference — working code)
+
+```js
+import fs from 'fs';
+import path from 'path';
+import axios from 'axios';
+import { DefaultAzureCredential } from '@azure/identity';
+import { SecretClient } from '@azure/keyvault-secrets';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const voiceConfig = JSON.parse(fs.readFileSync(path.join(__dirname, '../../config/voice.json'), 'utf8'));
+
+async function getSecret(secretName) {
+  const credential = new DefaultAzureCredential();
+  const client = new SecretClient(`https://${voiceConfig.api.keyvault_name}.vault.azure.net`, credential);
+  return (await client.getSecret(secretName)).value;
+}
+
+export async function generateVoice(text, outputPath) {
+  const apiKey = process.env.ELEVENLABS_API_KEY || await getSecret(voiceConfig.api.api_key_secret);
+  const voiceId = process.env.ELEVENLABS_VOICE_ID || await getSecret(voiceConfig.voice_id_secret);
+  const url = `${voiceConfig.api.base_url}${voiceConfig.api.endpoint.replace('{voice_id}', voiceId)}`;
+
+  const response = await axios.post(url, {
+    text, model_id: voiceConfig.model_id, voice_settings: voiceConfig.voice_settings
+  }, {
+    headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json', 'Accept': 'audio/mpeg' },
+    responseType: 'arraybuffer'
+  });
+
+  fs.writeFileSync(outputPath, response.data);
+  return { path: outputPath, sizeBytes: fs.statSync(outputPath).size, characterCount: text.length };
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const text = process.argv[2] || 'Phase A smoke test.';
+  const output = process.argv[3] || path.join(process.cwd(), 'artifacts', 'phase-a-test.mp3');
+  fs.mkdirSync(path.dirname(output), { recursive: true });
+  generateVoice(text, output).then(r => {
+    console.log(`PHASE A SUCCESS: ${r.path}, ${(r.sizeBytes/1024).toFixed(2)} KB, ${r.characterCount} chars`);
+  }).catch(err => { console.error('FAILED:', err.message); process.exit(1); });
+}
+```
+
+#### `README.md`
+
+```markdown
+# 1AltX AutoVid
+
+Automated client walkthrough video generator. Voice + screen capture → finished MP4.
+
+## Phase status
+
+| Phase | Scope | Status |
+|---|---|---|
+| A | ElevenLabs voice smoke test | Complete |
+| B | Puppeteer screen capture | Active (Forge) |
+| C | Voice + screen sync | Queued |
+| E | Claude narration generation | Queued |
+| F | Scenario library + admin trigger | Queued |
+
+Phase D (talking head overlay) — CUT.
+
+## Secrets (Azure Key Vault kvdaximpactcapital)
+
+- ELEVENLABS-API-KEY
+- ELEVENLABS-VOICE-ID-RICHARD
+
+See docs/ORCHESTRATION.md for protocol.
+```
+
+#### `docs/ORCHESTRATION.md`
+
+```markdown
+# AutoVid Orchestration
+
+## Roles
+- Gatekeeper: Richard — approves phase artifacts
+- Orchestrator: Sonnet — queues tasks, pre-reviews PRs
+- Builder: Forge — writes pipeline code
+- Architect: Triton — config schema, reusability reviews
+- QA: Nautilus — scenario library, narration review
+
+## Gate protocol
+1. Forge builds on `phase-X-description` branch
+2. Drops artifact in `C:\Users\18473\Dropbox\AutoVid\artifacts\`
+3. Opens PR, posts GATE RESULTS in TASK_QUEUE.md
+4. Sonnet pre-reviews code
+5. Richard reviews artifact
+6. Pass → merge · Fail → Forge iterates
+
+## Rules
+- One phase = one branch = one PR
+- Artifact in Dropbox before merge
+- Commit prefix: `[Phase X] ...`
+```
+
+#### `config/scenario.schema.json` (minimal stub — expand in Phase E)
+
+```json
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "title": "AutoVid Scenario",
+  "type": "object",
+  "required": ["id", "title", "client", "scenes"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "title": { "type": "string" },
+    "client": { "type": "string" },
+    "scenes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "url", "narration_prompt"],
+        "properties": {
+          "id": { "type": "string" },
+          "url": { "type": "string", "format": "uri" },
+          "duration_seconds": { "type": "number" },
+          "narration_prompt": { "type": "string" }
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+### QUESTIONS / BLOCKERS
+
+Post GATE RESULTS in this task when ready for review (PR link + artifact path) or blocked (describe issue).
