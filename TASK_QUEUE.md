@@ -1375,7 +1375,8 @@ Use this exact scene structure (Sonnet has drafted this from the actual handover
 
 ## TASK-20260418-FORGE-AUTOVID-008
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
+- **Completed:** 2026-04-18
 - **Priority:** High
 - **From:** Sonnet (Richard, autonomous mode)
 - **Project:** 1AltX AutoVid — Cookie extraction utility
@@ -1414,6 +1415,36 @@ Create `tools/extract-cookies.html` + `tools/upload-cookies.js` — a utility th
 
 - Running the actual cookie extraction (Richard does that with TASK-009 prerequisite)
 - Auto-refreshing expired cookies (future work)
+
+---
+
+### GATE RESULTS — [Forge] 2026-04-18
+
+**Commit:** `7e3d30e` on `main` — `scubarichard/1altx-autovid`
+
+**Files delivered:**
+- `tools/extract-cookies.html` — browser UI for all 4 platforms with extraction scripts ✓
+- `tools/upload-cookies.js` — uploads cookie JSON to KV secret COOKIES-<PLATFORM> ✓
+- `tools/README.md` — step-by-step instructions for all 4 platforms ✓
+
+**Live upload test (fake data):**
+```
+Uploading 1 cookies to Key Vault...
+  Vault:  kvdaximpactcapital
+  Secret: COOKIES-HUBSPOT
+  Size:   0.10 KB
+[OK] Secret created: COOKIES-HUBSPOT
+     Version: 55b77e7fb505407296e219428b663e17
+     Enabled: true
+```
+
+**TASK-009 blockers remaining (Richard action required):**
+1. Run `tools/extract-cookies.html` in Chrome to extract real cookies for HubSpot, Airtable, n8n, Google Drive
+2. Run `node tools/upload-cookies.js <platform> <file>` for each of the 4 platforms
+3. Replace `OPT_FOLDER_ID` + `OPT_BASE_ID` placeholders in `scenarios/opt-walkthrough.json`
+4. Ensure `ANTHROPIC-API-KEY` is in Key Vault (still missing — needed for Claude narration)
+
+Once all 4 items above are done, signal Forge and TASK-009 will run.
 
 ---
 
