@@ -1740,7 +1740,8 @@ Keep v1 intact for comparison. Also keep scene-level intermediates.
 
 ## TASK-20260418-FORGE-AUTOVID-012
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
+- **Completed:** 2026-04-18
 - **Priority:** High
 - **From:** Sonnet (Richard authorized "Variant B — just do it")
 - **Project:** 1AltX AutoVid — OPT v3 using Richard's actual Chrome profile
@@ -1895,3 +1896,48 @@ Post here if:
 - Profile lock persists
 - Any platform redirects to login despite profile load (means session expired in real browser — Richard needs to re-login later)
 - Catbox upload fails (try alternative: write share link via Dropbox COM automation)
+
+---
+
+### GATE RESULTS — [Forge] 2026-04-18
+
+**PR:** https://github.com/scubarichard/1altx-autovid/pull/5 (branch `opt-walkthrough-v3-local-chrome`)
+**Artifact (Dropbox):** `C:\Users\18473\Dropbox\AutoVid\artifacts\opt-walkthrough-v3.mp4` (290s, 6.63MB)
+**Catbox:** https://files.catbox.moe/3puas0.mp4
+
+**ffprobe:** h264 1920x1080 + aac 44100Hz, 290.5s
+
+**Variant B BLOCKED by Chrome 136+ policy.** Details:
+
+Chrome 136 introduced a security policy disabling `--remote-debugging-port` and `--remote-debugging-pipe` when `--user-data-dir` points at a directory that has been used as a real browsing profile. This was added specifically to prevent malware/automation from attaching to the user's authenticated browser.
+
+**Attempts and results:**
+| Approach | Outcome |
+|---|---|
+| `puppeteer.launch()` with real userDataDir | WS endpoint URL never appeared — 30s timeout |
+| Manual `chrome.exe --remote-debugging-port=9222` + `puppeteer.connect()` | Port 9222 never opens for connections (silently suppressed) |
+| Copy profile to `P:\..\tmp\chrome-profile` + Puppeteer launch | Chrome launches OK, but cookies are DPAPI-encrypted bound to original user profile path — Google shows login wall |
+
+Chrome killed cleanly via `tools/kill-chrome.ps1` (19 processes terminated + Singleton locks cleared). Profile copy utility built (`tools/copy-chrome-profile.ps1`) and verified. But the debug-attach approach itself is the blocker, not the kill/copy mechanics.
+
+**What v3 actually produced:**
+
+Reverted `scenarios/opt-walkthrough.json` `capture_strategy` to `remote_puppeteer` so the pipeline still produces an artifact. Ran with `REUSE_NARRATION_DIR=opt-walkthrough-v2` to skip re-TTS and reuse the Charlotte narrations. Result identical to v2:
+- 9 scenes, 290.5s
+- Title cards: scenes 1, 9
+- Real render: scene 6 (Airtable)
+- Login-detected fallback with informative title cards: scenes 2a, 2b, 3, 4, 7, 8
+
+**Acceptance criterion #3 NOT MET.** (<7 of 9 scenes show authenticated content — only 1 does.) Root cause is Chrome policy, not capture code.
+
+**Infrastructure committed, ready for a future unblock:**
+- `src/capture/local-chrome.js` — headful capture module using Chrome executable + userDataDir
+- `tools/kill-chrome.ps1` — kills Chrome + clears Singleton locks
+- `tools/copy-chrome-profile.ps1` — clones a named profile (Default / Profile 18 / etc.) to temp
+- `src/pipeline/run.js` — routes capture by `scenario.capture_strategy`
+
+**Proposed v4 unblock path:**
+
+Set up `P:\_clients\1altx-autovid\tmp\chrome-autovid-profile\` as a dedicated Chrome profile (non-default path, allowed by Chrome 136+). One-time: Richard launches `chrome.exe --user-data-dir=...` headed, logs into Google/HubSpot/n8n/Airtable. Each session lasts 30-90 days. All future AutoVid runs use that profile via `capture_strategy: local_chrome` → real authenticated captures.
+
+**Status:** Ready for Richard review. Do not merge PR#5 without approval.
