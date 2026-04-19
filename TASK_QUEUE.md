@@ -1735,3 +1735,163 @@ Keep v1 intact for comparison. Also keep scene-level intermediates.
 **If Richard wants real live captures for failing scenes:** v3 needs a persisted Chrome profile on the VM (per task note about `n8n.dakona.net` userDataDir approach) with one-time headed login. Deferred.
 
 **Status:** Ready for Richard review. DO NOT MERGE PR#4 without approval.
+
+---
+
+## TASK-20260418-FORGE-AUTOVID-012
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Sonnet (Richard authorized "Variant B — just do it")
+- **Project:** 1AltX AutoVid — OPT v3 using Richard's actual Chrome profile
+- **Repo:** `scubarichard/1altx-autovid`
+- **Branch:** Create `opt-walkthrough-v3-local-chrome` from `main`
+
+### Why this task
+
+v1 and v2 failed auth on Google/n8n/HubSpot because Puppeteer on a remote VM with injected cookies can't pass fingerprint/IP checks. Richard's own Chrome is already logged in to everything. This task uses HIS Chrome profile directly — no cookie injection, no fingerprint games.
+
+**Richard is AWAY from desk but authorized "just do it" (Variant B).** No confirmation prompts. Close his running Chrome, do the work, move on. His Chrome session restore will bring tabs back when he reopens.
+
+### CRITICAL PRECONDITIONS
+
+1. You run on Richard's Windows desktop (RICHARD-WS). This task will NOT work from the n8n VM or Azure container.
+2. Chrome profile location: `C:\Users\18473\AppData\Local\Google\Chrome\User Data\Default`
+3. Chrome executable: `C:\Program Files\Google\Chrome\Application\chrome.exe`
+
+### BUILD
+
+#### 1. Create `src/capture/local-chrome.js`
+
+A new capture module that uses Richard's actual Chrome installation and profile.
+
+**Key differences from existing `src/capture/screen.js`:**
+
+```js
+const browser = await puppeteer.launch({
+  executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+  userDataDir: 'C:\\Users\\18473\\AppData\\Local\\Google\\Chrome\\User Data',
+  headless: false,  // MUST be false — headless defeats the purpose
+  defaultViewport: { width: 1920, height: 1080 },
+  args: [
+    '--profile-directory=Default',
+    '--start-maximized',
+    '--disable-blink-features=AutomationControlled',  // hide "Chrome is being controlled" banner
+    '--no-first-run',
+    '--no-default-browser-check'
+  ]
+});
+```
+
+Note: `headless: false` means a visible Chrome window appears on his desktop. That's required — we're capturing what the real browser renders, with real auth.
+
+#### 2. Create `tools/kill-chrome.ps1` and `tools/wait-for-chrome-closed.ps1`
+
+Forge will call these BEFORE launching Puppeteer:
+
+```powershell
+# kill-chrome.ps1
+Get-Process chrome -ErrorAction SilentlyContinue | Stop-Process -Force
+Start-Sleep -Seconds 3
+# Verify
+if (Get-Process chrome -ErrorAction SilentlyContinue) {
+    Write-Error "Chrome still running after kill"
+    exit 1
+}
+```
+
+Per Richard's explicit Variant B authorization: kill Chrome forcefully. His session restore handles recovery.
+
+#### 3. Capture strategy — frame-based recording via `page.screenshot()` in a loop
+
+Do NOT use ffmpeg gdigrab or Windows screen capture — too fragile. Same pattern as Phase B worked: loop `page.screenshot()` at 10fps, FFmpeg stitches into MP4.
+
+Per scene:
+```js
+// Navigate
+await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+
+// Optional: start scroll animation in parallel
+if (scrollBehavior === 'top_to_bottom') {
+  page.evaluate((ms) => {
+    const start = performance.now();
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    function step(now) {
+      const t = Math.min(1, (now - start) / ms);
+      window.scrollTo(0, maxScroll * t);
+      if (t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }, durationSeconds * 1000);
+}
+
+// Capture frames
+for (let i = 0; i < totalFrames; i++) {
+  await page.screenshot({ path: `frame-${i.toString().padStart(5,'0')}.png`, type: 'png' });
+  // absolute-scheduled sleep per Phase C fix
+}
+```
+
+#### 4. Auth detection heuristic — same as v2 but SHOULD NEVER TRIGGER here
+
+Reuse the login-page detection from `src/capture/screen.js`. If it triggers on ANY scene in this task, log a WARNING — it means something's wrong with profile loading, not a normal auth failure. Fall back to title card as before, but flag loudly in GATE RESULTS.
+
+#### 5. Update scenario JSON handling
+
+The existing `scenarios/opt-walkthrough.json` is fine as-is. The scene definitions already specify URLs and scroll behavior. Just route capture calls through `local-chrome.js` instead of `screen.js` when a new top-level config flag is set:
+
+Add to scenario root:
+```json
+"capture_strategy": "local_chrome"  // vs. "remote_puppeteer"
+```
+
+Default behavior for existing scenarios remains `remote_puppeteer` so nothing breaks. Add this flag to `opt-walkthrough.json`.
+
+### EXECUTION SEQUENCE
+
+1. Kill Chrome (tools/kill-chrome.ps1)
+2. Verify Chrome processes gone (wait-for-chrome-closed.ps1, max 10 sec wait)
+3. Run full pipeline: `node src/pipeline/run.js scenarios/opt-walkthrough.json`
+4. Pipeline uses `local-chrome.js` per the new flag
+5. All 9 scenes capture with REAL authenticated content
+6. Existing Charlotte narration + merge + concat flow unchanged
+7. Output: `C:\Users\18473\Dropbox\AutoVid\artifacts\opt-walkthrough-v3.mp4`
+
+### ACCEPTANCE CRITERIA
+
+1. All files from existing v2 artifacts remain untouched (v2 MP4 in Dropbox stays)
+2. Chrome closed cleanly before Puppeteer launch
+3. At least 7 of 9 scenes show authenticated content (not title cards)
+   - If HubSpot scenes specifically still fall back, log which and why
+4. `opt-walkthrough-v3.mp4` lands in Dropbox artifacts folder
+5. Scene-level intermediates in `artifacts/scenes/opt-walkthrough-v1/` overwritten with v3 versions (or separate subfolder)
+6. Upload v3 MP4 to catbox.moe at the end: `curl.exe -F "reqtype=fileupload" -F "fileToUpload=@<path>" https://catbox.moe/user/api.php`
+7. Post GATE RESULTS with:
+   - catbox.moe URL (so Richard can watch from phone)
+   - Scene-by-scene status (real render vs. fallback)
+   - File sizes
+   - ffprobe summary
+   - Any warnings about Chrome state or auth failures
+
+### OUT OF SCOPE
+
+- Do NOT ask Richard to confirm anything (he authorized Variant B)
+- Do NOT re-record Charlotte's narration (already done in v2, reuse MP3s from scene artifacts)
+- Do NOT modify Charlotte voice config
+- Do NOT delete v1 or v2 artifacts
+- Do NOT permanently change Chrome profile state (Puppeteer will create session markers; that's fine — his session restore will handle it when he reopens)
+
+### NOTES
+
+- Richard's Chrome is currently running with logged-in sessions for: Google/Drive, Airtable, n8n (optsolutions.app.n8n.cloud), HubSpot (app-ap1.hubspot.com). Verified by earlier cookie extraction in this work stream.
+- If Puppeteer launch fails with "profile already in use" even after kill, try: delete `Singleton*` lock files in `C:\Users\18473\AppData\Local\Google\Chrome\User Data\` before relaunch.
+- The visible Chrome window during capture is expected and intentional. Richard is not at his desk.
+- Estimated total execution: 15-20 minutes (browser launch, 9 scene captures, narration merge, concat, upload).
+
+### QUESTIONS / BLOCKERS
+
+Post here if:
+- Chrome won't close
+- Profile lock persists
+- Any platform redirects to login despite profile load (means session expired in real browser — Richard needs to re-login later)
+- Catbox upload fails (try alternative: write share link via Dropbox COM automation)
