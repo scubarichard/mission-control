@@ -1941,3 +1941,183 @@ Reverted `scenarios/opt-walkthrough.json` `capture_strategy` to `remote_puppetee
 Set up `P:\_clients\1altx-autovid\tmp\chrome-autovid-profile\` as a dedicated Chrome profile (non-default path, allowed by Chrome 136+). One-time: Richard launches `chrome.exe --user-data-dir=...` headed, logs into Google/HubSpot/n8n/Airtable. Each session lasts 30-90 days. All future AutoVid runs use that profile via `capture_strategy: local_chrome` → real authenticated captures.
 
 **Status:** Ready for Richard review. Do not merge PR#5 without approval.
+
+---
+
+## TASK-20260420-FORGE-AUTOVID-013
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Sonnet (Richard)
+- **Project:** 1AltX AutoVid — Redact OPT walkthrough for catalog use
+- **Repo:** `scubarichard/1altx-autovid`
+- **Branch:** Create `opt-walkthrough-v3-redacted` from `main`
+
+### Context
+
+Richard wants to put `opt-walkthrough-v3.mp4` on the 1AltX product catalog as a demo of AutoVid, but it currently contains OPT Solutions client data that must not be public. Need to produce a redacted version with sensitive regions blurred and the HubSpot scene replaced with a generic title card.
+
+**Source:** `C:\Users\18473\Dropbox\AutoVid\artifacts\opt-walkthrough-v3.mp4` (290.4s, 1920x1080, H.264+AAC)
+**Target:** `C:\Users\18473\Dropbox\AutoVid\artifacts\opt-walkthrough-v3-redacted.mp4`
+
+Sonnet has already measured all blur coordinates and validated them against extracted frames. Execute per spec.
+
+---
+
+### SCENE MAP (verified by Sonnet)
+
+| Scene | Time range | Content | Action |
+|---|---|---|---|
+| 1 | 0-31s | Intro title card "Commission flow · Four platforms" | Keep |
+| 2a | 31-60s | Google Drive Tyro folder | Blur 2 regions |
+| 2b | 60-78s | Google Drive Nuvei folder | Blur 2 regions (same coords) |
+| 3a | 78-120s | n8n Tyro workflow | Blur 2 regions |
+| 3b | 120-152s | n8n Nuvei workflow | Blur 2 regions (same coords) |
+| 4 | 152-190s | Airtable Transactions table | Blur 2 regions |
+| 5 | 190-242s | HubSpot dashboards + companies list | REPLACE with title card |
+| 6 | 242-290s | Closing title card | Keep |
+
+---
+
+### REDACTION RULES
+
+**Blur these:**
+- Client/merchant names (e.g. "Riley's Relining", "Kiama Sweet")
+- Merchant Identifiers / MIDs / Transaction IDs
+- "OPT Solutions" / "Opt Solutions" / "optsolutions.au" / "optsolutions.app.n8n.cloud" wherever they appear
+- OPT-branded filenames ("OPT Commission Report...xlsx")
+
+**Keep visible (do NOT blur):**
+- Dollar amounts and revenue numbers
+- Transaction counts, dates, provider labels (Tyro, Nuvei)
+- 1altx.ai branding
+- `richard@1altx.com` in the closing card
+- The workflow node labels in n8n (Webhook, Extract, Dedup Check, Parse Sheet, etc.)
+
+---
+
+### BUILD
+
+#### 1. Create `tools/redact-video.js`
+
+A reusable Node script that takes a redaction config JSON + input MP4 and produces a redacted MP4. Spec:
+
+```
+node tools/redact-video.js <config.json>
+```
+
+Config schema:
+```json
+{
+  "input": "path/to/input.mp4",
+  "output": "path/to/output.mp4",
+  "blur_regions": [
+    {"x": 275, "y": 75, "w": 900, "h": 50, "start": 31, "end": 78, "sigma": 20, "note": "Drive breadcrumb"}
+  ],
+  "scene_replacements": [
+    {"start": 190, "end": 242, "image_path": "path/to/card.png"}
+  ]
+}
+```
+
+Uses `fluent-ffmpeg`. Builds a filter_complex chain: split the video into N+1 streams (1 base + 1 per blur region), crop each region, apply gblur, overlay back with `enable='between(t,start,end)'`. For scene replacements, overlay a looped still image with `enable='between(t,start,end)'`.
+
+#### 2. Create `scenarios/opt/opt-walkthrough-redaction.json`
+
+The config for this specific redaction. **Exact coordinates:**
+
+```json
+{
+  "input": "C:\\Users\\18473\\Dropbox\\AutoVid\\artifacts\\opt-walkthrough-v3.mp4",
+  "output": "C:\\Users\\18473\\Dropbox\\AutoVid\\artifacts\\opt-walkthrough-v3-redacted.mp4",
+  "blur_regions": [
+    {"x": 275, "y": 75,  "w": 900,  "h": 50,  "start": 31,  "end": 78,  "sigma": 20, "note": "Drive breadcrumb (Tyro + Nuvei folders)"},
+    {"x": 275, "y": 230, "w": 900,  "h": 50,  "start": 31,  "end": 78,  "sigma": 20, "note": "Drive filename row (Tyro + Nuvei files)"},
+    {"x": 100, "y": 25,  "w": 1400, "h": 50,  "start": 78,  "end": 152, "sigma": 20, "note": "n8n URL bar (Tyro + Nuvei workflows)"},
+    {"x": 100, "y": 75,  "w": 400,  "h": 50,  "start": 78,  "end": 152, "sigma": 20, "note": "n8n workflow title header"},
+    {"x": 30,  "y": 5,   "w": 280,  "h": 50,  "start": 152, "end": 190, "sigma": 20, "note": "Airtable OPT Solutions workspace label"},
+    {"x": 330, "y": 90,  "w": 280,  "h": 900, "start": 152, "end": 190, "sigma": 18, "note": "Airtable Transaction ID column (MIDs)"}
+  ],
+  "scene_replacements": [
+    {
+      "start": 190,
+      "end": 242,
+      "image_path": "assets/redaction/opt/hubspot-replacement-card.png"
+    }
+  ]
+}
+```
+
+#### 3. Generate the HubSpot replacement card
+
+Create `assets/redaction/opt/hubspot-replacement-card.png` — 1920x1080 PNG matching the closing title card's visual style.
+
+**Design spec:**
+- Background: `#050505` (near-black)
+- Centered vertically around 50% height:
+  - Eyebrow (letter-spaced, small): `CRM & REPORTING` in `#22c55e`, font ~20px
+  - Title (large bold): `HubSpot` in white, font ~96px bold
+  - Short green underline rule below title: 120px wide, 3px tall, `#22c55e`, centered
+  - Subtitle: `Merchant records · Sales rep attribution · Reporting dashboards` in `#9ca3af`, font ~36px
+- Bottom-right corner: `1altx.ai` in `#22c55e`, 36px, positioned 80px from right and 60px from bottom
+
+Use Sharp, Jimp, or Node-Canvas to generate. Sharp approach recommended (we already have sharp for video frames):
+
+```js
+const sharp = require('sharp');
+const svg = Buffer.from(`
+  <svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1920" height="1080" fill="#050505"/>
+    <text x="960" y="440" font-family="sans-serif" font-size="20" fill="#22c55e" text-anchor="middle" letter-spacing="3">C R M   &amp;   R E P O R T I N G</text>
+    <text x="960" y="540" font-family="sans-serif" font-size="96" font-weight="bold" fill="#ffffff" text-anchor="middle">HubSpot</text>
+    <rect x="900" y="560" width="120" height="3" fill="#22c55e"/>
+    <text x="960" y="620" font-family="sans-serif" font-size="36" fill="#9ca3af" text-anchor="middle">Merchant records  ·  Sales rep attribution  ·  Reporting dashboards</text>
+    <text x="1760" y="1000" font-family="sans-serif" font-size="36" fill="#22c55e" text-anchor="end">1altx.ai</text>
+  </svg>
+`);
+await sharp(svg).png().toFile('assets/redaction/opt/hubspot-replacement-card.png');
+```
+
+#### 4. Run redaction
+
+```bash
+node tools/redact-video.js scenarios/opt/opt-walkthrough-redaction.json
+```
+
+Expected output: `opt-walkthrough-v3-redacted.mp4` at 290.4s, same duration as input, with all regions blurred and HubSpot scene replaced.
+
+---
+
+### ACCEPTANCE CRITERIA
+
+1. `tools/redact-video.js` exists, accepts config JSON, runs successfully
+2. `scenarios/opt/opt-walkthrough-redaction.json` committed with exact blur coordinates from this spec
+3. `assets/redaction/opt/hubspot-replacement-card.png` committed (1920x1080, matches design spec)
+4. Artifact at `C:\Users\18473\Dropbox\AutoVid\artifacts\opt-walkthrough-v3-redacted.mp4`
+5. Verify by sampling frames at t=5, 40, 70, 95, 140, 170, 215, 275 — post screenshots or ffprobe output
+6. Audio from original remains intact and in sync
+7. PR: `[Phase F] OPT walkthrough redaction + reusable tool`
+8. Post GATE RESULTS with: PR link, artifact path, file size, ffprobe duration, confirmation of each blur landing correctly
+
+---
+
+### OUT OF SCOPE
+
+- Don't re-capture anything — only process the existing MP4
+- Don't modify the voice/narration
+- Don't touch v1 or v2 artifacts
+- Don't change the closing card (242-290s region)
+- Don't build a GUI markup tool (coordinates already measured)
+
+---
+
+### NOTES
+
+- Ffmpeg's `boxblur` has a chroma radius max of 12 and will error on large regions — use `gblur=sigma=N` instead (already tested by Sonnet, works for all regions).
+- The Airtable MID column blur is intentionally wide (280px) and tall (900px) — it must cover header + all visible rows + partial scrolled row at bottom. Do not reduce it.
+- The HubSpot scene replacement is a full-viewport image overlay with `enable='between(t,190,242)'`. No need to re-render the whole video — just composite.
+- This tool will be reused for every future catalog video. Build it properly.
+
+### QUESTIONS / BLOCKERS
+
+Post here if ffmpeg behaves unexpectedly on any region, or if Sharp/Canvas library is missing from the repo.
