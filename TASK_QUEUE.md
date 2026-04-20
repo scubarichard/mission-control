@@ -2613,3 +2613,112 @@ This approach eliminates silence completely — each scene is exactly as long as
 - Reported silence after 1:15 — fixed with per-scene extraction ✓
 - Requested scene 1 open with page title + automation explanation + time savings ✓
 - Noted HubSpot was not showing as redacted — fixed, now shows real footage with full blur ✓
+
+
+---
+
+## TASK-20260420-FORGE-AUTOVID-017
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High (blocks public catalog launch)
+- **From:** [Sonnet]
+- **Project:** 1AltX AutoVid — Fix leaks in catalog-commission-tracking-v1 before public release
+- **Repo:** `scubarichard/1altx-autovid`
+- **Branch:** `catalog-commission-tracking-v2` from current `catalog-commission-tracking`
+- **Depends on:** TASK-014 DONE (catalog video already produced)
+- **PR:** #7 is open; this task produces PR #8 on top of or replacing it
+
+### Context
+
+Richard shipped `catalog-commission-tracking-v1.mp4` via TASK-014. Sonnet reviewed the 189.7s artifact (the version Richard uploaded for review on 2026-04-20) and found 5 leaks that survived the blur pass. Before this video can go on the public 1altx.ai product catalog, the 2 critical leaks must be fixed. The 3 minor leaks should also be fixed since we're already in the filter_complex.
+
+**Source artifact:** `C:\Users\18473\Dropbox\AutoVid\artifacts\catalog-commission-tracking-v1.mp4` (189.7s, 5.82 MB, md5 `8ea84b5645a4055df5440ffbf64a3aae`)
+
+### Leaks to fix
+
+**Critical (must fix):**
+
+| # | Time | What leaks | Root cause |
+|---|---|---|---|
+| 1 | ~79-114s | n8n workflow title "OPT - Tyro Commission Import" text readable BELOW the current blur strip | Existing blur was at y=75 h=50, but the title text actually sits at y=100-155 in this layout. Blur missed it entirely. |
+| 2 | ~163-168s | HubSpot browser tab title shows "Riley's Relining" — a real merchant name | Existing blur covers URL bar (y=0-38) but the tab bar sits above that (y=0-25) and tab TITLE text sits at roughly y=5-25. Current blur may not extend far enough up, or the tab region was not included. |
+
+**Minor (should fix):**
+
+| # | Time | What leaks |
+|---|---|---|
+| 3 | ~142-172s | Airtable bottom row shows "...2025-02_tyro" + a Tyro badge on row ~28 (scrolled bottom) |
+| 4 | ~155-163s | HubSpot tab shows "Companies \| All companies" — identifies the HubSpot view |
+| 5 | ~114-142s (all of Airtable scene) | "R" avatar bottom-left (Richard's account initial) |
+
+### Blur regions to add/adjust
+
+Update the existing redaction config for the catalog scenario. Based on Sonnet's coordinate measurements on the 189.7s artifact:
+
+```json
+{
+  "note": "FIX n8n workflow title - existing blur missed the text",
+  "change": "extend existing n8n title blur",
+  "old": {"x": 100, "y": 75, "w": 400, "h": 50, "start": 79, "end": 114, "sigma": 20},
+  "new": {"x": 100, "y": 75, "w": 400, "h": 90, "start": 79, "end": 114, "sigma": 20}
+}
+
+{
+  "note": "FIX Airtable bottom row leak - extend MID and Provider blur regions to cover row 28",
+  "change": "increase h on Airtable MID and Provider columns",
+  "MID_old": {"x": 330, "y": 90, "w": 280, "h": 900, "start": 114, "end": 142, "sigma": 18},
+  "MID_new": {"x": 330, "y": 90, "w": 280, "h": 970, "start": 114, "end": 142, "sigma": 18},
+  "Provider_old": {"x": 745, "y": 90, "w": 140, "h": 900, "start": 114, "end": 142, "sigma": 18},
+  "Provider_new": {"x": 745, "y": 90, "w": 140, "h": 970, "start": 114, "end": 142, "sigma": 18}
+}
+
+{
+  "note": "NEW: HubSpot browser tab bar blur - covers 'Riley's Relining' and 'Companies | All companies'",
+  "region": {"x": 0, "y": 0, "w": 700, "h": 40, "start": 142, "end": 172, "sigma": 20}
+}
+
+{
+  "note": "NEW: R avatar bottom-left in Airtable scene",
+  "region": {"x": 0, "y": 1020, "w": 40, "h": 60, "start": 114, "end": 142, "sigma": 18}
+}
+```
+
+Note: All time windows above are for the current 189.7s catalog video, NOT the source OPT v3 video. Adjust as needed if Forge's build script uses source-relative timestamps — measure against the final catalog output.
+
+### Build
+
+1. Checkout `catalog-commission-tracking-v2` from `catalog-commission-tracking`
+2. Update `scenarios/catalog/commission-tracking-for-resellers.json` (or whichever config holds the blur regions for the catalog build) with the 5 region changes above
+3. Re-run `tmp/build-catalog.mjs` to regenerate the video. Audio (Matilda narration) does NOT need to change — reuse the existing scene MP3s in `artifacts/scenes/catalog-commission-tracking/`
+4. Output: `C:\Users\18473\Dropbox\AutoVid\artifacts\catalog-commission-tracking-v2.mp4`
+5. Verify by extracting frames at t=95, t=110, t=130, t=145, t=160, t=165, t=170 — confirm each previously-leaking region is now blurred
+
+### Acceptance Criteria
+
+1. `catalog-commission-tracking-v2.mp4` exists at the Dropbox path
+2. Duration unchanged (~189.7s) — audio track reused, not regenerated
+3. All 5 leaks verified fixed via frame extraction (post ffprobe dimensions + sample PNGs in GATE RESULTS)
+4. Scene 5 HubSpot full-frame blur preserved (Richard wants real HubSpot visible through the blur — do not replace with title card)
+5. PR #8 opened on top of existing `catalog-commission-tracking-v2` branch: `[Catalog] v2 — fix 5 leak points for public release`
+6. Post GATE RESULTS with: PR link, artifact path, duration, md5, 7 frame screenshots at timestamps above
+
+### Out of Scope
+
+- Do NOT change the narration, voice, or audio in any way
+- Do NOT change the intro title card length or content
+- Do NOT change the HubSpot scene from blurred real footage to a title card (Richard's explicit preference)
+- Do NOT add or remove scenes
+- Do NOT touch `scenarios/opt/` — that's the client deliverable, keep unblurred
+- Do NOT try to auto-OCR to find leaks — coordinates above are Sonnet-measured from actual frames
+
+### Notes
+
+- This is a targeted fix, not a rebuild. If `tmp/build-catalog.mjs` is too coupled to a full regeneration, consider a narrow FFmpeg pass that takes v1 as input and applies only the delta blurs. The `tools/redact-video.js` built in TASK-015 should handle this cleanly if pointed at v1 with an incremental config.
+- If Forge measures the blur coordinates himself (preferred — Sonnet's measurements come from scaled thumbnails and may be off by a few px), err on the side of larger blur regions. Better an over-blurred tab bar than a readable merchant name.
+- The 200.6s artifact Sonnet first reviewed was an OLDER version. The 189.7s version is the current target. Verify Dropbox has the 189.7s file before starting.
+
+### Questions / Blockers
+
+Post here if:
+- The blur region for the HubSpot tab bar extends over HubSpot's logo (the HubSpot brand logo should remain visible — reduce x start from 0 if needed)
+- `tmp/build-catalog.mjs` can't regenerate from existing audio (need to understand pipeline coupling)
