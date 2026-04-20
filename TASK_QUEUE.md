@@ -1946,7 +1946,7 @@ Set up `P:\_clients\1altx-autovid\tmp\chrome-autovid-profile\` as a dedicated Ch
 
 ## TASK-20260420-FORGE-AUTOVID-013
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** SUPERSEDED_BY_014
 - **Priority:** High
 - **From:** Sonnet (Richard)
 - **Project:** 1AltX AutoVid — Redact OPT walkthrough for catalog use
@@ -2121,3 +2121,252 @@ Expected output: `opt-walkthrough-v3-redacted.mp4` at 290.4s, same duration as i
 ### QUESTIONS / BLOCKERS
 
 Post here if ffmpeg behaves unexpectedly on any region, or if Sharp/Canvas library is missing from the repo.
+
+---
+
+### [Sonnet] TASK-013 SUPERSEDED 2026-04-20
+
+**Reason:** Redacting visuals alone leaves client-specific narration intact (Sunny, OPT Solutions, $199/mo plan, MIDs mentioned aloud). A blurred video with client-naming audio is worse than either option on its own.
+
+**Replaced by:**
+- TASK-014: Catalog-purpose scenario JSON with generic narration (re-uses existing v3 authenticated captures)
+- TASK-015: Standalone redaction tool (built anyway — needed for future catalog videos that don't get fresh narration)
+
+If you already started TASK-013, stop and archive the work on branch `opt-walkthrough-v3-redacted` without opening a PR. Sonnet will reference it if needed for TASK-015.
+
+---
+
+## TASK-20260420-FORGE-AUTOVID-014
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** Sonnet (Richard)
+- **Project:** 1AltX AutoVid — Catalog-purpose walkthrough (generic, reusable pattern)
+- **Repo:** `scubarichard/1altx-autovid`
+- **Branch:** Create `catalog-commission-tracking` from `main`
+
+### Context
+
+Richard is building a product catalog page at 1altx.ai and wants an AutoVid-produced demo video. The existing OPT walkthrough has:
+- Authenticated captures of real systems (visible pixels have client data)
+- Narration that names the client specifically
+
+For catalog use, we need a **new narration** that describes the capability generically, re-muxed over the existing v3 authenticated video frames (with the visuals blurred per TASK-015's tool).
+
+### BUILD
+
+#### 1. Create `scenarios/catalog/commission-tracking-for-resellers.json`
+
+Use the v2 scenario schema. Same scene count + timing as `scenarios/opt/opt-walkthrough.json` so the new narration can be re-muxed onto the existing v3 captures without re-capturing anything.
+
+Scene-by-scene narration prompts for Claude (generic, catalog-voiced):
+
+**Scene 1 — Intro title card** (0-31s)
+- Title card content unchanged: "Commission flow · Four platforms"
+- Narration prompt: "Payment industry resellers juggle commission reporting from multiple processors every month. Tyro reports come in one format, Nuvei in another, and reconciling them into what each merchant actually earned takes hours. Here's how 1AltX automates the entire pipeline. Four platforms working together: Google Drive for file intake, n8n for orchestration, an AI agent for calculation, and HubSpot for the CRM and reporting view."
+- Max words: 90
+
+**Scene 2 — Google Drive intake** (31-78s, covers both Tyro + Nuvei subfolders)
+- Narration prompt: "Monthly reports from each payment processor land in dedicated Google Drive folders. n8n watches these folders continuously — whenever a new file appears, the pipeline kicks off automatically. File formats, naming conventions, and processor quirks are handled by the automation. No one has to touch a spreadsheet."
+- Max words: 75
+
+**Scene 3 — n8n workflows** (78-152s, covers both Tyro + Nuvei workflows)
+- Narration prompt: "Two workflows run the calculation logic, one per processor. An AI agent extracts merchant data from each report, handling the different row structures and column names without hand-coded parsers. The workflows apply whatever commission rules the reseller has agreed to with each merchant — flat adjustments, volume-based deductions, funding fees, residual splits. A third workflow keeps merchant identifiers synced between Airtable and HubSpot so the data always reconciles."
+- Max words: 95
+
+**Scene 4 — Airtable transaction database** (152-190s)
+- Narration prompt: "Every merchant's monthly commission record lands in Airtable as the single source of truth. Volume, income, expense, gross profit, adjustments, and the final net payout — all traceable back to the source report. This becomes the historical ledger the reseller can audit, export, or build further automations on top of."
+- Max words: 75
+
+**Scene 5 — HubSpot dashboards + CRM** (190-242s)
+- **Replace the HubSpot captures with the title card** generated in TASK-015 (same card used for the redacted version)
+- Narration prompt: "HubSpot is the reporting layer. Merchant performance, total commission by month, breakdowns by processor, sales rep attribution — all visible in customized dashboards. For the reseller's sales team, every merchant record shows the linked contact, current provider, activation date, and trailing commission. The CRM becomes the day-to-day interface; the pipeline keeps it current without manual data entry."
+- Max words: 90
+
+**Scene 6 — Closing card** (242-290s)
+- Title card content unchanged, but no longer says "Monthly Process · Upload Tyro · Upload Nuvei · Wait 1 hour · Verify in HubSpot"
+- NEW title card text: "Built for payment resellers · Operators · Agencies" (or similar generic phrasing)
+- NEW eyebrow: "1ALTX AUTOVID"
+- NEW bottom CTA (replacing "richard@1altx.com"): "1altx.ai"
+- Narration prompt: "Every 1AltX engagement ends with automation like this — built around the client's actual workflow, running in their own accounts, documented in a walkthrough video just like this one. Want to see what this could look like for your team? Visit 1altx.ai."
+- Max words: 55
+
+#### 2. Generate narration
+
+Run the existing Phase E narration pipeline on `scenarios/catalog/commission-tracking-for-resellers.json`:
+```bash
+node src/pipeline/run.js scenarios/catalog/commission-tracking-for-resellers.json --narration-only
+```
+
+Output: 6 scene MP3s in `artifacts/scenes/catalog-commission-tracking/`. Each matches the scene duration of the corresponding OPT scene.
+
+If `--narration-only` flag doesn't exist in the current pipeline, add it. It should do: generate narration text via Claude → ElevenLabs TTS → atempo post-process → save MP3 per scene.
+
+#### 3. Regenerate the two title cards (scenes 1 and 6)
+
+The existing intro title card at 0-31s stays as-is. The closing card at 242-290s needs to be regenerated with the new catalog-facing text:
+
+```
+NEW CLOSING CARD (replaces the "Monthly Process" card):
+  Eyebrow:  "1ALTX AUTOVID"  (letter-spaced, #22c55e, 20px)
+  Title:    "Built for resellers"  (white, 96px bold)
+  Green underline, 120px wide, 3px tall, centered
+  Subtitle: "Operators  ·  Agencies  ·  In-house ops teams"  (#9ca3af, 36px)
+  Bottom-right: "1altx.ai" (#22c55e, 36px)
+```
+
+Use the same Sharp/SVG approach from TASK-015.
+
+#### 4. Also regenerate HubSpot replacement card (Scene 5)
+
+Same card as TASK-015 spec:
+- Eyebrow: "CRM & REPORTING"
+- Title: "HubSpot"
+- Subtitle: "Merchant records · Sales rep attribution · Reporting dashboards"
+- 1altx.ai bottom right
+
+#### 5. Composite the final catalog video
+
+Use the existing redaction tool from TASK-015 (if built first) or a simpler composite step. The pipeline is:
+- Input: `opt-walkthrough-v3.mp4` (source captures)
+- Blur all 6 regions from TASK-015 config
+- Replace Scene 5 (190-242) with the HubSpot title card
+- Replace Scene 6 (242-290) with the new closing card
+- Strip original audio
+- Concatenate new narration MP3s (scenes 1-6) onto a single synced audio track
+- Mux new audio onto redacted video
+
+Output: `C:\Users\18473\Dropbox\AutoVid\artifacts\catalog-commission-tracking-v1.mp4`
+
+### ACCEPTANCE CRITERIA
+
+1. `scenarios/catalog/commission-tracking-for-resellers.json` committed with all 6 scene definitions and narration prompts
+2. 6 narration MP3s generated (one per scene) in `artifacts/scenes/catalog-commission-tracking/`
+3. New closing title card PNG at `assets/cards/catalog-commission-tracking-closing.png` (1920x1080)
+4. HubSpot replacement card at `assets/redaction/shared/hubspot-crm-card.png` (reusable across any catalog video referencing HubSpot)
+5. Final artifact at `C:\Users\18473\Dropbox\AutoVid\artifacts\catalog-commission-tracking-v1.mp4`
+6. Durations match: each scene MP3 matches its scene window; total video ~290s
+7. Audio: new narration only, no trace of original OPT-specific audio
+8. Visual: all TASK-015 blurs applied, Scene 5 replaced, Scene 6 replaced with new closing
+9. PR: `[Catalog] Commission tracking walkthrough (reusable pattern)`
+10. Post GATE RESULTS with: PR link, artifact path, duration per scene, full ffprobe output
+
+### OUT OF SCOPE
+
+- Don't re-capture any source video (use existing v3 captures)
+- Don't modify the original `opt-walkthrough-v3.mp4` file
+- Don't change the intro title card (Scene 1) — it's already generic
+- Don't build a catalog landing page (different product, later task)
+
+### DEPENDENCY
+
+Requires TASK-015 (redaction tool) to be built first. If TASK-015 isn't done, build the minimum blur logic inline in this task, then refactor into a tool later. Do not block on TASK-015.
+
+### NOTES
+
+- The voice config stays the same as Phase E locked: Richard's voice, stability 0.15, atempo 1.08
+- This establishes the **template pattern** for all future catalog videos. Nautilus will use this structure to produce walkthroughs for PNT-style booking, RPE-style ops, AutoVid itself, etc.
+- The scenario file is the deliverable. The video is the demo. The tool is the engine. All three are catalog-enabling.
+
+### QUESTIONS / BLOCKERS
+
+Post here if narration timing doesn't fit scene windows, if Claude's narration is off-brand, or if pipeline changes are needed.
+
+---
+
+## TASK-20260420-FORGE-AUTOVID-015
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** Medium (parallel to TASK-014)
+- **From:** Sonnet (Richard)
+- **Project:** 1AltX AutoVid — Reusable video redaction tool
+- **Repo:** `scubarichard/1altx-autovid`
+- **Branch:** Create `phase-f-redaction-tool` from `main`
+
+### Context
+
+TASK-014 needs blur + scene-replacement logic. Instead of inlining it, build a reusable tool now. Every future catalog video and every client with pixel-level redaction needs will use it.
+
+### BUILD
+
+#### 1. `tools/redact-video.js`
+
+CLI: `node tools/redact-video.js <config.json>`
+
+Config schema:
+```json
+{
+  "input": "path/to/input.mp4",
+  "output": "path/to/output.mp4",
+  "audio_source": "same_as_input | path/to/new/audio",
+  "blur_regions": [
+    {"x": 275, "y": 75, "w": 900, "h": 50, "start": 31, "end": 78, "sigma": 20, "note": "description"}
+  ],
+  "scene_replacements": [
+    {"start": 190, "end": 242, "image_path": "path/to/card.png"}
+  ]
+}
+```
+
+Technique (verified by Sonnet):
+- Use `fluent-ffmpeg`
+- `filter_complex` with `split=N+1` for base + per-region streams
+- Each region: `crop=WxH:X:Y,gblur=sigma=N`
+- Overlay each blurred region back with `enable='between(t,start,end)'`
+- Scene replacements: overlay looped still image with `enable='between(t,start,end)'`
+- Audio: either `-c:a copy` (if audio_source = same_as_input) or remux from new source
+- Video codec: libx264, yuv420p, CRF 20, preset fast, +faststart
+
+**Important:** FFmpeg's `boxblur` has a chroma radius max of 12 — use `gblur=sigma=N` instead. Sonnet verified gblur sigma 18-20 gives good visual coverage.
+
+#### 2. `tools/card-generator.js`
+
+CLI: `node tools/card-generator.js <card-config.json> <output.png>`
+
+Generates title cards matching the 1AltX visual style. Config:
+```json
+{
+  "eyebrow": "CRM & REPORTING",
+  "title": "HubSpot",
+  "subtitle": "Merchant records · Sales rep attribution",
+  "brand": "1altx.ai",
+  "width": 1920,
+  "height": 1080
+}
+```
+
+Uses Sharp with SVG string composition. Style:
+- Background `#050505`
+- Eyebrow: #22c55e, 20px, letter-spaced (space out the chars with U+2009 thin spaces or use SVG letter-spacing)
+- Title: white, 96px bold, centered at roughly 50% height
+- Green underline bar below title: 120px × 3px, #22c55e
+- Subtitle: #9ca3af, 36px, centered below underline
+- Brand: #22c55e, 36px, bottom-right (80px margin right, 60px margin bottom)
+
+#### 3. Ship both tools with a shared `scenarios/catalog/_shared/cards/` convention
+
+Future catalog videos can reference pre-generated cards for common platforms (HubSpot, Airtable, n8n, Google Drive) without regenerating each time.
+
+### ACCEPTANCE CRITERIA
+
+1. `tools/redact-video.js` runs end-to-end against a test config — produces valid MP4
+2. `tools/card-generator.js` produces a valid 1920x1080 PNG from a sample config
+3. Both tools have `--help` output documenting the config schema
+4. Tools committed in `phase-f-redaction-tool` branch
+5. PR: `[Phase F] Video redaction + card generator tooling`
+6. Post GATE RESULTS with: tool listings, sample outputs, any test runs
+
+### OUT OF SCOPE
+
+- The actual OPT catalog video (that's TASK-014)
+- A config GUI (click-to-mark regions) — future enhancement, not needed now
+- OCR-based auto-detection — future enhancement
+
+### NOTES
+
+- Can run in parallel with TASK-014. If TASK-014 starts first, inline the redaction logic and refactor into this tool post-merge.
+- Build the tool properly — this is infrastructure used for every future catalog video.
+
+### QUESTIONS / BLOCKERS
+
+Post here if Sharp has issues with SVG text rendering (common pitfall — may need to render text server-side with node-canvas if Sharp's SVG text support is limited on your Node version).
