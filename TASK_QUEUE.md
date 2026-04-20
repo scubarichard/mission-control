@@ -2138,7 +2138,8 @@ If you already started TASK-013, stop and archive the work on branch `opt-walkth
 
 ## TASK-20260420-FORGE-AUTOVID-014
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
+- **Completed:** 2026-04-20
 - **Priority:** High
 - **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — Catalog-purpose walkthrough (generic, reusable pattern)
@@ -2274,9 +2275,46 @@ Post here if narration timing doesn't fit scene windows, if Claude's narration i
 
 ---
 
+### GATE RESULTS — [Forge] 2026-04-20
+
+**PR:** https://github.com/scubarichard/1altx-autovid/pull/7 (branch `catalog-commission-tracking`, commit `8693306`)
+
+**Artifact:** `C:\Users\18473\Dropbox\AutoVid\artifacts\catalog-commission-tracking-v1.mp4`
+
+**ffprobe:** h264 1920x1080 10fps + aac 44100Hz mono, 290.0s, 5.12 MB
+
+**Narration (6 MP3s — Richard's voice, stability 0.15, atempo 1.08):**
+| Scene | Window | Narration dur | Words |
+|---|---|---|---|
+| 01-intro | 31s | 34.8s → trimmed to 31s | 87 |
+| 02-drive | 47s | 24.9s → padded to 47s | 61 |
+| 03-n8n | 74s | 40.8s → padded to 74s | 81 |
+| 04-airtable | 38s | 27.3s → padded to 38s | 67 |
+| 05-hubspot | 52s | 37.8s → padded to 52s | 85 |
+| 06-closing | 48s | 17.0s → padded to 48s | 47 |
+
+**Cards generated:**
+- `assets/redaction/shared/hubspot-crm-card.png` — 1920x1080, "HubSpot / CRM & REPORTING"
+- `assets/cards/catalog-commission-tracking-closing.png` — 1920x1080, "Built for resellers"
+
+**Video processing:**
+- 7 blur regions applied (TASK-016 amendment: Drive breadcrumb, Drive filename, n8n URL bar, n8n title, Airtable workspace label, Airtable MID column, Airtable Provider column)
+- Scene 5 (190-242s) replaced with HubSpot generic card
+- Scene 6 (242-290s) replaced with "Built for resellers" closing card
+- Original OPT audio stripped; new narration muxed in
+
+**TASK-016 compliance:** Zero processor-specific names (Tyro/Nuvei) in narration or visible in video ✓
+
+**Fixes included:** `src/compose/concat.js` main-module guard (was executing CLI block when imported); `src/pipeline/run.js` `--narration-only` flag + argv parse fix
+
+DO NOT MERGE PR#7 without Richard review of the artifact.
+
+---
+
 ## TASK-20260420-FORGE-AUTOVID-015
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
+- **Completed:** 2026-04-20
 - **Priority:** Medium (parallel to TASK-014)
 - **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — Reusable video redaction tool
@@ -2371,6 +2409,21 @@ Future catalog videos can reference pre-generated cards for common platforms (Hu
 
 Post here if Sharp has issues with SVG text rendering (common pitfall — may need to render text server-side with node-canvas if Sharp's SVG text support is limited on your Node version).
 
+---
+
+### GATE RESULTS — [Forge] 2026-04-20
+
+**PR:** https://github.com/scubarichard/1altx-autovid/pull/6 (branch `phase-f-redaction-tool`, commit `3cb31d9`)
+
+**Tools:**
+- `tools/redact-video.js` — fluent-ffmpeg filter_complex: gblur per region + still-image scene overlay; `--help` ✓
+- `tools/card-generator.js` — Sharp/SVG 1920x1080 cards; `--help` ✓
+
+**Test outputs:**
+- `card-generator.js`: 69.2 KB PNG, 1920x1080 ✓
+- `redact-video.js` smoke test: 1 blur region on `opt-walkthrough-v3.mp4` → 9.97 MB MP4 ✓
+
+**Note:** `sharp` added to `package.json`. DO NOT MERGE PR#6 without approval.
 
 ---
 
