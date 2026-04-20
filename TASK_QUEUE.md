@@ -1583,7 +1583,7 @@ Per TASK-009 spec fallback: if any authenticated scene fails capture, substitute
 - **Status:** DONE
 - **Completed:** 2026-04-18
 - **Priority:** High
-- **From:** Sonnet (Richard authorized "surprise me")
+- **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — OPT walkthrough v2 (fix auth, change voice)
 - **Repo:** `scubarichard/1altx-autovid`
 - **Branch:** Create `opt-walkthrough-v2` from `main`
