@@ -2488,3 +2488,128 @@ Keep `scenarios/opt/` untouched. Build the catalog version separately with the f
 A catalog video that names "Tyro" and "Nuvei" filters out every payment reseller who doesn't work with those specific processors. The narration should describe the *pattern* — "reconciling commissions across multiple processors" — which applies to any reseller working with any combination of Stripe, Square, Adyen, Chase Paymentech, Worldpay, etc.
 
 The visuals, now blurred on processor-specific text, let any prospect see the pattern and imagine their own partners in those slots.
+
+---
+
+## [Forge → Sonnet] CATALOG VIDEO HANDOFF — 2026-04-20
+
+**Artifact:** `C:\Users\18473\Dropbox\AutoVid\artifacts\catalog-commission-tracking-v1.mp4`
+**Duration:** 3:03 (182.84s) | **Size:** 5.48 MB | **Spec:** H.264 1920x1080 10fps + AAC 44100Hz mono
+**Branch:** `catalog-commission-tracking` | **PR:** https://github.com/scubarichard/1altx-autovid/pull/7
+
+---
+
+### What this video is
+
+A catalog-purpose product demo for 1altx.ai — showing the commission tracking automation system built for OPT Solutions, re-narrated generically for any payment reseller prospect. It uses real authenticated screen captures from `opt-walkthrough-v3.mp4` (Richard's recordings) as the visual source, with all OPT-identifying content blurred and a new voiceover recorded by Matilda (ElevenLabs, US female, professional/educational).
+
+The video is designed to sit on a 1AltX product catalog page and speak directly to payment resellers who manually reconcile processor reports each month.
+
+---
+
+### Voice
+
+**Matilda** — ElevenLabs shared library voice, `voice_id: XrExE9yKIg1WjnnlVkGX`, US accent, tagged "Knowledgeable, Professional / informative_educational". Settings: stability 0.40, similarity_boost 0.75, style 0.50, use_speaker_boost true, atempo post-processing 1.08x. Defined as profile `matilda-catalog` in `config/voice.json`.
+
+---
+
+### Scene-by-scene breakdown
+
+**Scene 1 — Commission Tracking Automation (0–44.9s)**
+- Visual: Static title card on near-black background (#050505). Large bold white text: "Commission Tracking Automation". Subtitle in grey: "Built for payment resellers". Small green eyebrow: "1ALTX AUTOVID". Brand "1altx.ai" bottom-right in green.
+- Narration (~99 words, ~44s): Opens by reading the card title. States the problem — payment resellers spend 15–20 hours per month manually reconciling transaction reports from multiple processors, dealing with mismatched formats and no single source of truth. States the solution — 1AltX built a fully automated pipeline that handles it end to end; clients reclaim that time from the first billing cycle. Closes by previewing the four platforms: Google Drive for intake, n8n for orchestration, an AI agent for calculation, HubSpot for reporting.
+- No blurs. Pure title card.
+
+**Scene 2 — Google Drive Intake (44.9–72.2s, 27.4s)**
+- Visual: Real screenshot of Google Drive folder, captured from Richard's authenticated Chrome session. Shows a Drive folder containing uploaded commission report files from two payment processor partners. Folder names and filenames are blurred. The Drive interface chrome (sidebar, search bar, header) is partially visible but the breadcrumb (folder name containing "OPT" or processor names) and filename rows are blurred.
+- Blurs applied: breadcrumb bar (x=275, y=75, w=900, h=50) and filename row (x=275, y=230, w=900, h=50) — both sigma=20.
+- Narration (~68 words, ~27s): Explains that monthly reports from each payment partner land in dedicated Drive folders. n8n watches continuously — when a new file appears, the pipeline starts automatically. File formats, naming conventions, and processor quirks are handled by automation. "No one has to touch a spreadsheet."
+
+**Scene 3 — n8n Workflows (72.2–108.0s, 35.8s)**
+- Visual: Real screenshot of n8n cloud workflow canvas (optsolutions.app.n8n.cloud). Shows a workflow diagram — nodes visible include typical n8n automation blocks (Webhook trigger, data extraction, deduplication, parsing, AI Transform nodes, output nodes). The workflow is visually complex with ~15–20 nodes. The n8n URL bar is blurred (contained OPT-specific subdomain) and the workflow title/header is blurred.
+- Blurs applied: URL bar (x=100, y=25, w=1400, h=50) and workflow title header (x=100, y=75, w=400, h=50) — both sigma=20.
+- Narration (~87 words, ~35s): Two workflows run the calculation logic, one per payment partner. An AI agent extracts merchant data from each report, handling different row structures and column names without hand-coded parsers. The workflows apply the commission rules the reseller agreed to — flat adjustments, volume-based deductions, funding fees, residual splits. A third workflow keeps merchant identifiers synced between Airtable and HubSpot so the data always reconciles.
+
+**Scene 4 — Airtable Transaction Database (108.0–135.5s, 27.5s)**
+- Visual: Real screenshot of Airtable base (appyQvY4H1brqHuRE). Shows a grid view of the Transactions table with columns for Report Month, Transaction Count, Volume ($), Commissions ($), Visa Volume, Mastercard Volume, and other financial fields. Many rows visible — monthly records per merchant. The Airtable workspace label (top-left, shows "OPT Solutions") is blurred. The MID (merchant identifier) column — a narrow column of short codes — is blurred. The Provider column (showing "Nuvei"/"Tyro" badge pills) is blurred. All dollar figures and transaction counts remain visible.
+- Blurs applied: workspace label (x=30, y=5, w=280, h=50, sigma=20), MID column (x=330, y=90, w=280, h=900, sigma=18), Provider column (x=745, y=90, w=140, h=900, sigma=18).
+- Narration (~70 words, ~27s): Every merchant's monthly commission record lands in Airtable as the single source of truth. Volume, income, expense, gross profit, adjustments, final net payout — all traceable back to the source report. This becomes the historical ledger the reseller can audit, export, or build further automations on top of.
+
+**Scene 5 — HubSpot CRM & Reporting (135.5–165.7s, 30.2s)**
+- Visual: Real HubSpot screenshots from Richard's session — this scene contains two distinct views that appear sequentially:
+  1. **Companies list view** (~first 20s): HubSpot CRM companies table. Left sidebar shows HubSpot navigation (CRM, Marketing, Content, Sales, Commerce, Service, Data Management, Automation, Reporting, Breeze, Development) — visible and unblurred. Main content area (the entire data table) is heavily blurred (sigma=25) — covers company names, all column data (MIDs, phone numbers, owner fields, dates). The table header row (column labels) is also blurred. The window tab shows "Companies | All companies" (visible but small). The URL bar is blurred.
+  2. **Merchant Performance dashboard** (~last 10s): HubSpot reporting dashboard. Title area blurred (contained "OPT - Merchant Performance"). Both charts blurred — left chart "Top Merchants by Volume" (bar chart, merchant names on x-axis blurred) and right chart "Top Merchants by Commission" (similar format). The blurred charts show the structure of the visualisation without any readable data labels.
+  - Effective result: viewer can clearly see this is HubSpot, can see the navigation structure and that there is a table and dashboard, but cannot read any specific merchant, client, or financial data.
+- Blurs applied: URL bar (x=220, y=0, w=1500, h=38, sigma=22), companies table full area (x=220, y=38, w=1680, h=1042, sigma=25), dashboard title (x=100, y=40, w=500, h=45, sigma=22), left chart (x=270, y=130, w=700, h=620, sigma=22), right chart (x=990, y=130, w=900, h=620, sigma=22).
+- Narration (~78 words, ~30s): HubSpot is the reporting layer. Merchant performance, total commission by month, breakdowns by processor, sales rep attribution — all visible in customised dashboards. For the reseller's sales team, every merchant record shows linked contact, current provider, activation date, trailing commission. The CRM becomes the day-to-day interface; the pipeline keeps it current without manual data entry.
+
+**Scene 6 — Closing (165.7–182.8s, 17.1s)**
+- Visual: Static title card on near-black background. Large bold white text: "Built for resellers". Subtitle in grey: "Operators · Agencies · In-house ops teams". Green eyebrow: "1ALTX AUTOVID". Brand "1altx.ai" bottom-right.
+- Narration (~49 words, ~17s): Every 1AltX engagement ends with automation like this — built around the client's actual workflow, running in their own accounts, documented in a walkthrough video just like this one. Closes with CTA: "Want to see what this could look like for your team? Visit 1altx.ai."
+
+---
+
+### Build architecture
+
+The video is NOT produced by the standard `src/pipeline/run.js` end-to-end flow. It uses a custom build script at `tmp/build-catalog.mjs` that:
+
+1. **Per-scene narration-only** — `node src/pipeline/run.js scenarios/catalog/commission-tracking-for-resellers.json --narration-only` generates 6 MP3s via Claude (narrate.js) → ElevenLabs → atempo 1.08x post-processing. Saved to `artifacts/scenes/catalog-commission-tracking/`.
+
+2. **Per-scene video extraction (no silence)** — For each scene:
+   - **Title card scenes** (1, 6): `ffmpeg -loop 1 -i <card.png> -t <narration_duration>` → silent MP4 at exactly narration duration
+   - **Capture scenes** (2, 3, 4, 5): `ffmpeg -ss <v3_start> -i opt-walkthrough-v3.mp4 -t <narration_duration>` → extract + trim, then apply blur regions via `filter_complex` (gblur, always-on for full segment duration)
+
+3. **Per-scene mux** — Each silent video + narration MP3 → scene MP4 via `-c:v copy -c:a aac -shortest`
+
+4. **Concat** — All 6 scene MP4s → final via FFmpeg concat demuxer
+
+This approach eliminates silence completely — each scene is exactly as long as its narration. Total 182.84s vs the source v3 290s.
+
+---
+
+### Source video
+
+`opt-walkthrough-v3.mp4` (Richard's authenticated recordings spliced by Forge on 2026-04-18/19). Scene extraction offsets used:
+- Drive: v3_start=31s
+- n8n: v3_start=78s
+- Airtable: v3_start=152s
+- HubSpot: v3_start=190s
+
+---
+
+### Key files
+
+| File | Purpose |
+|---|---|
+| `scenarios/catalog/commission-tracking-for-resellers.json` | Scenario + narration prompts |
+| `config/voice.json` | Multi-profile voice config (matilda-catalog default) |
+| `src/tts/elevenlabs.js` | Updated to resolve active profile |
+| `src/pipeline/run.js` | Added `--narration-only` flag |
+| `src/compose/concat.js` | Fixed main-module guard |
+| `tools/card-generator.js` | Sharp/SVG 1920x1080 title card generator |
+| `tools/redact-video.js` | Config-driven gblur + scene replacement tool |
+| `assets/cards/catalog-scene1-intro.png` | Scene 1 title card |
+| `assets/cards/catalog-commission-tracking-closing.png` | Scene 6 closing card |
+| `assets/redaction/shared/hubspot-crm-card.png` | Generic HubSpot card (not used in final — real footage preferred) |
+| `tmp/build-catalog.mjs` | Full build orchestration script |
+| `artifacts/scenes/catalog-commission-tracking/` | 6 narration MP3s |
+
+---
+
+### Open items for Sonnet
+
+1. **PR #7 awaiting Richard approval** — do not merge `catalog-commission-tracking` until Richard signs off on the artifact
+2. **PR #6 awaiting Richard approval** — `phase-f-redaction-tool` (tools/redact-video.js + tools/card-generator.js)
+3. **`tmp/build-catalog.mjs` is not committed** — it's the build script, lives in `tmp/`. If the pipeline needs to be reproducible, consider promoting it to `src/pipeline/build-catalog.js` or similar
+4. **Voice profile in `config/voice.json`** — `default_profile: "matilda-catalog"` is now the global default; if Richard runs any other AutoVid pipeline it will use Matilda. May want to make profile selection per-scenario rather than global default
+5. **Scene 5 blur coverage** — verified via frame extraction, all data redacted. The HubSpot navigation sidebar (CRM, Marketing, etc.) is intentionally left unblurred so the interface is recognisable as HubSpot
+
+---
+
+### What Richard said after review
+
+- "not bad" — general approval
+- Requested Matilda (US female, professional) replacing Richard's voice ✓
+- Reported silence after 1:15 — fixed with per-scene extraction ✓
+- Requested scene 1 open with page title + automation explanation + time savings ✓
+- Noted HubSpot was not showing as redacted — fixed, now shows real footage with full blur ✓
