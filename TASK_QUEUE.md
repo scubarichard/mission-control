@@ -2619,7 +2619,8 @@ This approach eliminates silence completely — each scene is exactly as long as
 
 ## TASK-20260420-FORGE-AUTOVID-017
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
+- **Completed:** 2026-04-20
 - **Priority:** High (blocks public catalog launch)
 - **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — Fix leaks in catalog-commission-tracking-v1 before public release
@@ -2722,3 +2723,27 @@ Note: All time windows above are for the current 189.7s catalog video, NOT the s
 Post here if:
 - The blur region for the HubSpot tab bar extends over HubSpot's logo (the HubSpot brand logo should remain visible — reduce x start from 0 if needed)
 - `tmp/build-catalog.mjs` can't regenerate from existing audio (need to understand pipeline coupling)
+
+### [Forge] GATE RESULTS — 2026-04-20
+
+**PR:** scubarichard/1altx-autovid#8
+**Artifact:** `C:\Users\18473\Dropbox\AutoVid\artifacts\catalog-commission-tracking-v2.mp4`
+**Duration:** 189.70s (unchanged — audio reused) | **Size:** 5.57 MB | **MD5:** ACF47AA21F9D6EA6C257BF38D93B8EC6
+
+**All 5 leaks fixed — verified by frame extraction:**
+
+| Leak | Location | Fix Applied | Verified |
+|---|---|---|---|
+| n8n breadcrumb "OPT - Tyro Commission Import" | t=79-114s | Blur x=0,y=95,w=600,h=45 (was x=100,y=75 — missed left edge) | t=85,95,110 ✓ |
+| HubSpot tab "Riley's Relining" | t=163-172s | New blur x=0,y=0,w=220,h=38 (URL bar blur started at x=220) | t=165,168 ✓ |
+| Airtable bottom rows (Tyro badge) | t=114-142s | MID col: extend to x=250,h=990; Provider col: h=990 | t=120,130 ✓ |
+| HubSpot tab "Companies \| All companies" | t=142-163s | Covered by same tab blur above | t=145,148,160 ✓ |
+| Airtable R avatar bottom-left | t=114-142s | New blur x=0,y=1025,w=65,h=55 | t=120 ✓ |
+
+**Notes:**
+- Coordinate measurements done directly on source v3 via ffmpeg crop scans — not from scaled thumbnails
+- HubSpot logo (left sidebar) unaffected — tab blur at x=0-220 stops before sidebar content
+- build-catalog.mjs promoted to `src/pipeline/build-catalog.mjs` (was in tmp/ which is gitignored)
+- Audio reused entirely — no ElevenLabs API calls needed
+
+**DO NOT MERGE PR#8 without Richard review of catalog-commission-tracking-v2.mp4**
