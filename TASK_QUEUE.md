@@ -5,7 +5,7 @@
 - **Status:** DONE
 - **Completed:** 2026-04-18
 - **Priority:** High
-- **From:** Sonnet (Richard)
+- **From:** [Sonnet]
 - **Client:** PNT
 - **Branch:** dev ONLY — DO NOT merge to main until Richard reviews and signs off
 
@@ -193,7 +193,7 @@ All 9 screenshots captured. Commits on `dev` branch:
 - **Status:** DONE
 - **Completed:** 2026-04-18
 - **Priority:** High
-- **From:** Sonnet (Richard)
+- **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — automated client walkthrough video generator
 - **Repo:** `scubarichard/1altx-autovid` (currently empty except auto-generated README)
 - **Branch:** Create `phase-b-puppeteer-capture` from `main`
@@ -528,7 +528,7 @@ Ready for gate review. DO NOT MERGE — Richard reviews MP4 first.
 - **Status:** DONE
 - **Completed:** 2026-04-18
 - **Priority:** High
-- **From:** Sonnet (Richard)
+- **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — Phase B retry with scroll
 - **Repo:** `scubarichard/1altx-autovid`
 - **Branch:** CONTINUE on existing `phase-b-puppeteer-capture` (do NOT create new branch)
@@ -642,7 +642,7 @@ Ready for gate review. DO NOT MERGE — Richard reviews MP4 first.
 - **Status:** DONE
 - **Completed:** 2026-04-18
 - **Priority:** High
-- **From:** Sonnet (Richard)
+- **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — Phase C: Voice + video sync
 - **Repo:** `scubarichard/1altx-autovid`
 - **Branch:** Create `phase-c-audio-sync` from `main`
@@ -795,7 +795,7 @@ Ready for gate review. DO NOT MERGE — Richard reviews MP4 first.
 - **Status:** DONE
 - **Completed:** 2026-04-18
 - **Priority:** High
-- **From:** Sonnet (Richard)
+- **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — Phase C: Voice + video sync
 - **Repo:** `scubarichard/1altx-autovid`
 - **Branch:** Create `phase-c-audio-sync` from `main` (PR #1 merged, main has scaffolding + Phase B)
@@ -927,7 +927,7 @@ Post GATE RESULTS when ready for review, or flag blockers here.
 - **Status:** DONE
 - **Completed:** 2026-04-18
 - **Priority:** High
-- **From:** Sonnet (Richard)
+- **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — Phase C retry (faster pace, tighter script)
 - **Repo:** `scubarichard/1altx-autovid`
 - **Branch:** CONTINUE on existing `phase-c-audio-sync`
@@ -1009,7 +1009,7 @@ Ready for gate review. DO NOT MERGE — Richard reviews MP4 first.
 - **Status:** DONE
 - **Completed:** 2026-04-18
 - **Priority:** High
-- **From:** Sonnet (Richard)
+- **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — Phase C final audio swap (v5)
 - **Repo:** `scubarichard/1altx-autovid`
 - **Branch:** CONTINUE on existing `phase-c-audio-sync`
@@ -1136,7 +1136,7 @@ Richard reviewed `phase-c-walkthrough-v5.mp4` and approved. PR #2 merged to main
 - **Status:** DONE
 - **Completed:** 2026-04-18
 - **Priority:** High
-- **From:** Sonnet (Richard, autonomous mode)
+- **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — Phase E architecture
 - **Repo:** `scubarichard/1altx-autovid`
 - **Branch:** Create `phase-e-architecture` from `main`
@@ -1285,7 +1285,7 @@ Write artifacts to `artifacts/` dir with scene-level intermediate files kept for
 - **Status:** DONE
 - **Completed:** 2026-04-18
 - **Priority:** High
-- **From:** Sonnet (Richard, autonomous mode)
+- **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — OPT Solutions scenario JSON
 - **Repo:** `scubarichard/1altx-autovid`
 - **Branch:** `phase-e-architecture` (continue from TASK-006)
@@ -1378,7 +1378,7 @@ Use this exact scene structure (Sonnet has drafted this from the actual handover
 - **Status:** DONE
 - **Completed:** 2026-04-18
 - **Priority:** High
-- **From:** Sonnet (Richard, autonomous mode)
+- **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — Cookie extraction utility
 
 ### DO NOT START until TASK-007 is merged
@@ -1453,7 +1453,7 @@ Once all 4 items above are done, signal Forge and TASK-009 will run.
 - **Status:** DONE
 - **Completed:** 2026-04-18
 - **Priority:** High
-- **From:** Sonnet (Richard, autonomous mode)
+- **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — Generate OPT walkthrough video
 
 ### DO NOT START until:
@@ -1743,7 +1743,7 @@ Keep v1 intact for comparison. Also keep scene-level intermediates.
 - **Status:** DONE
 - **Completed:** 2026-04-18
 - **Priority:** High
-- **From:** Sonnet (Richard authorized "Variant B — just do it")
+- **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — OPT v3 using Richard's actual Chrome profile
 - **Repo:** `scubarichard/1altx-autovid`
 - **Branch:** Create `opt-walkthrough-v3-local-chrome` from `main`
@@ -1946,9 +1946,9 @@ Set up `P:\_clients\1altx-autovid\tmp\chrome-autovid-profile\` as a dedicated Ch
 
 ## TASK-20260420-FORGE-AUTOVID-013
 - **Assignee:** Forge
-- **Status:** SUPERSEDED_BY_014
+- **Status:** CANCELLED
 - **Priority:** High
-- **From:** Sonnet (Richard)
+- **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — Redact OPT walkthrough for catalog use
 - **Repo:** `scubarichard/1altx-autovid`
 - **Branch:** Create `opt-walkthrough-v3-redacted` from `main`
@@ -2124,7 +2124,7 @@ Post here if ffmpeg behaves unexpectedly on any region, or if Sharp/Canvas libra
 
 ---
 
-### [Sonnet] TASK-013 SUPERSEDED 2026-04-20
+### [Sonnet] TASK-013 CANCELLED 2026-04-20 (replaced by TASK-014)
 
 **Reason:** Redacting visuals alone leaves client-specific narration intact (Sunny, OPT Solutions, $199/mo plan, MIDs mentioned aloud). A blurred video with client-naming audio is worse than either option on its own.
 
@@ -2140,7 +2140,7 @@ If you already started TASK-013, stop and archive the work on branch `opt-walkth
 - **Assignee:** Forge
 - **Status:** PENDING
 - **Priority:** High
-- **From:** Sonnet (Richard)
+- **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — Catalog-purpose walkthrough (generic, reusable pattern)
 - **Repo:** `scubarichard/1altx-autovid`
 - **Branch:** Create `catalog-commission-tracking` from `main`
@@ -2278,7 +2278,7 @@ Post here if narration timing doesn't fit scene windows, if Claude's narration i
 - **Assignee:** Forge
 - **Status:** PENDING
 - **Priority:** Medium (parallel to TASK-014)
-- **From:** Sonnet (Richard)
+- **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — Reusable video redaction tool
 - **Repo:** `scubarichard/1altx-autovid`
 - **Branch:** Create `phase-f-redaction-tool` from `main`
@@ -2374,7 +2374,19 @@ Post here if Sharp has issues with SVG text rendering (common pitfall — may ne
 
 ---
 
-### [Sonnet] AMENDMENT 2026-04-20 — TASK-014 + TASK-015 processor genericization
+## TASK-20260420-FORGE-AUTOVID-016
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High (blocker for TASK-014 + TASK-015 execution)
+- **From:** [Sonnet]
+- **Project:** 1AltX AutoVid — Modifications to TASK-014 and TASK-015
+- **Type:** Amendment (modifies existing tasks, must be applied before TASK-014/015 execution)
+
+### Purpose
+
+Richard flagged that "Tyro" and "Nuvei" are Australia-specific payment processors. Every mention narrows the catalog video's addressable market. Both audio and visual references to these processors must be removed/blurred so the video pitches to payment resellers globally.
+
+This task modifies TASK-014 and TASK-015 before execution.
 
 Richard flagged that "Tyro" and "Nuvei" are Australia-specific payment processors. Every mention narrows the catalog video's addressable market. Both audio and visual references to these processors must be removed/blurred so the video pitches to payment resellers globally.
 
