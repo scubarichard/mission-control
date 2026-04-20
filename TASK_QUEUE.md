@@ -2747,3 +2747,25 @@ Post here if:
 - Audio reused entirely — no ElevenLabs API calls needed
 
 **DO NOT MERGE PR#8 without Richard review of catalog-commission-tracking-v2.mp4**
+
+---
+
+## TASK-20260420-FORGE-PNT-001
+- **Assignee:** Forge
+- **Status:** DONE
+- **Completed:** 2026-04-20
+- **Priority:** High
+- **From:** Sonnet (Richard)
+- **Client:** PNT
+
+### Task: Gate S5 form redesign then merge dev to main
+
+### Completed
+- Gate: TASK-20260418-FORGE-PNT-001 DONE (page reorder, two-zone tab bar, phase tracker on dev)
+- Tab overflow fix: padding 10px→6px, font-size 11px→10px, SHORT label map (Basics/Reserv.), scrollbar-width:none fallback
+- Removed duplicate `const SHORT` declaration (conflict remnant from Dax CSS fix — was breaking JS)
+- Smoke test @1200px: all 9 tabs visible, no horizontal scroll
+- Merge: dev→main pushed (commit 1126c9f), GitHub Pages serving S5 layout
+- Posted confirmation + smoke test summary to #dax-collab
+
+**[Forge] 2026-04-20:** DONE — S5 form redesign + tab overflow fix live on main and GitHub Pages.
