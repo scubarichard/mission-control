@@ -2370,3 +2370,56 @@ Future catalog videos can reference pre-generated cards for common platforms (Hu
 ### QUESTIONS / BLOCKERS
 
 Post here if Sharp has issues with SVG text rendering (common pitfall — may need to render text server-side with node-canvas if Sharp's SVG text support is limited on your Node version).
+
+
+---
+
+### [Sonnet] AMENDMENT 2026-04-20 — TASK-014 + TASK-015 processor genericization
+
+Richard flagged that "Tyro" and "Nuvei" are Australia-specific payment processors. Every mention narrows the catalog video's addressable market. Both audio and visual references to these processors must be removed/blurred so the video pitches to payment resellers globally.
+
+### CHANGES TO TASK-014 (Catalog narration rewrite)
+
+All narration prompts updated. Use these replacements:
+
+**Scene 1 narration prompt (UPDATED):**
+> "Payment industry resellers juggle commission reporting from multiple processors every month. Each partner sends reports in a different format, and reconciling them into what each merchant actually earned takes hours. Here's how 1AltX automates the entire pipeline. Four platforms working together: Google Drive for file intake, n8n for orchestration, an AI agent for calculation, and HubSpot for the CRM and reporting view."
+
+**Scene 2 narration prompt (UPDATED):**
+> "Monthly reports from each payment partner land in dedicated Google Drive folders — one folder per partner. n8n watches these folders continuously. Whenever a new file appears, the pipeline kicks off automatically. File formats, naming conventions, and processor quirks are handled by the automation. No one has to touch a spreadsheet."
+
+**Scene 3 narration prompt (UPDATED):**
+> "Two workflows run the calculation logic, one per payment partner. An AI agent extracts merchant data from each report, handling the different row structures and column names without hand-coded parsers. The workflows apply whatever commission rules the reseller has agreed to with each merchant — flat adjustments, volume-based deductions, funding fees, residual splits. A third workflow keeps merchant identifiers synced between Airtable and HubSpot so the data always reconciles."
+
+**Scene 4 narration prompt (UPDATED):**
+> "Every merchant's monthly commission record lands in Airtable as the single source of truth. Volume, income, expense, gross profit, adjustments, and the final net payout — all traceable back to the source report. This becomes the historical ledger the reseller can audit, export, or build further automations on top of."
+
+**Scene 5 narration prompt (unchanged — no processor names in it already)**
+
+**Scene 6 narration prompt (unchanged)**
+
+**Rule for Claude:** Never name specific payment processors in narration. Use "payment partner", "processor", or "provider" generically. If Claude's output includes specific processor names, regenerate.
+
+### CHANGES TO TASK-015 / scenarios/catalog/commission-tracking-for-resellers.json
+
+Add one more blur region to the redaction config — the Airtable **Provider column** which shows "Nuvei" / "Tyro" badges per row:
+
+```json
+{"x": 745, "y": 90, "w": 140, "h": 900, "start": 152, "end": 190, "sigma": 18, "note": "Airtable Provider column (processor badges: Nuvei/Tyro) — genericize for catalog use"}
+```
+
+Append this to the `blur_regions` array in the redaction config. Total blur regions for the catalog video: **7** (was 6).
+
+**Verified coordinates by Sonnet:** x=745 aligns with left edge of Provider column header, w=140 covers the badge width, y=90 starts at header, h=900 extends past the last visible row.
+
+### CLARIFICATION
+
+For the OPT client deliverable (`scenarios/opt/opt-walkthrough.json`), keep processor names VISIBLE. That's Sunny's actual system — he needs to see "Tyro" and "Nuvei" in his walkthrough. This amendment applies ONLY to the catalog-use video (`scenarios/catalog/commission-tracking-for-resellers.json`).
+
+Keep `scenarios/opt/` untouched. Build the catalog version separately with the full 7-region blur list + generic narration.
+
+### WHY THIS MATTERS
+
+A catalog video that names "Tyro" and "Nuvei" filters out every payment reseller who doesn't work with those specific processors. The narration should describe the *pattern* — "reconciling commissions across multiple processors" — which applies to any reseller working with any combination of Stripe, Square, Adyen, Chase Paymentech, Worldpay, etc.
+
+The visuals, now blurred on processor-specific text, let any prospect see the pattern and imagine their own partners in those slots.
