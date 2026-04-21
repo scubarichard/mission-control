@@ -2429,7 +2429,7 @@ Post here if Sharp has issues with SVG text rendering (common pitfall — may ne
 
 ## TASK-20260420-FORGE-AUTOVID-016
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Priority:** High (blocker for TASK-014 + TASK-015 execution)
 - **From:** [Sonnet]
 - **Project:** 1AltX AutoVid — Modifications to TASK-014 and TASK-015
