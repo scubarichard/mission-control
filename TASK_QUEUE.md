@@ -2769,3 +2769,32 @@ Post here if:
 - Posted confirmation + smoke test summary to #dax-collab
 
 **[Forge] 2026-04-20:** DONE — S5 form redesign + tab overflow fix live on main and GitHub Pages.
+
+---
+
+## TASK-20260420-FORGE-AUTOVID-018
+- **Assignee:** Forge
+- **Status:** DONE
+- **Completed:** 2026-04-20
+- **Priority:** High
+- **ClickUp:** 86e106nfe
+- **Project:** 1AltX AutoVid — DAX Demo Video
+
+### Task: Build DAX demo video v2 for Upwork proposals
+
+Built `dax-demo-v2.mp4` (79.6s, 1.80 MB) at `C:/Users/18473/Dropbox/AutoVid/artifacts/dax-demo-v2.mp4`
+
+**v2 changes over v1:**
+- Title cards: pure dark style (#050505 bg, green eyebrow "1ALTX LLC", white 96px bold title, green underline, #9ca3af subtitle) — no arch diagram background
+- Scene 1 (new): arch diagram centered on dark background, padded to 1440×810 max within 1920×1080 canvas
+- Demo clip (Scene 4): seeks t=20s to skip Microsoft SSO login page, starts on live DAX chat interaction
+- 6 new narration tracks (v2-00 through v2-05) — Matilda voice
+- Script: `src/pipeline/build-dax-demo-v2.mjs`
+
+**Scene breakdown:**
+- 00 Opening title card: 10.1s
+- 01 Arch diagram: 9.7s
+- 02 Dashboard clip: 11.3s
+- 03 Workflows clip: 12.1s
+- 04 Demo clip (seek=20s): 9.8s
+- 05 Closing title card: 5.2s
