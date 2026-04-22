@@ -1,0 +1,34 @@
+{
+  "id": 1,
+  "mapper": {
+    "mode": "select",
+    "filter": [
+      [
+        {
+          "a": "status",
+          "b": "Queued",
+          "o": "text:equal"
+        }
+      ]
+    ],
+    "sheetId": "Queue",
+    "sortOrder": "asc",
+    "spreadsheetId": "/1OuTq7QYItLLJdfRI0131Zq4FcZ8jtxbXudf5Zv3HvD0",
+    "tableFirstRow": "A1:N1",
+    "includesHeaders": true,
+    "maxReturnedRows": "1",
+    "valueRenderOption": "FORMATTED_VALUE",
+    "dateTimeRenderOption": "FORMATTED_STRING"
+  },
+  "module": "google-sheets:filterRows",
+  "version": 2,
+  "metadata": {
+    "designer": {
+      "x": 0,
+      "y": 450
+    }
+  },
+  "parameters": {
+    "__IMTCONN__": 4472711
+  }
+}

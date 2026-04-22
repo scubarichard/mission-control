@@ -1,0 +1,363 @@
+{
+  "name": "Chosen Agency — Content Pipeline (Test)",
+  "flow": [
+    {
+      "id": 1,
+      "module": "google-sheets:filterRows",
+      "version": 2,
+      "parameters": { "__IMTCONN__": 4472711 },
+      "mapper": {
+        "mode": "select",
+        "spreadsheetId": "/1OuTq7QYItLLJdfRI0131Zq4FcZ8jtxbXudf5Zv3HvD0",
+        "sheetId": "Queue",
+        "includesHeaders": true,
+        "tableFirstRow": "A1:N1",
+        "filter": [[{ "a": "status", "b": "Queued", "o": "text:equal" }]],
+        "sortOrder": "asc",
+        "maxReturnedRows": "1",
+        "valueRenderOption": "FORMATTED_VALUE",
+        "dateTimeRenderOption": "FORMATTED_STRING"
+      },
+      "metadata": { "designer": { "x": 0, "y": 450 } }
+    },
+    {
+      "id": 2,
+      "module": "util:SetVariables",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "scope": "roundtrip",
+        "variables": [
+          { "name": "row_hash", "value": "{{sha1(1.`topic` + 1.`voice_id` + 1.`avatar_id`)}}" },
+          { "name": "effective_voice_id", "value": "{{ifempty(1.`voice_id`; \"IuxDTLynYdvisya7jrK5\")}}" },
+          { "name": "effective_avatar_id", "value": "{{ifempty(1.`avatar_id`; \"Abigail_expressive_2024112501\")}}" },
+          { "name": "effective_duration", "value": "{{ifempty(1.`target_duration_sec`; 30)}}" },
+          { "name": "word_count_target", "value": "{{round(ifempty(1.`target_duration_sec`; 30) * 2.5)}}" }
+        ]
+      },
+      "metadata": { "designer": { "x": 300, "y": 450 } }
+    },
+    {
+      "id": 3,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "mapper": null,
+      "metadata": { "designer": { "x": 600, "y": 450 } },
+      "routes": [
+        {
+          "flow": [
+            {
+              "id": 4,
+              "module": "google-sheets:updateRow",
+              "version": 2,
+              "parameters": { "__IMTCONN__": 4472711 },
+              "filter": { "name": "Proceed (not duplicate)", "conditions": [[]] },
+              "mapper": {
+                "from": "drive",
+                "mode": "select",
+                "spreadsheetId": "/1OuTq7QYItLLJdfRI0131Zq4FcZ8jtxbXudf5Zv3HvD0",
+                "sheetId": "Queue",
+                "includesHeaders": true,
+                "tableFirstRow": "A1:N1",
+                "rowNumber": "{{1.`__ROW_NUMBER__`}}",
+                "values": { "status": "Processing", "row_hash": "{{2.row_hash}}" },
+                "valueInputOption": "USER_ENTERED"
+              },
+              "metadata": { "designer": { "x": 900, "y": 300 } }
+            },
+            {
+              "id": 5,
+              "module": "openai-gpt-3:CreateCompletion",
+              "version": 1,
+              "parameters": { "__IMTCONN__": null },
+              "mapper": {
+                "select": "chat",
+                "model": "gpt-4o-mini",
+                "messages": [
+                  { "role": "system", "content": "You are a narration scriptwriter for short-form AI avatar videos. You write the exact words an on-camera host will speak — nothing more.\n\nRules:\n- Write approximately {{2.word_count_target}} words, which reads at about {{2.effective_duration}} seconds of natural narration.\n- Output only the spoken text. No titles, no headers, no markdown, no bullet points.\n- No stage directions, no emotion cues, no bracketed notes. If it's not meant to be spoken aloud, don't include it.\n- Use contractions (it's, you'll, don't). Write the way a person actually talks.\n- Open with the hook. First sentence delivers value — no greetings, no preamble.\n- End on a clear final thought. No sign-off, no thanks for watching.\n- Conversational tone. Short sentences. Active voice.\n\nReturn only the script text." },
+                  { "role": "user", "content": "Topic: {{1.`topic`}}" }
+                ],
+                "max_tokens": "500",
+                "temperature": "0.7",
+                "top_p": "1",
+                "n": "1",
+                "response_format": { "type": "text" }
+              },
+              "metadata": { "designer": { "x": 1200, "y": 300 } }
+            },
+            {
+              "id": 6,
+              "module": "google-sheets:updateRow",
+              "version": 2,
+              "parameters": { "__IMTCONN__": 4472711 },
+              "mapper": {
+                "from": "drive",
+                "mode": "select",
+                "spreadsheetId": "/1OuTq7QYItLLJdfRI0131Zq4FcZ8jtxbXudf5Zv3HvD0",
+                "sheetId": "Queue",
+                "includesHeaders": true,
+                "tableFirstRow": "A1:N1",
+                "rowNumber": "{{1.`__ROW_NUMBER__`}}",
+                "values": { "status": "Script Done", "script": "{{5.choices[].message.content}}" },
+                "valueInputOption": "USER_ENTERED"
+              },
+              "metadata": { "designer": { "x": 1500, "y": 300 } }
+            },
+            {
+              "id": 7,
+              "module": "http:ActionSendData",
+              "version": 3,
+              "parameters": { "handleErrors": true, "useNewZLibDeCompress": true },
+              "mapper": {
+                "qs": [],
+                "url": "https://api.elevenlabs.io/v1/text-to-speech/{{2.effective_voice_id}}",
+                "data": "{\n  \"text\": \"{{replace(5.choices[].message.content; \"\\\"\"; \"\\\\\\\"\")}}\",\n  \"model_id\": \"eleven_turbo_v2_5\",\n  \"voice_settings\": {\n    \"stability\": 0.5,\n    \"similarity_boost\": 0.75\n  }\n}",
+                "gzip": true,
+                "method": "post",
+                "headers": [
+                  { "name": "xi-api-key", "value": "sk_96777b4083fe132f3e98f54f011ad28e144805f60628c1c6" },
+                  { "name": "Content-Type", "value": "application/json" },
+                  { "name": "Accept", "value": "audio/mpeg" }
+                ],
+                "timeout": "60",
+                "bodyType": "raw",
+                "contentType": "application/json",
+                "parseResponse": false,
+                "followRedirect": true,
+                "rejectUnauthorized": true
+              },
+              "metadata": { "designer": { "x": 1800, "y": 300 } }
+            },
+            {
+              "id": 8,
+              "module": "google-drive:uploadAFile",
+              "version": 4,
+              "parameters": { "__IMTCONN__": null },
+              "mapper": {
+                "select": "map",
+                "folderId": "root",
+                "filename": "audio_{{1.`row_id`}}_{{formatDate(now; \"YYYYMMDD_HHmmss\")}}.mp3",
+                "data": "{{7.data}}",
+                "convert": false
+              },
+              "metadata": { "designer": { "x": 2100, "y": 300 } }
+            },
+            {
+              "id": 9,
+              "module": "google-sheets:updateRow",
+              "version": 2,
+              "parameters": { "__IMTCONN__": 4472711 },
+              "mapper": {
+                "from": "drive",
+                "mode": "select",
+                "spreadsheetId": "/1OuTq7QYItLLJdfRI0131Zq4FcZ8jtxbXudf5Zv3HvD0",
+                "sheetId": "Queue",
+                "includesHeaders": true,
+                "tableFirstRow": "A1:N1",
+                "rowNumber": "{{1.`__ROW_NUMBER__`}}",
+                "values": { "status": "Voice Done", "audio_url": "{{8.webContentLink}}" },
+                "valueInputOption": "USER_ENTERED"
+              },
+              "metadata": { "designer": { "x": 2400, "y": 300 } }
+            },
+            {
+              "id": 10,
+              "module": "http:ActionSendData",
+              "version": 3,
+              "parameters": { "handleErrors": true, "useNewZLibDeCompress": true },
+              "mapper": {
+                "qs": [],
+                "url": "https://api.heygen.com/v2/video/generate",
+                "data": "{\n  \"video_inputs\": [\n    {\n      \"character\": {\n        \"type\": \"avatar\",\n        \"avatar_id\": \"{{2.effective_avatar_id}}\",\n        \"avatar_style\": \"normal\"\n      },\n      \"voice\": {\n        \"type\": \"audio\",\n        \"audio_url\": \"{{9.audio_url}}\"\n      }\n    }\n  ],\n  \"dimension\": { \"width\": 1280, \"height\": 720 }\n}",
+                "gzip": true,
+                "method": "post",
+                "headers": [
+                  { "name": "X-Api-Key", "value": "sk_V2_hgu_kreth6P7l81_sjkUCQdTU4CE0Nu6OQmCa70KaMVjbFnA" },
+                  { "name": "Content-Type", "value": "application/json" }
+                ],
+                "timeout": "60",
+                "bodyType": "raw",
+                "contentType": "application/json",
+                "parseResponse": true,
+                "followRedirect": true,
+                "rejectUnauthorized": true
+              },
+              "metadata": { "designer": { "x": 2700, "y": 300 } }
+            },
+            {
+              "id": 11,
+              "module": "google-sheets:updateRow",
+              "version": 2,
+              "parameters": { "__IMTCONN__": 4472711 },
+              "mapper": {
+                "from": "drive",
+                "mode": "select",
+                "spreadsheetId": "/1OuTq7QYItLLJdfRI0131Zq4FcZ8jtxbXudf5Zv3HvD0",
+                "sheetId": "Queue",
+                "includesHeaders": true,
+                "tableFirstRow": "A1:N1",
+                "rowNumber": "{{1.`__ROW_NUMBER__`}}",
+                "values": { "status": "Rendering", "heygen_video_id": "{{10.data.video_id}}", "poll_attempts": "0" },
+                "valueInputOption": "USER_ENTERED"
+              },
+              "metadata": { "designer": { "x": 3000, "y": 300 } }
+            },
+            {
+              "id": 12,
+              "module": "builtin:BasicRepeater",
+              "version": 1,
+              "mapper": { "start": "1", "repeats": "10", "step": "1" },
+              "metadata": { "designer": { "x": 3300, "y": 300 } }
+            },
+            {
+              "id": 13,
+              "module": "util:FunctionSleep",
+              "version": 1,
+              "parameters": {},
+              "mapper": { "duration": "60" },
+              "metadata": { "designer": { "x": 3600, "y": 300 } }
+            },
+            {
+              "id": 14,
+              "module": "http:ActionSendData",
+              "version": 3,
+              "parameters": { "handleErrors": true, "useNewZLibDeCompress": true },
+              "mapper": {
+                "qs": [],
+                "url": "https://api.heygen.com/v1/video_status.get?video_id={{10.data.video_id}}",
+                "gzip": true,
+                "method": "get",
+                "headers": [ { "name": "X-Api-Key", "value": "sk_V2_hgu_kreth6P7l81_sjkUCQdTU4CE0Nu6OQmCa70KaMVjbFnA" } ],
+                "timeout": "30",
+                "bodyType": "raw",
+                "parseResponse": true,
+                "followRedirect": true,
+                "rejectUnauthorized": true
+              },
+              "metadata": { "designer": { "x": 3900, "y": 300 } }
+            },
+            {
+              "id": 15,
+              "module": "builtin:BasicRouter",
+              "version": 1,
+              "mapper": null,
+              "metadata": { "designer": { "x": 4200, "y": 300 } },
+              "routes": [
+                {
+                  "flow": [
+                    {
+                      "id": 16,
+                      "module": "google-sheets:updateRow",
+                      "version": 2,
+                      "parameters": { "__IMTCONN__": 4472711 },
+                      "filter": { "name": "Completed", "conditions": [[{ "a": "{{14.data.status}}", "b": "completed", "o": "text:equal" }]] },
+                      "mapper": {
+                        "from": "drive",
+                        "mode": "select",
+                        "spreadsheetId": "/1OuTq7QYItLLJdfRI0131Zq4FcZ8jtxbXudf5Zv3HvD0",
+                        "sheetId": "Queue",
+                        "includesHeaders": true,
+                        "tableFirstRow": "A1:N1",
+                        "rowNumber": "{{1.`__ROW_NUMBER__`}}",
+                        "values": { "status": "Done", "video_url": "{{14.data.video_url}}", "processed_at": "{{formatDate(now; \"YYYY-MM-DD HH:mm:ss\")}}" },
+                        "valueInputOption": "USER_ENTERED"
+                      },
+                      "metadata": { "designer": { "x": 4500, "y": 0 } }
+                    }
+                  ]
+                },
+                {
+                  "flow": [
+                    {
+                      "id": 17,
+                      "module": "google-sheets:updateRow",
+                      "version": 2,
+                      "parameters": { "__IMTCONN__": 4472711 },
+                      "filter": { "name": "Failed", "conditions": [[{ "a": "{{14.data.status}}", "b": "failed", "o": "text:equal" }]] },
+                      "mapper": {
+                        "from": "drive",
+                        "mode": "select",
+                        "spreadsheetId": "/1OuTq7QYItLLJdfRI0131Zq4FcZ8jtxbXudf5Zv3HvD0",
+                        "sheetId": "Queue",
+                        "includesHeaders": true,
+                        "tableFirstRow": "A1:N1",
+                        "rowNumber": "{{1.`__ROW_NUMBER__`}}",
+                        "values": { "status": "Failed", "error": "HeyGen render failed: {{14.data.error.message}}" },
+                        "valueInputOption": "USER_ENTERED"
+                      },
+                      "metadata": { "designer": { "x": 4500, "y": 300 } }
+                    }
+                  ]
+                },
+                {
+                  "flow": [
+                    {
+                      "id": 18,
+                      "module": "google-sheets:updateRow",
+                      "version": 2,
+                      "parameters": { "__IMTCONN__": 4472711 },
+                      "filter": { "name": "Still processing", "conditions": [[{ "a": "{{14.data.status}}", "b": "processing,pending,waiting", "o": "text:contain" }]] },
+                      "mapper": {
+                        "from": "drive",
+                        "mode": "select",
+                        "spreadsheetId": "/1OuTq7QYItLLJdfRI0131Zq4FcZ8jtxbXudf5Zv3HvD0",
+                        "sheetId": "Queue",
+                        "includesHeaders": true,
+                        "tableFirstRow": "A1:N1",
+                        "rowNumber": "{{1.`__ROW_NUMBER__`}}",
+                        "values": { "poll_attempts": "{{12.i}}" },
+                        "valueInputOption": "USER_ENTERED"
+                      },
+                      "metadata": { "designer": { "x": 4500, "y": 600 } }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 19,
+              "module": "google-sheets:updateRow",
+              "version": 2,
+              "parameters": { "__IMTCONN__": 4472711 },
+              "filter": { "name": "Duplicate", "conditions": [[{ "a": "{{1.`row_hash`}}", "b": "{{2.row_hash}}", "o": "text:equal" }, { "a": "{{1.`status`}}", "b": "Done", "o": "text:equal" }]] },
+              "mapper": {
+                "from": "drive",
+                "mode": "select",
+                "spreadsheetId": "/1OuTq7QYItLLJdfRI0131Zq4FcZ8jtxbXudf5Zv3HvD0",
+                "sheetId": "Queue",
+                "includesHeaders": true,
+                "tableFirstRow": "A1:N1",
+                "rowNumber": "{{1.`__ROW_NUMBER__`}}",
+                "values": { "status": "Done (duplicate)" },
+                "valueInputOption": "USER_ENTERED"
+              },
+              "metadata": { "designer": { "x": 900, "y": 900 } }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "instant": false,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "slots": null,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": { "orphans": [] },
+    "zone": "us2.make.com"
+  }
+}
