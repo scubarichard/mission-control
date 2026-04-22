@@ -2798,3 +2798,40 @@ Built `dax-demo-v2.mp4` (79.6s, 1.80 MB) at `C:/Users/18473/Dropbox/AutoVid/arti
 - 03 Workflows clip: 12.1s
 - 04 Demo clip (seek=20s): 9.8s
 - 05 Closing title card: 5.2s
+
+---
+
+## TASK-20260422-FORGE-DAX-001
+- **Assignee:** Forge
+- **Status:** DONE
+- **Completed:** 2026-04-22
+- **Priority:** CRITICAL
+- **From:** Richard (via session handoff)
+- **Client:** ICP (Impact Capital Partners) — dax.impact-cp.com
+
+### Task: ICP DAX live client fixes — Brett's team is LIVE
+
+### Completed
+
+**1. Check logins ✅** — Container app `ca-dax-impact-capital` running, SSO configured, allowed domains include impact-cp.com.
+
+**2. Activate sub-workflows ✅** — All 6 ICP production workflows confirmed active in n8n SQLite.
+
+**3. Compliance portal branding ✅** — Updated `patches/compliance-route.js` to inject `DAX_FIRM_NAME` env var into compliance.html (replaces all "Dakona LLC" occurrences). Built and deployed new image `acrdaximpactcapital.azurecr.io/librechat-dax:v0.6.2-hotfix2` (ACR run `ca4`). New revision `ca-dax-impact-capital--hotfix2` running. `DAX_FIRM_NAME=Impact Capital Partners` already set. Portal stays "coming soon" until `COMPLIANCE_COMING_SOON=0` + Wealthbox token added.
+
+**4. System prompt ✅** — Updated librechat.yaml `promptPrefix` to replace "Dakona LLC" → "Impact Capital Partners'" (deployed in revision `--config1776882122`). Also fixed "Dakona LLC" in n8n DAX Agent node `systemMessage` directly via SQLite.
+
+**5. Streaming ✅** — Changed `stream: false` → `stream: true` in librechat.yaml CONFIG_YAML_B64. Deployed in `--config1776882122`.
+
+**6. Verify doc gen ⚠️** — No Document Generator executions found (never triggered). Needs manual test from Brett's side or Richard to confirm end-to-end doc creation + SharePoint upload.
+
+**7. Fix doc gen cross-tenant bug ✅** — ICP router `wGhmfrxHEBK7FzES` had three Dakona references patched via SQLite on `vm-n8n-icp`:
+- Generate Reports Tool: `https://n8n.dakona.net/webhook/schwab-processor` → `http://localhost:5678/webhook/schwab-processor`
+- Research and Write Tool: `n8n.dakona.net` → `localhost` (in jsCode)
+- DAX Agent systemMessage: "Dakona LLC" → "Impact Capital Partners"
+- n8n restarted to reload changes.
+
+**8. Replicate Dakona fixes ✅** — All Dakona tenant references removed from ICP n8n router. Verified: zero "dakona" references remaining in workflow node parameters.
+
+**[Forge] 2026-04-22:** DONE — ICP DAX live fixes applied. Subtask 6 (doc gen smoke test) deferred to Richard/Brett manual verification.
+
