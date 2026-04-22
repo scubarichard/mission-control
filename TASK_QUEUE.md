@@ -269,3 +269,216 @@ Post results for ALL 8 tasks here. Do not mark DONE until:
 - Router workflow: `wGhmfrxHEBK7FzES`
 - DAX-ICP SSO app: `7822f093-9c83-4b1a-83db-29517d29ac89`
 - DAX Document Generator app: `1678bb95-083d-45b5-a3ea-31941773d2d4`
+
+
+---
+
+## TASK-20260422-TRITON-1ALTX-001 — Catalog Video Library (Phase F)
+- **Assignee:** Triton
+- **Status:** PENDING
+- **Date:** 2026-04-22
+- **From:** Sonnet (session with Richard)
+- **Client:** 1AltX (internal — building sales asset library)
+- **Priority:** Medium
+- **Title:** Build catalog video scenario library + YouTube upload pipeline
+
+### Context
+
+Richard has 13 existing Descript-hosted catalog videos (the 1AltX product catalog — Close-ClickUp, Shopify Top 30, etc.). He wants to build a YouTube-hosted library using the autovid pipeline with three additions per video:
+
+1. **Opening:** bespoke hook per automation (pain point → reveal → promise)
+2. **CTA card:** standardized outro (script locked — see "Locked Assets" below)
+3. **YouTube upload:** automatic publish to his YouTube channel (@1AltXLLC, channel ID `UCq_19UyLx50ng6EXFvPnQUw`)
+
+Why Triton and not Forge: this is primarily **scenario schema work + narration writing + YouTube API integration** — architecture and config work, not capture/compose plumbing. Forge already owns capture/compose. Triton owns config schema per the ORCHESTRATION.md protocol.
+
+### First step — catch up on the repo (DO THIS BEFORE ANY CODE)
+
+Triton does not have Forge's full context on the autovid codebase. Before writing anything:
+
+1. Read `docs/ORCHESTRATION.md` — gate protocol, role definitions, one-phase-one-PR rule
+2. Read `docs/PHASE_E.md` — scene schema, module reference, pipeline data flow
+3. Read `docs/PHASE_D_PVC.md` — Sonnet's session handover (separate PVC track — helpful context on 1AltX sheets + ElevenLabs usage)
+4. Read `scenarios/chosen-walkthrough.json` + `scenarios/opt-walkthrough.json` — production-quality examples of the scenario schema
+5. Read `config/scenario.schema.json` — canonical schema (extend this for catalog-type scenarios)
+6. Read `config/voice.json` — voice profile config pattern
+7. Read `src/pipeline/run.js` — orchestrator, understand how scenarios are consumed
+8. Read `src/compose/scene.js` + `src/compose/concat.js` — how scenes merge
+
+Only after reading all the above, begin implementation. If anything is unclear, post a question in `#dax-collab` prefixed `[Triton]` before building.
+
+### Scope — 4 phases
+
+**Phase F.1 — Catalog scenario schema**
+
+Extend `config/scenario.schema.json` with a new scenario type: `catalog_item`. Canonical structure:
+
+```
+scenarios/catalog/
+  ├── _template.json        ← reusable template
+  ├── 01-close-clickup.json
+  ├── 02-close-agencyhandy.json
+  ├── 03-smart-email-intake.json
+  ├── 04-sheets-pdf-docuseal.json
+  ├── 05-ai-blog-generator.json
+  ├── 06-ringover-webhook.json
+  ├── 07-csv-apps-script.json
+  ├── 08-shopify-top30.json
+  ├── 09-shopify-matrixify.json
+  ├── 10-msp-psa-export.json
+  ├── 11-pipedrive-zendesk.json
+  ├── 12-receipts.json
+  └── 13-google-form-pdf.json
+```
+
+Each catalog scenario has **exactly 3 scenes**:
+- `scene-01-opener` (type: `title_card`, ~12 sec) — hook + reveal + promise
+- `scene-02-demo` (type: `user_provided`, 60-90 sec) — the existing demo footage
+- `scene-03-cta` (type: `title_card`, ~15 sec) — standardized CTA (see Locked Assets)
+
+Scene 2 source_path: Richard will provide existing MP4 exports from Descript (or we re-record — see Phase F.2 Open Questions below). Triton's job is the scenario structure, not the demo content itself.
+
+**Phase F.2 — Write all 13 opener scripts**
+
+Richard chose **bespoke** opener scripts (not templated). Standard length (~14 seconds each).
+
+Structure for each:
+1. **Hook** — bespoke 1-sentence pain point specific to this automation
+2. **Reveal** — "This is how our {automation_name} {outcome}"
+3. **Promise** — "In the next {duration}, I'll show you exactly how it works"
+
+The 13 automations and draft hooks (Sonnet-drafted — Triton should refine where prospect context is missing):
+
+| # | Automation | Draft hook (refine as needed) |
+|---|---|---|
+| 1 | Close → ClickUp | "Every closed deal in Close creates ten minutes of admin in ClickUp. This automation does it in ten seconds." |
+| 2 | Close → AgencyHandy | "Your agency sells in Close but delivers in AgencyHandy — somewhere in between, details get lost. This closes the gap." |
+| 3 | Smart Email Intake Logger | "Your inbox is full of leads you never logged. This automation captures every one, tagged and ready to work." |
+| 4 | Sheets → PDF/DocuSeal | "If you''re still pasting spreadsheet rows into contract templates, you''re wasting an hour every time." |
+| 5 | AI Blog Post Generator | "Writing one blog post takes four hours. Writing ten takes this automation thirty minutes." |
+| 6 | Ringover Webhook Listener | "Every missed call in Ringover should create a task somewhere. This automation makes sure none slip through." |
+| 7 | CSV → Apps Script | "Drop a CSV in a folder. Watch it become a fully processed dataset in your sheet — without touching a thing." |
+| 8 | Shopify Top 30 | "Monday mornings, 9am — is your bestsellers report ready, or are you still building it?" |
+| 9 | Shopify Matrixify | "Managing thousands of Shopify product variants shouldn''t require a developer. This automation gives your team that power." |
+| 10 | MSP PSA Export | "Your PSA has the data your clients need. This automation puts it in their hands — on schedule, no manual pulls." |
+| 11 | Pipedrive → Zendesk | "When a deal closes in Pipedrive, support picks up in Zendesk — without anyone copying anything between them." |
+| 12 | Receipt Submission | "Your team shouldn''t email receipts to accounting. This automation lets them submit, tag, and forget." |
+| 13 | Google Form → PDF | "Every form submission becomes a branded PDF — in your drive, in your client''s inbox, automatically." |
+
+**Open questions for Phase F.2 — post in #dax-collab for Richard to answer before writing the 6 below:**
+- **#2 (AgencyHandy):** what handoff does this automate — project setup, billing, or both?
+- **#3 (Smart Email Intake):** leads, support tickets, all inbound, or something else?
+- **#6 (Ringover):** logs calls, routes them, creates tasks, syncs to CRM?
+- **#7 (CSV → Apps Script):** data import, transformation, or reporting use case?
+- **#9 (Matrixify):** bulk import/export, variant management, or migration?
+- **#10 (MSP PSA):** exports to what — client reports, billing, analytics?
+
+**Phase F.3 — YouTube uploader module**
+
+Build `src/publish/youtube.js` as a new autovid module. Not a standalone script — integrates into the pipeline so scenarios can opt in via a `publish: { youtube: true }` field in the scenario JSON.
+
+**Requirements:**
+- Uses YouTube Data API v3, scope `https://www.googleapis.com/auth/youtube.upload`
+- Reads credentials from OAuth flow (not service account — YouTube requires user auth)
+- Uploads as **Unlisted** by default (Richard reviews, publishes manually)
+- Metadata fields from scenario JSON:
+  - `title` — "{automation_name} — 1AltX Product Catalog"
+  - `description` — auto-generated from scenario `_notes.description` + CTA text + link to `https://1altx.com`
+  - `tags` — `["1AltX", "automation", "{category}", ...scenario.tags]`
+  - `category_id` — 28 (Science & Technology) or 22 (People & Blogs) — Triton pick
+- Returns: `{ videoId, url, title, privacyStatus }`
+- Writes result back to scenario JSON as `_notes.youtube_url` for traceability
+- Quota budget: each upload costs 1600 units; daily limit is 10,000 units = **6 uploads/day max**. Build in a rate-limiter or at minimum document this clearly in README
+
+**Critical lessons from Sonnet''s 2026-04-21 YouTube tangent (don''t repeat):**
+- OAuth `redirect_uri` must EXACTLY match what''s in the GCP Desktop OAuth client config — port 80 vs 8080 caused failures
+- Token refresh: store refresh_token, don''t re-auth every run
+- Brand channel vs personal channel auth context matters — uploads may go to the wrong channel if the user switches accounts during OAuth. Verify `channels.list?mine=true` after auth.
+- Test uploads orphaned from wrong channel can''t be deleted via API from a different auth context. Use `videos.list?id={ids}` to verify ownership before trusting the delete endpoint.
+
+**Phase F.4 — Integration test**
+
+Run the full pipeline end-to-end on **1 catalog item only** (Triton picks the easiest — recommend Close → ClickUp since it has the clearest demo footage pattern). Deliverable:
+- Opener card rendered with bespoke narration in Richard''s voice (ElevenLabs)
+- Demo scene embedded
+- CTA card rendered with locked CTA script (same ElevenLabs voice)
+- All 3 scenes concatenated into final MP4
+- Uploaded to YouTube as Unlisted
+- YouTube URL posted in gate results
+
+Once Phase F.4 passes review, Triton (or Forge) can batch-render and batch-upload the remaining 12.
+
+### Locked assets (do not modify without Richard''s approval)
+
+**CTA script (exact wording — used in scene-03-cta for all 13 videos):**
+
+> "You''ll be amazed how much manual work disappears when the right automation kicks in. Visit one alt X dot com and schedule a call — we''ll scope it, size it, and give you a straight price."
+
+**CTA card visual spec (design):**
+- Background: dark (match Richard''s DAX demo v2 title cards — coordinate with Forge for exact colors)
+- Logo: "1AltX" wordmark top-center
+- Main text: "onealtx.com"
+- Subtitle: "Schedule a call"
+- Duration: 15 seconds (matches audio)
+
+**Opener card visual spec (design):**
+- Eyebrow: "1ALTX PRODUCT CATALOG" (all caps)
+- Title: {automation_name} — e.g., "Close → ClickUp"
+- Subtitle: short pain statement, 4-6 words max
+- Duration: 12 seconds (matches audio)
+
+### Credentials + infrastructure reference
+
+**Azure Key Vault (autovid uses `kvdaximpactcapital`, NOT kvdaxdakonapilot):**
+- `ELEVENLABS-API-KEY` — ElevenLabs API key
+- `ELEVENLABS-VOICE-ID-RICHARD` — Richard''s voice clone ID (= `IuxDTLynYdvisya7jrK5`, verified in chosen scenario)
+- `ANTHROPIC-API-KEY` — Claude API key for narration generation (Phase E already wired)
+
+**Dakona KV (`kvdaxdakonapilot`) — NOT used by autovid, but reference:**
+- `descript-api-token` — Descript API bearer (used by PVC track, not catalog track)
+- `github-token` — GitHub PAT for scubarichard
+
+**YouTube OAuth (does NOT exist yet — Triton creates in Phase F.3):**
+- Create Desktop OAuth 2.0 Client in GCP project `positive-bonbon-478413-p1` (same project Sonnet used 2026-04-21)
+- Or: new GCP project dedicated to 1AltX — Triton''s call
+- Scope: `https://www.googleapis.com/auth/youtube.upload`
+- Store `client_secret.json` + `token.json` at `C:\Users\18473\Tools\autovid-youtube\` (NOT in repo)
+- Add to `.gitignore`: `youtube_*.json`, `token.json`
+- Refresh token stored securely; rotation not required but note expiry behavior in README
+
+**Paths:**
+- Repo clone: `C:\Users\18473\Dropbox\Companies\1AltX\Projects\_clients\1altx-autovid\`
+- Scenarios output: `scenarios/catalog/`
+- Artifacts (intermediate MP4s): `artifacts/catalog/{id}/`
+- Final output: `C:/Users/18473/Dropbox/Companies/1AltX/Catalog/Videos/{id}.mp4` (Triton create this folder)
+- Existing catalog demo footage source: Richard will drop in `C:/Users/18473/Dropbox/Companies/1AltX/Tools/Video/catalog/` (coordinate with Richard on getting the 13 demo clips — may require re-exporting from Descript)
+
+**Sheet (if any tracking needed):**
+- No sheet yet — Triton decide if one is needed or if scenario JSONs are sufficient. Voting lean: scenario JSONs are sufficient, add a sheet only if Richard wants it for catalog management.
+
+### Gate protocol (per ORCHESTRATION.md)
+
+1. Branch: `triton/catalog-video-library`
+2. Phase F.1 (schema) → Sonnet pre-review → commit
+3. Phase F.2 (13 opener scripts) → Richard reviews the bespoke hooks (especially the 6 marked as open questions) → commit
+4. Phase F.3 (YouTube uploader) → Sonnet pre-review → commit
+5. Phase F.4 (integration test, 1 video) → Richard reviews the actual Unlisted YouTube video → IF PASS → merge PR to main
+6. Batch render remaining 12 → all upload to YouTube Unlisted → Richard publishes from YouTube Studio UI
+
+### Deliverables for this task (PENDING → DONE)
+
+- [ ] Branch created, all docs read (comment in gate result: "I read X, X, X")
+- [ ] Phase F.1: schema extended + `_template.json` committed
+- [ ] Phase F.2: all 13 opener scripts committed (OPEN QUESTIONS resolved with Richard first)
+- [ ] Phase F.3: `src/publish/youtube.js` + `docs/PHASE_F_YOUTUBE.md` committed
+- [ ] Phase F.4: 1 catalog video rendered + uploaded to YouTube Unlisted
+- [ ] Gate result posted: YouTube URL + any surprises encountered
+
+### Do NOT
+
+- Do not publish anything to YouTube as Public. All uploads Unlisted. Richard publishes from YouTube Studio UI.
+- Do not re-record existing catalog demo footage without explicit Richard ask — reuse existing Descript-sourced MP4s if Richard provides them
+- Do not modify the locked CTA script
+- Do not touch Forge''s catalog-commission-tracking-v2 branch or the main autovid pipeline — catalog scenarios are additive, not a refactor
+- Do not put credentials in the repo
+- Do not skip the "read the repo docs first" step — your context is not Forge''s context
