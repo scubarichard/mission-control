@@ -1,4 +1,30 @@
 
+## TASK-20260423-FORGE-PVC-001
+- **Assignee:** Forge
+- **Status:** DONE
+- **Completed:** 2026-04-23
+- **Priority:** High
+- **From:** Richard (direct)
+- **Client:** Internal (PVC pipeline)
+
+### Task: PVC job-ID keying, Hot run, Descript upload automation, repo handoff
+
+### Completed
+- Job ID keying: filenames now row{N}_~{jobId}.mp4 (extracted from col B Upwork URL)
+- 19 Hot-priority rows (49-67) recorded, overlaid, uploaded to Descript, col AK populated
+- upload_descript.py: reads col AJ paths, uploads to Descript, writes project URL to col AK
+  - Project + composition named ~{jobId} — {title}
+  - --recover flag: queries Descript jobs API by filename, populates AK without re-uploading
+- descript_cleanup.py: dry-run by default, --delete to purge job videos older than N days
+- Added to repo: record_hot.py, overlay_hot.py, run_now.ps1, full README rewrite
+- Commit: scubarichard/proposal-video-creator@08f222f
+
+### Key notes for next agent
+- DESCRIPT_TOKEN: KV kvdaxdakonapilot -> descript-api-token (az login tenant d2a3c346-...)
+- Descript API cannot rename/delete projects — manual only via UI
+- Always use --recover if upload succeeded but sheet write failed (avoids duplicates)
+- set :PYTHONUTF8 = '1' before running any Python with arrow chars
+
 
 ## TASK-20260418-FORGE-PNT-001
 - **Assignee:** Forge
