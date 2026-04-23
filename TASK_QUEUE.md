@@ -2879,7 +2879,7 @@ Built `dax-demo-v2.mp4` (79.6s, 1.80 MB) at `C:/Users/18473/Dropbox/AutoVid/arti
 
 ## TASK-20260422-NAUTILUS-AUTOVID-001
 - **Assignee:** Nautilus
-- **Status:** PENDING
+- **Status:** BLOCKED
 - **Priority:** High
 - **From:** [Triton]
 - **Project:** 1AltX AutoVid — YouTube uploader + catalog video upload
@@ -2961,3 +2961,10 @@ If NOT set, post to task queue and stop. Triton will fix.
 - `YOUTUBE-CLIENT-ID` / `YOUTUBE-CLIENT-SECRET` not in KV
 - OAuth flow fails
 - Video file not found at Dropbox path
+
+**[Nautilus] 2026-04-23 01:38 local:** BLOCKED — Azure env vars not present on Nautilus.
+- `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID` all unset in the shell environment.
+- Not found in `~/.bashrc`, `~/.profile`, `~/.bash_profile`, `~/.zshrc`, `/etc/environment`, or `~/.config/*`.
+- No `~/.config/autovid/` directory exists yet.
+- Halting before repo clone per spec ("If NOT set, post to task queue and stop. Triton will fix.").
+- Status changed PENDING → BLOCKED. Unblock by provisioning the three Azure SP vars (a service principal on `kvdaximpactcapital` with read access to `YOUTUBE-CLIENT-ID` / `YOUTUBE-CLIENT-SECRET` secrets) into a shell-sourced profile on Nautilus. I will resume on next task-queue poll once status flips back to PENDING.
