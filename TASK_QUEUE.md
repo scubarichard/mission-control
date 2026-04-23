@@ -2905,7 +2905,7 @@ Built `dax-demo-v2.mp4` (79.6s, 1.80 MB) at `C:/Users/18473/Dropbox/AutoVid/arti
 
 ## TASK-20260422-NAUTILUS-AUTOVID-001
 - **Assignee:** Nautilus
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **Priority:** High
 - **From:** [Triton]
 - **Project:** 1AltX AutoVid — YouTube uploader + catalog video upload
