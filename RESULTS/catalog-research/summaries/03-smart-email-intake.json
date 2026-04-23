@@ -1,0 +1,10 @@
+{
+  "automation_name": "Project07 Automation System",
+  "what_it_does": "Automatically monitors Gmail for Upwork job alerts, uses GPT-4 to evaluate job fit in two stages, and logs only high-confidence opportunities to Google Sheets.",
+  "pain_it_solves": "Eliminates the need to manually sift through daily job alert blasts and waste time reviewing low-fit opportunities.",
+  "outcome": "Teams only respond to high-confidence job matches, saving hours each week while improving proposal quality.",
+  "key_systems": ["Make.com", "Google Sheets", "GPT-4", "Gmail", "Upwork"],
+  "duration_implied": "90s",
+  "opener_hook_draft": "Drowning in daily job alerts but only landing low-fit work that wastes your proposal time?",
+  "bespoke_opener_full": "Drowning in daily job alerts but only landing low-fit work that wastes your proposal time? This is how our Project07 Automation System lets you respond only to high-confidence matches while saving hours each week. In the next 90 seconds, I'll show you exactly how it works."
+}

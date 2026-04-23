@@ -1,0 +1,10 @@
+{
+  "automation_name": "Receipt Submission",
+  "what_it_does": "Collects information from a GOOT Vitality form, automatically creates vendor or client folders with subfolders, and files the form based on specified criteria.",
+  "pain_it_solves": "Eliminates manual sorting and filing of receipt forms into the correct folder structure for each vendor or client.",
+  "outcome": "Submitted receipts are automatically organized into the correct folder hierarchy without any manual intervention.",
+  "key_systems": ["GOOT Vitality", "folder management system"],
+  "duration_implied": "60s",
+  "opener_hook_draft": "Manually filing every receipt into vendor folders wastes hours every week.",
+  "bespoke_opener_full": "Manually filing every receipt into vendor folders wastes hours every week. This is how our Receipt Submission automation organizes everything instantly. In the next 60 seconds, I'll show you exactly how it works."
+}

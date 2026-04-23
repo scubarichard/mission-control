@@ -1,0 +1,10 @@
+{
+  "automation_name": "Sheets to PDF/DocuSeal",
+  "what_it_does": "Pulls data from Google Sheets, auto-generates documents in DocuSeal, files PDFs in Drive folders by contractor name, and updates the sheet with completion status and links.",
+  "pain_it_solves": "Eliminates manually creating documents one-by-one, downloading PDFs, organizing files into folders, and tracking completion status across spreadsheets.",
+  "outcome": "30 contractor documents auto-generated, filed in organized folders, and tracked in seconds instead of hours of manual work.",
+  "key_systems": ["Google Sheets", "Make.com", "DocuSeal", "Google Drive"],
+  "duration_implied": "90s",
+  "opener_hook_draft": "Creating 30 contractor documents manually, filing them, and tracking status takes hours of tedious work.",
+  "bespoke_opener_full": "Creating 30 contractor documents manually, filing them, and tracking status takes hours of tedious work. This is how our Sheets to PDF/DocuSeal automation generates, files, and tracks all documents in seconds. In the next 90 seconds, I'll show you exactly how it works."
+}

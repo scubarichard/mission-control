@@ -1,0 +1,10 @@
+{
+  "automation_name": "Google Form to PDF",
+  "what_it_does": "Automatically converts Google Form submissions into formatted PDF documents without manual intervention.",
+  "pain_it_solves": "Eliminates the tedious manual process of copying form responses and formatting them into professional PDF documents one by one.",
+  "outcome": "Every form submission instantly generates a polished, formatted PDF ready for distribution, filing, or printing.",
+  "key_systems": ["Google Forms", "PDF generation"],
+  "duration_implied": "60s",
+  "opener_hook_draft": "Copying form responses into PDFs manually wastes hours every week and introduces formatting errors.",
+  "bespoke_opener_full": "Copying form responses into PDFs manually wastes hours every week and introduces formatting errors. This is how our Google Form to PDF automation instantly generates polished documents from every submission. In the next 60 seconds, I'll show you exactly how it works."
+}

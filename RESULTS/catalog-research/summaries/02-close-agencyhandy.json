@@ -1,0 +1,10 @@
+{
+  "automation_name": "Close to AgencyHandy Client Onboarding",
+  "what_it_does": "Automatically creates new client accounts, orders, and tasks in AgencyHandy whenever a deal closes in Close CRM using Make.com as middleware.",
+  "pain_it_solves": "Eliminates manual re-entry of client information between your CRM and fulfillment system after closing a deal.",
+  "outcome": "New clients are instantly set up in your fulfillment system with their account, order, and first task ready to go the moment they sign.",
+  "key_systems": ["Close.com", "Make.com", "AgencyHandy"],
+  "duration_implied": "90s",
+  "opener_hook_draft": "You just closed a deal, now you're copying client details into three different screens in your fulfillment system.",
+  "bespoke_opener_full": "You just closed a deal, now you're copying client details into three different screens in your fulfillment system. This is how our Close to AgencyHandy Client Onboarding gets new clients instantly set up in your fulfillment system with their account, order, and first task ready to go the moment they sign. In the next 90 seconds, I'll show you exactly how it works."
+}

@@ -1,0 +1,10 @@
+{
+  "automation_name": "Metricify Update File Process",
+  "what_it_does": "Automatically exports Shopify product data via Metricify, enriches specific tagged items by cross-referencing master lookup files in Google Sheets, then re-imports the updated data back into Shopify.",
+  "pain_it_solves": "Eliminates the manual work of exporting product data, looking up values in reference files, updating records one by one, and re-importing corrected information into Shopify.",
+  "outcome": "Product data with specific tags gets automatically refreshed and enhanced with accurate information from master files without any manual spreadsheet work.",
+  "key_systems": ["Shopify", "Metricify", "Google Sheets", "CSV"],
+  "duration_implied": "90s",
+  "opener_hook_draft": "Manually updating hundreds of Shopify products from lookup files wastes hours every single week.",
+  "bespoke_opener_full": "Manually updating hundreds of Shopify products from lookup files wastes hours every single week. This is how our Metricify Update File Process automatically refreshes and enhances your product data with accurate information from master files. In the next 90 seconds, I'll show you exactly how it works."
+}

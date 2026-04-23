@@ -1,0 +1,10 @@
+{
+  "automation_name": "AI Blog Post Generator",
+  "what_it_does": "Collects blog requirements via form, generates an AI-powered outline, iteratively refines content through multiple AI passes, applies SEO optimization, and publishes finished articles directly to Contentful CMS.",
+  "pain_it_solves": "Eliminates the manual process of drafting blog outlines, writing multiple content iterations, applying SEO optimization, and manually uploading articles to your CMS.",
+  "outcome": "Professionally written, SEO-optimized blog posts automatically published to your website from a simple form submission.",
+  "key_systems": ["Tally", "Google Sheets", "Google Drive", "AI modules", "Contentful", "Markdown/HTML conversion"],
+  "duration_implied": "90s",
+  "opener_hook_draft": "Writing blog posts means hours of drafting, editing, SEO work, and manual uploading.",
+  "bespoke_opener_full": "Writing blog posts means hours of drafting, editing, SEO work, and manual uploading. This is how our AI Blog Post Generator produces professionally written, SEO-optimized articles and publishes them automatically to your CMS. In the next 90 seconds, I'll show you exactly how it works."
+}

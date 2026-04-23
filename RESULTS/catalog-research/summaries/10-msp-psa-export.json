@@ -1,0 +1,10 @@
+{
+  "automation_name": "MSP PSA Export",
+  "what_it_does": "Automatically pulls ticket data from ConnectWise PSA, merges ticket headers with ticket notes, and exports everything to a Google Sheet for easy reporting and analysis.",
+  "pain_it_solves": "Eliminates the manual work of exporting ConnectWise data, reconciling separate ticket headers and notes tables, and formatting everything for reporting.",
+  "outcome": "MSPs get clean, consolidated ticket data in Google Sheets ready for instant sorting, reporting, and exporting without touching ConnectWise's clunky export tools.",
+  "key_systems": ["ConnectWise", "Google Sheets", "Excel"],
+  "duration_implied": "60s",
+  "opener_hook_draft": "ConnectWise splits your ticket data into separate tables, making reporting a nightmare.",
+  "bespoke_opener_full": "ConnectWise splits your ticket data into separate tables, making reporting a nightmare. This is how our MSP PSA Export gives you clean, consolidated ticket data in Google Sheets without the manual headache. In the next 60 seconds, I'll show you exactly how it works."
+}

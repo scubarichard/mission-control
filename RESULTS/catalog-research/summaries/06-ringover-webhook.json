@@ -1,0 +1,10 @@
+{
+  "automation_name": "Ringover Webhook Listener",
+  "what_it_does": "Automatically receives Ringover call data via webhook, filters it, and logs it with proper tagging into campaign-specific Google Sheets organized by month.",
+  "pain_it_solves": "Eliminates manual entry and classification of call center data from Ringover into campaign tracking spreadsheets.",
+  "outcome": "Call centers get automatic, organized campaign tracking with running totals that update in real-time as calls happen.",
+  "key_systems": ["Ringover", "Google Sheets", "Webhooks", "Make.com"],
+  "duration_implied": "90s",
+  "opener_hook_draft": "Manually logging call center data into spreadsheets kills productivity and creates tracking chaos.",
+  "bespoke_opener_full": "Manually logging call center data into spreadsheets kills productivity and creates tracking chaos. This is how our Ringover Webhook Listener gives you automatic, organized campaign tracking with real-time updates. In the next 90 seconds, I'll show you exactly how it works."
+}

@@ -365,13 +365,20 @@ The 13 automations and draft hooks (Sonnet-drafted — Triton should refine wher
 | 12 | Receipt Submission | "Your team shouldn''t email receipts to accounting. This automation lets them submit, tag, and forget." |
 | 13 | Google Form → PDF | "Every form submission becomes a branded PDF — in your drive, in your client''s inbox, automatically." |
 
-**Open questions for Phase F.2 — post in #dax-collab for Richard to answer before writing the 6 below:**
-- **#2 (AgencyHandy):** what handoff does this automate — project setup, billing, or both?
-- **#3 (Smart Email Intake):** leads, support tickets, all inbound, or something else?
-- **#6 (Ringover):** logs calls, routes them, creates tasks, syncs to CRM?
-- **#7 (CSV → Apps Script):** data import, transformation, or reporting use case?
-- **#9 (Matrixify):** bulk import/export, variant management, or migration?
-- **#10 (MSP PSA):** exports to what — client reports, billing, analytics?
+**UPDATE 2026-04-22: No open questions remain — Sonnet transcribed all 13 videos.**
+
+Research artifacts at `RESULTS/catalog-research/`:
+- `README.md` — full summary of all 13 automations with draft opener hooks
+- `transcripts/*.txt` — Whisper-generated transcripts of Richard''s actual narration
+- `summaries/*.json` — structured Claude analysis per video (automation_name, what_it_does, pain_it_solves, outcome, key_systems, duration_implied, opener_hook_draft, bespoke_opener_full)
+
+Triton: **start with `RESULTS/catalog-research/README.md`**. The draft opener hooks in that doc replace the ones in the table above — they''re based on Richard''s actual narration, not Sonnet''s guesses. Refine wording, don''t start from scratch. If a hook doesn''t feel right, check the transcript.
+
+Key findings from the research (surprises vs. the original task):
+- #3 "Smart Email Intake Logger" is actually a **UpWork job filter + Google Sheets logger** using Gmail + GPT-4 (not a general inbox logger)
+- #7 "CSV → Apps Script" is specifically a **Ringify call log tagger** (a sibling to #6 Ringover, not a generic CSV processor)
+- #9 "Shopify Matrixify" is correctly named **Metricify** in the video — Triton may want to align the catalog name with what Richard actually calls it
+- #12 "Receipt Submission" is specifically for **GOOT Vitality** vendor/client folder filing (narrower scope than the generic name suggests)
 
 **Phase F.3 — YouTube uploader module**
 

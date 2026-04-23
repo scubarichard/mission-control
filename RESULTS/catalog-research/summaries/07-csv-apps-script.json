@@ -1,0 +1,10 @@
+{
+  "automation_name": "CSV to Apps Script (Ringify Call Log Tagger)",
+  "what_it_does": "Automatically uploads Ringify call log CSV exports to Google Drive and populates call status tags into campaign tracking sheets via Apps Script.",
+  "pain_it_solves": "Eliminates the manual copy-paste work of transferring call status data from exported CSV files into campaign tracking spreadsheets every month.",
+  "outcome": "Campaign sheets are automatically updated with call status tags from Ringify exports with just two clicks and a few seconds of processing time.",
+  "key_systems": ["Ringify", "Google Drive", "Google Apps Script", "CSV uploads", "1AltX web interface"],
+  "duration_implied": "90s",
+  "opener_hook_draft": "Copying call statuses from CSV exports into campaign sheets every month wastes hours of your time.",
+  "bespoke_opener_full": "Copying call statuses from CSV exports into campaign sheets every month wastes hours of your time. This is how our CSV to Apps Script automation updates your campaign tags automatically. In the next 90 seconds, I'll show you exactly how it works."
+}

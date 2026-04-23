@@ -1,0 +1,10 @@
+{
+  "automation_name": "Shopify Top 30",
+  "what_it_does": "Automatically polls Shopify for the last 30 days of orders, totals sales by product, creates a top 30 bestsellers list, and updates a collection in your Shopify catalog.",
+  "pain_it_solves": "Eliminates manual tracking of sales data, spreadsheet manipulation, and the tedious process of manually updating bestseller collections every month.",
+  "outcome": "Your Shopify store always features an accurate, automatically-updated bestsellers collection based on real sales data from the last 30 days.",
+  "key_systems": ["Shopify", "1AltX"],
+  "duration_implied": "60s",
+  "opener_hook_draft": "Manually tracking your bestsellers and updating collections every month wastes hours you don't have.",
+  "bespoke_opener_full": "Manually tracking your bestsellers and updating collections every month wastes hours you don't have. This is how our Shopify Top 30 automation keeps your bestseller collection accurate without touching a spreadsheet. In the next 60 seconds, I'll show you exactly how it works."
+}

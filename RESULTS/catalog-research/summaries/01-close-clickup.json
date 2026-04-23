@@ -1,0 +1,10 @@
+{
+  "automation_name": "Close to ClickUp",
+  "what_it_does": "Automatically pulls deal information from Close CRM and creates corresponding task records in ClickUp with completion updates.",
+  "pain_it_solves": "Eliminates manual copying of CRM deal data into project management tasks across separate platforms.",
+  "outcome": "Sales activity in Close instantly becomes actionable tasks in ClickUp without any manual data entry.",
+  "key_systems": ["Close CRM", "ClickUp", "API"],
+  "duration_implied": "60s",
+  "opener_hook_draft": "Your sales team closes deals in Close, but your delivery team lives in ClickUp.",
+  "bespoke_opener_full": "Your sales team closes deals in Close, but your delivery team lives in ClickUp. This is how our Close to ClickUp automation keeps both systems perfectly synced. In the next 60 seconds, I'll show you exactly how it works."
+}

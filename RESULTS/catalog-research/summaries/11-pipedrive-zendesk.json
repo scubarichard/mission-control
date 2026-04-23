@@ -1,0 +1,10 @@
+{
+  "automation_name": "Pipe Drive to Zendesk",
+  "what_it_does": "Automatically synchronizes completed Pipedrive deals to Zendesk by creating or updating organizations and their associated contacts when deals reach implementation complete status.",
+  "pain_it_solves": "Eliminates the manual work of copying deal information, company details, and multiple contact records from Pipedrive into Zendesk after sales are complete.",
+  "outcome": "Sales-to-support handoff happens automatically with all customer data ready in Zendesk the moment a deal closes, so support teams can immediately start managing tickets.",
+  "key_systems": ["Pipedrive", "Zendesk"],
+  "duration_implied": "90s",
+  "opener_hook_draft": "Your support team is manually recreating customer data that already exists in your CRM.",
+  "bespoke_opener_full": "Your support team is manually recreating customer data that already exists in your CRM. This is how our Pipe Drive to Zendesk automation ensures every closed deal automatically appears in your ticketing system with complete customer details. In the next 90 seconds, I'll show you exactly how it works."
+}
