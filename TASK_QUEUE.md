@@ -2874,3 +2874,90 @@ Built `dax-demo-v2.mp4` (79.6s, 1.80 MB) at `C:/Users/18473/Dropbox/AutoVid/arti
 
 **[Forge] 2026-04-22:** DONE — video at Dropbox path above, ready for Erika delivery.
 
+
+---
+
+## TASK-20260422-NAUTILUS-AUTOVID-001
+- **Assignee:** Nautilus
+- **Status:** PENDING
+- **Priority:** High
+- **From:** [Triton]
+- **Project:** 1AltX AutoVid — YouTube uploader + catalog video upload
+- **Repo:** `scubarichard/1altx-autovid`
+- **Branch:** `phase-g-youtube-uploader` from `main`
+
+### Read first (no prior AutoVid context)
+1. `~/Dropbox/Companies/1AltX/Projects/_clients/CLAUDE.md`
+2. `~/Dropbox/Companies/1AltX/Projects/_clients/1altx-autovid/docs/ORCHESTRATION.md`
+3. `~/Dropbox/Companies/1AltX/Projects/_clients/1altx-autovid/docs/PHASE_E.md`
+4. `~/mission-control/TASK_QUEUE.md` — TASK-014 through TASK-017 for catalog video context
+
+### Setup
+```bash
+git clone git@github.com:scubarichard/1altx-autovid.git ~/1altx-autovid
+cd ~/1altx-autovid && npm install
+npm install googleapis
+```
+
+### Context
+Catalog video `catalog-commission-tracking-v2.mp4` was built by Forge (TASK-014/017). 189.7s, redacted for public release. Located at:
+```
+~/Dropbox/Companies/1AltX/Projects/_clients/1altx-autovid/artifacts/catalog-commission-tracking-v2.mp4
+```
+(Dropbox is sshfs-mounted from Triton at ~/Dropbox)
+
+### Build: `tools/youtube-upload.js`
+
+CLI: `node tools/youtube-upload.js <video-path> [options]`
+
+Options:
+- `--title` — video title (required)
+- `--description` — video description
+- `--tags` — comma-separated tags
+- `--privacy` — unlisted|private|public (default: unlisted)
+
+Implementation:
+- Use `googleapis` npm package
+- OAuth2 flow — store token at `~/.config/autovid/youtube-token.json`
+- Client credentials from Azure Key Vault `kvdaximpactcapital`:
+  - `YOUTUBE-CLIENT-ID`
+  - `YOUTUBE-CLIENT-SECRET`
+- If KV env vars not set or secrets missing: STOP and post to task queue — do not proceed
+- If token missing: print auth URL to terminal and wait for code input
+- Upload as **Unlisted** by default
+- Show upload progress %
+- On success: print YouTube video URL
+
+### Azure Key Vault env vars required
+Check if these are set before starting:
+- `AZURE_CLIENT_ID`
+- `AZURE_CLIENT_SECRET`
+- `AZURE_TENANT_ID`
+
+If NOT set, post to task queue and stop. Triton will fix.
+
+### Execution steps
+1. Clone repo + npm install
+2. Check Azure env vars — stop if missing, post to task queue
+3. Build `tools/youtube-upload.js`
+4. Attempt KV secret read — stop if `YOUTUBE-CLIENT-ID` missing, post to task queue
+5. Run OAuth flow — print URL, wait for Richard to authenticate
+6. Upload `catalog-commission-tracking-v2.mp4`:
+   - Title: `Commission Tracking for Payment Processors — Automated Reporting System`
+   - Description: `See how 1AltX builds automated commission tracking and reporting pipelines for payment processors and ISO resellers. Built on n8n, HubSpot, Airtable, and Google Drive.`
+   - Tags: `automation,commission tracking,n8n,HubSpot,Airtable,payment processing,ISO reseller,1AltX`
+   - Privacy: `unlisted`
+7. Post GATE RESULTS with YouTube URL
+
+### Gate protocol
+- Branch: `phase-g-youtube-uploader`
+- PR: `[Phase G] YouTube uploader tool`
+- Post GATE RESULTS in task queue before marking DONE
+- DO NOT upload as Public
+- DO NOT modify the video file
+
+### Blockers — post immediately if hit
+- Azure env vars missing on Nautilus
+- `YOUTUBE-CLIENT-ID` / `YOUTUBE-CLIENT-SECRET` not in KV
+- OAuth flow fails
+- Video file not found at Dropbox path
