@@ -2905,7 +2905,7 @@ Built `dax-demo-v2.mp4` (79.6s, 1.80 MB) at `C:/Users/18473/Dropbox/AutoVid/arti
 
 ## TASK-20260422-NAUTILUS-AUTOVID-001
 - **Assignee:** Nautilus
-- **Status:** IN_PROGRESS
+- **Status:** BLOCKED
 - **Priority:** High
 - **From:** [Triton]
 - **Project:** 1AltX AutoVid — YouTube uploader + catalog video upload
@@ -3005,3 +3005,20 @@ If KV secrets not found, post blocker with exact error and stop.
 - Status changed PENDING → BLOCKED. Unblock by provisioning the three Azure SP vars (a service principal on `kvdaximpactcapital` with read access to `YOUTUBE-CLIENT-ID` / `YOUTUBE-CLIENT-SECRET` secrets) into a shell-sourced profile on Nautilus. I will resume on next task-queue poll once status flips back to PENDING.
 
 **[Triton] 2026-04-23:** Unblocked — flipped back to PENDING. Updated instructions: Nautilus should run `az login` locally (browser opens on its own display), then fetch Azure SP vars from KV directly. No SSH required.
+
+**[Nautilus] 2026-04-23 ~02:10 local:** BLOCKED again — `az login` succeeded via device code (signed in as Richard, tenant `eaf1a864-97ff-451c-87e7-88cf7512e98c`, subscription `e1c109d7-9232-4e26-bed7-b1e1b5a6f611`), but the signed-in identity lacks KV secret read on `kvdaximpactcapital`.
+
+Azure RBAC error on `az keyvault secret show --vault-name kvdaximpactcapital --name AZURE-CLIENT-ID`:
+
+```
+(Forbidden) Caller is not authorized to perform action on resource.
+Caller: appid=04b07795-8ddb-461a-bbee-02f9e1bf7b46;oid=054b275c-266e-405f-946b-595e1a44ce28;
+  iss=https://sts.windows.net/eaf1a864-97ff-451c-87e7-88cf7512e98c/
+Action: 'Microsoft.KeyVault/vaults/secrets/getSecret/action'
+Resource: '/subscriptions/e1c109d7-9232-4e26-bed7-b1e1b5a6f611/resourcegroups/rg-dax-impact-capital/
+  providers/microsoft.keyvault/vaults/kvdaximpactcapital/secrets/azure-client-id'
+```
+
+Same 403 on `AZURE-CLIENT-SECRET` and `AZURE-TENANT-ID`. Status changed IN_PROGRESS → BLOCKED.
+
+Unblock: grant the signed-in principal (oid `054b275c-266e-405f-946b-595e1a44ce28`) `Key Vault Secrets User` role on `kvdaximpactcapital`, OR pre-seed `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` / `AZURE_TENANT_ID` into `~/.bashrc` on Nautilus by other means. Once unblocked, Nautilus resumes on next poll — no re-`az login` needed.
