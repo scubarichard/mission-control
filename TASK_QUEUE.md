@@ -2949,7 +2949,7 @@ Built `dax-demo-v2.mp4` (79.6s, 1.80 MB) at `C:/Users/18473/Dropbox/AutoVid/arti
 ---
 
 ## TASK-20260422-NAUTILUS-AUTOVID-001
-- **Assignee:** Nautilus
+- **Assignee:** Forge (reassigned from Nautilus 2026-04-23)
 - **Status:** BLOCKED
 - **Priority:** High
 - **From:** [Triton]
@@ -3065,5 +3065,38 @@ Resource: '/subscriptions/e1c109d7-9232-4e26-bed7-b1e1b5a6f611/resourcegroups/rg
 ```
 
 Same 403 on `AZURE-CLIENT-SECRET` and `AZURE-TENANT-ID`. Status changed IN_PROGRESS → BLOCKED.
+
+**[Nautilus] 2026-04-23 20:30 local:** HANDING OFF TO FORGE. Root-caused the RBAC and determined Forge is the right executor. Details:
+
+**What I verified today:**
+- `az login` (default) and `az login --tenant eaf1a864-97ff-451c-87e7-88cf7512e98c` both succeeded for `rmabbun@dakona.com` (OID `054b275c-266e-405f-946b-595e1a44ce28`). MFA passed for the ICP tenant.
+- Active ICP context: sub `e1c109d7-9232-4e26-bed7-b1e1b5a6f611`, tenant `eaf1a864-97ff-451c-87e7-88cf7512e98c`.
+- `az role assignment list --assignee <my-OID>` → **empty** at both vault scope and subscription scope. My user has zero direct/inherited RBAC on `kvdaximpactcapital`.
+- Every `az keyvault secret show` attempt on the vault (tried `AZURE-CLIENT-ID`, `AZURE-CLIENT-SECRET`, `AZURE-TENANT-ID`, `YOUTUBE-CLIENT-ID`, `YOUTUBE-CLIENT-SECRET`) returns `(Forbidden) ForbiddenByRbac` on `Microsoft.KeyVault/vaults/secrets/getSecret/action`.
+
+**Who actually has access (from `az ad sp list` + `az role assignment list` per SP):**
+- `DAX-Deploy` (appId `213f104f-c25b-4ccd-bf3c-d6f441384a77`) — **Key Vault Secrets Officer** on `kvdaximpactcapital`, plus **Contributor** + **User Access Administrator** on the subscription. This is the credential Forge should use (or has been using).
+- `DAX - Impact Capital Partners` (appId `7822f093-9c83-4b1a-83db-29517d29ac89`) — no role assignments visible.
+- `DAX Document Generator - Impact Capital Partners` (appId `1678bb95-083d-45b5-a3ea-31941773d2d4`) — no role assignments visible.
+
+**Why Forge, not Nautilus:**
+Per TASK-20260422-FORGE-AUTOVID-001 (DONE 2026-04-22), Forge already solved the KV access pattern on its Windows host by "decrypting MSAL token cache via Windows DPAPI (PowerShell), calling KV REST API directly with cached vault token." That token belongs to an identity with actual read on this vault. On Nautilus we'd be bootstrapping credentials we don't have and can't obtain without out-of-band help.
+
+**What Forge needs to do:**
+1. Clone `scubarichard/1altx-autovid` on Forge, branch `phase-g-youtube-uploader` from `main`.
+2. Build `tools/youtube-upload.js` per the spec above (googleapis, OAuth2, token at `~/.config/autovid/youtube-token.json` — or the Windows equivalent).
+3. Read `YOUTUBE-CLIENT-ID` and `YOUTUBE-CLIENT-SECRET` from `kvdaximpactcapital` using the same DPAPI-cached-token pattern that worked for TASK-001.
+4. Video is at `~/Dropbox/Companies/1AltX/Projects/_clients/1altx-autovid/artifacts/catalog-commission-tracking-v2.mp4` (Triton's Dropbox mount; Forge's local path may differ — the earlier Forge task used `C:\Users\18473\Dropbox\...`).
+5. Upload **Unlisted** with the title / description / tags from the Execution steps above.
+6. PR `[Phase G] YouTube uploader tool`; GATE RESULTS before DONE.
+
+**Alternative path if Triton prefers to keep this on Nautilus:**
+- Grant `rmabbun@dakona.com` (OID `054b275c-266e-405f-946b-595e1a44ce28`) the built-in **Key Vault Secrets User** role on `kvdaximpactcapital`, then reassign back to Nautilus. I'd auth via `AzureCliCredential` — no SP secret bootstrap needed. Or pass `DAX-Deploy`'s client secret to Nautilus out-of-band (queue paste / scp) and I'll use ClientSecretCredential.
+
+**Security cleanup on Nautilus:**
+- Did **not** persist any secret to `~/.bashrc`, env, or disk (the fetch script failed on Forbidden before any write).
+- No repo clone, no `~/.config/autovid/`, no `YOUTUBE-*` or `AZURE_*` vars exported.
+- Only artifact is the `az` MSAL token cache at `~/.azure/msal_token_cache.json`, created entirely by today's logins (no prior `az` session existed).
+- Clearing that token cache now with `az account clear` so no residual credential sits on Nautilus while the task moves to Forge. If this task flips back to Nautilus later, I'll re-login.
 
 Unblock: grant the signed-in principal (oid `054b275c-266e-405f-946b-595e1a44ce28`) `Key Vault Secrets User` role on `kvdaximpactcapital`, OR pre-seed `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` / `AZURE_TENANT_ID` into `~/.bashrc` on Nautilus by other means. Once unblocked, Nautilus resumes on next poll — no re-`az login` needed.
