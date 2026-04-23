@@ -1,4 +1,49 @@
 
+## TASK-20260423-FORGE-PVC-002
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** High
+- **From:** [Triton / Richard]
+- **Project:** Upwork PVC+Overlay automation — job status updates
+
+### Task
+Update job statuses in the Upwork jobs Airtable base. Match rows using the **UpWork Link** column containing the job ID. Update the **Status** column as follows.
+
+**Set Status = "Pursue":**
+| Job ID | Title |
+|---|---|
+| ~022044182102985753320 | N8N + Retell Developer |
+| ~022043971653712220686 | Automation Specialist (n8n Content) |
+| ~022043891002672197390 | HubSpot CRM Setup & Integration |
+| ~022044049536639124200 | Make.com + Client Portal (Coaching) |
+| ~022044127238824283806 | AI skilled PM – Ecommerce |
+| ~022043868818681530452 | Zapier Automation |
+
+**Set Status = "Skip":**
+| Job ID | Title |
+|---|---|
+| ~022044051711897453288 | HubSpot Website Designer |
+| ~022044147327236313614 | HubSpot CMS Developer |
+| ~022044069345426161599 | Elevenlabs |
+| ~022044042548614411112 | CRM Automation Specialist |
+| ~022044203793133605390 | Apollo Email Marketing |
+| ~022044126567528018792 | AI Engineer Workflow |
+| ~022044136992183307934 | Chatbot Clothing Store |
+| ~022043737323904976782 | CRM Implementation |
+| ~022043844875813800467 | GHL Ops Coordinator |
+| ~022044205386608415246 | AI System CEO Agent VPS |
+| ~022044059334201728379 | Automated Calling System |
+
+**Leave as "Apply" (do not change):**
+~022043915152926061416, ~022043992773097567080, ~022044022551880774846, ~022043817805085837396, ~022043929426727770764, ~022043804684049229449, ~022044068774324358814, ~022043981711280026814
+
+### Notes
+- Match on UpWork Link column containing the job ID string
+- Do NOT re-parse Column P (raw HTML) — Notes column has all scoring context
+- Post row count updated as GATE RESULTS before marking DONE
+
+---
+
 ## TASK-20260423-FORGE-PVC-001
 - **Assignee:** Forge
 - **Status:** DONE
