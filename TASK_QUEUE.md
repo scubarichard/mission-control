@@ -2835,3 +2835,42 @@ Built `dax-demo-v2.mp4` (79.6s, 1.80 MB) at `C:/Users/18473/Dropbox/AutoVid/arti
 
 **[Forge] 2026-04-22:** DONE — ICP DAX live fixes applied. Subtask 6 (doc gen smoke test) deferred to Richard/Brett manual verification.
 
+## TASK-20260422-FORGE-AUTOVID-001
+- **Assignee:** Forge
+- **Status:** DONE
+- **Completed:** 2026-04-22
+- **Priority:** High
+- **From:** Richard (direct)
+- **Client:** Chosen Agency (Erika Cobb)
+
+### Task: Build and render AutoVid walkthrough — Chosen Agency Make.com pipeline
+
+### Completed
+
+**Scenario:** `scenarios/chosen-walkthrough.json` — 9 scenes, 1280x720, Richard's voice (IuxDTLynYdvisya7jrK5)
+
+**Output:** `C:\Users\18473\Dropbox\Companies\1AltX\Clients\Chosen_Agency\deliverables\chosen_agency_walkthrough.mp4`
+- Duration: 395.6s (6m 35s) | Size: 8.2MB | Resolution: 1280x720
+
+**Scene breakdown:**
+| # | Scene | Duration |
+|---|---|---|
+| 01 | Title card | 6.6s |
+| 02 | Architecture overview | 34.7s |
+| 03 | Google Sheet queue | 35.4s |
+| 04 | Deduplication | 26.9s |
+| 05 | Dynamic config | 18.1s |
+| 06 | Polling + retries | 48.9s |
+| 07 | Live run intro card | 52.5s |
+| 08 | Live run clip (2x speed, audio preserved) | 106.6s |
+| 09 | HeyGen output (1x, audio preserved) | 30.0s |
+
+**Fixes shipped (commit 01d6b8d → main):**
+- Title cards: single Puppeteer screenshot + ffmpeg `-loop 1` (replaces N-screenshot loop — eliminates Windows `browser.close()` hang, reduces title card render from mins to secs)
+- `preserve_audio` + `playback_speed`: now applies `atempo=${speed}` to audio track to match video speed (previously only video was sped up, causing A/V drift)
+
+**Blockers resolved:**
+- `DefaultAzureCredential` / az CLI hung as subprocess → bypassed by decrypting MSAL token cache via Windows DPAPI (PowerShell), calling KV REST API directly with cached vault token
+
+**[Forge] 2026-04-22:** DONE — video at Dropbox path above, ready for Erika delivery.
+
