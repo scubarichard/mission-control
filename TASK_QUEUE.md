@@ -1,7 +1,8 @@
 
 ## TASK-20260423-FORGE-PVC-002
-- **Assignee:** Forge
-- **Status:** PENDING
+- **Assignee:** Triton
+- **Status:** DONE
+- **Completed:** 2026-04-23
 - **Priority:** High
 - **From:** [Triton / Richard]
 - **Project:** Upwork PVC+Overlay automation — job status updates
