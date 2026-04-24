@@ -354,25 +354,25 @@ The 13 automations and draft hooks (Sonnet-drafted — Triton should refine wher
 | 1 | Close → ClickUp | "Every closed deal in Close creates ten minutes of admin in ClickUp. This automation does it in ten seconds." |
 | 2 | Close → AgencyHandy | "Your agency sells in Close but delivers in AgencyHandy — somewhere in between, details get lost. This closes the gap." |
 | 3 | Smart Email Intake Logger | "Your inbox is full of leads you never logged. This automation captures every one, tagged and ready to work." |
-| 4 | Sheets → PDF/DocuSeal | "If you''re still pasting spreadsheet rows into contract templates, you''re wasting an hour every time." |
+| 4 | Sheets → PDF/DocuSeal | "If you're still pasting spreadsheet rows into contract templates, you're wasting an hour every time." |
 | 5 | AI Blog Post Generator | "Writing one blog post takes four hours. Writing ten takes this automation thirty minutes." |
 | 6 | Ringover Webhook Listener | "Every missed call in Ringover should create a task somewhere. This automation makes sure none slip through." |
 | 7 | CSV → Apps Script | "Drop a CSV in a folder. Watch it become a fully processed dataset in your sheet — without touching a thing." |
 | 8 | Shopify Top 30 | "Monday mornings, 9am — is your bestsellers report ready, or are you still building it?" |
-| 9 | Shopify Matrixify | "Managing thousands of Shopify product variants shouldn''t require a developer. This automation gives your team that power." |
+| 9 | Shopify Matrixify | "Managing thousands of Shopify product variants shouldn't require a developer. This automation gives your team that power." |
 | 10 | MSP PSA Export | "Your PSA has the data your clients need. This automation puts it in their hands — on schedule, no manual pulls." |
 | 11 | Pipedrive → Zendesk | "When a deal closes in Pipedrive, support picks up in Zendesk — without anyone copying anything between them." |
-| 12 | Receipt Submission | "Your team shouldn''t email receipts to accounting. This automation lets them submit, tag, and forget." |
-| 13 | Google Form → PDF | "Every form submission becomes a branded PDF — in your drive, in your client''s inbox, automatically." |
+| 12 | Receipt Submission | "Your team shouldn't email receipts to accounting. This automation lets them submit, tag, and forget." |
+| 13 | Google Form → PDF | "Every form submission becomes a branded PDF — in your drive, in your client's inbox, automatically." |
 
 **UPDATE 2026-04-22: No open questions remain — Sonnet transcribed all 13 videos.**
 
 Research artifacts at `RESULTS/catalog-research/`:
 - `README.md` — full summary of all 13 automations with draft opener hooks
-- `transcripts/*.txt` — Whisper-generated transcripts of Richard''s actual narration
+- `transcripts/*.txt` — Whisper-generated transcripts of Richard's actual narration
 - `summaries/*.json` — structured Claude analysis per video (automation_name, what_it_does, pain_it_solves, outcome, key_systems, duration_implied, opener_hook_draft, bespoke_opener_full)
 
-Triton: **start with `RESULTS/catalog-research/README.md`**. The draft opener hooks in that doc replace the ones in the table above — they''re based on Richard''s actual narration, not Sonnet''s guesses. Refine wording, don''t start from scratch. If a hook doesn''t feel right, check the transcript.
+Triton: **start with `RESULTS/catalog-research/README.md`**. The draft opener hooks in that doc replace the ones in the table above — they're based on Richard's actual narration, not Sonnet's guesses. Refine wording, don't start from scratch. If a hook doesn't feel right, check the transcript.
 
 Key findings from the research (surprises vs. the original task):
 - #3 "Smart Email Intake Logger" is actually a **UpWork job filter + Google Sheets logger** using Gmail + GPT-4 (not a general inbox logger)
@@ -397,16 +397,16 @@ Build `src/publish/youtube.js` as a new autovid module. Not a standalone script 
 - Writes result back to scenario JSON as `_notes.youtube_url` for traceability
 - Quota budget: each upload costs 1600 units; daily limit is 10,000 units = **6 uploads/day max**. Build in a rate-limiter or at minimum document this clearly in README
 
-**Critical lessons from Sonnet''s 2026-04-21 YouTube tangent (don''t repeat):**
-- OAuth `redirect_uri` must EXACTLY match what''s in the GCP Desktop OAuth client config — port 80 vs 8080 caused failures
-- Token refresh: store refresh_token, don''t re-auth every run
+**Critical lessons from Sonnet's 2026-04-21 YouTube tangent (don't repeat):**
+- OAuth `redirect_uri` must EXACTLY match what's in the GCP Desktop OAuth client config — port 80 vs 8080 caused failures
+- Token refresh: store refresh_token, don't re-auth every run
 - Brand channel vs personal channel auth context matters — uploads may go to the wrong channel if the user switches accounts during OAuth. Verify `channels.list?mine=true` after auth.
-- Test uploads orphaned from wrong channel can''t be deleted via API from a different auth context. Use `videos.list?id={ids}` to verify ownership before trusting the delete endpoint.
+- Test uploads orphaned from wrong channel can't be deleted via API from a different auth context. Use `videos.list?id={ids}` to verify ownership before trusting the delete endpoint.
 
 **Phase F.4 — Integration test**
 
 Run the full pipeline end-to-end on **1 catalog item only** (Triton picks the easiest — recommend Close → ClickUp since it has the clearest demo footage pattern). Deliverable:
-- Opener card rendered with bespoke narration in Richard''s voice (ElevenLabs)
+- Opener card rendered with bespoke narration in Richard's voice (ElevenLabs)
 - Demo scene embedded
 - CTA card rendered with locked CTA script (same ElevenLabs voice)
 - All 3 scenes concatenated into final MP4
@@ -415,14 +415,14 @@ Run the full pipeline end-to-end on **1 catalog item only** (Triton picks the ea
 
 Once Phase F.4 passes review, Triton (or Forge) can batch-render and batch-upload the remaining 12.
 
-### Locked assets (do not modify without Richard''s approval)
+### Locked assets (do not modify without Richard's approval)
 
 **CTA script (exact wording — used in scene-03-cta for all 13 videos):**
 
-> "You''ll be amazed how much manual work disappears when the right automation kicks in. Visit one alt X dot com and schedule a call — we''ll scope it, size it, and give you a straight price."
+> "You'll be amazed how much manual work disappears when the right automation kicks in. Visit one alt X dot com and schedule a call — we'll scope it, size it, and give you a straight price."
 
 **CTA card visual spec (design):**
-- Background: dark (match Richard''s DAX demo v2 title cards — coordinate with Forge for exact colors)
+- Background: dark (match Richard's DAX demo v2 title cards — coordinate with Forge for exact colors)
 - Logo: "1AltX" wordmark top-center
 - Main text: "onealtx.com"
 - Subtitle: "Schedule a call"
@@ -438,7 +438,7 @@ Once Phase F.4 passes review, Triton (or Forge) can batch-render and batch-uploa
 
 **Azure Key Vault (autovid uses `kvdaximpactcapital`, NOT kvdaxdakonapilot):**
 - `ELEVENLABS-API-KEY` — ElevenLabs API key
-- `ELEVENLABS-VOICE-ID-RICHARD` — Richard''s voice clone ID (= `IuxDTLynYdvisya7jrK5`, verified in chosen scenario)
+- `ELEVENLABS-VOICE-ID-RICHARD` — Richard's voice clone ID (= `IuxDTLynYdvisya7jrK5`, verified in chosen scenario)
 - `ANTHROPIC-API-KEY` — Claude API key for narration generation (Phase E already wired)
 
 **Dakona KV (`kvdaxdakonapilot`) — NOT used by autovid, but reference:**
@@ -447,7 +447,7 @@ Once Phase F.4 passes review, Triton (or Forge) can batch-render and batch-uploa
 
 **YouTube OAuth (does NOT exist yet — Triton creates in Phase F.3):**
 - Create Desktop OAuth 2.0 Client in GCP project `positive-bonbon-478413-p1` (same project Sonnet used 2026-04-21)
-- Or: new GCP project dedicated to 1AltX — Triton''s call
+- Or: new GCP project dedicated to 1AltX — Triton's call
 - Scope: `https://www.googleapis.com/auth/youtube.upload`
 - Store `client_secret.json` + `token.json` at `C:\Users\18473\Tools\autovid-youtube\` (NOT in repo)
 - Add to `.gitignore`: `youtube_*.json`, `token.json`
@@ -486,6 +486,87 @@ Once Phase F.4 passes review, Triton (or Forge) can batch-render and batch-uploa
 - Do not publish anything to YouTube as Public. All uploads Unlisted. Richard publishes from YouTube Studio UI.
 - Do not re-record existing catalog demo footage without explicit Richard ask — reuse existing Descript-sourced MP4s if Richard provides them
 - Do not modify the locked CTA script
-- Do not touch Forge''s catalog-commission-tracking-v2 branch or the main autovid pipeline — catalog scenarios are additive, not a refactor
+- Do not touch Forge's catalog-commission-tracking-v2 branch or the main autovid pipeline — catalog scenarios are additive, not a refactor
 - Do not put credentials in the repo
-- Do not skip the "read the repo docs first" step — your context is not Forge''s context
+- Do not skip the "read the repo docs first" step — your context is not Forge's context
+
+---
+
+## TASK-20260424-NAUTILUS-1ALTX-001 — PVC Pipeline Context Sync
+- **Assignee:** Nautilus
+- **Status:** PENDING
+- **Date:** 2026-04-24
+- **From:** Sonnet (session with Richard)
+- **Client:** 1AltX (internal)
+- **Priority:** Low
+- **Title:** Clone autovid-outreach repo and load PVC pipeline context
+
+### Context
+
+Richard built a local Windows pipeline called PVC (Proposal Video Creator) that generates personalized Upwork proposal videos. The pipeline runs on his Windows machine (cannot run on Linux). A dedicated GitHub repo was created today to house the code and state file.
+
+Nautilus does not need to run the pipeline — it runs Windows-only (Chrome CDP, FFmpeg, PowerShell). Nautilus's role is to stay aware of pipeline state so it can assist with: editing scripts, updating MEMORY.md, querying the Google Sheet, drafting Descript API code, and any other support tasks assigned via this queue.
+
+### Tasks
+
+**Step 1 — Clone the repo (one-time setup)**
+
+```bash
+cd ~
+git clone https://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@github.com/scubarichard/autovid-outreach.git
+cd autovid-outreach
+```
+
+**Step 2 — Read the state file**
+
+```bash
+cat ~/autovid-outreach/MEMORY.md
+```
+
+**Step 3 — Read the README**
+
+```bash
+cat ~/autovid-outreach/README.md
+```
+
+**Step 4 — Confirm context loaded**
+
+Post a gate result below confirming:
+- Repo cloned successfully
+- Current pipeline state as described in MEMORY.md (summary in your own words)
+- Last processed rows
+- Known open items
+- What Nautilus is ready to help with
+
+### Standing instructions (add to your startup routine)
+
+At the start of any session where PVC pipeline work is relevant, run:
+
+```bash
+git -C ~/autovid-outreach pull 2>/dev/null && cat ~/autovid-outreach/MEMORY.md
+```
+
+This keeps your context current without re-cloning.
+
+### What Nautilus CAN help with (Linux-safe tasks)
+
+- Reading/editing scripts in the repo and pushing changes
+- Updating MEMORY.md with current pipeline state
+- Querying the Google Sheet via Python + service account (if credentials provided)
+- Drafting or testing Descript API calls (upload, publish endpoint research)
+- Writing documentation or README updates
+- Any task Richard assigns via this queue
+
+### What Nautilus CANNOT do
+
+- Run record_videos.py (requires Chrome CDP on Windows)
+- Run overlay_batch.ps1 (requires FFmpeg + PowerShell on Windows)
+- Run populate_aj.ps1 (PowerShell)
+- Run run_pipeline.ps1 (PowerShell orchestrator)
+
+### Gate
+
+Post results here when complete:
+- [ ] Repo cloned
+- [ ] MEMORY.md read and summarized
+- [ ] Ready for PVC support tasks
