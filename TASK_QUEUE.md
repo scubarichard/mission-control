@@ -3135,3 +3135,11 @@ Windows 10 laptop (Lenovo ThinkPad T450, 20BUS1A500) being converted to Ubuntu 2
 5. Mark DONE
 
 **[Forge] 2026-04-25 14:40:** Installer running. Cron monitoring. Will complete autonomously.
+
+**[Forge] 2026-04-25 16:00 — DONE**
+- Ubuntu 24.04.4 LTS installed on Sculati-Spare (192.168.1.125)
+- ninjarmm-agent: active (running) — appears in NinjaOne under Sculati Wealth Management LLC
+- UFW enabled: port 22 open
+- SSH key (richard@triton) in dakona authorized_keys
+- NOPASSWD sudo configured for dakona
+- Cron af5a4281 stopped
