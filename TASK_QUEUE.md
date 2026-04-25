@@ -2994,3 +2994,54 @@ If NOT set, post to task queue and stop. Triton will fix.
 - No `~/.config/autovid/` directory exists yet.
 - Halting before repo clone per spec ("If NOT set, post to task queue and stop. Triton will fix.").
 - Status changed PENDING → BLOCKED. Unblock by provisioning the three Azure SP vars (a service principal on `kvdaximpactcapital` with read access to `YOUTUBE-CLIENT-ID` / `YOUTUBE-CLIENT-SECRET` secrets) into a shell-sourced profile on Nautilus. I will resume on next task-queue poll once status flips back to PENDING.
+
+---
+
+## TASK-20260425-FORGE-DAKONA-001 — Sculati Ubuntu Install
+- **Assignee:** Forge
+- **Status:** IN_PROGRESS
+- **Date:** 2026-04-25
+- **Client:** Dakona / Sculati Wealth Management LLC
+- **Priority:** High
+- **Title:** Install Ubuntu 24.04 on Sculati-Spare laptop (192.168.1.125)
+
+### Context
+
+Windows 10 laptop at 192.168.1.125 (Lenovo ThinkPad T450, 20BUS1A500) being converted to Ubuntu 24.04 as a jump-point for Sculati network access. Windows 10 EOL + Explorer.exe crash issues made Ubuntu the right call.
+
+### Completed steps
+
+- WinRM established, NinjaOne Windows agent installed
+- Removed: ScreenConnect (x3), Norton, Malwarebytes, SAAZOD, ITSPlatform, iTunes/Apple, Amazon Workspaces, USB over Network
+- Installed: 7-Zip, Chrome, WinSCP, Notepad++, PuTTY
+- Configured: auto-logon DakonaAdmin, sleep disabled, WinRM persistent
+- Renamed computer to Sculati-Spare
+- RyanKnabusch profile archived
+- Ubuntu 24.04 autoinstall prepared on USB (D:, SanDisk Extreme):
+  - `D:\autoinstall\user-data` — cloud-config YAML, hostname sculati-spare, user dakonaadmin
+  - `D:\autoinstall\post-install.sh` — creates richard user, SSH keys, installs NinjaOne DEB if present
+  - `D:\boot\grub\grub.cfg` — auto-boots installer, timeout=5
+  - NinjaOne DEB NOT pre-staged (403 on download) — install via SSH post-boot
+- BIOS boot order changed via Lenovo WMI: `USBHDD:USBCD:USBFDD:HDD0:...` (USB first)
+- Machine rebooted ~14:26 — both ports down at 14:35 (Ubuntu installer running)
+- Cron job af5a4281 polls SSH (port 22) every 3 min
+
+### Next steps (Forge — autonomous)
+
+When SSH port 22 opens at 192.168.1.125:
+
+1. Connect as richard (password: 888Z7ac41947)
+2. Verify: dakonaadmin + richard users, sudo, authorized_keys
+3. Install NinjaOne Linux agent:
+   `wget -O /tmp/ninja.deb "https://us2.ninjarmm.com/agent/installer/0b5fa60e-ba33-4c40-88ad-ac01769eb590/13.0.7070/NinjaOne-Agent-SculatiWealthManagementLLC-MainOffice-Auto-x86-64.deb" && sudo dpkg -i /tmp/ninja.deb && sudo systemctl enable --now ninjarmm-agent`
+4. Verify: `sudo systemctl status ninjarmm-agent`
+5. Confirm hostname = sculati-spare, ufw enabled, port 22 open
+6. Mark DONE here
+
+### Gate
+- [ ] SSH on 192.168.1.125 accessible
+- [ ] dakonaadmin + richard verified
+- [ ] NinjaOne Linux agent installed and running
+- [ ] Appears in NinjaOne portal under Sculati Wealth Management LLC
+
+**[Forge] 2026-04-25 14:38:** Ubuntu installer running (both ports down). BIOS boot order changed via Lenovo WMI — USBHDD now first. Cron af5a4281 monitoring. Will execute post-install steps autonomously when SSH opens.
