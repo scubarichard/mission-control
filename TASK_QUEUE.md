@@ -3101,3 +3101,37 @@ Per TASK-20260422-FORGE-AUTOVID-001 (DONE 2026-04-22), Forge already solved the 
 - Clearing that token cache now with `az account clear` so no residual credential sits on Nautilus while the task moves to Forge. If this task flips back to Nautilus later, I'll re-login.
 
 Unblock: grant the signed-in principal (oid `054b275c-266e-405f-946b-595e1a44ce28`) `Key Vault Secrets User` role on `kvdaximpactcapital`, OR pre-seed `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` / `AZURE_TENANT_ID` into `~/.bashrc` on Nautilus by other means. Once unblocked, Nautilus resumes on next poll — no re-`az login` needed.
+
+---
+
+## TASK-20260425-FORGE-DAKONA-001 — Sculati Ubuntu Install
+- **Assignee:** Forge
+- **Status:** IN_PROGRESS
+- **Date:** 2026-04-25
+- **Client:** Dakona / Sculati Wealth Management LLC
+- **Priority:** High
+- **Title:** Install Ubuntu 24.04 on Sculati-Spare laptop (192.168.1.125)
+
+### Context
+
+Windows 10 laptop (Lenovo ThinkPad T450, 20BUS1A500) being converted to Ubuntu 24.04 as a jump-point for Sculati network access. Windows 10 EOL + Explorer.exe crash issues.
+
+### Completed
+
+- WinRM, NinjaOne Windows agent, software cleanup, tools installed
+- Renamed Sculati-Spare, auto-logon, sleep disabled
+- Ubuntu 24.04 autoinstall on USB (D:): user-data, post-install.sh, grub.cfg
+- NinjaOne DEB NOT on USB (403) — install via SSH post-boot
+- BIOS boot order changed via Lenovo WMI: USBHDD first
+- Rebooted ~14:26 — both ports down at 14:35, Ubuntu installer running
+- Cron af5a4281 polls SSH/3min
+
+### Next (autonomous when SSH opens)
+
+1. SSH as richard / 888Z7ac41947
+2. Verify users dakonaadmin + richard, sudo, authorized_keys
+3. Install NinjaOne: `wget -O /tmp/ninja.deb "https://us2.ninjarmm.com/agent/installer/0b5fa60e-ba33-4c40-88ad-ac01769eb590/13.0.7070/NinjaOne-Agent-SculatiWealthManagementLLC-MainOffice-Auto-x86-64.deb" && sudo dpkg -i /tmp/ninja.deb && sudo systemctl enable --now ninjarmm-agent`
+4. Verify service, hostname=sculati-spare, ufw enabled
+5. Mark DONE
+
+**[Forge] 2026-04-25 14:40:** Installer running. Cron monitoring. Will complete autonomously.
