@@ -3238,3 +3238,28 @@ Needs: add n8n HTTP Header Auth credential using clientId `1678bb95` + secret fr
 
 **[Forge] 2026-04-26:** DONE â€” E2E passed on all core checks. KV cleaned. SharePoint n8n cred gap logged.
 
+
+---
+
+## TASK-20260426-FORGE-ICP-004 â€” ICP Search SharePoint Tool
+- **Assignee:** Forge
+- **Status:** DONE
+- **Completed:** 2026-04-26
+- **Client:** ICP (Impact Capital Partners)
+- **Priority:** High
+
+### Task
+Add `search_sharepoint` tool to ICP DAX router so Brett can search company SharePoint documents.
+
+### Completed
+
+- Confirmed neither Dakona nor ICP router had a search_sharepoint tool (net-new)
+- Tested Graph search API against ICP tenant:
+  - `POST /search/query` with `region=NAM` works â€” hits 14,040 items across full SharePoint
+  - Drive-based search also works for site-specific search
+- Built `Search SharePoint Tool` node (toolCode) added to workflow `wGhmfrxHEBK7FzES` at node index [27]
+- Tool name: `search_sharepoint` | Input: `{ "query": "..." }` | Returns top 10 hits with name, link, date, summary
+- System prompt updated with search_sharepoint trigger guidance
+- n8n restarted and confirmed active (28 nodes total)
+
+**[Forge] 2026-04-26:** DONE â€” Brett can now search company SharePoint from DAX chat.
