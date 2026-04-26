@@ -3266,3 +3266,72 @@ Add `search_sharepoint` tool to ICP DAX router so Brett can search company Share
 **[Forge] 2026-04-26:** DONE â€” Brett can now search company SharePoint from DAX chat.
 
 **[Forge] 2026-04-26:** DONE â€” Ubuntu 24.04 installed, shipped pending.
+
+---
+
+## TASK-20260426-FORGE-PNT-PHASEB — PNT S5 Phase B
+- **Assignee:** Forge
+- **Status:** DONE
+- **Completed:** 2026-04-26
+- **Client:** PNT (Portugal Nature Trails / Ari Adnan Cibari)
+- **Priority:** High
+- **Repo:** scubarichard/pnt-central-brain | **Branch:** dev → commit 2171e91
+
+### Task: S5 Phase B — schema upgrades, lifecycle alerts, admin write functions
+
+### Completed
+
+**Group 1 — Airtable Schema (Bookings table tblEpWKHyHMXzqG4d):**
+- Request Received Date (date), Process Started Date (dateTime), Ops Ready Date (dateTime), Post Tour Complete Date (dateTime)
+- Booking Owner Link (multipleRecordLinks → Guides_Staff)
+- Staff Role singleSelect on Guides_Staff (Guide/Booking Owner/Ops Manager/Finance/Mechanics)
+- Catarina Fialho record created in Guides_Staff
+
+**Formula fields (Richard created in Airtable UI):**
+- Phase 1/2 Duration hrs, Current Phase, Phase 2 Status (Green/Yellow/Orange/Red thresholds)
+
+**Group 3 — n8n Phase Alerts (dakona instance):**
+- Phase_Snapshots table created in Airtable (tbl2bnL2BVmqhu9P5)
+- Workflow z0u6vJUxYJ53lMZG: 24h stale booking alert — ACTIVE, 06:00 UTC daily
+- Workflow NUWpT1dOvdYJlea7: Phase 2 status poller + Red urgent alert — ACTIVE, every 2h
+- Gmail cred yr8s5B6McaB6dEEB (1altX.com OAuth2) wired to both workflows
+
+**Group 6 — Admin Write Functions (admin.html):**
+- pntAdminPatch() via proxy (no token in client)
+- ADMIN_EDIT_FIELDS config for Hotels/Tours/Bikes/Taxi_Routes/Taxi_Vendors/Guides_Staff
+- Inline edit: row hides → form expands → Save PATCHes Airtable → row refreshes
+- No DELETE on Hotels/Tours (deactivate only)
+
+**Regression: 143/143 PASS**
+
+**[Forge] 2026-04-26:** DONE — dev pushed, #dax-collab notified, awaiting Richard merge to main.
+
+---
+
+## TASK-20260426-FORGE-PNT-GROUP7A — PNT Group 7a: Restaurants Typeahead
+- **Assignee:** Forge
+- **Status:** DONE
+- **Completed:** 2026-04-26
+- **Client:** PNT (Portugal Nature Trails)
+- **Priority:** High
+- **Repo:** scubarichard/pnt-central-brain | **Branch:** dev → commit fa1c208
+
+### Task: Link Reservations → Restaurants with live typeahead search
+
+### Completed
+
+**Airtable schema:**
+- Reservations table: Restaurant field (multipleRecordLinks → Restaurants tblpEuKRg5z26ps55)
+- Restaurants table: reverse link renamed from auto-generated "Reservations 2" → "Reservations"
+- Orphaned singleLineText "Reservations" field renamed "Reservations (old - delete me)" — Airtable API does not support field deletion; Richard to remove manually
+
+**Form (js/pages/page6-reservations.js):**
+- searchRestaurants(): debounced 300ms, 3+ chars, queries 299 restaurant records via proxy
+- initRestaurantTypeahead(): live dropdown, Name · Address (Cuisine Type), mousedown select
+- onResTypeChange(): swaps Name field between plain text (non-restaurant) and typeahead (Restaurant)
+- saveServiceRow / saveEditReservation: writes Restaurant:[recordId] linked field + Name text fallback
+- editReservation: pre-fills typeahead input + hidden ID when existing reservation has Restaurant link
+
+**Regression: 143/143 PASS**
+
+**[Forge] 2026-04-26:** DONE — dev pushed, #dax-collab notified.
