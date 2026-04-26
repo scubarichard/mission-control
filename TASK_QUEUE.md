@@ -1,37 +1,4 @@
 
-## TASK-20260425-FORGE-DAKONA-002 — DAX Router Parameterization
-- **Assignee:** Forge
-- **Status:** DONE
-- **Completed:** 2026-04-25
-- **Priority:** Critical
-- **From:** [Richard — Slack #dax-collab ICP sprint]
-- **Project:** DAX — Multi-tenant router parameterization
-
-### Task
-Replace all hardcoded Dakona credentials in the DAX Router n8n workflow with `process.env.*` variables so the same workflow code deploys to any client tenant. Then deploy parameterized version to ICP n8n.
-
-### Completed
-
-**Dakona router restored + parameterized** (`3tniyxZREqfnAbfo`):
-- Router had been corrupted (0 nodes) from earlier session — restored from backup (`dax-router-current.json`, Apr 17, 26 nodes)
-- Applied 8 string replacements on raw JSON (backup used double-quoted JS, patterns differ from live)
-- All hardcoded creds zeroed out: WB token (18), tenant ID (14), client ID (14), client secret (14), SP site ID (10)
-- Env vars: `process.env.WEALTHBOX_TOKEN`, `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`, `GRAPH_CLIENT_SECRET`, `SHAREPOINT_SITE_ID`
-- WB guard added: `if (!process.env.WEALTHBOX_TOKEN) return 'Wealthbox CRM is not configured for this client.'`
-- HTTP 200 PUT confirmed — 26 nodes live
-- Added `SHAREPOINT_SITE_ID` + `WEALTHBOX_TOKEN` to Dakona PM2 `ecosystem.config.js`, reloaded
-
-**ICP router parameterized** (`wGhmfrxHEBK7FzES` on `vm-n8n-icp`):
-- Applied same 5 replacements using Python3 on ICP VM (ICP used single-quoted JS)
-- ICP-specific creds: tenant `eaf1a864`, client `1678bb95`, secret `2ya8Q~mOk...`, SP site `impactcapitalpartnersllc.sharepoint.com,...`
-- All hardcoded creds zeroed out, 27 nodes live, HTTP 200 PUT confirmed
-- Added `SHAREPOINT_SITE_ID=impactcapitalpartnersllc.sharepoint.com,...` to ICP systemd `/etc/systemd/system/n8n.service`, restarted
-- ICP already had `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`, `GRAPH_CLIENT_SECRET` in systemd — no change needed
-
-**[Forge] 2026-04-25:** DONE — both routers parameterized, env vars live, services restarted and healthy.
-
----
-
 ## TASK-20260423-FORGE-PVC-002
 - **Assignee:** Triton
 - **Status:** DONE
@@ -2984,8 +2951,7 @@ Built `dax-demo-v2.mp4` (79.6s, 1.80 MB) at `C:/Users/18473/Dropbox/AutoVid/arti
 
 ## TASK-20260422-NAUTILUS-AUTOVID-001
 - **Assignee:** Forge (reassigned from Nautilus 2026-04-23)
-- **Status:** DONE
-- **Completed:** 2026-04-25
+- **Status:** BLOCKED
 - **Priority:** High
 - **From:** [Triton]
 - **Project:** 1AltX AutoVid — YouTube uploader + catalog video upload
@@ -3136,34 +3102,11 @@ Per TASK-20260422-FORGE-AUTOVID-001 (DONE 2026-04-22), Forge already solved the 
 
 Unblock: grant the signed-in principal (oid `054b275c-266e-405f-946b-595e1a44ce28`) `Key Vault Secrets User` role on `kvdaximpactcapital`, OR pre-seed `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` / `AZURE_TENANT_ID` into `~/.bashrc` on Nautilus by other means. Once unblocked, Nautilus resumes on next poll — no re-`az login` needed.
 
-**[Forge] 2026-04-25 — DONE**
-
-Credentials found in `kvdaxdakonapilot` (GCP project `positive-bonbon-478413-p1`):
-- `pvc-youtube-client-secret` — Desktop OAuth2 client JSON
-- `pvc-youtube-token` — Stored token with valid refresh_token
-
-Used refresh_token to obtain fresh access_token, uploaded via YouTube Data API v3 resumable upload.
-
-**GATE RESULTS:**
-- Video ID: `4RJYpjFoiP0`
-- URL: https://www.youtube.com/watch?v=4RJYpjFoiP0
-- Privacy: Unlisted
-- Title: Commission Tracking for Payment Processors - Automated Reporting System
-- File: `catalog-commission-tracking-v2.mp4` (5.6 MB, 189.7s)
-
-`tools/youtube-upload.js` committed to branch `phase-g-youtube-uploader` in `scubarichard/1altx-autovid`:
-- ESM CLI: `node tools/youtube-upload.js <path> --title "..." [--description --tags --privacy]`
-- Reads/refreshes OAuth creds from KV (`kvdaxdakonapilot` by default, override with `YOUTUBE_KV_NAME`)
-- Note: spec listed `kvdaximpactcapital` but creds only exist in `kvdaxdakonapilot`
-
-Richard: publish from YouTube Studio when ready.
-
 ---
 
 ## TASK-20260425-FORGE-DAKONA-001 — Sculati Ubuntu Install
 - **Assignee:** Forge
-- **Status:** DONE
-- **Completed:** 2026-04-25
+- **Status:** IN_PROGRESS
 - **Date:** 2026-04-25
 - **Client:** Dakona / Sculati Wealth Management LLC
 - **Priority:** High
@@ -3203,4 +3146,57 @@ Windows 10 laptop (Lenovo ThinkPad T450, 20BUS1A500) being converted to Ubuntu 2
 
 ---
 
-**[Forge] 2026-04-25:** Attempted pickup. `YOUTUBE-CLIENT-ID` and `YOUTUBE-CLIENT-SECRET` do NOT exist in `kvdaximpactcapital` (SecretNotFound on both). Video file confirmed at `C:\Users\18473\Dropbox\Companies\1AltX\Tools\AutoVid\artifacts\catalog-commission-tracking-v2.mp4`. No YouTube token cached. Remaining BLOCKED until YouTube API credentials are provisioned. Note: `pvc-youtube-client-secret` and `pvc-youtube-token` exist in `kvdaxdakonapilot` — if these are the same OAuth app, Richard can store `YOUTUBE-CLIENT-ID` and `YOUTUBE-CLIENT-SECRET` in `kvdaximpactcapital` and Forge will resume on next poll.
+## TASK-20260425-FORGE-ICP-001 — ICP DAX System Prompt: Code Response Fix
+- **Assignee:** Forge
+- **Status:** DONE
+- **Completed:** 2026-04-26
+- **Client:** ICP (Impact Capital Partners)
+- **Priority:** High
+
+### Task
+Update ICP n8n DAX Agent system prompt to instruct the agent NOT to use the `create_document` tool when responding with code — return code as markdown in chat instead.
+
+### Completed
+
+- Found real n8n SQLite DB at `/home/daxadmin/.n8n/.n8n/database.sqlite` (31MB, not the empty 4KB stub at `.n8n/database.sqlite`)
+- Workflow `wGhmfrxHEBK7FzES` (DAX Router - AI Agent): system message is in `nodes[2].parameters.options.systemMessage`
+- Appended guidance (10130 → 10317 chars):
+  ```
+  ## Code Responses
+  When responding with code snippets or code blocks, do NOT use the create_document tool. Return the code directly as a markdown code block in the chat response instead.
+  ```
+- n8n restarted and confirmed active
+
+**[Forge] 2026-04-26:** DONE — System prompt updated, n8n restarted on vm-n8n-icp.
+
+---
+
+## TASK-20260426-FORGE-ICP-002 — ICP SharePoint Libraries + Permissions
+- **Assignee:** Forge
+- **Status:** DONE
+- **Completed:** 2026-04-26
+- **Client:** ICP (Impact Capital Partners)
+- **Priority:** High
+
+### Task
+Create DAX SharePoint document libraries on ICP SharePoint site and grant the DAX DocGen app (`1678bb95`) write access.
+
+### Completed
+
+**Permissions granted on app `1678bb95` (DAX Document Generator - ICP):**
+- `Sites.Read.All` — already existed
+- `Sites.ReadWrite.All` — added + admin consent granted
+- `Files.ReadWrite.All` — added + admin consent granted
+- `Sites.Manage.All` — added + admin consent granted
+- `Sites.FullControl.All` — added + admin consent granted (required for list creation)
+
+SP object ID: `42ddc972-ace7-48ea-917d-bb2355caa730`
+App object ID: `48d01346-16fe-4468-90d4-85d2b3e2ced0`
+Admin consent granted by: `rmabbun@dakona.com` (MSP)
+
+**Libraries created on `impactcapitalpartnersllc.sharepoint.com/sites/ImpactCapitalPartners`:**
+- `DAX Templates` — id: `dfeb5d46-4dae-49be-bb77-888c9ef870b0`
+- `DAX Reports` — id: `88bccfd5-9fc9-45df-b5ba-931d2ad59ccd`
+- `DAX Documents` — id: `33f0fb6b-519d-498d-9901-ae3d9f3f8838`
+
+**[Forge] 2026-04-26:** DONE — Libraries created, permissions fully consented.
