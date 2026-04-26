@@ -1,4 +1,37 @@
 
+## TASK-20260425-FORGE-DAKONA-002 — DAX Router Parameterization
+- **Assignee:** Forge
+- **Status:** DONE
+- **Completed:** 2026-04-25
+- **Priority:** Critical
+- **From:** [Richard — Slack #dax-collab ICP sprint]
+- **Project:** DAX — Multi-tenant router parameterization
+
+### Task
+Replace all hardcoded Dakona credentials in the DAX Router n8n workflow with `process.env.*` variables so the same workflow code deploys to any client tenant. Then deploy parameterized version to ICP n8n.
+
+### Completed
+
+**Dakona router restored + parameterized** (`3tniyxZREqfnAbfo`):
+- Router had been corrupted (0 nodes) from earlier session — restored from backup (`dax-router-current.json`, Apr 17, 26 nodes)
+- Applied 8 string replacements on raw JSON (backup used double-quoted JS, patterns differ from live)
+- All hardcoded creds zeroed out: WB token (18), tenant ID (14), client ID (14), client secret (14), SP site ID (10)
+- Env vars: `process.env.WEALTHBOX_TOKEN`, `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`, `GRAPH_CLIENT_SECRET`, `SHAREPOINT_SITE_ID`
+- WB guard added: `if (!process.env.WEALTHBOX_TOKEN) return 'Wealthbox CRM is not configured for this client.'`
+- HTTP 200 PUT confirmed — 26 nodes live
+- Added `SHAREPOINT_SITE_ID` + `WEALTHBOX_TOKEN` to Dakona PM2 `ecosystem.config.js`, reloaded
+
+**ICP router parameterized** (`wGhmfrxHEBK7FzES` on `vm-n8n-icp`):
+- Applied same 5 replacements using Python3 on ICP VM (ICP used single-quoted JS)
+- ICP-specific creds: tenant `eaf1a864`, client `1678bb95`, secret `2ya8Q~mOk...`, SP site `impactcapitalpartnersllc.sharepoint.com,...`
+- All hardcoded creds zeroed out, 27 nodes live, HTTP 200 PUT confirmed
+- Added `SHAREPOINT_SITE_ID=impactcapitalpartnersllc.sharepoint.com,...` to ICP systemd `/etc/systemd/system/n8n.service`, restarted
+- ICP already had `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`, `GRAPH_CLIENT_SECRET` in systemd — no change needed
+
+**[Forge] 2026-04-25:** DONE — both routers parameterized, env vars live, services restarted and healthy.
+
+---
+
 ## TASK-20260423-FORGE-PVC-002
 - **Assignee:** Triton
 - **Status:** DONE
@@ -3143,3 +3176,7 @@ Windows 10 laptop (Lenovo ThinkPad T450, 20BUS1A500) being converted to Ubuntu 2
 - SSH key (richard@triton) in dakona authorized_keys
 - NOPASSWD sudo configured for dakona
 - Cron af5a4281 stopped
+
+---
+
+**[Forge] 2026-04-25:** Attempted pickup. `YOUTUBE-CLIENT-ID` and `YOUTUBE-CLIENT-SECRET` do NOT exist in `kvdaximpactcapital` (SecretNotFound on both). Video file confirmed at `C:\Users\18473\Dropbox\Companies\1AltX\Tools\AutoVid\artifacts\catalog-commission-tracking-v2.mp4`. No YouTube token cached. Remaining BLOCKED until YouTube API credentials are provisioned. Note: `pvc-youtube-client-secret` and `pvc-youtube-token` exist in `kvdaxdakonapilot` — if these are the same OAuth app, Richard can store `YOUTUBE-CLIENT-ID` and `YOUTUBE-CLIENT-SECRET` in `kvdaximpactcapital` and Forge will resume on next poll.
