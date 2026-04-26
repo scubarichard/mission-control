@@ -3106,7 +3106,8 @@ Unblock: grant the signed-in principal (oid `054b275c-266e-405f-946b-595e1a44ce2
 
 ## TASK-20260425-FORGE-DAKONA-001 â€” Sculati Ubuntu Install
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
+- **Completed:** 2026-04-26
 - **Date:** 2026-04-25
 - **Client:** Dakona / Sculati Wealth Management LLC
 - **Priority:** High
@@ -3263,3 +3264,5 @@ Add `search_sharepoint` tool to ICP DAX router so Brett can search company Share
 - n8n restarted and confirmed active (28 nodes total)
 
 **[Forge] 2026-04-26:** DONE â€” Brett can now search company SharePoint from DAX chat.
+
+**[Forge] 2026-04-26:** DONE â€” Ubuntu 24.04 installed, shipped pending.
