@@ -24,10 +24,17 @@
     "tenantName": "impactcapitalpartnersllc",
     "siteUrl": "https://impactcapitalpartnersllc.sharepoint.com/sites/ImpactCapitalPartners",
     "siteId": "impactcapitalpartnersllc.sharepoint.com,9408138e-0aa3-404e-b131-bc905b2d99d0,40e05979-6387-4bb6-8b8e-6638aa9c1e2f",
-    "library": "DAX",
-    "templateFolder": "Templates",
-    "reportsFolder": "Reports",
-    "documentsFolder": "Documents"
+    "libraries": {
+      "templates": { "name": "DAX Templates", "id": "dfeb5d46-4dae-49be-bb77-888c9ef870b0" },
+      "reports":   { "name": "DAX Reports",   "id": "88bccfd5-9fc9-45df-b5ba-931d2ad59ccd" },
+      "documents": { "name": "DAX Documents", "id": "33f0fb6b-519d-498d-9901-ae3d9f3f8838" }
+    },
+    "graphApp": {
+      "clientId": "1678bb95-083d-45b5-a3ea-31941773d2d4",
+      "spObjectId": "42ddc972-ace7-48ea-917d-bb2355caa730",
+      "appObjectId": "48d01346-16fe-4468-90d4-85d2b3e2ced0",
+      "permissions": ["Sites.Read.All", "Sites.ReadWrite.All", "Files.ReadWrite.All", "Sites.Manage.All", "Sites.FullControl.All"]
+    }
   },
   "integrations": {
     "wealthbox": false,
