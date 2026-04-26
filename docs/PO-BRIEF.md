@@ -1,5 +1,5 @@
 # DAX Project — PO Brief
-**Last updated:** 2026-03-28  
+**Last updated:** 2026-04-26  
 **For:** Project Orchestrator (PO) — AI agent assigned to track and advance DAX
 
 ---
@@ -26,7 +26,7 @@ Dakona is already the MSP/IT provider for RIA clients — trust and access are p
 | Component | What it is | Location |
 |---|---|---|
 | LibreChat | Chat UI at dax.dakona.com | Azure Container App `ca-dax-dakona-pilot` |
-| n8n | Workflow engine / tool router | Azure VM `n8n` (172.16.0.4, D2s_v5) |
+| n8n | Workflow engine / tool router | Azure Container App `ca-dax-n8n-dakona-pilot` |
 | MCP Server | Claude.ai ↔ DAX infrastructure bridge | Azure Container App `ca-dax-mcp-dakona-pilot` |
 | RAG API | File retrieval / vector search | PM2 on n8n VM, port 8000 |
 | Desktop Bridge | Local Windows PowerShell bridge | Scheduled Task on Richard's machine → bridge.dakona.net |
@@ -49,7 +49,8 @@ Dakona is already the MSP/IT provider for RIA clients — trust and access are p
 ## What's Working (v0.5.3)
 
 - ✅ DAX chat at dax.dakona.com (LibreChat)
-- ✅ 15 advisor tools (email, calendar, market data, Schwab reports, document generation)
+- ✅ 16 advisor tools (email, calendar, market data, Schwab reports, document generation, **GitHub**)
+- ✅ **GitHub tool** — read + write access to `scubarichard/dax` repo (list_repos, list_files, read_file, search_code, create_or_update_file)
 - ✅ Quarterly review .docx → SharePoint `DAX Documents/`
 - ✅ ICP template: 35-field Word doc with Mustache tags
 - ✅ Research & Write pipeline → SharePoint .txt
@@ -75,6 +76,8 @@ Dakona is already the MSP/IT provider for RIA clients — trust and access are p
 | ✅ COMPLETE | Cloudflare tunnel / bridge service | 86e0kaer8 |
 | ✅ COMPLETE | T6 pre-demo test suite | 86e0kaep1 |
 | ✅ COMPLETE | Deploy LibreChat v0.5.1 | 86e0kaek2 |
+| ✅ COMPLETE | GitHub tool — dax.dakona.com (Dakona instance) | 86e130qht |
+| 🔲 TO DO | GitHub tool — ICP instance | 86e12zpa2 |
 | 🔲 TO DO | v0.6.0 — Azure Functions migration | 86e0kaf5y |
 | 🔲 TO DO | v0.7.0 — Copilot Studio eval | 86e0kaf8n |
 | 🔲 TO DO | v1.0.0 — AppSource + self-serve provisioner | 86e0kafbm |
@@ -85,10 +88,11 @@ Dakona is already the MSP/IT provider for RIA clients — trust and access are p
 
 ## Immediate Next Steps
 
-### Before March 31 Demo
-- [ ] Verify DAX conversation → n8n webhook trigger works end-to-end
-- [ ] Test "Generate Q1 review for John Smith" → doc in SharePoint in ~15 seconds
-- [ ] Hard-coded defaults: firmName=Impact Capital Partners, advisorName=Brett Stone
+### GitHub Tool — ICP Instance (86e12zpa2)
+- [ ] Same tool node design as Dakona instance
+- [ ] Different GITHUB_TOKEN — PAT scoped to ICP repo
+- [ ] Store in `kvdaximpactcapital` as `GITHUB-TOKEN`
+- [ ] Set env var on `ca-dax-impact-capital` container
 
 ### Infrastructure (This Week)
 - [ ] Move 6 plaintext credentials to Key Vault: `CLICKUP_API_KEY`, `DESKTOP_BRIDGE_SECRET`, `MCP_AUTH_TOKEN`, `WEALTHBOX_API_KEY`, `FMP_API_KEY`, `FINNHUB_API_KEY`
@@ -116,7 +120,7 @@ Dakona is already the MSP/IT provider for RIA clients — trust and access are p
 1. **All AI processing via Azure OpenAI only** — never send client data to external AI APIs
 2. **Staged migrations** — nothing breaks during upgrades, run in parallel
 3. **Keep advisor in DAX** — n8n handles retrieval behind the scenes
-4. **`n8n_update_workflow` replaces entire workflow** — always pass complete node list
+4. **`n8n_update_workflow` replaces entire workflow** — always pass complete node list; for large workflows use REST API PUT (remove `id` field from payload)
 5. **`az containerapp update --set-env-vars` replaces all plaintext env vars** — re-specify everything
 6. **Word doc generation uses LibreOffice** — not the `docx` npm library (produces corrupt files)
 
