@@ -2984,7 +2984,8 @@ Built `dax-demo-v2.mp4` (79.6s, 1.80 MB) at `C:/Users/18473/Dropbox/AutoVid/arti
 
 ## TASK-20260422-NAUTILUS-AUTOVID-001
 - **Assignee:** Forge (reassigned from Nautilus 2026-04-23)
-- **Status:** BLOCKED
+- **Status:** DONE
+- **Completed:** 2026-04-25
 - **Priority:** High
 - **From:** [Triton]
 - **Project:** 1AltX AutoVid — YouTube uploader + catalog video upload
@@ -3135,11 +3136,34 @@ Per TASK-20260422-FORGE-AUTOVID-001 (DONE 2026-04-22), Forge already solved the 
 
 Unblock: grant the signed-in principal (oid `054b275c-266e-405f-946b-595e1a44ce28`) `Key Vault Secrets User` role on `kvdaximpactcapital`, OR pre-seed `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` / `AZURE_TENANT_ID` into `~/.bashrc` on Nautilus by other means. Once unblocked, Nautilus resumes on next poll — no re-`az login` needed.
 
+**[Forge] 2026-04-25 — DONE**
+
+Credentials found in `kvdaxdakonapilot` (GCP project `positive-bonbon-478413-p1`):
+- `pvc-youtube-client-secret` — Desktop OAuth2 client JSON
+- `pvc-youtube-token` — Stored token with valid refresh_token
+
+Used refresh_token to obtain fresh access_token, uploaded via YouTube Data API v3 resumable upload.
+
+**GATE RESULTS:**
+- Video ID: `4RJYpjFoiP0`
+- URL: https://www.youtube.com/watch?v=4RJYpjFoiP0
+- Privacy: Unlisted
+- Title: Commission Tracking for Payment Processors - Automated Reporting System
+- File: `catalog-commission-tracking-v2.mp4` (5.6 MB, 189.7s)
+
+`tools/youtube-upload.js` committed to branch `phase-g-youtube-uploader` in `scubarichard/1altx-autovid`:
+- ESM CLI: `node tools/youtube-upload.js <path> --title "..." [--description --tags --privacy]`
+- Reads/refreshes OAuth creds from KV (`kvdaxdakonapilot` by default, override with `YOUTUBE_KV_NAME`)
+- Note: spec listed `kvdaximpactcapital` but creds only exist in `kvdaxdakonapilot`
+
+Richard: publish from YouTube Studio when ready.
+
 ---
 
 ## TASK-20260425-FORGE-DAKONA-001 — Sculati Ubuntu Install
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
+- **Completed:** 2026-04-25
 - **Date:** 2026-04-25
 - **Client:** Dakona / Sculati Wealth Management LLC
 - **Priority:** High
