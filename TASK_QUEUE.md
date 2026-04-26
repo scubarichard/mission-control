@@ -570,3 +570,62 @@ Post results here when complete:
 - [ ] Repo cloned
 - [ ] MEMORY.md read and summarized
 - [ ] Ready for PVC support tasks
+
+---
+
+## TASK-20260425-FORGE-1ALTX-001 — AutoVid Phase F Scene Pipeline
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-04-25
+- **Client:** 1AltX (internal) / LeadLUX (first use case)
+- **Title:** Build Phase F scene pipeline — story document → HeyGen + ElevenLabs + Puppeteer → assembled MP4
+
+### Completed
+
+**Branch:** `phase-f-scene-pipeline` — commit `77469bb` pushed to `scubarichard/1altx-autovid`
+
+**New modules (18 files, 2,472 insertions):**
+
+| File | Purpose |
+|------|---------|
+| `src/parse/story-parser.js` | Markdown story doc → SceneObject[] (padded IDs, blockquote dialogue, screen target inference) |
+| `src/scenes/scene-types.js` | JSDoc typedefs: SceneObject, ScreenTarget, NavigationCue |
+| `src/scenes/scene-validator.js` | Strict/warn validation for all scene fields + mode-specific checks |
+| `src/scenes/scene-router.js` | Dispatch → 'heygen' or 'screen_voice' |
+| `src/avatar/heygen-config.js` | KV secret resolution for HeyGen API key, avatar ID, voice ID |
+| `src/avatar/heygen.js` | Full HeyGen render pipeline (submit → poll → download → verify duration) |
+| `src/capture/capture-utils.js` | Shared frame-capture → silent 1920×1080 MP4 |
+| `src/capture/pdf-renderer.js` | PDF → MP4 via local HTTP server + pdfjs-dist ESM + Puppeteer |
+| `src/capture/svg-renderer.js` | SVG → MP4 (inline in HTML, Puppeteer scroll capture) |
+| `src/capture/xlsx-renderer.js` | XLSX tab → dark-mode HTML via SheetJS → Puppeteer scroll capture → MP4 |
+| `src/compose/scene-composer.js` | SCREEN_VOICE orchestrator: TTS → capture → merge (dispatches to correct renderer) |
+| `src/compose/final-assembler.js` | Concat (simple or xfade) → final MP4 + optional deliverable copy |
+| `src/pipeline/run-scenes.js` | 8-phase CLI orchestrator: parse → validate → plan → config → render → assemble → report |
+| `config/phase-f.json` | HeyGen API settings, KV secret names, capture defaults |
+| `docs/PHASE_F.md` | Full usage guide, CLI reference, artifact layout, smoke test instructions |
+| `tests/test-story.md` | 5-scene 3-min smoke test story |
+| `tests/assets/test-diagram.svg` | Test SVG for capture smoke tests |
+
+**CLI:**
+```
+npm run phase-f -- --story path/to/story.md --project my-project [--output final.mp4]
+  --scene-id <id>         render one scene only
+  --resume                skip already-completed scenes
+  --test-mode             black placeholder MP4s (no API calls)
+  --crossfade <seconds>   xfade between scenes
+  --assets-base <dir>     resolve screen asset paths from this dir
+  --require-approval      show plan and pause for confirmation
+```
+
+**Smoke test result:**
+```
+5 scenes rendered (test-mode) → 210s / 0.32MB assembled → PASS
+```
+
+**New dependencies:** `pdfjs-dist@4.4.168` (PDF rendering), `xlsx@0.18.5` (SheetJS XLSX→HTML)
+
+**Bug fix:** `story-parser.js` CLI guard updated to use `import.meta.url` main-module check (was firing on any non-help argv[2] during import).
+
+**LeadLUX story document:** `Working Docs/VIDEO-STORY-DOCUMENT.md` (committed in earlier session) — 10 scenes ready to run against this pipeline. Next step: provision HeyGen API key + avatar/voice IDs in Key Vault and run live.
+
+**[Forge] 2026-04-25:** DONE — all 9 sub-tasks complete, branch pushed, smoke test green.
