@@ -3684,3 +3684,301 @@ Add NinjaOne as a set of tools in the DAX MCP server (mcp/server.js) similar to 
 - ninja_list_clients tested and returning results
 - ninja_create_ticket tested with a sample ticket
 - Post completion status to #dax-collab
+
+
+---
+
+# TASK-20260428-FORGE-CHOSEN-002 — V1 Build Foundation (Sheet, Templates, Scenario Clone)
+
+**Status:** OPEN
+**Owner:** Forge
+**Client:** Erika Cobb / Chosen Agency
+**Priority:** High
+**Created:** 2026-04-28 by Richard
+**Estimated effort:** 1.5–2 hours
+**Depends on:** TASK-20260428-FORGE-CHOSEN-001 (DONE — Editor Brief prompt v1)
+
+---
+
+## Context
+
+Erika awarded the Chosen Agency V1 build ($1,488) on Apr 28. SOW received and reviewed. Kickoff message sent — awaiting her answers on 7 items (OpenAI model, voice/avatar IDs, editor logic, folder ownership, Notion confirm, API keys, comm channel).
+
+This task is **deterministic V1 prep work** — everything in her SOW that can be built without her input. Compresses Day 1-2 of the build window from ~3 hours to ~30 min once she answers.
+
+**Critical constraint:** Do NOT activate any Make scenario. Do NOT make any external API calls (no HeyGen test calls, no ElevenLabs test calls). Build the structure only.
+
+---
+
+## Reference
+
+- Full SOW: `clients/chosen-agency/builder-handoff.md`
+- Editor Brief prompt: `clients/chosen-agency/prompts/editor_brief_v1.md` (DONE in CHOSEN-001)
+- Drive folder structure (already created):
+  - Parent: `1xCplt3J0RNAPwDpWyjpqqXXTeTf3USPb` (Chosen Agency)
+  - 09_Templates: `1mXidTD8Dwhz4bzYaqVVPEdoIOsXx_Wqb`
+  - Existing empty Script Doc: `1ZDum9DDkuEGPMpoqo39XbAiF-D5-bGMExfOmSY3gm_A`
+  - Existing empty Editor Brief Doc: `179Rc1u3mWVC-7hidFeyBLWxIp0Xxaocl_M52MsDc-4I`
+- Test Make scenario to clone: `4820264` (Make team `885318`, org `5193163`)
+- Make API key in Key Vault: `kvdaxdakonapilot/make-api-key`
+- Google Drive owner: `richard@1altx.com`
+
+---
+
+## Subtasks (execute in order, do not skip)
+
+### Subtask 1 — Create V1 Production Tracker sheet
+
+**Where:** Root of Chosen Agency Drive folder (`1xCplt3J0RNAPwDpWyjpqqXXTeTf3USPb`)
+**Filename:** `Content_Pipeline_V1`
+**Result:** New Google Sheet with two tabs
+
+**Tab 1: `Queue` (the Production Tracker)**
+
+Columns A–AB (28 columns) per SOW Section 6.1 — exact names below:
+
+| Col | Name | Type |
+|---|---|---|
+| A | Status | Dropdown |
+| B | Script ID | Text |
+| C | Script Name | Text |
+| D | Variation Number | Number |
+| E | Variation ID | Text (system) |
+| F | Avatar ID | Text |
+| G | Voice ID | Text |
+| H | Audience | Text |
+| I | Current Belief | Text |
+| J | Desired Belief | Text |
+| K | Tone | Text |
+| L | Emotional Arc | Text |
+| M | Offer / CTA | Text |
+| N | Script Text | Long text |
+| O | Caption Text | Long text |
+| P | Override Voice ID | Text |
+| Q | Override Avatar ID | Text |
+| R | Override Tone | Text |
+| S | Override ElevenLabs Stability | Number |
+| T | Override ElevenLabs Similarity Boost | Number |
+| U | Script Doc Link | URL (system) |
+| V | Brief Doc Link | URL (system) |
+| W | Voice File URL | URL (system) |
+| X | Raw Video Link | URL (system) |
+| Y | Render Job ID | Text (system) |
+| Z | Assigned Editor | Text |
+| AA | Error Message | Text (system) |
+| AB | Last Updated | Datetime (system) |
+
+Configuration:
+- Header row frozen
+- Header row bold, light gray background
+- Column A (Status): data validation dropdown with these 8 values: `Queued`, `Processing`, `Rendering`, `Ready for Editing`, `Editing`, `Ready for QA`, `Done`, `Error`
+
+**Tab 2: `System Settings`**
+
+Columns A–E (5 columns) per SOW Section 7:
+
+| Col | Name |
+|---|---|
+| A | Setting Type |
+| B | Setting Name |
+| C | Value |
+| D | Notes |
+| E | Active |
+
+Pre-populate these 13 rows (Value column LEFT BLANK — Erika fills):
+
+| Setting Type | Setting Name | Value | Notes | Active |
+|---|---|---|---|---|
+| Voice | Default Voice ID |  | Primary ElevenLabs voice ID | TRUE |
+| Voice | Default ElevenLabs Model ID |  | Main TTS model (e.g. eleven_multilingual_v2) | TRUE |
+| Voice | Default Stability |  | 0.0-1.0; lower = more expressive | TRUE |
+| Voice | Default Similarity Boost |  | 0.0-1.0; closer voice match | TRUE |
+| Voice | Default Style |  | 0.0-1.0; style exaggeration | TRUE |
+| Voice | Default Speaker Boost |  | TRUE/FALSE | TRUE |
+| Avatar | Default Avatar ID |  | Primary HeyGen avatar ID | TRUE |
+| Avatar | Default Avatar Background |  | Default visual background, if supported | TRUE |
+| Avatar | Default Delivery Style |  | Default presentation style, if supported | TRUE |
+| Avatar | Default Playback Speed |  | Default speed (1.0 = normal) | TRUE |
+| Prompt | Default Tone |  | Default script/brief tone | TRUE |
+| Prompt | Default Emotional Delivery |  | Default emotional delivery direction | TRUE |
+| Prompt | Default Output Language | en | ISO language code | TRUE |
+
+Configuration:
+- Header row frozen, bold, light gray
+- Column E (Active): data validation TRUE/FALSE checkbox
+
+**Output to record in notes:**
+- Sheet ID
+- Sheet URL
+- Both tab names confirmed
+
+---
+
+### Subtask 2 — Fill Script Doc template with placeholders
+
+**File:** existing Doc `1ZDum9DDkuEGPMpoqo39XbAiF-D5-bGMExfOmSY3gm_A` in 09_Templates folder
+**Filename to set:** `Script_Doc_Template` (already named)
+
+Replace the entire document body with this content (using Google Docs API):
+
+```
+# {{Script_Name}}
+
+**Script ID:** {{Script_ID}}
+**Variation:** {{Variation_Number}}
+**Date:** {{Created_Date}}
+
+---
+
+## Audience
+
+{{Audience}}
+
+---
+
+## Offer / CTA
+
+{{Offer_CTA}}
+
+---
+
+## Script
+
+{{Script_Text}}
+
+---
+
+## Caption
+
+{{Caption_Text}}
+```
+
+Use Google Docs `batchUpdate` with `insertText` after clearing existing body. Make sure `{{placeholders}}` are literal text (not turned into smart quotes or auto-corrected).
+
+---
+
+### Subtask 3 — Fill Editor Brief template with placeholders
+
+**File:** existing Doc `179Rc1u3mWVC-7hidFeyBLWxIp0Xxaocl_M52MsDc-4I` in 09_Templates folder
+
+Replace the entire document body with this content. Placeholders must match the JSON keys in `editor_brief_v1.md` exactly:
+
+```
+# Editor Brief — {{Script_Name}}
+
+**Script ID:** {{Script_ID}}
+**Variation:** {{Variation_Number}}
+**Date:** {{Created_Date}}
+
+---
+
+## 1. Review Priorities
+
+{{review_priorities}}
+
+---
+
+## 2. Customer Avatar and Emotional Arc
+
+**Viewer Profile:** {{viewer_profile}}
+
+**Emotional State at Open:** {{emotional_state_at_open}}
+
+**Emotional State at Close:** {{emotional_state_at_close}}
+
+**Arc:** {{arc_description}}
+
+---
+
+## 3. Editing Directives
+
+{{editing_directives}}
+
+---
+
+## 4. Line-by-Line Visual Direction
+
+{{line_by_line_visual_direction}}
+```
+
+**Note for Forge:** `review_priorities`, `editing_directives`, and `line_by_line_visual_direction` are JSON arrays in the prompt output. The Make scenario will need to format these as readable text (likely numbered lists / bullet lists) before injecting into the Doc. For this task, just leave the placeholder as-is. Document this transformation requirement in `notes.md`.
+
+---
+
+### Subtask 4 — Clone test Make scenario as V1 base
+
+**Source scenario:** `4820264` (current name: `Chosen Agency — Content Pipeline (Test)`)
+**Make API endpoint:** `POST https://us2.make.com/api/v2/scenarios/4820264/clone`
+**Auth:** `Authorization: Token <make-api-key>`
+**Target name:** `Chosen Agency — Content Pipeline V1`
+**Folder:** `232853` (same folder as source)
+
+**Critical:**
+- Do NOT activate the cloned scenario
+- Do NOT modify any modules in the clone
+- Just clone, rename, leave inactive
+
+**Output to record in notes:**
+- New scenario ID
+- New scenario URL
+- Confirm status: inactive
+
+---
+
+### Subtask 5 — Update build_log.md
+
+**File:** `clients/chosen-agency/build_log.md` (create if not exists)
+
+Append entry:
+
+```markdown
+## 2026-04-28 — V1 Foundation Built (TASK-20260428-FORGE-CHOSEN-002)
+
+- V1 Production Tracker sheet created: <URL>
+  - Sheet ID: <id>
+  - 28 columns on Queue tab, 13 settings on System Settings tab
+  - Status dropdown configured (8 values)
+- Script Doc template filled with placeholders (Doc ID: 1ZDum9DDkuEGPMpoqo39XbAiF-D5-bGMExfOmSY3gm_A)
+- Editor Brief template filled with placeholders (Doc ID: 179Rc1u3mWVC-7hidFeyBLWxIp0Xxaocl_M52MsDc-4I)
+- V1 Make scenario cloned from test (ID: 4820264 ? <new_id>)
+  - Renamed to "Chosen Agency — Content Pipeline V1"
+  - Inactive (will be modified after Erika confirms model + provides keys)
+
+**Pending Erika kickoff answers:**
+- OpenAI model name (Q1)
+- ElevenLabs voice IDs + settings (Q2)
+- HeyGen avatar IDs + endpoint (Q3)
+- Editor assignment logic (Q4)
+- Drive folder ownership (Q5)
+- Notion in/out (Q6)
+- API keys (Q7)
+```
+
+---
+
+## Acceptance criteria
+
+- [ ] Production Tracker sheet exists with both tabs and all required columns
+- [ ] Status dropdown on column A has all 8 values
+- [ ] System Settings tab has all 13 rows (Value column blank)
+- [ ] Script Doc template has placeholder body (no leftover empty content)
+- [ ] Editor Brief template has placeholder body matching JSON keys
+- [ ] V1 Make scenario exists, named correctly, inactive
+- [ ] build_log.md updated with all IDs and URLs
+- [ ] Slack post to #dax-collab on completion with paths and IDs
+
+## Constraints (NON-NEGOTIABLE)
+
+- DO NOT activate the V1 Make scenario
+- DO NOT make any test calls to ElevenLabs, HeyGen, or OpenAI
+- DO NOT modify any modules in the cloned scenario
+- DO NOT touch the existing test scenario (`4820264`)
+- DO NOT touch the archived test sheet in `00_Test_Archive`
+
+## Done When
+
+- All 5 subtasks executed in order
+- All acceptance criteria met
+- build_log.md committed and pushed
+- Slack notification posted with sheet URL, scenario URL, and confirmation of placeholder docs
+- Forge complete entry appended to TASK_QUEUE.md below this task
