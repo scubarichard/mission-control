@@ -3426,3 +3426,155 @@ This is bigger than the keep-alive. Create a skill at `P:\_tools\skills\amazon-s
 
 - DAX backlog item "Outlook MCP" follows similar Azure-app-registration pattern
 - See TASK-20260425-FORGE-DAKONA-002 for Key Vault and parameterized credential precedent
+
+
+---
+
+# TASK-20260428-FORGE-CHOSEN-001 — Editor Brief OpenAI Prompt v1
+
+**Status:** OPEN
+**Owner:** Forge
+**Client:** Erika Cobb / Chosen Agency
+**Priority:** High (V1 build prep)
+**Estimated effort:** 2-3 hours
+**Created:** 2026-04-28 by Richard
+
+---
+
+## Context
+
+Erika Cobb of Chosen Agency awarded the full $1,488 V1 build today (Apr 28). Test milestone delivered Apr 23. Full SOW ("Builder Handoff") received and reviewed. Build window is 7-14 days per her SOW Section 17.
+
+**The high-leverage piece** Erika explicitly called out as priority is the **Editor Brief generation**. She referenced an inspiration Loom (loom.com/share/e8fb5f0138294b088f7190acc705c7f2) and said: *"very impressed with the detailed editing brief shown in this video. That's important."*
+
+This task is to draft and iterate the OpenAI prompt that generates the Editor Brief from row inputs.
+
+## Reference
+
+Full SOW: `clients/chosen-agency/builder-handoff.md` (just committed to repo)
+
+Key sections:
+- **Editor Brief Template** — fixed 4-section order is non-negotiable:
+  1. Review Priorities
+  2. Customer Avatar and Emotional Arc
+  3. Editing Directives
+  4. Line-by-Line Visual Direction
+- **Production Tracker Schema (Section 5)** — input fields available to the prompt
+- **Configuration Rules (Section 2)** — System Settings tab provides global tone/emotional delivery defaults; per-row overrides take precedence
+
+## Inputs the prompt receives
+
+Variables passed from Make immediately after row validation:
+
+```
+{{script_text}}        - full script body
+{{audience}}           - target audience summary
+{{current_belief}}     - what audience currently thinks
+{{desired_belief}}     - what we want them to think
+{{tone}}               - resolved (override or global default)
+{{emotional_arc}}      - emotional movement target
+{{offer_cta}}          - call to action / offer
+{{script_id}}
+{{variation_number}}
+{{voice_id}}
+{{avatar_id}}
+{{emotional_delivery}} - resolved override or default
+```
+
+## Required output structure
+
+Must produce structured response that gets piped into a Google Doc template with the 4 sections.
+
+**Forge to decide:** JSON with 4 keys (parse in Make, fill 4 placeholders) OR markdown with `## Section N - [Name]` headers.
+
+If using JSON, force structured output via `response_format`.
+
+## Quality bar
+
+Brief must be **good enough that an editor can start work without asking questions**:
+
+1. **Review Priorities** — 3-5 prioritized items specific to THIS script (hook, retention, CTA, pacing). Not generic.
+
+2. **Customer Avatar and Emotional Arc** — concrete description: who's watching, what they feel at second 0, what they should feel at second 30. Reference audience field but expand into actionable editing context.
+
+3. **Editing Directives** — 4-8 specific directives. Examples: "cut first 0.5s of silence," "add b-roll over the data point at 0:08," "increase pacing in the middle third," "linger on CTA for 1.5s minimum." NOT generic. Tied to actual script content.
+
+4. **Line-by-Line Visual Direction** — for EACH sentence or major beat, a specific visual instruction. **THIS IS THE SECTION ERIKA HIGHLIGHTED.** Format example:
+   ```
+   "Want to sleep better tonight?" ? close-up, eye contact, slight forward lean
+   "Start by setting a consistent bedtime." ? cut to b-roll of hands setting alarm clock
+   "Going to bed at the same time helps your body get into a rhythm." ? split-screen, two people going to bed at different times then converging
+   ```
+
+The line-by-line section is what separates this build from competitors. Spend time here.
+
+## Test cases
+
+Run the prompt against these 3 scripts to validate before delivery:
+
+### Test 1 — Educational/health (sleep tips)
+```
+Want to sleep better tonight? Start by setting a consistent bedtime. Going to bed at the same time helps your body get into a rhythm. Next, create a calming bedtime routine. Simple activities like reading or meditating can signal your brain that it's time to wind down. Lastly, keep your bedroom cool and dark. A cooler environment can improve sleep quality. Try these tips tonight and wake up refreshed tomorrow!
+```
+- Audience: working professionals 30-50 with sleep issues
+- Tone: helpful, direct
+- Emotional Arc: frustrated ? hopeful
+
+### Test 2 — Sales/conversion
+```
+Stop guessing what to post. Start posting what works. Most creators waste hours every week trying to figure out what to make next. The winners use a simple system: data first, content second. In the next 30 seconds I'll show you exactly how. Watch till the end — there's a free template at the end if you want it.
+```
+- Audience: aspiring content creators 22-35
+- Tone: bold, direct
+- Emotional Arc: overwhelmed ? in-control
+
+### Test 3 — Brand/agency (Erika's actual use case)
+```
+We don't make content. We make winners. Every video we ship is tested against a control. Every script is rewritten until the data says ship. If you've been posting and praying, this is your sign — there's a better way to grow.
+```
+- Audience: agency owners and DTC founders
+- Tone: confident, contrarian
+- Emotional Arc: skeptical ? curious
+
+For each test, validate the brief is:
+- Specific to that script (not interchangeable)
+- Actionable (an editor could start work)
+- Within the 4-section structure
+- Reasonable length (not a wall of text)
+
+## Deliverables
+
+1. **Final prompt** at `clients/chosen-agency/prompts/editor_brief_v1.md`
+2. **3 sample outputs** at `clients/chosen-agency/prompts/samples/test_1.md`, `test_2.md`, `test_3.md`
+3. **Brief notes** (model, params, why those choices) at `clients/chosen-agency/prompts/notes.md`
+4. **Slack post to #dax-collab** when done with: prompt path, sample paths, any concerns about quality or token cost
+
+## Acceptance criteria
+
+- All 3 test outputs are usable by a hypothetical editor without follow-up questions
+- Line-by-Line Visual Direction has concrete visuals for each script beat (no "consider adding visuals" hand-waves)
+- Output structure is reliable across all 3 tests (no JSON parse errors, no missing sections)
+- Token cost per generation is reasonable (under $0.02 per brief at current OpenAI pricing — note model used)
+
+## Constraints
+
+- **Model assumption:** gpt-4o for v1 work. Awaiting Erika confirmation. Note clearly in notes.md.
+- **API key:** use 1AltX OpenAI key for testing (Richard's, not Erika's — she hasn't provided keys yet)
+- **DO NOT** push prompt to production Make scenario. This is a research/iteration task only. Production wiring happens in a separate task after Erika confirms the model.
+
+## Notes / deviations welcome
+
+If you believe the 4-section structure should be tweaked for better quality (e.g., adding a 5th section, reordering, etc.), make the case in the Slack post. Erika's SOW is firm on the section names, but Richard can negotiate refinements with her. **Don't change without flagging.**
+
+## Reference / precedent
+
+- DAX system prompt work (RIA guardrails, structured output patterns)
+- OPT Solutions HubSpot prompt patterns (structured JSON output)
+
+## Done When
+
+- [ ] editor_brief_v1.md prompt file exists
+- [ ] All 3 sample output files exist and read as high-quality briefs
+- [ ] notes.md documents model, params, token cost
+- [ ] Slack post to #dax-collab with paths and any concerns
+- [ ] Forge complete entry appended below this task
