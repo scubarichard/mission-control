@@ -3600,3 +3600,35 @@ If you believe the 4-section structure should be tweaked for better quality (e.g
 **Flag:** Model is gpt-4o (working assumption). Awaiting Erika confirmation. Do NOT wire to production Make scenario until confirmed.
 
 **Next task needed:** Wire prompt into Make Phase 2 scenario + update Google Doc template placeholders.
+
+
+---
+
+### TASK-20260426-001
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** Medium
+- **Task:** Add HubSpot integration to DAX MCP server
+- **Authorized by:** Richard Mabbun
+
+## CONTEXT
+
+Richard needs HubSpot accessible via the DAX MCP server so he can publish blog articles, update CRM contacts, and create deals directly from Claude conversations. HubSpot MCP is available at https://mcp.hubspot.com/anthropic but needs to be configured in the DAX MCP server.
+
+## WHAT TO BUILD
+
+Add HubSpot as a connected MCP server in the DAX MCP configuration so it appears as available tools in Claude conversations.
+
+## STEPS
+
+1. Check current DAX MCP server config at mcp.dakona.net to see how existing MCP servers are registered
+2. Register HubSpot MCP endpoint: https://mcp.hubspot.com/anthropic
+3. Configure OAuth or API key authentication for Richard's HubSpot account
+4. Test that HubSpot tools appear in Claude tool search
+5. Verify Richard can search CRM objects, create blog posts, and update contacts
+
+## DELIVERABLES
+- HubSpot tools available via DAX MCP server
+- Test confirming CRM search and blog post creation works
+- Post completion status to #dax-collab
+
