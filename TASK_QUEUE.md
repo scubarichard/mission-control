@@ -3335,3 +3335,94 @@ Add `search_sharepoint` tool to ICP DAX router so Brett can search company Share
 **Regression: 143/143 PASS**
 
 **[Forge] 2026-04-26:** DONE — dev pushed, #dax-collab notified.
+
+---
+
+## TASK-20260428-FORGE-1ALTX-001 - SP-API Keep-Alive (n8n) + Amazon Automation Skill
+
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** Medium
+- **From:** Richard via Sonnet (chat: 2026-04-28 SP-API approval crisis)
+- **Project:** 1AltX - Amazon SP-API automation foundation
+
+### Background
+
+Today (2026-04-28) we resolved an Amazon SP-API developer account deactivation deadline (May 5). Account "1AltX LLC" had been approved Jan 8, 2026 with global marketplace access (4 roles: Product Listing, Pricing, Selling Partner Insights, Inventory and Order Tracking) but had no app registered, hence no successful API call in 90 days.
+
+Richard registered the app today, self-authorized against Bunny Ear Products (his own seller account), and stored credentials in Azure Key Vault. A PowerShell-based daily Windows scheduled task is currently running as the keep-alive mechanism. **It works, but it only fires when Richard's laptop is awake.**
+
+This task creates an n8n-based redundant keep-alive AND establishes a reusable foundation for future Amazon SP-API automation work (which 1AltX expects to pick up - non-compete from Itegria sale just expired May 2026).
+
+### What "Done" Means
+
+**Part 1: n8n keep-alive workflow**
+
+Build and deploy a workflow on n8n.dakona.net that:
+
+1. Schedule trigger - runs daily at 09:00 America/Chicago
+2. HTTP POST to `https://api.amazon.com/auth/o2/token` with form-urlencoded body:
+   - grant_type=refresh_token
+   - refresh_token, client_id, client_secret (pulled from Key Vault or n8n credential store - see Part 2 decision)
+3. HTTP GET to `https://sellingpartnerapi-na.amazon.com/sellers/v1/marketplaceParticipations` with header `x-amz-access-token: {access_token}`
+4. Set node to extract: marketplace count, country codes list, success timestamp
+5. On success: log to Slack #dax-collab with [Forge] prefix (or wire into existing error workflow pattern - whichever fits Richard's preferred notification style)
+6. On failure: send to error notification workflow (use existing Heartland/OPT error pattern as reference); critical because Amazon deactivates accounts 90 days after last successful call
+
+**Part 2: Credential storage decision**
+
+Key Vault is the canonical store, but n8n on n8n.dakona.net likely doesn't have managed identity. Two acceptable approaches:
+
+- **Option A (preferred):** Set up a service principal for n8n -> Key Vault, store SP creds in n8n credential store, workflow fetches from Key Vault at runtime. Documents the pattern for future use across all 1AltX automations.
+- **Option B (fallback):** Store the three secrets directly in n8n's encrypted credential store. Faster, fine for one workflow, sets a worse precedent.
+
+Forge: pick A if it can be done in under 60 min of additional work. Document the choice in the workflow's notes.
+
+**Part 3: Reduce the Windows scheduled task to weekly**
+
+Once n8n workflow is live and proven (3+ successful runs), reduce the Windows task `SP-API Keep-Alive (1AltX)` from daily to weekly (Sundays) as a backup. Don't delete it - the redundancy is cheap insurance for a 90-day deactivation deadline.
+
+PowerShell to run on Richard's desktop via bridge:
+```
+$trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At 9:00AM
+Set-ScheduledTask -TaskName 'SP-API Keep-Alive (1AltX)' -Trigger $trigger
+```
+
+**Part 4: Create reusable Amazon SP-API skill**
+
+This is bigger than the keep-alive. Create a skill at `P:\_tools\skills\amazon-spapi\SKILL.md` (or wherever Richard's skills live - check existing skill paths) that documents:
+
+- The 1AltX developer profile (App ID amzn1.sp.solution.456df410-9a0b-452b-b9e4-12d8ddaf77fb, region NA, 4 approved roles)
+- LWA token exchange flow (working PowerShell example from today's session in C:\Scripts\spapi-keepalive\Invoke-SpApiKeepAlive.ps1)
+- Key Vault secret names (spapi-lwa-client-id, spapi-lwa-client-secret, spapi-lwa-refresh-token, spapi-region in vault kvdaxdakonapilot)
+- Authorization model: same app supports multiple seller authorizations; each new seller (e.g., Vince/Tech on Time, future clients) gets its own refresh token via Manage Authorizations -> Authorize app
+- Common SP-API endpoints by use case (Reports API for inventory pulls, Listings Items API for product data, Catalog Items API for ASIN lookup, Product Pricing for competitive pricing, FBA Inventory for stock, Finances for transactions)
+- Rate limit guidance (most endpoints: 0.5 req/sec burst 10)
+- The 90-day baseline rule and how the keep-alive solves it
+- A "starter n8n template" (the keep-alive workflow JSON) that future Amazon work can clone and modify
+
+### Context Files
+
+- Working PowerShell script: `C:\Scripts\spapi-keepalive\Invoke-SpApiKeepAlive.ps1` (3.5 KB, tested successfully today)
+- Live log: `C:\Scripts\spapi-keepalive\keepalive.log` (shows successful runs at 09:12 and 09:13 today)
+
+### Notes
+
+- App was registered against Bunny Ear Products as the authorized seller. Refresh token is scoped to NA marketplaces (US, MX, CA, BR). Adding Tech on Time (Vince) later is a 2-minute self-auth flow Richard can do; no app changes needed.
+- Credentials were briefly leaked to Sonnet chat history during today's session. Should be rotated as part of this task before going to production. Forge: rotate client_secret in SPP -> View LWA credentials -> Rotate, then update Key Vault. Refresh token is fresh from today's authorize and OK for now (revoke + regenerate if paranoid).
+- Microsoft Graph integration is a separate DAX backlog item (DAX Beta Blocker). Don't conflate this work with that.
+
+### Done When
+
+- [ ] n8n workflow deployed, active, and successfully run at least 3 times
+- [ ] Slack confirmation message posted to #dax-collab on success
+- [ ] Failure path tested (e.g., temporarily set wrong client_id) and notification verified
+- [ ] Windows task reduced to weekly Sunday schedule
+- [ ] Skill file created at agreed path with all sections above
+- [ ] client_secret rotated, Key Vault updated, n8n re-tested
+- [ ] [Forge] complete entry appended below this task
+
+### Reference Tasks
+
+- DAX backlog item "Outlook MCP" follows similar Azure-app-registration pattern
+- See TASK-20260425-FORGE-DAKONA-002 for Key Vault and parameterized credential precedent
