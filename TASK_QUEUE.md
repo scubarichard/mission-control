@@ -3632,3 +3632,55 @@ Add HubSpot as a connected MCP server in the DAX MCP configuration so it appears
 - Test confirming CRM search and blog post creation works
 - Post completion status to #dax-collab
 
+
+
+---
+
+### TASK-20260426-002
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** Medium
+- **Task:** Add NinjaOne API integration to DAX MCP server
+- **Authorized by:** Richard Mabbun
+
+## CONTEXT
+
+Richard needs NinjaOne accessible via the DAX MCP server so he can create tickets, check device status, and document client work directly from Claude conversations. NinjaOne has a REST API that needs to be added as a tool set in server.js.
+
+## WHAT TO BUILD
+
+Add NinjaOne as a set of tools in the DAX MCP server (mcp/server.js) similar to how ClickUp and other tools are implemented.
+
+## NINJAONE API DETAILS
+
+- Base URL: https://app.ninjarmm.com/api/v2
+- Auth: OAuth2 client credentials
+- Credentials: stored in Key Vault or .env — check existing MCP config for pattern
+
+## TOOLS TO IMPLEMENT
+
+1. ninja_create_ticket — create a new ticket for a client/device
+   - Parameters: clientId, deviceId, title, description, priority, status
+2. ninja_list_tickets — list tickets for a client or device
+   - Parameters: clientId, deviceId (optional)
+3. ninja_get_device — get device details by device ID or name
+   - Parameters: deviceId or deviceName
+4. ninja_list_devices — list all devices for a client
+   - Parameters: clientId
+5. ninja_list_clients — list all clients/organizations in NinjaOne
+   - No parameters
+
+## IMPLEMENTATION STEPS
+
+1. Review mcp/server.js to understand existing tool pattern (ClickUp is a good reference)
+2. Add NinjaOne OAuth2 token fetch using client credentials from env/Key Vault
+3. Implement the 5 tools above following the same pattern
+4. Add NinjaOne credentials to mcp/.env
+5. Test each tool — at minimum confirm ninja_list_clients returns Dakona client list
+6. Deploy updated MCP server to ca-dax-mcp-dakona-pilot via Deploy-SSOConfig or docker rebuild
+
+## DELIVERABLES
+- NinjaOne tools available in DAX MCP server
+- ninja_list_clients tested and returning results
+- ninja_create_ticket tested with a sample ticket
+- Post completion status to #dax-collab
