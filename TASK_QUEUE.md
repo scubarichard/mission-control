@@ -4020,13 +4020,14 @@ https://1altx.slack.com/archives/C0APVGG486M/p1777403158897349
 
 ---
 
-# TASK-20260428-FORGE-CHOSEN-003 — Drive Cleanup + build_log Correction
+# TASK-20260428-FORGE-CHOSEN-003 ï¿½ Drive Cleanup + build_log Correction
 
-**Status:** OPEN
+**Status:** DONE
 **Owner:** Forge
 **Client:** Erika Cobb / Chosen Agency
 **Priority:** Medium
 **Created:** 2026-04-28 by Richard
+**Completed:** 2026-04-28 by Forge + Richard
 **Estimated effort:** 15-30 min
 **Depends on:** TASK-20260428-FORGE-CHOSEN-002 (DONE 4/5)
 
@@ -4037,9 +4038,9 @@ https://1altx.slack.com/archives/C0APVGG486M/p1777403158897349
 CHOSEN-002 created 3 duplicate `Content_Pipeline_V1` sheets in the Chosen Agency parent folder due to retries during the build. Need to clean up duplicates, verify which sheet is the real deliverable, and correct the build_log entry that claimed wrong placement.
 
 Drive view shows 3 sheets at root of `1xCplt3J0RNAPwDpWyjpqqXXTeTf3USPb`:
-- `Content_Pipeline_V1` — created ~1:32 PM, 1 KB (likely empty/junk)
-- `Content_Pipeline_V1` — created ~1:36 PM, 1 KB (likely empty/junk)
-- `Content_Pipeline_V1` — created ~1:56 PM, 2 KB, **shared with `n8n-sheets@positive-bonbon-478413-p1.iam.gserviceaccount.com`** (the real one per Forge's own logs)
+- `Content_Pipeline_V1` ï¿½ created ~1:32 PM, 1 KB (likely empty/junk)
+- `Content_Pipeline_V1` ï¿½ created ~1:36 PM, 1 KB (likely empty/junk)
+- `Content_Pipeline_V1` ï¿½ created ~1:56 PM, 2 KB, **shared with `n8n-sheets@positive-bonbon-478413-p1.iam.gserviceaccount.com`** (the real one per Forge's own logs)
 
 Real sheet ID per build_log: `1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo`
 
@@ -4047,7 +4048,7 @@ Real sheet ID per build_log: `1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo`
 
 ## Subtasks (in order)
 
-### Subtask 1 — Identify all 3 sheets
+### Subtask 1 ï¿½ Identify all 3 sheets
 
 Use the service account `google-sa-pvc-sheets` (from Key Vault) + Drive API to:
 - List all files named `Content_Pipeline_V1` in parent folder `1xCplt3J0RNAPwDpWyjpqqXXTeTf3USPb`
@@ -4060,7 +4061,7 @@ Use the service account `google-sa-pvc-sheets` (from Key Vault) + Drive API to:
 
 Print the list with verification data.
 
-### Subtask 2 — Verify which is the real one
+### Subtask 2 ï¿½ Verify which is the real one
 
 The real one MUST have:
 - Tab named `Queue` with 28 columns (A through AB)
@@ -4072,15 +4073,15 @@ The expected ID per CHOSEN-002 build_log is `1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG
 
 If that ID matches one of the 3 found AND meets the criteria above, mark it as KEEP. The other 2 are duplicates.
 
-If the expected ID is NOT among the 3 found, STOP and report — something is wrong.
+If the expected ID is NOT among the 3 found, STOP and report ï¿½ something is wrong.
 
-### Subtask 3 — Delete duplicates
+### Subtask 3 ï¿½ Delete duplicates
 
-Move the 2 duplicates to Drive trash via Drive API (not permanent delete — operator can recover if needed).
+Move the 2 duplicates to Drive trash via Drive API (not permanent delete ï¿½ operator can recover if needed).
 
 Do NOT delete the real one.
 
-### Subtask 4 — Correct build_log.md
+### Subtask 4 ï¿½ Correct build_log.md
 
 Edit `clients/chosen-agency/build_log.md`:
 
@@ -4090,12 +4091,12 @@ Find this line (approximate):
 Replace with:
 > **Location:** Chosen Agency root folder (`1xCplt3J0RNAPwDpWyjpqqXXTeTf3USPb`)
 >
-> **Note:** Originally targeted `01_Production_Tracker_Backend` but kept at parent root per architecture decision — the operational sheet stays at root for operator daily access; numbered subfolders are for assets only.
+> **Note:** Originally targeted `01_Production_Tracker_Backend` but kept at parent root per architecture decision ï¿½ the operational sheet stays at root for operator daily access; numbered subfolders are for assets only.
 
 Then append a new section:
 
 ```markdown
-## TASK-20260428-FORGE-CHOSEN-003 — Drive Cleanup
+## TASK-20260428-FORGE-CHOSEN-003 ï¿½ Drive Cleanup
 **Status:** DONE
 **Date:** 2026-04-28
 **Agent:** Forge
@@ -4109,7 +4110,7 @@ Then append a new section:
 - Corrected build_log location entry (root, not `01_Production_Tracker_Backend`)
 ```
 
-### Subtask 5 — Commit and notify
+### Subtask 5 ï¿½ Commit and notify
 
 - `git add clients/chosen-agency/build_log.md`
 - `git commit -m "[Forge] CHOSEN-003 DONE: Drive cleanup + build_log correction"`
@@ -4130,11 +4131,26 @@ Then append a new section:
 
 ## Constraints
 
-- Use TRASH (not permanent delete) — recoverable if wrong
+- Use TRASH (not permanent delete) ï¿½ recoverable if wrong
 - Do NOT touch any sheets outside `Content_Pipeline_V1` named files
 - Do NOT touch the test sheet in `00_Test_Archive`
-- Do NOT modify the real sheet's content — only deletions of duplicates allowed
+- Do NOT modify the real sheet's content ï¿½ only deletions of duplicates allowed
 
 ## Done When
 
 Acceptance criteria met, Slack notified.
+
+---
+
+## [Forge] TASK-20260428-FORGE-CHOSEN-003 â€” DONE
+**Completed:** 2026-04-28
+
+### Results
+- Verified real sheet `1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo` via Sheets API: Queue (28 cols) + System Settings (13 rows) âœ…
+- Duplicates identified: `1_jDq7gwdybSYN3DE_1Ah5RPX3BthT73nXRA-PAtfzgQ`, `1jXZh5cs9z7JvXDIwnSyaPNVyFvX_q43yzj-xsAY0k4k`, `__test_sheet_DELETE_ME`
+- Richard moved duplicates to trash and renamed real sheet
+- build_log.md updated with CHOSEN-003 entry + location correction
+- All temp n8n workflows cleaned up
+
+### Note: CHOSEN-002 now 5/5 DONE
+Richard manually cloned Make scenario â†’ ID 4894796 ("Chosen Agency â€” Content Pipeline V1")

@@ -99,3 +99,28 @@ Placeholders inserted (matching `editor_brief_v1.md`):
 
 **Note:** Cloned manually by Richard (2026-04-28 evening) due to `make-api-key` write-scope blocker. CHOSEN-002 now fully complete.
 
+
+---
+
+## TASK-20260428-FORGE-CHOSEN-003 — Drive Cleanup
+**Status:** DONE
+**Date:** 2026-04-28
+**Agent:** Forge + Richard
+
+### Verification
+Confirmed real sheet `1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo` via Sheets API:
+- Tab: Queue — 28 columns (Status → Last Updated) ✅
+- Tab: System Settings — 13 data rows (Voice ×6, Avatar ×4, Prompt ×3) ✅
+- Status dropdown configured ✅
+- Shared with service account ✅
+
+### Actions
+- Forge: identified 3 duplicate/junk sheets in Drive (`1_jDq7gwdybSYN3DE_1Ah5RPX3BthT73nXRA-PAtfzgQ`, `1jXZh5cs9z7JvXDIwnSyaPNVyFvX_q43yzj-xsAY0k4k`, `__test_sheet_DELETE_ME`)
+- Richard: moved duplicates to trash + renamed real sheet (2026-04-28)
+
+### Corrected Location
+**Location:** Chosen Agency root folder (`1xCplt3J0RNAPwDpWyjpqqXXTeTf3USPb`)
+*(build_log previously stated `01_Production_Tracker_Backend` — sheet lives at parent root for operator daily access)*
+
+### CHOSEN-002 Now Fully Complete
+All 5 subtasks done. Make scenario V1: 4894796 (cloned manually by Richard).
