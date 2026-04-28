@@ -629,3 +629,30 @@ npm run phase-f -- --story path/to/story.md --project my-project [--output final
 **LeadLUX story document:** `Working Docs/VIDEO-STORY-DOCUMENT.md` (committed in earlier session) — 10 scenes ready to run against this pipeline. Next step: provision HeyGen API key + avatar/voice IDs in Key Vault and run live.
 
 **[Forge] 2026-04-25:** DONE — all 9 sub-tasks complete, branch pushed, smoke test green.
+
+---
+
+## TASK-20260428-FORGE-1ALTX-001 — SP-API Keep-Alive + Amazon Automation Skill
+- **Assignee:** Forge
+- **Status:** IN_PROGRESS
+- **Date:** 2026-04-28
+- **Client:** 1AltX
+- **Priority:** High — May 5 deactivation deadline resolved today; keep it that way
+- **Title:** SP-API Keep-Alive (n8n) + Amazon Automation Skill
+
+### Context
+
+Amazon SP-API app registered today, self-authorized against Bunny Ear Products. LWA credentials in Key Vault (`kvdaxdakonapilot`). Windows scheduled task at `C:\Scripts\spapi-keepalive\Invoke-SpApiKeepAlive.ps1` runs daily as keep-alive — works but only when laptop is on.
+
+### Parts
+
+1. n8n keep-alive workflow on n8n.dakona.net — daily 9 AM Central, KV → LWA exchange → marketplaceParticipations → Slack confirmation, failure-path notification
+2. Credential storage — SP → Key Vault from n8n (preferred)
+3. Reduce Windows task to weekly Sundays once n8n proven (3+ runs)
+4. Build Amazon SP-API skill at `P:\_tools\skills\amazon-spapi\SKILL.md`
+
+**Working reference:** `C:\Scripts\spapi-keepalive\Invoke-SpApiKeepAlive.ps1` — tested 2x, both SUCCESS.
+
+**IMPORTANT — Action Required:** Rotate `spapi-lwa-client-secret` in Amazon Developer Console (was briefly exposed in chat history today). See SKILL.md Rotation Checklist.
+
+### ClickUp: https://app.clickup.com/t/86e146xkg
