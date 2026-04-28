@@ -3655,19 +3655,19 @@ Add NinjaOne as a set of tools in the DAX MCP server (mcp/server.js) similar to 
 
 - Base URL: https://app.ninjarmm.com/api/v2
 - Auth: OAuth2 client credentials
-- Credentials: stored in Key Vault or .env ó check existing MCP config for pattern
+- Credentials: stored in Key Vault or .env ÔøΩ check existing MCP config for pattern
 
 ## TOOLS TO IMPLEMENT
 
-1. ninja_create_ticket ó create a new ticket for a client/device
+1. ninja_create_ticket ÔøΩ create a new ticket for a client/device
    - Parameters: clientId, deviceId, title, description, priority, status
-2. ninja_list_tickets ó list tickets for a client or device
+2. ninja_list_tickets ÔøΩ list tickets for a client or device
    - Parameters: clientId, deviceId (optional)
-3. ninja_get_device ó get device details by device ID or name
+3. ninja_get_device ÔøΩ get device details by device ID or name
    - Parameters: deviceId or deviceName
-4. ninja_list_devices ó list all devices for a client
+4. ninja_list_devices ÔøΩ list all devices for a client
    - Parameters: clientId
-5. ninja_list_clients ó list all clients/organizations in NinjaOne
+5. ninja_list_clients ÔøΩ list all clients/organizations in NinjaOne
    - No parameters
 
 ## IMPLEMENTATION STEPS
@@ -3676,7 +3676,7 @@ Add NinjaOne as a set of tools in the DAX MCP server (mcp/server.js) similar to 
 2. Add NinjaOne OAuth2 token fetch using client credentials from env/Key Vault
 3. Implement the 5 tools above following the same pattern
 4. Add NinjaOne credentials to mcp/.env
-5. Test each tool ó at minimum confirm ninja_list_clients returns Dakona client list
+5. Test each tool ÔøΩ at minimum confirm ninja_list_clients returns Dakona client list
 6. Deploy updated MCP server to ca-dax-mcp-dakona-pilot via Deploy-SSOConfig or docker rebuild
 
 ## DELIVERABLES
@@ -3688,23 +3688,24 @@ Add NinjaOne as a set of tools in the DAX MCP server (mcp/server.js) similar to 
 
 ---
 
-# TASK-20260428-FORGE-CHOSEN-002 ó V1 Build Foundation (Sheet, Templates, Scenario Clone)
+# TASK-20260428-FORGE-CHOSEN-002 ÔøΩ V1 Build Foundation (Sheet, Templates, Scenario Clone)
 
-**Status:** OPEN
+**Status:** DONE (4/5 ‚Äî subtask 4 blocked on Make API permissions)
 **Owner:** Forge
 **Client:** Erika Cobb / Chosen Agency
 **Priority:** High
 **Created:** 2026-04-28 by Richard
-**Estimated effort:** 1.5ñ2 hours
-**Depends on:** TASK-20260428-FORGE-CHOSEN-001 (DONE ó Editor Brief prompt v1)
+**Completed:** 2026-04-28 by Forge
+**Estimated effort:** 1.5ÔøΩ2 hours
+**Depends on:** TASK-20260428-FORGE-CHOSEN-001 (DONE ÔøΩ Editor Brief prompt v1)
 
 ---
 
 ## Context
 
-Erika awarded the Chosen Agency V1 build ($1,488) on Apr 28. SOW received and reviewed. Kickoff message sent ó awaiting her answers on 7 items (OpenAI model, voice/avatar IDs, editor logic, folder ownership, Notion confirm, API keys, comm channel).
+Erika awarded the Chosen Agency V1 build ($1,488) on Apr 28. SOW received and reviewed. Kickoff message sent ÔøΩ awaiting her answers on 7 items (OpenAI model, voice/avatar IDs, editor logic, folder ownership, Notion confirm, API keys, comm channel).
 
-This task is **deterministic V1 prep work** ó everything in her SOW that can be built without her input. Compresses Day 1-2 of the build window from ~3 hours to ~30 min once she answers.
+This task is **deterministic V1 prep work** ÔøΩ everything in her SOW that can be built without her input. Compresses Day 1-2 of the build window from ~3 hours to ~30 min once she answers.
 
 **Critical constraint:** Do NOT activate any Make scenario. Do NOT make any external API calls (no HeyGen test calls, no ElevenLabs test calls). Build the structure only.
 
@@ -3727,7 +3728,7 @@ This task is **deterministic V1 prep work** ó everything in her SOW that can be 
 
 ## Subtasks (execute in order, do not skip)
 
-### Subtask 1 ó Create V1 Production Tracker sheet
+### Subtask 1 ÔøΩ Create V1 Production Tracker sheet
 
 **Where:** Root of Chosen Agency Drive folder (`1xCplt3J0RNAPwDpWyjpqqXXTeTf3USPb`)
 **Filename:** `Content_Pipeline_V1`
@@ -3735,7 +3736,7 @@ This task is **deterministic V1 prep work** ó everything in her SOW that can be 
 
 **Tab 1: `Queue` (the Production Tracker)**
 
-Columns AñAB (28 columns) per SOW Section 6.1 ó exact names below:
+Columns AÔøΩAB (28 columns) per SOW Section 6.1 ÔøΩ exact names below:
 
 | Col | Name | Type |
 |---|---|---|
@@ -3775,7 +3776,7 @@ Configuration:
 
 **Tab 2: `System Settings`**
 
-Columns AñE (5 columns) per SOW Section 7:
+Columns AÔøΩE (5 columns) per SOW Section 7:
 
 | Col | Name |
 |---|---|
@@ -3785,7 +3786,7 @@ Columns AñE (5 columns) per SOW Section 7:
 | D | Notes |
 | E | Active |
 
-Pre-populate these 13 rows (Value column LEFT BLANK ó Erika fills):
+Pre-populate these 13 rows (Value column LEFT BLANK ÔøΩ Erika fills):
 
 | Setting Type | Setting Name | Value | Notes | Active |
 |---|---|---|---|---|
@@ -3814,7 +3815,7 @@ Configuration:
 
 ---
 
-### Subtask 2 ó Fill Script Doc template with placeholders
+### Subtask 2 ÔøΩ Fill Script Doc template with placeholders
 
 **File:** existing Doc `1ZDum9DDkuEGPMpoqo39XbAiF-D5-bGMExfOmSY3gm_A` in 09_Templates folder
 **Filename to set:** `Script_Doc_Template` (already named)
@@ -3857,14 +3858,14 @@ Use Google Docs `batchUpdate` with `insertText` after clearing existing body. Ma
 
 ---
 
-### Subtask 3 ó Fill Editor Brief template with placeholders
+### Subtask 3 ÔøΩ Fill Editor Brief template with placeholders
 
 **File:** existing Doc `179Rc1u3mWVC-7hidFeyBLWxIp0Xxaocl_M52MsDc-4I` in 09_Templates folder
 
 Replace the entire document body with this content. Placeholders must match the JSON keys in `editor_brief_v1.md` exactly:
 
 ```
-# Editor Brief ó {{Script_Name}}
+# Editor Brief ÔøΩ {{Script_Name}}
 
 **Script ID:** {{Script_ID}}
 **Variation:** {{Variation_Number}}
@@ -3905,12 +3906,12 @@ Replace the entire document body with this content. Placeholders must match the 
 
 ---
 
-### Subtask 4 ó Clone test Make scenario as V1 base
+### Subtask 4 ÔøΩ Clone test Make scenario as V1 base
 
-**Source scenario:** `4820264` (current name: `Chosen Agency ó Content Pipeline (Test)`)
+**Source scenario:** `4820264` (current name: `Chosen Agency ÔøΩ Content Pipeline (Test)`)
 **Make API endpoint:** `POST https://us2.make.com/api/v2/scenarios/4820264/clone`
 **Auth:** `Authorization: Token <make-api-key>`
-**Target name:** `Chosen Agency ó Content Pipeline V1`
+**Target name:** `Chosen Agency ÔøΩ Content Pipeline V1`
 **Folder:** `232853` (same folder as source)
 
 **Critical:**
@@ -3925,14 +3926,14 @@ Replace the entire document body with this content. Placeholders must match the 
 
 ---
 
-### Subtask 5 ó Update build_log.md
+### Subtask 5 ÔøΩ Update build_log.md
 
 **File:** `clients/chosen-agency/build_log.md` (create if not exists)
 
 Append entry:
 
 ```markdown
-## 2026-04-28 ó V1 Foundation Built (TASK-20260428-FORGE-CHOSEN-002)
+## 2026-04-28 ÔøΩ V1 Foundation Built (TASK-20260428-FORGE-CHOSEN-002)
 
 - V1 Production Tracker sheet created: <URL>
   - Sheet ID: <id>
@@ -3941,7 +3942,7 @@ Append entry:
 - Script Doc template filled with placeholders (Doc ID: 1ZDum9DDkuEGPMpoqo39XbAiF-D5-bGMExfOmSY3gm_A)
 - Editor Brief template filled with placeholders (Doc ID: 179Rc1u3mWVC-7hidFeyBLWxIp0Xxaocl_M52MsDc-4I)
 - V1 Make scenario cloned from test (ID: 4820264 ? <new_id>)
-  - Renamed to "Chosen Agency ó Content Pipeline V1"
+  - Renamed to "Chosen Agency ÔøΩ Content Pipeline V1"
   - Inactive (will be modified after Erika confirms model + provides keys)
 
 **Pending Erika kickoff answers:**
@@ -3982,3 +3983,37 @@ Append entry:
 - build_log.md committed and pushed
 - Slack notification posted with sheet URL, scenario URL, and confirmation of placeholder docs
 - Forge complete entry appended to TASK_QUEUE.md below this task
+
+---
+
+## [Forge] TASK-20260428-FORGE-CHOSEN-002 ‚Äî DONE (partial ‚Äî subtask 4 blocked)
+**Completed:** 2026-04-28
+**Status:** 4/5 subtasks DONE; subtask 4 (Make clone) blocked on API permissions
+
+### Results
+
+**Subtask 1 ‚Äî Production Tracker Sheet ‚úÖ**
+- Sheet: Content_Pipeline_V1
+- ID: `1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo`
+- URL: https://docs.google.com/spreadsheets/d/1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo
+- Queue tab: 28 cols, Status dropdown (8 values), frozen+bold+gray header
+- System Settings tab: 13 rows (Voice √ó6, Avatar √ó4, Prompt √ó3), Active checkbox
+
+**Subtask 2 ‚Äî Script Doc Template ‚úÖ**
+- Doc ID: `1ZDum9DDkuEGPMpoqo39XbAiF-D5-bGMExfOmSY3gm_A`
+- Placeholders: SCRIPT_ID, SCRIPT_NAME, VARIATION_NUMBER, VARIATION_ID, LAST_UPDATED, AUDIENCE, CURRENT_BELIEF, DESIRED_BELIEF, TONE, EMOTIONAL_ARC, OFFER_CTA, SCRIPT_TEXT, CAPTION_TEXT
+
+**Subtask 3 ‚Äî Editor Brief Template ‚úÖ**
+- Doc ID: `179Rc1u3mWVC-7hidFeyBLWxIp0Xxaocl_M52MsDc-4I`
+- Placeholders: SCRIPT_ID, VARIATION_NUMBER, LAST_UPDATED, REVIEW_PRIORITIES, VIEWER_PROFILE, EMOTIONAL_OPEN, EMOTIONAL_CLOSE, ARC_DESCRIPTION, EDITING_DIRECTIVES, LINE_BY_LINE
+
+**Subtask 4 ‚Äî Make Scenario Clone ‚ö†Ô∏è BLOCKED**
+- `kvdaxdakonapilot/make-api-key` is read-only (SC401 on write ops)
+- Action needed: Richard to manually clone scenario 4820264 ‚Üí rename "Chosen Agency ‚Äî Content Pipeline V1" in Make UI, OR provide token with `scenarios:write` scope
+
+**Subtask 5 ‚Äî build_log.md ‚úÖ**
+- Created `clients/chosen-agency/build_log.md`
+- Commit: d7b0e34 ‚Äî pushed to main
+
+**Slack:** Posted to #dax-collab with all URLs and blocker details
+https://1altx.slack.com/archives/C0APVGG486M/p1777403158897349
