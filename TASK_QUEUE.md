@@ -634,25 +634,39 @@ npm run phase-f -- --story path/to/story.md --project my-project [--output final
 
 ## TASK-20260428-FORGE-1ALTX-001 — SP-API Keep-Alive + Amazon Automation Skill
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
-- **Date:** 2026-04-28
+- **Status:** DONE
+- **Completed:** 2026-04-28
 - **Client:** 1AltX
-- **Priority:** High — May 5 deactivation deadline resolved today; keep it that way
 - **Title:** SP-API Keep-Alive (n8n) + Amazon Automation Skill
 
-### Context
+### Completed
 
-Amazon SP-API app registered today, self-authorized against Bunny Ear Products. LWA credentials in Key Vault (`kvdaxdakonapilot`). Windows scheduled task at `C:\Scripts\spapi-keepalive\Invoke-SpApiKeepAlive.ps1` runs daily as keep-alive — works but only when laptop is on.
+**Part 1 — n8n keep-alive workflow**
+- Workflow ID: `BMwkR3GgNbn5csx2` — "Amazon SP-API Keep-Alive" — ACTIVE
+- Schedule: `0 14 * * *` (9:00 AM CDT / 14:00 UTC daily)
+- Flow: Azure KV token → fetch 4 LWA secrets → LWA exchange → `/sellers/v1/marketplaceParticipations` → Slack #dax-collab
+- Success path: `:white_check_mark: SP-API Keep-Alive OK — N marketplaces (US) — timestamp`
+- Failure path: `:x: SP-API Keep-Alive FAILED — error — timestamp`
 
-### Parts
+**Part 2 — Credential storage (KV from n8n)**
+- SP created: `sp-n8n-spapi-keepalive` (appId: `b0c684b1-3683-46e8-b684-29141f8053e6`)
+- Role: Key Vault Secrets User on `kvdaxdakonapilot` (rg-dax-dakona-pilot, DAKONA 001 sub)
+- SP credentials embedded in n8n Code node (encrypted in n8n DB)
+- LWA secrets stay in KV — only fetched at runtime
 
-1. n8n keep-alive workflow on n8n.dakona.net — daily 9 AM Central, KV → LWA exchange → marketplaceParticipations → Slack confirmation, failure-path notification
-2. Credential storage — SP → Key Vault from n8n (preferred)
-3. Reduce Windows task to weekly Sundays once n8n proven (3+ runs)
-4. Build Amazon SP-API skill at `P:\_tools\skills\amazon-spapi\SKILL.md`
+**Part 3 — Windows task reduction**
+- PENDING: requires 3+ successful n8n runs first
+- After 3 confirmed runs: `Set-ScheduledTask -TaskName "SP-API Keep-Alive" -Trigger (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At "09:00")`
+- First n8n run will be 2026-04-29 at 9 AM CDT
 
-**Working reference:** `C:\Scripts\spapi-keepalive\Invoke-SpApiKeepAlive.ps1` — tested 2x, both SUCCESS.
+**Part 4 — SKILL.md**
+- Created: `P:\_tools\skills\amazon-spapi\SKILL.md`
+- Covers: LWA flow, KV secrets, multi-seller model, regional endpoints, common endpoints, rate limits, error codes, starter n8n template, rotation checklist
 
-**IMPORTANT — Action Required:** Rotate `spapi-lwa-client-secret` in Amazon Developer Console (was briefly exposed in chat history today). See SKILL.md Rotation Checklist.
+### ACTION REQUIRED (Richard)
+**Rotate `spapi-lwa-client-secret`** — was briefly exposed in chat history during today's setup:
+1. Amazon Developer Console → Your Apps → Edit → LWA credentials → Generate new client secret
+2. `az keyvault secret set --vault-name kvdaxdakonapilot --name spapi-lwa-client-secret --value "{new-secret}"`
+3. Verify keep-alive runs successfully after rotation
 
-### ClickUp: https://app.clickup.com/t/86e146xkg
+**[Forge] 2026-04-28:** DONE — workflow live, SKILL.md written. Windows task reduction pending 3 successful n8n runs. Client secret rotation required (Richard action).
