@@ -1,0 +1,56 @@
+name: Promote DAX-Dev solution to DAX-Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      approved_by:
+        description: 'Richard approval confirmation (type: approved by richard)'
+        required: true
+      solution_version:
+        description: 'Solution version tag (e.g. v0.7.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    if: ${{ inputs.approved_by == 'approved by richard' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Power Platform CLI
+        uses: microsoft/powerplatform-actions/actions-install@v1
+
+      - name: Export managed solution from DAX-Dev
+        uses: microsoft/powerplatform-actions/export-solution@v1
+        with:
+          environment-url: ${{ secrets.DAX_DEV_URL }}
+          app-id: ${{ secrets.PP_APP_ID }}
+          client-secret: ${{ secrets.PP_CLIENT_SECRET }}
+          tenant-id: ${{ secrets.PP_TENANT_ID }}
+          solution-name: DAX
+          managed: true
+          solution-output-file: power-platform/solutions/DAX-staging.zip
+
+      - name: Import managed solution to DAX-Staging
+        uses: microsoft/powerplatform-actions/import-solution@v1
+        with:
+          environment-url: ${{ secrets.DAX_STAGING_URL }}
+          app-id: ${{ secrets.PP_APP_ID }}
+          client-secret: ${{ secrets.PP_CLIENT_SECRET }}
+          tenant-id: ${{ secrets.PP_TENANT_ID }}
+          solution-file: power-platform/solutions/DAX-staging.zip
+          force-overwrite: true
+          publish-changes: true
+
+      - name: Tag promoted solution
+        run: |
+          git config user.name "Nautilus (DAX promote bot)"
+          git config user.email "nautilus@1altx.com"
+          git add power-platform/solutions/DAX-staging.zip
+          git diff --cached --quiet || git commit -m "chore(pp): promote DAX to staging ${{ inputs.solution_version }}"
+          git tag ${{ inputs.solution_version }}
+          git push origin HEAD:master --tags

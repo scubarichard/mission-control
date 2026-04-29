@@ -1,0 +1,60 @@
+name: Export DAX-Dev solution to git
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  export-solution:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Power Platform CLI
+        uses: microsoft/powerplatform-actions/actions-install@v1
+
+      - name: Who am I (DAX-Dev)
+        uses: microsoft/powerplatform-actions/who-am-i@v1
+        with:
+          environment-url: ${{ secrets.DAX_DEV_URL }}
+          app-id: ${{ secrets.PP_APP_ID }}
+          client-secret: ${{ secrets.PP_CLIENT_SECRET }}
+          tenant-id: ${{ secrets.PP_TENANT_ID }}
+
+      - name: Export DAX solution (unmanaged)
+        uses: microsoft/powerplatform-actions/export-solution@v1
+        with:
+          environment-url: ${{ secrets.DAX_DEV_URL }}
+          app-id: ${{ secrets.PP_APP_ID }}
+          client-secret: ${{ secrets.PP_CLIENT_SECRET }}
+          tenant-id: ${{ secrets.PP_TENANT_ID }}
+          solution-name: DAX
+          solution-output-file: power-platform/solutions/DAX-dev.zip
+
+      - name: Export DAX solution (managed)
+        uses: microsoft/powerplatform-actions/export-solution@v1
+        with:
+          environment-url: ${{ secrets.DAX_DEV_URL }}
+          app-id: ${{ secrets.PP_APP_ID }}
+          client-secret: ${{ secrets.PP_CLIENT_SECRET }}
+          tenant-id: ${{ secrets.PP_TENANT_ID }}
+          solution-name: DAX
+          managed: true
+          solution-output-file: power-platform/solutions/DAX-dev-managed.zip
+
+      - name: Commit solution exports
+        run: |
+          git config user.name "Nautilus (DAX export bot)"
+          git config user.email "nautilus@1altx.com"
+          git add power-platform/solutions/DAX-dev.zip power-platform/solutions/DAX-dev-managed.zip
+          if git diff --cached --quiet; then
+            echo "No solution changes to commit."
+          else
+            git commit -m "chore(pp): auto-export DAX-Dev solution"
+            git push origin HEAD:master
+          fi
