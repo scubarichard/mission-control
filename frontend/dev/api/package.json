@@ -1,0 +1,9 @@
+{
+  "name": "dax-dev-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DAX dev SWA API — Direct Line token exchange (no client-side secrets).",
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DAX [DEV] — Dakona</title>
+    <link rel="icon" href="/logo.svg" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script
+      crossorigin="anonymous"
+      src="https://cdn.botframework.com/botframework-webchat/4.18.0/webchat.js"
+    ></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">DAX</span>
+        <span class="brand-tag">[DEV — dev.dax.dakona.com]</span>
+      </div>
+      <div class="user" id="user-slot"></div>
+    </header>
+    <main>
+      <div id="webchat" role="main" aria-label="DAX chat"></div>
+      <div id="status" class="status" hidden></div>
+    </main>
+    <script src="/app.js" defer></script>
+  </body>
+</html>
