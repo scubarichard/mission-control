@@ -670,3 +670,189 @@ npm run phase-f -- --story path/to/story.md --project my-project [--output final
 3. Verify keep-alive runs successfully after rotation
 
 **[Forge] 2026-04-28:** DONE — workflow live, SKILL.md written. Windows task reduction pending 3 successful n8n runs. Client secret rotation required (Richard action).
+
+---
+
+## TASK-20260429-FORGE-PERSONAL-001 — Freqtrade Install on vm-dax-dev
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Date:** 2026-04-29
+- **From:** Sonnet (session with Richard)
+- **Client:** Personal (Richard Mabbun — not Dakona, not 1AltX)
+- **Priority:** Low — personal project, no client dependency
+- **Title:** Install and configure Freqtrade crypto trading bot on vm-dax-dev
+
+### Context
+
+Richard wants to explore algorithmic crypto trading as a personal learning project. He's moving soon and his local machine (Nautilus) may be down for an extended period — the Azure VM is the right host since it stays up regardless of what's happening at his house. This is completely separate from DAX infrastructure; no Azure Container Apps, no ACR, no Key Vault integration needed. Keep it simple.
+
+### Why vm-dax-dev
+
+- Already running Ubuntu 24 — perfect for Freqtrade
+- Accessible via SSH through the jumpbox at n8n.dakona.net anytime
+- Runs 24/7 regardless of Richard's local machine status
+- Existing stack: n8n lives here too — Freqtrade runs in its own directory, completely isolated
+
+### What Freqtrade is
+
+Open-source Python crypto trading bot (github.com/freqtrade/freqtrade). Supports backtesting, dry-run (paper trading), and live trading. Connects to 30+ exchanges via the `ccxt` library. Richard wants to start in dry-run mode — no real money until he's reviewed at least 2-4 weeks of paper trading results.
+
+### Tasks
+
+**Step 1 — Install Freqtrade (isolated from DAX stack)**
+
+SSH into vm-dax-dev via the jumpbox. Install in Richard's home directory, NOT anywhere near the DAX/n8n stack:
+
+```bash
+# Ensure deps
+sudo apt update && sudo apt install -y python3 python3-pip python3-venv git curl
+
+# Clone into home dir — isolated from DAX
+cd ~
+git clone https://github.com/freqtrade/freqtrade.git freqtrade-personal
+cd freqtrade-personal
+
+# Run the official install script
+./setup.sh -i
+
+# Activate venv
+source .venv/bin/activate
+
+# Confirm install
+freqtrade --version
+```
+
+**Step 2 — Generate baseline config**
+
+```bash
+freqtrade new-config --config config.json
+```
+
+During config generation, set:
+- Exchange: **binance** (most Freqtrade community strategies are Binance-tested)
+- Trading mode: **spot** (not futures — simpler for learning)
+- Stake currency: **USDT**
+- Stake amount: **10** (small per-trade size for dry-run)
+- Max open trades: **3**
+- Dry run: **true** — DO NOT set to false
+
+Do not add real API keys. Leave exchange keys empty for now — dry-run doesn't need them.
+
+**Step 3 — Download a community strategy**
+
+Pull one well-documented beginner strategy from the freqtrade community repo:
+
+```bash
+# Create user_data structure
+freqtrade create-userdir --userdir user_data
+
+# Download the community strategies repo
+cd user_data/strategies
+git clone https://github.com/freqtrade/freqtrade-strategies.git community
+```
+
+Recommended starting strategy: **NostalgiaForInfinityX** or **SMAOffset** — both are well-documented, widely backtested, and appropriate for a beginner exploring the platform. Pick whichever has the cleaner code and document which one was selected in the gate result.
+
+**Step 4 — Download historical data and run a backtest**
+
+```bash
+cd ~/freqtrade-personal
+source .venv/bin/activate
+
+# Download 30 days of OHLCV data for top pairs
+freqtrade download-data \
+  --exchange binance \
+  --pairs BTC/USDT ETH/USDT SOL/USDT \
+  --timeframe 1h \
+  --days 30
+
+# Run backtest with chosen strategy
+freqtrade backtesting \
+  --config config.json \
+  --strategy SMAOffset \
+  --userdir user_data \
+  --timerange 20250301-20250401
+```
+
+Capture the backtest output summary (win rate, total profit %, max drawdown, Sharpe ratio) and include in gate result.
+
+**Step 5 — Start dry-run with screen session**
+
+Start Freqtrade in a persistent `screen` session so it survives SSH disconnects:
+
+```bash
+# Install screen if not present
+sudo apt install -y screen
+
+# Start a named session
+screen -S freqtrade-dryrun
+
+# Inside the screen session:
+cd ~/freqtrade-personal
+source .venv/bin/activate
+freqtrade trade \
+  --config config.json \
+  --strategy SMAOffset \
+  --userdir user_data \
+  --dry-run
+
+# Detach: Ctrl+A then D
+```
+
+Confirm it's running:
+```bash
+screen -ls  # should show freqtrade-dryrun session
+```
+
+**Step 6 — Enable Freqtrade REST API + UI (optional but useful)**
+
+Freqtrade has a built-in web UI (FreqUI) that shows open trades, P&L, etc. Enable it in config.json:
+
+```json
+"api_server": {
+  "enabled": true,
+  "listen_ip_address": "127.0.0.1",
+  "listen_port": 8080,
+  "username": "richard",
+  "password": "choose-a-password"
+}
+```
+
+Richard can then SSH tunnel to view it locally:
+```bash
+ssh -L 8080:localhost:8080 vm-dax-dev-user@n8n.dakona.net
+# Then open http://localhost:8080 in browser
+```
+
+Document the exact SSH tunnel command in the gate result so Richard can copy-paste it.
+
+### Constraints
+
+- **Personal project only** — do not integrate with DAX infrastructure, Key Vault, n8n, or any Dakona/1AltX systems
+- **Dry-run only** — config must have `"dry_run": true`. Do not configure real exchange API keys
+- **Isolated directory** — all files under `~/freqtrade-personal/`, nothing touching DAX paths
+- **No Azure resources** — this runs directly on the VM, not as a Container App
+- **No Slack alerts** — this is personal, not a monitored service
+- **screen, not systemd** — keep it simple, no service management needed for a personal experiment
+
+### Gate
+
+Post results here when DONE:
+- [ ] Freqtrade installed and `freqtrade --version` confirmed
+- [ ] Config generated with dry_run: true
+- [ ] Strategy selected — name it here
+- [ ] Backtest results summary (win rate, profit %, max drawdown, Sharpe)
+- [ ] Dry-run started in screen session — `screen -ls` output
+- [ ] SSH tunnel command for FreqUI documented
+- [ ] Any surprises or issues encountered
+
+### Notes for Richard (read before going live someday)
+
+When you're ready to go live with real money (weeks/months from now):
+1. Create API keys on Binance/Coinbase — **read + trade only, never withdraw**
+2. Add keys to config.json under `exchange.key` and `exchange.secret`
+3. Change `"dry_run": false`
+4. Start with the smallest possible stake amount ($10/trade)
+5. Never risk more than you can afford to lose entirely — algo trading is speculative
+
+Not financial advice. This is a learning project.
