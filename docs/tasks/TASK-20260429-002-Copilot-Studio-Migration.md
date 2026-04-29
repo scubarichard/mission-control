@@ -4,6 +4,7 @@
 **Dependencies:** TASK-20260429-001 (Graph SDK Migration) must reach T6 7/7 PASS before Phase 5  
 **Report to:** #dax-collab after each phase  
 **ICP Lock:** Phase 5 requires Richard's passcode — do not touch ICP until provided  
+**ClickUp:** https://app.clickup.com/t/86e157vqf  
 
 ---
 
@@ -11,7 +12,7 @@
 
 Migrate DAX from its current LibreChat + n8n architecture to Microsoft Copilot Studio as the agent and front-end layer, with Power Automate replacing n8n for tool execution. The result is a more reliable, natively M365-integrated DAX that costs less per client and requires no VM management.
 
-All work happens in a dev environment first. Production (dax.dakona.com) is not touched until T6 passes and Richard approves. ICP (dax.impact-cp.com) is locked until Richard provides the unlock passcode.
+All work happens in a fully isolated dev environment first — dev.dax.dakona.com. Production (dax.dakona.com) is not touched until T6 passes and Richard approves. ICP (dax.impact-cp.com) is locked until Richard provides the unlock passcode.
 
 ---
 
@@ -22,442 +23,508 @@ User → dax.dakona.com (Cloudflare DNS)
          → LibreChat Container App (ca-dax-dakona-pilot)
              image: acrdaxdakona.azurecr.io/librechat-dax:v0.5.3-hotfix1
              replicas: 3
-         → n8n VM (Standard_D2s_v5, n8n v2.14.2)
-             at n8n.dakona.net
+         → n8n VM (Standard_D2s_v5, n8n v2.14.2, n8n.dakona.net)
              27 active tool workflows
-         → Azure OpenAI (oai-dax-dakona-pilot.openai.azure.com)
-             deployment: gpt-4o
-         → Cosmos DB (cosmos-dax-dakona-pilot)
-             conversation history per user
-         → SharePoint (dakonallc.sharepoint.com)
-             DAX Documents / DAX Reports / DAX Templates
-         → MCP Container App (ca-dax-mcp-dakona-pilot)
-             at mcp.dakona.net
+         → Azure OpenAI (oai-dax-dakona-pilot.openai.azure.com / gpt-4o)
+         → Cosmos DB (cosmos-dax-dakona-pilot) — conversation history
+         → SharePoint (dakonallc.sharepoint.com) — DAX Documents/Reports/Templates
+         → MCP Container App (ca-dax-mcp-dakona-pilot, mcp.dakona.net)
 ```
 
 **Current monthly cost (Dakona):** ~$140/mo  
-**Biggest cost:** n8n VM D2s_v5 ~$75/mo (shared with 1AltX — not a pure DAX cost)
+**n8n VM D2s_v5 ~$75/mo** — shared with 1AltX, not a pure DAX cost
 
 ---
 
-## Target Architecture (what we're building)
+## Target Architecture
 
 ```
-User → dev.dax.dakona.com (Phase 1-3) / dax.dakona.com (Phase 4+)
-         → Custom React/HTML front end (simple, lightweight)
-             hosted: Azure Static Web App or Container App
-             communicates via: Copilot Studio Direct Line API
+User → dev.dax.dakona.com → dax.dakona.com → dax.impact-cp.com
+         → Azure Static Web App (custom chat UI — React + Bot Framework Web Chat)
+             Direct Line secret injected server-side from Key Vault
+             never exposed in client JS
          → Copilot Studio Agent (DAX)
-             environment: DAX-Dev (Power Platform)
-             tenant: d2a3c346-00f3-47dd-a53e-caa3fca74714 (Dakona)
-             channel: Custom web app via Direct Line
-         → Power Automate Flows (tool execution)
-             replaces: n8n Code nodes
-             uses: native M365 connectors + HTTP actions
-         → Azure OpenAI (same instance — oai-dax-dakona-pilot)
-             DAX agent uses BYOM (bring your own model) via Azure AI connector
-         → SharePoint (same libraries — no change)
-         → Cosmos DB (same — conversation history)
-         → Key Vault (same — secrets)
+             Power Platform environment: DAX-Dev / DAX-Staging / DAX-ICP
+             Channel: Custom app via Direct Line API
+             Model: Azure OpenAI gpt-4o (BYOM)
+         → Power Automate Flows (15 tools)
+             native M365 connectors for email/calendar/SharePoint
+             HTTP actions for Wealthbox, FMP, Finnhub, GitHub
+             proxy HTTP calls to n8n for Schwab + Document Generator
+         → Azure OpenAI (oai-dax-dakona-pilot — same, shared)
+         → Cosmos DB (cosmos-dax-dev — NEW, separate account for dev)
+         → SharePoint (same libraries, DAX-Dev subfolder for dev)
+         → Key Vault (kvdaxdakonapilot — same, new secrets added)
 ```
 
 **Target monthly cost (Dakona DAX only):** ~$30-50/mo  
-**n8n VM stays running** for 1AltX client work — just off DAX books
+**n8n VM stays** for 1AltX client work — off DAX books entirely
 
 ---
 
-## Dev Environment Details
+## Architecture Principles (non-negotiable)
 
-**URL:** `dev.dax.dakona.com`  
-**DNS:** Add CNAME in Cloudflare → Azure Static Web App or Container App  
-**Power Platform environment name:** `DAX-Dev`  
-**Environment type:** Developer (free — no production credits consumed)  
-**Tenant:** Dakona (d2a3c346-00f3-47dd-a53e-caa3fca74714)  
-**SharePoint:** Use `DAX-Dev` subfolder within existing DAX Documents — do not create separate site  
-**Azure OpenAI:** Same endpoint (oai-dax-dakona-pilot) — prefix all dev system prompts with [DEV] so traffic is identifiable  
+1. **Full environment isolation** — dev, staging, and production have completely separate infrastructure. No shared Cosmos DB accounts between environments. No shared Power Platform environments.
 
----
+2. **Environment variables everywhere** — nothing environment-specific is hardcoded in any flow or agent configuration. Every value that changes between dev/staging/ICP is a Power Platform environment variable.
 
-## Credentials and Resources
+3. **GitHub as source of truth** — all solution exports, front-end code, deployment scripts, and config live in GitHub. Power Platform Build Tools auto-export solutions to git on every change.
 
-### Dakona tenant
-- Tenant ID: `d2a3c346-00f3-47dd-a53e-caa3fca74714`
-- Azure Subscription: `36676e89-8ccf-4390-8602-e57a913755dc`
-- Azure OpenAI: `oai-dax-dakona-pilot.openai.azure.com` / deployment `gpt-4o`
-- SharePoint Site ID: `dakonallc.sharepoint.com,68764500-f333-44cc-8017-30489a6a9053,71b1b423-6196-4e05-b004-7298445afb6f`
-- Graph API Client ID: `218064ac-bee2-4246-9709-ae7518ae71cb`
-- Graph API Client Secret: in Key Vault as `DAX-Client-Secret`
-- Key Vault: `kvdaxdakonapilot`
-- Cosmos DB: `cosmos-dax-dakona-pilot`
+4. **Secrets in Key Vault only** — Direct Line secrets, connection strings, API keys, client secrets never appear in git, never appear in client-side JavaScript, never appear in flow configuration as plain text.
 
-### ICP tenant (LOCKED — do not use until Richard provides passcode)
-- All ICP credentials are in Key Vault with prefix `ICP-`
-- Do not touch until explicitly unlocked
+5. **Promote, never redeploy** — code moves from dev → staging → production via Power Platform Pipeline promotion. Never rebuild in a higher environment.
 
 ---
 
-## DAX Tools to Rebuild in Power Automate
+## Where Files Live
 
-These are the 15 tools currently in the DAX Router (n8n workflow `3tniyxZREqfnAbfo`). Each becomes a Power Automate flow triggered by Copilot Studio:
+### Power Platform (not in git directly)
+```
+make.powerapps.com → DAX-Dev environment
+  Copilot Studio agent (DAX)
+  Power Automate flows (15 tools)
+  Environment variables (names + values)
+  Connectors and connection references
+```
+These are managed by Microsoft. Exported to git automatically via GitHub Actions.
 
-| Tool | n8n replacement | Power Automate connector |
-|---|---|---|
-| Email Tool | Read advisor inbox | Microsoft 365 — Outlook |
-| Send Email Tool | Send email | Microsoft 365 — Outlook |
-| Calendar Tool | Read calendar | Microsoft 365 — Calendar |
-| Manage Calendar Tool | Create/update events | Microsoft 365 — Calendar |
-| SharePoint Browser Tool | List/read files | SharePoint connector |
-| Create Document Tool | Save files to SharePoint | SharePoint connector |
-| Market Data Tool | Live prices via FMP/Finnhub | HTTP action |
-| Market Summary Tool | Market news | HTTP action → Bing News |
-| Client Lookup Tool | Search Wealthbox contacts | HTTP action → Wealthbox API |
-| List Clients Tool | List all clients | HTTP action → Wealthbox API |
-| Meeting Prep Tool | Pull client brief | Compose: Wealthbox + SharePoint |
-| Generate Reports Tool | Trigger Schwab reports | HTTP action → n8n webhook (keep for now) |
-| Research and Write Tool | Long-form article | Azure OpenAI connector |
-| Compliance Flag Check | Reg BI check | Custom logic + SharePoint log |
-| GitHub Tool | Code repo access | HTTP action → GitHub API |
-
-**Note on Schwab:** Keep calling the existing n8n Schwab workflow via HTTP action for now. Schwab DDF integration is complex — do not rebuild it in this task. Just proxy the call.
-
-**Note on Document Generator:** The quarterly review .docx generator (pizzip/docxtemplater) stays on n8n for now. Copilot Studio calls it via HTTP action same as today. Migrate in v1.0.
-
----
-
-## DAX System Prompt (carry over from current)
-
-The DAX agent system prompt must be preserved exactly. Get the current system prompt from:
-- n8n DAX Router workflow `3tniyxZREqfnAbfo`
-- Node: `DAX Agent` → `parameters.systemMessage`
-
-Key elements to preserve:
-- DAX identity and persona
-- Compliance guardrails (never make specific investment recommendations)
-- Tool routing instructions
-- Firm name and advisor name injection
-- Data sovereignty language
-
-Add to system prompt for dev: prefix with `[DEV MODE - dev.dax.dakona.com]` so Richard can distinguish dev from production responses.
-
----
-
-## Phase 1 — Power Platform Dev Environment Setup
-
-**Estimated time: 2-3 hours**
-
-### 1a — Create DAX-Dev environment
-1. Go to make.powerapps.com → logged in as rmabbun@dakona.com
-2. Environments → New
-3. Name: `DAX-Dev`
-4. Type: Developer
-5. Region: United States
-6. Purpose: DAX Copilot Studio development and testing
-
-### 1b — Create Copilot Studio agent in DAX-Dev
-1. Go to copilotstudio.microsoft.com
-2. Select DAX-Dev environment
-3. Create new agent: name `DAX`
-4. Description: "Governed AI workspace for RIA firms — Dakona LLC"
-5. Set language: English
-6. Configure generative AI: enable
-7. Connect to Azure OpenAI:
-   - Endpoint: `https://oai-dax-dakona-pilot.openai.azure.com`
-   - Deployment: `gpt-4o`
-   - This keeps data inside Dakona's Azure tenant
-
-### 1c — Set DAX system prompt
-Copy the system prompt from n8n DAX Router node `DAX Agent`.
-Paste into Copilot Studio agent Instructions field.
-Add prefix: `[DEV] ` to distinguish from production.
-
-### 1d — Configure Direct Line channel
-1. In Copilot Studio → Channels → Custom app
-2. Enable Direct Line channel
-3. Copy the Direct Line secret — store in Key Vault as `DAX-Dev-DirectLine-Secret`
-
-### 1e — Deploy simple front-end
-Build a minimal HTML/JS chat UI using the Direct Line JS SDK:
-```html
-<!-- Minimal DAX front end — dev.dax.dakona.com -->
-<!-- Uses Microsoft's Bot Framework Web Chat component -->
-<!-- Direct Line secret injected server-side — never expose in client JS -->
+### GitHub (/repo — scubarichard/dax)
+```
+/repo/
+  /frontend/
+    /dev/              ← dev.dax.dakona.com source
+      index.html
+      app.js           ← Direct Line integration (secret from Key Vault)
+      styles.css       ← DAX branding, dark navy #1F3864
+    /staging/          ← dax.dakona.com (copied from dev on promotion)
+    /icp/              ← dax.impact-cp.com (locked)
+  /power-platform/
+    /solutions/
+      DAX-dev.zip      ← auto-exported by GitHub Action
+      DAX-staging.zip  ← auto-exported on promotion
+    /environment-vars/
+      dev.json         ← variable NAMES only, no values
+      staging.json
+      icp.json
+  /clients/
+    /impact-capital/
+      params.json      ← already exists
+  /docs/tasks/
+    TASK-20260429-002-Copilot-Studio-Migration.md
+  /scripts/
+    New-DAXClient.ps1  ← to be built
 ```
 
-Host on Azure Static Web App (free tier):
-- Resource group: `rg-dax-dakona-pilot`
-- Name: `stapp-dax-dev`
-- Source: GitHub repo `/repo/frontend/dev/`
+### Azure Key Vault (kvdaxdakonapilot — secrets only, never in git)
+```
+DAX-Dev-DirectLine-Secret        ← new
+DAX-Staging-DirectLine-Secret    ← new on Phase 4
+DAX-Dev-CosmosEndpoint           ← new
+DAX-Client-Secret                ← existing
+ICP-*                            ← existing, locked
+```
 
-### 1f — Configure DNS
-In Cloudflare:
-- Add CNAME: `dev.dax.dakona.com` → Azure Static Web App default domain
-- Enable proxy (orange cloud)
-
-### 1g — Verify
-- Open dev.dax.dakona.com in browser
-- Login with rmabbun@dakona.com (Entra SSO)
-- Send: `Good morning`
-- DAX should respond with [DEV] prefix
-- Post confirmation to #dax-collab
-
----
-
-## Phase 2 — Rebuild Core Tools in Power Automate
-
-**Estimated time: 1-2 days**
-
-Build each tool as a Power Automate instant flow triggered by Copilot Studio. Test each tool individually before moving to the next.
-
-### Tool build order (priority):
-1. Market Data Tool — simplest, no auth complexity, proves the pattern
-2. Email Tool — most used, validates Graph connector
-3. Calendar Tool — validates Graph connector
-4. SharePoint Browser Tool — validates SharePoint connector
-5. Create Document Tool — validates SharePoint write
-6. Client Lookup Tool — validates Wealthbox HTTP action
-7. List Clients Tool
-8. Meeting Prep Tool — composite of Client Lookup + SharePoint
-9. Send Email Tool
-10. Manage Calendar Tool
-11. Market Summary Tool
-12. Research and Write Tool
-13. Compliance Flag Check
-14. Generate Reports Tool (proxy to n8n)
-15. GitHub Tool
-
-### For each tool:
-
-**Step 1 — Create Power Automate flow**
-- Trigger: When Copilot Studio calls this flow (Copilot Studio connector)
-- Input: user query text + any structured parameters
-- Logic: call the appropriate API
-- Output: return formatted text response to Copilot Studio
-
-**Step 2 — Register flow as Copilot Studio action**
-- In Copilot Studio → Actions → Add action
-- Connect to the Power Automate flow
-- Define input/output schema
-- Add to agent's available tools
-
-**Step 3 — Test in Copilot Studio test canvas**
-- Send a test prompt that triggers the tool
-- Verify the tool is called and returns correct data
-- Post test result to #dax-collab
-
-### Graph API credentials for Power Automate:
-Use the existing DAX app registration:
-- Client ID: `218064ac-bee2-4246-9709-ae7518ae71cb`
-- Secret: pull from Key Vault `DAX-Client-Secret`
-- Create a Power Automate custom connector or use HTTP action with manual auth
-
-### Wealthbox API for Power Automate:
-- API key: pull from Key Vault `WEALTHBOX-API-KEY`
-- Base URL: `https://api.crmworkspace.com/v1`
-- Use HTTP action — same endpoints as n8n
+### Azure Static Web Apps (one per environment)
+```
+stapp-dax-dev      → dev.dax.dakona.com
+stapp-dax-staging  → dax.dakona.com (Phase 4)
+stapp-dax-icp      → dax.impact-cp.com (Phase 5, ICP subscription)
+```
 
 ---
 
-## Phase 3 — T6 Verification on dev.dax.dakona.com
+## GitHub Actions Setup (Phase 1 requirement)
 
-**Estimated time: 2-3 hours**
+Install **Power Platform Build Tools** from GitHub Marketplace before writing any flows.
 
-Run the full T6 test suite against dev.dax.dakona.com. All 7 tests must pass.
+### Actions to configure:
 
-### T6 Test prompts (exact):
-1. `Good morning` — confirm DAX responds
-2. `What is driving markets this morning?` then `What is SPY trading at today?` — market data
-3. `Show me my clients who are interested in ESG investing` — Wealthbox client filter
-4. `Which of my clients have college planning as a goal?` — Wealthbox goal filter
-5. `Prep me for my meeting with George Jetson, the one with account 12345678` — meeting prep
-6. `Should I put George Jetson into QQQ?` — compliance deflection (must NOT give investment advice)
-7. `Generate Q1 reviews from my Schwab file` — Schwab report generation
-8. `Write a 1000 word article about the impact of rising interest rates on bond portfolios and save it` — Research & Write → SharePoint
+**1. Export on change (dev branch)**
+```yaml
+# .github/workflows/export-dev-solution.yml
+on:
+  workflow_dispatch:  # manual trigger
+  schedule:
+    - cron: '0 */6 * * *'  # every 6 hours
 
-**Also test (new capabilities):**
-- `Show me what files are in my DAX Documents folder` — SharePoint browser
-- `Read my last 2 emails` — email reading
-- `What's on my calendar today?` — calendar reading
+jobs:
+  export:
+    uses: microsoft/powerplatform-actions
+    # Export DAX solution from DAX-Dev environment
+    # Commit to /repo/power-platform/solutions/DAX-dev.zip
+```
 
-### Pass criteria:
-- All 7 T6 tests pass
-- No silent failures — DAX must report errors clearly if a tool fails
+**2. Deploy front end on push**
+```yaml
+# .github/workflows/deploy-frontend-dev.yml
+on:
+  push:
+    paths: ['frontend/dev/**']
+
+jobs:
+  deploy:
+    # az staticwebapp deploy → stapp-dax-dev
+```
+
+**3. Promote to staging (manual, requires Richard approval)**
+```yaml
+# .github/workflows/promote-to-staging.yml
+on:
+  workflow_dispatch:
+    inputs:
+      approved_by:
+        description: 'Richard approval confirmation'
+        required: true
+```
+
+---
+
+## Environment Variables (all flows must use these)
+
+Never hardcode these values. Define as Power Platform environment variables and reference in all flows.
+
+| Variable Name | Dev value | Staging value | ICP value |
+|---|---|---|---|
+| `DAX_TENANT_ID` | d2a3c346-... | d2a3c346-... | eaf1a864-... |
+| `DAX_CLIENT_ID` | 218064ac-... | 218064ac-... | 213f104f-... |
+| `DAX_CLIENT_SECRET` | from KV | from KV | from KV |
+| `DAX_SHAREPOINT_SITE_ID` | dakonallc.sharepoint.com,68764500-... | same | impactcapitalpartnersllc.sharepoint.com,9408138e-... |
+| `DAX_SHAREPOINT_DOCS_FOLDER` | DAX-Dev | DAX Documents | DAX Documents |
+| `DAX_ADVISOR_EMAIL` | rmabbun@dakona.com | rmabbun@dakona.com | brett@impact-cp.com |
+| `DAX_FIRM_NAME` | Dakona [DEV] | Dakona | Impact Capital Partners |
+| `DAX_COSMOS_ENDPOINT` | cosmos-dax-dev endpoint | cosmos-dax-dakona endpoint | cosmos-dax-icp endpoint |
+| `DAX_OPENAI_ENDPOINT` | oai-dax-dakona-pilot... | oai-dax-dakona-pilot... | oai-dax-icp... |
+| `DAX_DIRECTLINE_SECRET` | from KV DAX-Dev-DirectLine-Secret | from KV | from KV |
+
+---
+
+## Dev Environment Infrastructure
+
+### New resources to create (Phase 1)
+
+**1. Cosmos DB account — cosmos-dax-dev**
+- Separate account from production (cosmos-dax-dakona-pilot)
+- Resource group: rg-dax-dakona-pilot
+- API: MongoDB (same as production)
+- Capacity: Serverless
+- Region: East US
+- Cost: ~$1-3/mo at dev usage
+
+Why separate: Environment isolation is non-negotiable for a compliance product. Sharing a Cosmos DB account between dev and production means a misconfigured connection string can write dev data to production. Full isolation eliminates this class of risk.
+
+**2. Azure Static Web App — stapp-dax-dev**
+- Resource group: rg-dax-dakona-pilot
+- Region: East US
+- SKU: Free
+- Source: GitHub /repo/frontend/dev/
+- Custom domain: dev.dax.dakona.com
+
+**3. Power Platform environment — DAX-Dev**
+- Type: Developer (free — no production credits consumed)
+- Tenant: Dakona (d2a3c346-00f3-47dd-a53e-caa3fca74714)
+- Region: United States
+- Purpose: DAX Copilot Studio development
+
+**4. Copilot Studio agent — DAX (in DAX-Dev)**
+- Connected to Azure OpenAI gpt-4o via BYOM
+- System prompt: copy from n8n DAX Router node DAX Agent → parameters.systemMessage
+- Add prefix to system prompt: [DEV dev.dax.dakona.com] — identifies dev traffic
+- Direct Line channel enabled
+- Direct Line secret → Key Vault DAX-Dev-DirectLine-Secret
+
+**5. DNS — Cloudflare**
+- Add CNAME: dev.dax.dakona.com → stapp-dax-dev default domain
+- Enable orange cloud proxy
+
+---
+
+## DAX System Prompt
+
+Get the exact current system prompt from n8n:
+- Workflow ID: 3tniyxZREqfnAbfo
+- Node: DAX Agent
+- Field: parameters.systemMessage
+
+This is the authoritative system prompt. Copy it exactly into Copilot Studio agent Instructions. Do not paraphrase or rewrite — the compliance guardrails and tool routing instructions are carefully tuned.
+
+Add this prefix for dev only:
+```
+[DEV — dev.dax.dakona.com] 
+```
+
+---
+
+## Tools to Rebuild in Power Automate (15 total)
+
+Build in this priority order. Test each individually before moving to the next. Post completion of each tool to #dax-collab.
+
+| # | Tool | Power Automate approach | Test prompt |
+|---|---|---|---|
+| 1 | Market Data Tool | HTTP action → FMP API + Finnhub | "What is SPY trading at today?" |
+| 2 | Email Tool | Microsoft 365 Outlook connector | "Read my last 2 emails" |
+| 3 | Calendar Tool | Microsoft 365 Calendar connector | "What's on my calendar today?" |
+| 4 | SharePoint Browser Tool | SharePoint connector | "Show me my DAX Documents" |
+| 5 | Create Document Tool | SharePoint connector | "Write a note and save it" |
+| 6 | Client Lookup Tool | HTTP action → Wealthbox API | "Find George Jetson" |
+| 7 | List Clients Tool | HTTP action → Wealthbox API | "Show me my ESG clients" |
+| 8 | Meeting Prep Tool | Compose: Client Lookup + SharePoint | "Prep me for George Jetson" |
+| 9 | Send Email Tool | Microsoft 365 Outlook connector | "Draft an email to..." |
+| 10 | Manage Calendar Tool | Microsoft 365 Calendar connector | "Schedule a meeting with..." |
+| 11 | Market Summary Tool | HTTP action → Bing News | "What's driving markets?" |
+| 12 | Research and Write Tool | Azure OpenAI connector + SharePoint | "Write 1000 words on..." |
+| 13 | Compliance Flag Check | Custom logic + SharePoint log | "Should I put client in QQQ?" |
+| 14 | Generate Reports Tool | HTTP action → n8n webhook (proxy) | "Generate Q1 reviews" |
+| 15 | GitHub Tool | HTTP action → GitHub API | (internal use) |
+
+### Proxy pattern for n8n tools (14 and Document Generator)
+For tools that stay on n8n, use a Power Automate HTTP action:
+```
+POST https://n8n.dakona.net/webhook/schwab-processor
+POST https://n8n.dakona.net/webhook/generate-document
+```
+Same webhooks as today — just called from Power Automate instead of n8n DAX Router.
+
+### Wealthbox API
+- Base URL: https://api.crmworkspace.com/v1
+- API key: Key Vault WEALTHBOX-API-KEY
+- Endpoints: /contacts (search, list), /tasks, /notes
+
+### Graph API credentials
+- Client ID: 218064ac-bee2-4246-9709-ae7518ae71cb (DAX app registration)
+- Secret: Key Vault DAX-Client-Secret
+- Scope: https://graph.microsoft.com/.default
+- Use Power Automate HTTP action with manual OAuth2 or create custom connector
+
+---
+
+## Publish Pipeline (how promotion works)
+
+### Dev → Staging (dax.dakona.com)
+```
+1. T6 passes 7/7 on dev.dax.dakona.com
+2. Post results to #dax-collab, tag Richard
+3. Richard reviews dev.dax.dakona.com manually
+4. Richard approves in #dax-collab
+5. Trigger GitHub Action: promote-to-staging.yml
+6. Power Platform Pipeline exports solution from DAX-Dev
+7. Imports managed solution to DAX-Staging environment
+8. Set Staging environment variables (Dakona production values)
+9. Deploy /repo/frontend/staging/ to stapp-dax-staging
+10. Update Cloudflare: dax.dakona.com → stapp-dax-staging
+11. LibreChat stays live 48 hours as fallback
+12. Run T6 on dax.dakona.com — must pass
+13. Decommission LibreChat container app
+14. git tag v0.7.0
+15. Post to #dax-collab
+```
+
+### Staging → ICP (dax.impact-cp.com) ⛔ LOCKED
+```
+1. Richard provides passcode in #dax-collab
+2. Power Platform Pipeline exports solution from DAX-Staging
+3. Imports managed solution to DAX-ICP environment in ICP tenant
+   - ICP Power Platform env created using DAX-Deploy SP
+   - Client ID: 213f104f-c25b-4ccd-bf3c-d6f441384a77
+   - Tenant: eaf1a864-97ff-451c-87e7-88cf7512e98c
+4. Set ICP environment variables (ICP values from params.json)
+5. Deploy /repo/frontend/icp/ to stapp-dax-icp in ICP Azure subscription
+6. DNS: dax.impact-cp.com → stapp-dax-icp
+7. Run ICP verification checklist
+8. Hand off to Brett
+```
+
+### For every future client
+Same process — one Power Platform Pipeline command per client. Environment variables inject the client-specific values. The solution never changes — only the config does.
+
+---
+
+## Phase Execution
+
+### Phase 1 — Dev environment setup (2-3 hours)
+
+**Step 1 — GitHub Actions setup**
+- Add Power Platform Build Tools to GitHub repo
+- Configure export workflow (auto-export DAX-Dev solution every 6 hours)
+- Configure front-end deploy workflow (deploy on push to frontend/dev/)
+- Confirm both workflows run successfully before proceeding
+
+**Step 2 — Provision dev infrastructure**
+- Create cosmos-dax-dev (separate Cosmos DB account, serverless, MongoDB API)
+- Create stapp-dax-dev (Azure Static Web App, free tier, linked to GitHub /repo/frontend/dev/)
+- Store Cosmos DB connection string in Key Vault as DAX-Dev-CosmosEndpoint
+
+**Step 3 — Create DAX-Dev Power Platform environment**
+- make.powerapps.com → Environments → New → Developer → DAX-Dev
+- Confirm environment appears in admin.powerplatform.microsoft.com
+
+**Step 4 — Create Copilot Studio agent**
+- copilotstudio.microsoft.com → DAX-Dev environment → New agent → DAX
+- Configure Azure OpenAI BYOM connection to oai-dax-dakona-pilot
+- Paste system prompt from n8n DAX Router (add [DEV] prefix)
+- Enable Direct Line channel
+- Store Direct Line secret in Key Vault as DAX-Dev-DirectLine-Secret
+
+**Step 5 — Set all environment variables**
+- Create all 10 environment variables in DAX-Dev with dev values
+- Confirm no hardcoded values anywhere
+
+**Step 6 — Deploy front-end shell**
+- Create /repo/frontend/dev/ with minimal DAX-branded chat UI
+- Bot Framework Web Chat component
+- Direct Line secret fetched server-side from Key Vault (never in client JS)
+- Dark navy #1F3864 branding
+- Push to GitHub → GitHub Action deploys to stapp-dax-dev
+
+**Step 7 — Configure DNS**
+- Cloudflare: CNAME dev.dax.dakona.com → stapp-dax-dev default domain
+
+**Step 8 — Verify basic chat**
+- Open dev.dax.dakona.com
+- Login with rmabbun@dakona.com
+- Send: Good morning
+- Confirm DAX responds with [DEV] prefix
+- Post screenshot to #dax-collab ✅
+
+---
+
+### Phase 2 — Rebuild tools in Power Automate (1-2 days)
+
+Build each tool in priority order (see table above).
+
+For each tool:
+1. Create Power Automate instant flow in DAX-Dev environment
+2. Trigger: Copilot Studio (When an agent calls a flow)
+3. Input: structured parameters from agent
+4. Logic: call appropriate API using environment variables
+5. Output: formatted text response back to agent
+6. Register flow as action in Copilot Studio agent
+7. Test in Copilot Studio test canvas
+8. Post tool name + pass/fail to #dax-collab
+
+Do not move to the next tool until the current one passes.
+
+---
+
+### Phase 3 — T6 verification on dev.dax.dakona.com (2-3 hours)
+
+Run all tests against dev.dax.dakona.com (not the Copilot Studio test canvas).
+
+**Original T6 prompts (must all pass):**
+1. `Good morning`
+2. `What is driving markets this morning?` then `What is SPY trading at today?`
+3. `Show me my clients who are interested in ESG investing`
+4. `Which of my clients have college planning as a goal?`
+5. `Prep me for my meeting with George Jetson, the one with account 12345678`
+6. `Should I put George Jetson into QQQ?` — must deflect, no investment advice
+7. `Generate Q1 reviews from my Schwab file`
+8. `Write a 1000 word article about the impact of rising interest rates on bond portfolios and save it`
+
+**New tests (additional):**
+9. `Show me what files are in my DAX Documents folder`
+10. `Read my last 2 emails`
+11. `What's on my calendar today?`
+12. `Summarize file 1` (from file listing)
+
+**Pass criteria:**
+- All 7 original T6 tests pass
+- All 4 new tests pass
+- No silent failures — DAX must report errors clearly
+- Files saved to DAX-Dev SharePoint subfolder (not production)
 - Response quality matches or exceeds current LibreChat DAX
-- SharePoint files appear in DAX-Dev subfolder (not polluting production)
 
-Post full results to #dax-collab and tag Richard.
+Post full results to #dax-collab and tag Richard. Do not proceed to Phase 4 without Richard's explicit approval.
 
 ---
 
-## Phase 4 — Richard Review and Staging Promotion
+### Phase 4 — Richard approval + staging promotion
 
-**This phase requires Richard's explicit approval.**
+**Requires Richard's explicit approval in #dax-collab.**
 
 1. Richard reviews dev.dax.dakona.com personally
-2. Richard confirms T6 results are acceptable
-3. Richard approves promotion to staging
-
-**If approved:**
-1. Export DAX agent from DAX-Dev environment
-2. Import into DAX-Staging environment (or promote via Power Platform pipelines)
-3. Update Cloudflare DNS: `dax.dakona.com` → new Copilot Studio front end
-4. Keep LibreChat running in parallel for 48 hours as fallback
-5. Run T6 again on dax.dakona.com
-6. If T6 passes → decommission LibreChat container app
-7. Tag release: `git tag v0.7.0`
-8. Post to #dax-collab
+2. Richard posts approval in #dax-collab
+3. Trigger promote-to-staging GitHub Action
+4. Set DAX-Staging environment variables (Dakona production values)
+5. Update Cloudflare: dax.dakona.com → stapp-dax-staging
+6. Keep LibreChat live 48 hours as fallback
+7. Run full T6 on dax.dakona.com
+8. If T6 passes → decommission LibreChat (ca-dax-dakona-pilot)
+9. git tag v0.7.0
+10. Post to #dax-collab
 
 ---
 
-## Phase 5 — ICP Deployment ⛔ LOCKED
+### Phase 5 — ICP deployment ⛔ LOCKED
 
-**This phase requires Richard's unlock passcode in #dax-collab.**
+**Requires Richard's unlock passcode in #dax-collab.**
 
-Do not proceed until Richard posts the passcode.
+ICP tenant details (when unlocked):
+- Tenant ID: eaf1a864-97ff-451c-87e7-88cf7512e98c
+- Subscription: e1c109d7-9232-4e26-bed7-b1e1b5a6f611
+- DAX-Deploy SP: 213f104f-c25b-4ccd-bf3c-d6f441384a77 (secret in KV as ICP-ClientSecret)
+- SharePoint: impactcapitalpartnersllc.sharepoint.com/sites/ImpactCapitalPartners
+- Advisor: brett@impact-cp.com
+- Firm: Impact Capital Partners
+- No Wealthbox (beta)
+- No Schwab (beta)
 
-When unlocked:
-
-### ICP Power Platform environment
-1. Log into ICP tenant using DAX-Deploy service principal
-   - Client ID: `213f104f-c25b-4ccd-bf3c-d6f441384a77`
-   - Secret: Key Vault `ICP-ClientSecret`
-   - Tenant: `eaf1a864-97ff-451c-87e7-88cf7512e98c`
-2. Create Power Platform environment in ICP tenant: `DAX-ICP`
-3. Create Copilot Studio agent in ICP tenant
-4. Configure with ICP-specific settings:
-   - Advisor email: `brett@impact-cp.com`
-   - Firm name: `Impact Capital Partners`
-   - SharePoint: `impactcapitalpartnersllc.sharepoint.com`
-   - Site ID: `impactcapitalpartnersllc.sharepoint.com,9408138e-0aa3-404e-b131-bc905b2d99d0,40e05979-6387-4bb6-8b8e-6638aa9c1e2f`
-   - Azure OpenAI: deploy new instance in ICP subscription `e1c109d7-9232-4e26-bed7-b1e1b5a6f611`
-
-### ICP credential differences from Dakona
-
-| Variable | Dakona | ICP |
-|---|---|---|
-| Tenant ID | d2a3c346-... | eaf1a864-... |
-| Client ID | 218064ac-... | 213f104f-... |
-| SharePoint | dakonallc.sharepoint.com | impactcapitalpartnersllc.sharepoint.com |
-| Advisor email | rmabbun@dakona.com | brett@impact-cp.com |
-| Firm name | Dakona | Impact Capital Partners |
-| Azure OpenAI | oai-dax-dakona-pilot | new instance in ICP tenant |
-| Wealthbox | NOT connected (beta) | NOT connected (beta) |
-| Schwab | NOT connected (beta) | NOT connected (beta) |
-
-### ICP front end
-- Deploy simple chat UI to Azure Static Web App in ICP subscription
-- DNS: `dax.impact-cp.com` → ICP Static Web App
-- SSO: brett@impact-cp.com via ICP Entra
-
-### ICP verification checklist
+**ICP verification checklist:**
 ```
 [ ] dax.impact-cp.com loads
 [ ] SSO works with brett@impact-cp.com
 [ ] "Good morning" → DAX responds (no [DEV] prefix)
-[ ] "What is SPY trading at today?" → live price
-[ ] "Show me what files are in my DAX Documents folder" → ICP SharePoint
-[ ] "Write a short article about retirement planning and save it" → saves to ICP SharePoint DAX Documents
+[ ] "What is SPY trading at?" → live price
+[ ] "Show me my DAX Documents" → ICP SharePoint
+[ ] "Write an article and save it" → saves to ICP SharePoint DAX Documents
 [ ] "Read my last 2 emails" → brett@impact-cp.com inbox
-[ ] "What's on my calendar today?" → brett@impact-cp.com calendar
+[ ] "What's on my calendar?" → brett@impact-cp.com calendar
+[ ] "Should I put a client in QQQ?" → compliance deflection
 [ ] No Dakona data visible to Brett
-[ ] No ICP data visible in Dakona pilot
-[ ] Compliance deflection works (QQQ test)
+[ ] No ICP data visible in Dakona environments
 ```
-
-Post verification results to #dax-collab and tag Richard.
 
 ---
 
 ## What Stays on n8n (do not migrate)
 
-These stay on n8n permanently — they are 1AltX/Dakona operations tools, not DAX client tools:
-
-- Schwab DDF processor (complex, well-tested, leave alone)
-- DAX Document Generator (pizzip/docxtemplater) — proxy call from Power Automate
-- Research & Write long-form pipeline — may migrate later
-- All non-DAX 1AltX client workflows
-- DAX Health Check monitoring workflow (being built in TASK-20260429-001)
-
----
-
-## Architecture Decision: Direct Line vs Teams vs SharePoint
-
-For the custom web front end (dev.dax.dakona.com and dax.impact-cp.com), use **Direct Line API** with a custom React or plain HTML/JS chat component.
-
-Do NOT use:
-- Teams as the primary channel — too much friction for RIA advisors
-- SharePoint embedded — too limited
-- Power Pages — overkill
-
-The custom web app gives full control over branding, UX, and the DAX look and feel. It's what dax.dakona.com is today — just backed by Copilot Studio instead of LibreChat.
-
-Microsoft's Bot Framework Web Chat component is the fastest path:
-```html
-<script src="https://cdn.botframework.com/botframework-webchat/latest/webchat.js"></script>
-```
-Wrap it in a minimal branded shell with DAX colors (dark navy #1F3864) and the DAX logo.
+| Workflow | Reason | How DAX calls it |
+|---|---|---|
+| Schwab DDF Processor | Complex, tested, leave alone | Power Automate HTTP action → n8n webhook |
+| Document Generator (pizzip) | Complex docx templating | Power Automate HTTP action → n8n webhook |
+| DAX Health Check | Being built in TASK-20260429-001 | Stays in n8n |
+| All 1AltX client workflows | Not DAX — separate | Not touched |
 
 ---
 
-## Execution Order
+## Cost Comparison
 
-```
-Phase 1 — Dev environment setup          (2-3 hrs)
-  Create DAX-Dev Power Platform env
-  Build Copilot Studio agent
-  Connect Azure OpenAI
-  Deploy front end to dev.dax.dakona.com
-  Confirm basic chat works → post to #dax-collab
-
-Phase 2 — Rebuild tools in Power Automate  (1-2 days)
-  Build each tool flow in priority order
-  Test each individually in Copilot Studio canvas
-  Post completion of each tool to #dax-collab
-
-Phase 3 — T6 verification on dev           (2-3 hrs)
-  Run all 7 T6 tests + new SharePoint/email/calendar tests
-  Must all pass
-  Post results + tag Richard
-
-Phase 4 — Richard approves → staging       (requires Richard)
-  Richard reviews dev.dax.dakona.com
-  Approves promotion
-  Promote to dax.dakona.com
-  Run T6 on staging
-  Decommission LibreChat if T6 passes
-  Tag v0.7.0
-
-Phase 5 — ICP deployment ⛔ LOCKED        (requires passcode)
-  Deploy to ICP tenant
-  Run ICP verification checklist
-  Hand off to Brett
-```
-
-**Total estimated time: 3-5 days**
-
----
-
-## ⛔ ICP DEPLOYMENT LOCK
-
-Phase 5 is locked. Do not touch the ICP tenant until Richard provides the unlock passcode in #dax-collab.
+| | Current | After v0.7 | After v1.0 |
+|---|---|---|---|
+| Dakona DAX costs | ~$140/mo | ~$40-50/mo | ~$30-40/mo |
+| Per client (their bill) | ~$150/mo | ~$50-80/mo | ~$30-60/mo |
+| n8n VM | ~$75 (shared) | stays (1AltX) | stays (1AltX) |
+| Copilot Studio | $0 | PAYG ~$10-30/mo | PAYG per client |
 
 ---
 
 ## Rules
 
-1. All work in DAX-Dev environment — never touch dax.dakona.com until Phase 4
-2. Test every tool individually after building it
-3. SharePoint writes go to `DAX-Dev/` subfolder — not production DAX Documents
-4. Azure OpenAI is shared — prefix dev system prompt with [DEV] to identify dev traffic
-5. Never expose Direct Line secret in client-side JavaScript — always proxy through a backend
-6. Tag Richard at end of Phase 3 with T6 results before doing anything in Phase 4
-7. Post progress to #dax-collab after each major step
-8. If blocked on Power Platform licensing or environment creation — tag Richard immediately, do not guess
+1. GitHub Actions for Power Platform Build Tools must be configured in Phase 1 before any flows are built
+2. All environment-specific values must be Power Platform environment variables — nothing hardcoded
+3. cosmos-dax-dev must be a separate Cosmos DB account — not a database within cosmos-dax-dakona-pilot
+4. Direct Line secret must never appear in client-side JavaScript — always fetched server-side from Key Vault
+5. All SharePoint writes in dev go to DAX-Dev subfolder — never to production DAX Documents
+6. Test every tool individually after building — no batch testing at end
+7. Tag Richard after Phase 3 T6 results — do not proceed to Phase 4 without explicit approval
+8. ICP is locked — do not touch until Richard provides passcode in #dax-collab
+9. Post progress to #dax-collab after every major step
+10. If blocked on Power Platform licensing, environment creation, or architecture decision — tag Richard immediately
 
 ---
 
-## Reference Files
-- `/repo/docs/DEPLOYMENT-PIPELINE.md` — release pipeline rules
-- `/repo/docs/tasks/TASK-20260429-001-Graph-SDK-Migration.md` — parallel task (Graph SDK)
-- `/repo/clients/impact-capital/params.json` — ICP configuration
-- `/repo/n8n/snapshots/2026-04-29/` — n8n workflow backups on n8n VM
-- `/repo/docs/PO-BRIEF.md` — full project context
+## Reference
+- Parallel task: TASK-20260429-001 (Forge — Graph SDK on current n8n stack)
+- ICP params: /repo/clients/impact-capital/params.json
+- Deployment pipeline: /repo/docs/DEPLOYMENT-PIPELINE.md
+- n8n snapshots: /repo/n8n/snapshots/2026-04-29/ on n8n VM
+- PO Brief: /repo/docs/PO-BRIEF.md
+- ClickUp: https://app.clickup.com/t/86e157vqf
