@@ -1,0 +1,23 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: to
+  - kind: AutomaticTaskInput
+    propertyName: subject
+  - kind: AutomaticTaskInput
+    propertyName: body
+modelDescription: |
+  Sends an email from the advisor's Outlook mailbox. Pass recipient email
+  address(es), subject, and body text. Use only when the advisor explicitly
+  asks to send an email — never proactively.
+outputs:
+  - propertyName: sent
+  - propertyName: to
+  - propertyName: subject
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false

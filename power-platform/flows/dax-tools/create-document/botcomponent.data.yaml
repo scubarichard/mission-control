@@ -1,0 +1,22 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: title
+  - kind: AutomaticTaskInput
+    propertyName: content
+modelDescription: |
+  Creates a markdown document in the firm's SharePoint Documents library
+  (dakona.sharepoint.com/sites/DAX/DAX-Documents/). Pass title (filename
+  without extension) and content. ALWAYS use this tool when an advisor asks
+  to write/create/draft/save/generate any document.
+outputs:
+  - propertyName: name
+  - propertyName: webUrl
+  - propertyName: id
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false

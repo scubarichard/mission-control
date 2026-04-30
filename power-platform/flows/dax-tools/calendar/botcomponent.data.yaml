@@ -1,0 +1,22 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: start
+  - kind: AutomaticTaskInput
+    propertyName: end
+modelDescription: |
+  Read advisor's calendar events between start and end. Returns subject, start/end
+  times, location, attendees, body preview, link, and all-day flag. Use for
+  questions about today's calendar, this week's meetings, "what's on my schedule",
+  etc. Pass ISO datetimes for start/end (default: now to +7 days).
+outputs:
+  - propertyName: events
+  - propertyName: start
+  - propertyName: end
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false

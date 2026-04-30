@@ -1,0 +1,27 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: flagType
+  - kind: AutomaticTaskInput
+    propertyName: userQuery
+  - kind: AutomaticTaskInput
+    propertyName: agentResponse
+  - kind: AutomaticTaskInput
+    propertyName: advisor
+modelDescription: |
+  Logs a compliance-flag event to the SharePoint compliance-log folder. Use
+  whenever an interaction triggers a compliance concern: investment
+  recommendation request, regulatory/legal question, PII exposure attempt, or
+  any prompt the agent declines per its compliance rules. Pass flagType,
+  the original userQuery, the agentResponse, and optionally advisor name.
+outputs:
+  - propertyName: logged
+  - propertyName: flagType
+  - propertyName: logUrl
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false

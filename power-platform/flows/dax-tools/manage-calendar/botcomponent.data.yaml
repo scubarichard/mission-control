@@ -1,0 +1,27 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: subject
+  - kind: AutomaticTaskInput
+    propertyName: start
+  - kind: AutomaticTaskInput
+    propertyName: end
+  - kind: AutomaticTaskInput
+    propertyName: attendees
+  - kind: AutomaticTaskInput
+    propertyName: body
+modelDescription: |
+  Creates a calendar event in the advisor's Outlook calendar. Pass subject,
+  ISO start/end datetimes (with timezone), and optional attendees + body.
+  Use when an advisor asks to schedule, book, or create a meeting.
+outputs:
+  - propertyName: id
+  - propertyName: subject
+  - propertyName: webLink
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false

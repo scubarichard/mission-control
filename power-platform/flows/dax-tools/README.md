@@ -60,36 +60,37 @@ Power Automate's M365 connectors run under the **connection owner's** identity (
 - **Solution import via `pac solution import --activate-plugins`** → imports flow but leaves `state=Stopped`. Activation must be a separate Flow Management API call after import.
 - **Trigger kind `PowerVirtualAgents`** (older naming) is rejected by Flow API. Use `Skills`. Both `PowerVirtualAgents` and `Skills` work in solution-import path; only `Skills` works in Flow API direct create.
 
-### Tools deployed (8/15 — all programmatic, no M365 consent needed)
+### All 15 tools deployed ✅
 
-| # | Tool | Workflow ID | Status |
+| # | Tool | Backend | Workflow ID |
 |---|---|---|---|
-| 1 | Market Data (FMP + Finnhub) | `b85b3b06-b244-f111-88b4-000d3a36c81b` | ✅ active in env |
-| 6 | Client Lookup (Wealthbox) | `7531f8df-b244-f111-88b4-000d3a36c81b` | ✅ active in env |
-| 7 | List Clients (Wealthbox) | `666e3a34-b344-f111-88b4-000d3a36c81b` | ✅ active in env |
-| 8 | Meeting Prep (Wealthbox composite — defers SharePoint storage) | `606598be-b344-f111-88b4-000d3a36c81b` | ✅ active in env |
-| 11 | Market Summary (Bing News + FMP indices) | `72da0243-b344-f111-88b4-000d3a36c81b` | ✅ active in env |
-| 12 | Research and Write (OpenAI.com gpt-4o; SharePoint storage deferred) | `109a6f97-b344-f111-88b4-000d3a36c81b` | ✅ active in env |
-| 14 | Generate Reports (proxy to n8n schwab-processor) | `cdc30d4a-b344-f111-88b4-000d3a36c81b` | ✅ active in env |
-| 15 | GitHub Tool (REST GET) | `202d1459-b344-f111-88b4-000d3a36c81b` | ✅ active in env |
+| 1 | Market Data | FMP + Finnhub HTTP | `b85b3b06-b244-f111-88b4-000d3a36c81b` |
+| 2 | Read Email | Microsoft Graph (app-only via DAX-PP-CI) | `8e3a013d-b444-f111-88b4-000d3a36c81b` |
+| 3 | Read Calendar | Microsoft Graph (app-only) | `0e263f5c-b444-f111-88b4-000d3a36c81b` |
+| 4 | SharePoint Browser | Microsoft Graph (app-only) | `6aa63268-b444-f111-88b4-000d3a36c81b` |
+| 5 | Create Document | Microsoft Graph (PUT to SP drive) | `213cf093-b444-f111-88b4-000d3a36c81b` |
+| 6 | Client Lookup | Wealthbox API | `7531f8df-b244-f111-88b4-000d3a36c81b` |
+| 7 | List Clients | Wealthbox API | `666e3a34-b344-f111-88b4-000d3a36c81b` |
+| 8 | Meeting Prep | Wealthbox composite (contacts+notes+tasks) | `606598be-b344-f111-88b4-000d3a36c81b` |
+| 9 | Send Email | Microsoft Graph (POST /sendMail) | `ce63a7a0-b444-f111-88b4-000d3a36c81b` |
+| 10 | Manage Calendar | Microsoft Graph (POST /events) | `6af31fb0-b444-f111-88b4-000d3a36c81b` |
+| 11 | Market Summary | Bing News + FMP indices | `72da0243-b344-f111-88b4-000d3a36c81b` |
+| 12 | Research and Write | OpenAI.com gpt-4o | `109a6f97-b344-f111-88b4-000d3a36c81b` |
+| 13 | Compliance Flag | SharePoint markdown log via Graph | `dc943bd0-b444-f111-88b4-000d3a36c81b` |
+| 14 | Generate Reports | n8n proxy (schwab-processor) | `cdc30d4a-b344-f111-88b4-000d3a36c81b` |
+| 15 | GitHub Tool | GitHub REST API | `202d1459-b344-f111-88b4-000d3a36c81b` |
 
-All in DAX solution. Bot publish click in Copilot Studio UI required for them to surface in chat.
+All 15 workflows in DAX-Dev with `state=Started`. All 15 action botcomponents created (componenttype=9, kind:TaskDialog) and N:N-linked to their workflows via `botcomponent_workflow`. All in DAX solution.
 
-### Tools deferred (need user OAuth consent for M365 connectors — can't fully automate without Richard at the keyboard)
+### Microsoft Graph app-only auth (Tools 2, 3, 4, 5, 9, 10, 13)
+Granted to DAX-PP-CI service principal (`37fe1021-88b3-4744-aa32-b5d7e104462b`) and admin-consented 2026-04-30:
+- Mail.Read, Mail.Send
+- Calendars.Read, Calendars.ReadWrite
+- Files.Read.All, Sites.Read.All
 
-| # | Tool | Connector(s) needed |
-|---|---|---|
-| 2 | Email (read) | Outlook |
-| 3 | Calendar (read) | Calendar |
-| 4 | SharePoint Browser | SharePoint |
-| 5 | Create Document | SharePoint |
-| 9 | Send Email | Outlook |
-| 10 | Manage Calendar | Calendar |
-| 13 | Compliance Flag Check | SharePoint (logging only — could omit and rely on prompt rules) |
+Each flow's first action POSTs to `login.microsoftonline.com/{tenant}/oauth2/v2.0/token` with `grant_type=client_credentials` to get a Graph token, then calls Graph API with `Bearer @{body('Get_Graph_Token')?['access_token']}`. The PP-CI client secret is referenced from KV via `__PP_CI_SECRET__` placeholder → `kvdaxdakonapilot/DAX-PP-CI-ClientSecret`.
 
-**Unblock path**: Richard creates 3 connections in `make.powerautomate.com` (Outlook, Calendar, SharePoint) — one auth flow each, ~30 sec total. Then `deploy-dax-tool.py` adds connection refs to flow JSON for those tools.
+**Permission scope = the entire tenant.** Fine for dev (Richard is the only user; flows hardcode his OID `1740bd16-eb72-4ace-913d-96150cec19fd` as the target user). For staging/ICP this needs to change to delegated user identity (passed from agent context) — currently a known Phase 4 blocker.
 
-**Alternative**: rebuild M365-connector tools as direct Microsoft Graph HTTP calls. Requires Graph app-only permissions on a service principal + admin consent. Gives all-user access (fine for dev where Richard is the only user; unacceptable for staging/ICP). Better long-term path for multi-tenant.
-
-### Phase 2 progress: ~55% by tool count, ~70% by usefulness
-The 8 deployed tools cover all market data, all client CRM lookup, meeting prep, generated long-form content, and the n8n proxy. The remaining 7 are M365 productivity tools (read mail, draft email, calendar, SharePoint files) — important but not blocking general DAX usefulness.
+### What's left to make Tool 1-15 chat-callable
+**Bot publish click** in Copilot Studio UI (Microsoft.Flow's bot-publish endpoint is undocumented; SP/user `PvaPublish` returns 200 no-op). One click, ~5 sec, exposes all 15 actions to the agent.

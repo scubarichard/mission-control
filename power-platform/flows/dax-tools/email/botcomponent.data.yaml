@@ -1,0 +1,20 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: count
+  - kind: AutomaticTaskInput
+    propertyName: search
+modelDescription: |
+  Read recent emails from the advisor's Outlook inbox. Returns messages with
+  subject, sender, received time, body preview, read state, and web link.
+  Use when an advisor asks to read mail, check inbox, find an email, or
+  search by sender/subject. Pass count (default 5) and optional search query.
+outputs:
+  - propertyName: messages
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false
