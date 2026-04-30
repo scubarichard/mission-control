@@ -4,17 +4,30 @@
     "definition": {
       "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
       "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
       "triggers": {
-        "When_an_agent_calls_the_flow": {
+        "manual": {
           "type": "Request",
-          "kind": "PowerVirtualAgents",
+          "kind": "Skills",
           "inputs": {
             "schema": {
               "type": "object",
               "properties": {
                 "ticker": {
                   "type": "string",
-                  "description": "Stock or ETF ticker symbol"
+                  "title": "Ticker",
+                  "description": "Stock or ETF ticker symbol (e.g. SPY, AAPL)",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
                 }
               },
               "required": [
@@ -26,24 +39,29 @@
         }
       },
       "actions": {
-        "Get_FMP_Quote": {
-          "type": "Http",
-          "inputs": {
-            "method": "GET",
-            "uri": "https://financialmodelingprep.com/api/v3/quote/@{toUpper(triggerBody()?['ticker'])}?apikey=__FMP_API_KEY__"
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Get_FMP_Quote": {
+              "type": "Http",
+              "inputs": {
+                "method": "GET",
+                "uri": "https://financialmodelingprep.com/api/v3/quote/@{toUpper(triggerBody()?['ticker'])}?apikey=__FMP_API_KEY__"
+              }
+            },
+            "Get_Finnhub_Quote": {
+              "type": "Http",
+              "inputs": {
+                "method": "GET",
+                "uri": "https://finnhub.io/api/v1/quote?symbol=@{toUpper(triggerBody()?['ticker'])}&token=__FINNHUB_API_KEY__"
+              },
+              "runAfter": {}
+            }
           }
         },
-        "Get_Finnhub_Quote": {
-          "type": "Http",
-          "inputs": {
-            "method": "GET",
-            "uri": "https://finnhub.io/api/v1/quote?symbol=@{toUpper(triggerBody()?['ticker'])}&token=__FINNHUB_API_KEY__"
-          },
-          "runAfter": {}
-        },
         "Respond_to_the_agent": {
-          "type": "Request",
-          "kind": "PowerVirtualAgentsResponseV2",
+          "type": "Response",
+          "kind": "Skills",
           "inputs": {
             "statusCode": 200,
             "body": {
@@ -56,25 +74,36 @@
               "type": "object",
               "properties": {
                 "ticker": {
-                  "type": "string"
+                  "title": "Ticker",
+                  "description": "Ticker queried",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
                 },
                 "fmp": {
-                  "type": "array"
+                  "title": "FMP Quote",
+                  "description": "FMP quote payload",
+                  "type": "array",
+                  "x-ms-dynamically-added": true
                 },
                 "finnhub": {
-                  "type": "object"
+                  "title": "Finnhub Quote",
+                  "description": "Finnhub quote (c=current, d=change, dp=%, h=high, l=low, o=open, pc=prev close, t=ts)",
+                  "type": "object",
+                  "x-ms-dynamically-added": true
                 },
                 "asOf": {
-                  "type": "string"
+                  "title": "As of",
+                  "description": "UTC timestamp",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
                 }
               }
             }
           },
           "runAfter": {
-            "Get_FMP_Quote": [
-              "Succeeded"
-            ],
-            "Get_Finnhub_Quote": [
+            "Scope": [
               "Succeeded"
             ]
           }

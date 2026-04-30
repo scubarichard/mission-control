@@ -1,0 +1,21 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: ticker
+modelDescription: |
+  Returns live market data (price, change percentage, day high/low, year range,
+  volume, market cap, P/E ratio) for a stock or ETF ticker symbol. Backed by
+  Financial Modeling Prep + Finnhub. Use when an advisor asks about prices,
+  market performance, treasury yields, gold, oil, VIX, crypto, or any current
+  financial data on a specific ticker.
+outputs:
+  - propertyName: ticker
+  - propertyName: fmp
+  - propertyName: finnhub
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false
