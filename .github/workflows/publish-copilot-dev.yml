@@ -32,18 +32,12 @@ jobs:
             --tenant "$PP_TENANT_ID"
           "$PAC" auth select --name dax-dev
 
-          echo "--- pac copilot help ---"
-          "$PAC" copilot help
-
-          echo "--- attempting copilot publish ---"
-          set +e
-          "$PAC" copilot publish help
-          PUBOUT=$("$PAC" copilot publish --schemaName "$BOT_SCHEMA" 2>&1)
+          echo "--- pac copilot publish ---"
+          "$PAC" copilot publish --bot "$BOT_SCHEMA"
           ECODE=$?
-          echo "exit=$ECODE"
-          echo "$PUBOUT"
-          if [ $ECODE -ne 0 ]; then
-            "$PAC" copilot publish --schema-name "$BOT_SCHEMA"
-            ECODE=$?
-          fi
+          echo "publish exit=$ECODE"
+
+          echo "--- pac copilot status ---"
+          "$PAC" copilot status --bot "$BOT_SCHEMA" || true
+
           exit $ECODE
