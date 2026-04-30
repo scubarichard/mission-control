@@ -122,6 +122,31 @@
     }
   }, 10000);
 
+  // SEC Rule 17a-4 audit trail: log every user/bot turn to cosmos via /api/log.
+  // Fire-and-forget; failures don't block the chat.
+  directLine.activity$.subscribe((act) => {
+    try {
+      if (!act || act.type !== 'message') return;
+      const role = act.from && act.from.role === 'user' ? 'user' : 'assistant';
+      const content = act.text || (act.attachments ? `[attachments: ${act.attachments.length}]` : '');
+      if (!content) return;
+      fetch('/api/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'omit',
+        body: JSON.stringify({
+          role,
+          content,
+          conversationId: act.conversation && act.conversation.id || null,
+          activityId: act.id || null,
+          activityTimestamp: act.timestamp || null,
+          userOid: account && account.idTokenClaims && account.idTokenClaims.oid || null,
+          userPrincipal: account && account.username || null
+        })
+      }).catch(e => console.warn('[dax] log failed', e));
+    } catch (e) { console.warn('[dax] log hook error', e); }
+  });
+
   const styleOptions = {
     backgroundColor: '#0d0d0d',
     bubbleBackground: '#1f1f23',

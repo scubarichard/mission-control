@@ -1,9 +1,12 @@
 {
   "name": "dax-dev-api",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
-  "description": "DAX dev SWA API — passes user's Power Platform access token + agent connection string to the browser SDK.",
+  "description": "DAX dev SWA API — /api/token (config) + /api/log (cosmos audit trail).",
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "mongodb": "^6.10.0"
   }
 }
