@@ -6,6 +6,10 @@
     <title>DAX [DEV] — Dakona</title>
     <link rel="icon" href="/assets/logo.svg" />
     <link rel="stylesheet" href="/styles.css" />
+    <script
+      crossorigin="anonymous"
+      src="https://unpkg.com/@azure/msal-browser@5.9.0/lib/msal-browser.min.js"
+    ></script>
   </head>
   <body class="login-body">
     <header class="login-topbar">
@@ -22,11 +26,12 @@
           <span class="brand-strip-segment">Managed by <strong>DAKONA</strong></span>
         </div>
         <h1 class="welcome">Welcome back</h1>
-        <a class="ms-signin" href="/.auth/login/aad?post_login_redirect_uri=/c">
+        <button id="signin-btn" class="ms-signin" type="button" aria-label="Sign in with Microsoft">
           <img src="/assets/microsoft-signin.png" alt="Sign in with Microsoft" />
-        </a>
-        <p class="login-foot">Sign in with your Dakona account to continue.</p>
+        </button>
+        <p class="login-foot" id="login-foot">Sign in with your Dakona account to continue.</p>
       </div>
     </main>
+    <script src="/login.js" defer></script>
   </body>
 </html>

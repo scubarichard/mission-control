@@ -28,7 +28,7 @@
       </div>
       <div class="user-area">
         <span class="user" id="user-slot"></span>
-        <a class="signout" href="/.auth/logout?post_logout_redirect_uri=/">Sign out</a>
+        <button class="signout" type="button" onclick="sessionStorage.clear(); window.location.replace('/');">Sign out</button>
       </div>
     </header>
     <main class="chat-main">

@@ -1,5 +1,4 @@
 (async function bootDax() {
-  const REDIRECT_FLAG = 'dax_msal_redirect_pending';
   const statusEl = document.getElementById('status');
   const webchatEl = document.getElementById('webchat');
   const userSlot = document.getElementById('user-slot');
@@ -7,33 +6,16 @@
   function showStatus(msg, isError) {
     statusEl.hidden = false;
     statusEl.textContent = msg;
-    if (isError) {
-      statusEl.style.background = '#FDE8E8';
-      statusEl.style.color = '#9B1C1C';
-      statusEl.style.borderTopColor = '#F8B4B4';
-    } else {
-      statusEl.style.background = '';
-      statusEl.style.color = '';
-      statusEl.style.borderTopColor = '';
-    }
+    statusEl.style.background = isError ? 'rgba(248, 113, 113, 0.12)' : '';
+    statusEl.style.color = isError ? '#F87171' : '';
+    statusEl.style.borderTopColor = isError ? 'rgba(248, 113, 113, 0.3)' : '';
     statusEl.style.cursor = '';
     statusEl.onclick = null;
     console.log('[dax]', msg);
   }
 
-  function showAction(msg, label, onClick) {
-    statusEl.hidden = false;
-    statusEl.style.background = '#EFF6FF';
-    statusEl.style.color = '#1E40AF';
-    statusEl.style.borderTopColor = '#BFDBFE';
-    statusEl.style.cursor = 'pointer';
-    statusEl.textContent = msg + ' — ' + label;
-    statusEl.onclick = onClick;
-    console.log('[dax]', msg);
-  }
-
   window.addEventListener('error', (e) => {
-    showStatus('JS error: ' + (e.message || e.error || 'unknown'), true);
+    showStatus('JS error: ' + (e.message || 'unknown'), true);
   });
   window.addEventListener('unhandledrejection', (e) => {
     const r = e.reason;
@@ -43,122 +25,30 @@
 
   showStatus('Booting…');
 
-  async function loadUser() {
-    try {
-      const res = await fetch('/.auth/me', { credentials: 'include' });
-      if (!res.ok) return null;
-      const data = await res.json();
-      return data.clientPrincipal;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  async function fetchAgentConfig() {
-    const res = await fetch('/api/token', { credentials: 'include' });
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      throw new Error('Config endpoint failed: ' + res.status + ' ' + text);
-    }
-    return res.json();
-  }
-
   function whenReady(timeoutMs) {
     return new Promise((resolve, reject) => {
       const start = Date.now();
-      const have = () => ({
-        cs: !!window.CopilotStudio,
-        wc: !!window.WebChat,
-        msal: !!window.msal
-      });
+      const have = () => ({ cs: !!window.CopilotStudio, wc: !!window.WebChat, msal: !!window.msal });
       const ready = (h) => h.cs && h.wc && h.msal;
       if (ready(have())) return resolve();
-      const interval = setInterval(() => {
+      const i = setInterval(() => {
         const h = have();
-        if (ready(h)) { clearInterval(interval); resolve(); return; }
+        if (ready(h)) { clearInterval(i); resolve(); return; }
         if (Date.now() - start > timeoutMs) {
-          clearInterval(interval);
-          reject(new Error('SDK load timeout. Loaded: CopilotStudio=' + h.cs + ' WebChat=' + h.wc + ' msal=' + h.msal));
+          clearInterval(i);
+          reject(new Error('SDK load timeout. CopilotStudio=' + h.cs + ' WebChat=' + h.wc + ' msal=' + h.msal));
         }
       }, 100);
     });
   }
 
-  async function renderChat(cfg, msalInstance, accessToken) {
-    const { CopilotStudioClient, CopilotStudioWebChat, ConnectionSettings } = window.CopilotStudio;
-    const settings = new ConnectionSettings({ directConnectUrl: cfg.directConnectUrl });
-    const client = new CopilotStudioClient(settings, accessToken);
-    const directLine = CopilotStudioWebChat.createConnection(client, { showTyping: true });
-
-    let lastConnStatus = null;
-    let everConnected = false;
-    directLine.connectionStatus$.subscribe((s) => {
-      console.log('[dax] connection status:', s, '(0=Disconnected 1=Connecting 2=Connected)');
-      lastConnStatus = s;
-      if (s === 2) everConnected = true;
-    });
-    setTimeout(() => {
-      if (!everConnected && (lastConnStatus === 0 || lastConnStatus === 1)) {
-        showStatus(
-          'Cannot reach the DAX agent. Most likely cause: the agent has not been Published in Copilot Studio (open the agent and click Publish).',
-          true
-        );
-      }
-    }, 10000);
-
-    const styleOptions = {
-      backgroundColor: '#0d0d0d',
-      bubbleBackground: '#1f1f23',
-      bubbleBorderColor: '#2a2a30',
-      bubbleBorderRadius: 10,
-      bubbleBorderWidth: 1,
-      bubbleTextColor: '#ECECF1',
-      bubbleFromUserBackground: '#3B82F6',
-      bubbleFromUserBorderColor: '#3B82F6',
-      bubbleFromUserBorderRadius: 10,
-      bubbleFromUserBorderWidth: 1,
-      bubbleFromUserTextColor: '#FFFFFF',
-      primaryFont: '"Segoe UI", system-ui, sans-serif',
-      sendBoxBackground: '#161616',
-      sendBoxTextColor: '#ECECF1',
-      sendBoxButtonColor: '#3B82F6',
-      sendBoxButtonColorOnHover: '#60A5FA',
-      sendBoxButtonColorOnFocus: '#60A5FA',
-      sendBoxBorderTop: '1px solid #2a2a30',
-      sendBoxPlaceholderColor: '#7C7C85',
-      suggestedActionBackgroundColor: '#1f1f23',
-      suggestedActionBorderColor: '#2a2a30',
-      suggestedActionTextColor: '#ECECF1',
-      timestampColor: '#7C7C85',
-      typingAnimationBackgroundImage: '',
-      rootHeight: '100%',
-      rootWidth: '100%'
-    };
-    window.WebChat.renderWebChat(
-      { directLine, styleOptions, locale: 'en-US' },
-      webchatEl
-    );
-    setTimeout(() => { statusEl.hidden = true; }, 1500);
-  }
-
-  showStatus('Loading user identity…');
-  const principal = await loadUser();
-  if (principal && principal.userDetails) {
-    userSlot.textContent = principal.userDetails;
-  }
-
   showStatus('Waiting for SDKs…');
-  try {
-    await whenReady(15000);
-  } catch (e) {
-    showStatus(e.message, true);
-    return;
-  }
+  try { await whenReady(15000); } catch (e) { showStatus(e.message, true); return; }
 
   showStatus('Fetching agent config…');
   let cfg;
   try {
-    cfg = await fetchAgentConfig();
+    cfg = await (await fetch('/api/token', { credentials: 'omit' })).json();
   } catch (err) {
     showStatus('Could not load DAX config: ' + err.message, true);
     return;
@@ -166,7 +56,6 @@
 
   showStatus('Initializing MSAL…');
   let msalInstance;
-  let redirectResponse;
   try {
     msalInstance = new window.msal.PublicClientApplication({
       auth: {
@@ -177,90 +66,95 @@
       cache: { cacheLocation: 'sessionStorage' }
     });
     await msalInstance.initialize();
-    redirectResponse = await msalInstance.handleRedirectPromise();
+    await msalInstance.handleRedirectPromise();
   } catch (e) {
     showStatus('MSAL init failed: ' + (e.message || e), true);
     return;
   }
 
-  if (redirectResponse && redirectResponse.account) {
-    msalInstance.setActiveAccount(redirectResponse.account);
+  let account = msalInstance.getActiveAccount() || msalInstance.getAllAccounts()[0];
+  if (!account) {
+    showStatus('Not signed in — returning to login…');
+    setTimeout(() => window.location.replace('/'), 800);
+    return;
   }
+  msalInstance.setActiveAccount(account);
+  if (userSlot && account.username) userSlot.textContent = account.username;
 
-  const scopeRequest = { scopes: [cfg.scope], loginHint: cfg.user.name };
-  const account = msalInstance.getActiveAccount() || msalInstance.getAllAccounts()[0];
-
+  showStatus('Acquiring agent token silently…');
   let tokenResp;
-  if (redirectResponse && redirectResponse.accessToken) {
-    // Just came back from redirect with a fresh token — use it directly.
-    sessionStorage.removeItem(REDIRECT_FLAG);
-    tokenResp = redirectResponse;
-  } else if (account) {
-    showStatus('Acquiring agent token silently…');
+  try {
+    tokenResp = await msalInstance.acquireTokenSilent({ scopes: [cfg.scope], account });
+  } catch (silentErr) {
+    console.warn('Silent failed:', silentErr);
+    showStatus('Silent failed — re-authenticating…');
     try {
-      tokenResp = await msalInstance.acquireTokenSilent({ ...scopeRequest, account });
-      sessionStorage.removeItem(REDIRECT_FLAG);
-    } catch (silentErr) {
-      console.warn('Silent acquisition failed:', silentErr);
-      const isInteraction = silentErr && (silentErr.errorCode === 'interaction_required' ||
-        silentErr.errorCode === 'consent_required' ||
-        silentErr.errorCode === 'login_required' ||
-        (silentErr.name && silentErr.name.includes('InteractionRequired')));
-      if (isInteraction) {
-        if (sessionStorage.getItem(REDIRECT_FLAG)) {
-          // Already tried a redirect this session — don't loop. Surface a click target.
-          sessionStorage.removeItem(REDIRECT_FLAG);
-          showAction('Sign-in did not complete on the previous redirect.',
-            'click here to try again',
-            () => {
-              sessionStorage.setItem(REDIRECT_FLAG, '1');
-              msalInstance.acquireTokenRedirect(scopeRequest);
-            });
-          return;
-        }
-        sessionStorage.setItem(REDIRECT_FLAG, '1');
-        showStatus('Need consent — redirecting to Microsoft sign-in…');
-        await msalInstance.acquireTokenRedirect(scopeRequest);
-        return;
-      }
-      showStatus('Token error: ' + (silentErr.message || silentErr), true);
+      await msalInstance.acquireTokenRedirect({ scopes: [cfg.scope], account });
       return;
-    }
-  } else {
-    // No cached account. Try ssoSilent first — uses the AAD session cookie
-    // established by SWA login moments ago, via an iframe to
-    // login.microsoftonline.com. If it succeeds, no visible second sign-in.
-    // If 3P cookies are blocked or the session is gone, fall back to redirect.
-    try {
-      showStatus('Single sign-on (silent)…');
-      tokenResp = await msalInstance.ssoSilent(scopeRequest);
-      if (tokenResp && tokenResp.account) {
-        msalInstance.setActiveAccount(tokenResp.account);
-      }
-      sessionStorage.removeItem(REDIRECT_FLAG);
-    } catch (ssoErr) {
-      console.warn('ssoSilent failed:', ssoErr);
-      if (sessionStorage.getItem(REDIRECT_FLAG)) {
-        sessionStorage.removeItem(REDIRECT_FLAG);
-        showAction('Sign-in did not complete on the previous redirect.',
-          'click here to try again',
-          () => {
-            sessionStorage.setItem(REDIRECT_FLAG, '1');
-            msalInstance.acquireTokenRedirect(scopeRequest);
-          });
-        return;
-      }
-      sessionStorage.setItem(REDIRECT_FLAG, '1');
-      showStatus('Authorizing DAX agent — redirecting to Microsoft sign-in…');
-      await msalInstance.acquireTokenRedirect(scopeRequest);
+    } catch (e) {
+      showStatus('Re-auth failed: ' + (e.message || e), true);
       return;
     }
   }
 
   showStatus('Got token. Starting chat…');
+  let directLine;
   try {
-    await renderChat(cfg, msalInstance, tokenResp.accessToken);
+    const { CopilotStudioClient, CopilotStudioWebChat, ConnectionSettings } = window.CopilotStudio;
+    const settings = new ConnectionSettings({ directConnectUrl: cfg.directConnectUrl });
+    const client = new CopilotStudioClient(settings, tokenResp.accessToken);
+    directLine = CopilotStudioWebChat.createConnection(client, { showTyping: true });
   } catch (e) {
-    showStatus('Chat render failed: ' + (e.message || e), true);
+    showStatus('Copilot Studio client error: ' + (e.message || e), true);
+    return;
+  }
+
+  let lastConnStatus = null;
+  let everConnected = false;
+  directLine.connectionStatus$.subscribe((s) => {
+    console.log('[dax] connection status:', s, '(0=Disconnected 1=Connecting 2=Connected)');
+    lastConnStatus = s;
+    if (s === 2) everConnected = true;
+  });
+  setTimeout(() => {
+    if (!everConnected && (lastConnStatus === 0 || lastConnStatus === 1)) {
+      showStatus('Cannot reach the DAX agent. Most likely cause: the agent has not been Published in Copilot Studio (open the agent and click Publish).', true);
+    }
+  }, 10000);
+
+  const styleOptions = {
+    backgroundColor: '#0d0d0d',
+    bubbleBackground: '#1f1f23',
+    bubbleBorderColor: '#2a2a30',
+    bubbleBorderRadius: 10,
+    bubbleBorderWidth: 1,
+    bubbleTextColor: '#ECECF1',
+    bubbleFromUserBackground: '#3B82F6',
+    bubbleFromUserBorderColor: '#3B82F6',
+    bubbleFromUserBorderRadius: 10,
+    bubbleFromUserBorderWidth: 1,
+    bubbleFromUserTextColor: '#FFFFFF',
+    primaryFont: '"Segoe UI", system-ui, sans-serif',
+    sendBoxBackground: '#161616',
+    sendBoxTextColor: '#ECECF1',
+    sendBoxButtonColor: '#3B82F6',
+    sendBoxButtonColorOnHover: '#60A5FA',
+    sendBoxButtonColorOnFocus: '#60A5FA',
+    sendBoxBorderTop: '1px solid #2a2a30',
+    sendBoxPlaceholderColor: '#7C7C85',
+    suggestedActionBackgroundColor: '#1f1f23',
+    suggestedActionBorderColor: '#2a2a30',
+    suggestedActionTextColor: '#ECECF1',
+    timestampColor: '#7C7C85',
+    rootHeight: '100%',
+    rootWidth: '100%'
+  };
+
+  showStatus('Rendering chat…');
+  try {
+    window.WebChat.renderWebChat({ directLine, styleOptions, locale: 'en-US' }, webchatEl);
+    setTimeout(() => { statusEl.hidden = true; }, 1500);
+  } catch (e) {
+    showStatus('Web Chat render failed: ' + (e.message || e), true);
   }
 })();
