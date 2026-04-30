@@ -94,3 +94,19 @@ Each flow's first action POSTs to `login.microsoftonline.com/{tenant}/oauth2/v2.
 
 ### What's left to make Tool 1-15 chat-callable
 **Bot publish click** in Copilot Studio UI (Microsoft.Flow's bot-publish endpoint is undocumented; SP/user `PvaPublish` returns 200 no-op). One click, ~5 sec, exposes all 15 actions to the agent.
+
+### Smoke-test results (2026-04-30 16:55 UTC)
+| Backend | Status | Note |
+|---|---|---|
+| Finnhub | ✅ | SPY = $714.38 |
+| FMP `/stable/quote` | ✅ | Replaces deprecated `/api/v3/quote/` (legacy endpoints retired 2025-08-31). Tool 1 + Tool 11 PATCHed to use new path. |
+| FMP `/stable/news/general-latest` | ✅ | Replaces Bing News in Tool 11 — Bing key was 401-ing. |
+| Microsoft Graph (app-only) | ✅ | Mail.Read against Richard's mailbox returned messages. |
+| Wealthbox | ❌ **401** | KV key `wealthbox-api-key` (created 2026-04-08, 32 chars) returns 401 against `/v1/me` and `/v1/contacts`. Tools 6, 7, 8 deployed but won't work until a valid Wealthbox API key replaces it. Possibly rotated upstream. |
+| Bing Search | ❌ 401 | Replaced — no longer needed. KV `bing-search-key` is now unused; safe to delete or leave. |
+| OpenAI.com | ✅ | gpt-4o responds. Tool 12 functional. |
+
+### Action items pre-Phase 4
+1. Rotate Wealthbox API key (Tools 6, 7, 8 blocked until then)
+2. Bot publish click (one-time UI action) to expose all 15 tools
+3. Delete unused `bing-search-key` from KV (cosmetic cleanup)

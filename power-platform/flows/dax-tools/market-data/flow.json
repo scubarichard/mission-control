@@ -46,7 +46,7 @@
               "type": "Http",
               "inputs": {
                 "method": "GET",
-                "uri": "https://financialmodelingprep.com/api/v3/quote/@{toUpper(triggerBody()?['ticker'])}?apikey=__FMP_API_KEY__"
+                "uri": "https://financialmodelingprep.com/stable/quote?symbol=@{toUpper(triggerBody()?['ticker'])}&apikey=__FMP_API_KEY__"
               }
             },
             "Get_Finnhub_Quote": {
