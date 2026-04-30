@@ -89,6 +89,23 @@
     const settings = new ConnectionSettings({ directConnectUrl: cfg.directConnectUrl });
     const client = new CopilotStudioClient(settings, accessToken);
     const directLine = CopilotStudioWebChat.createConnection(client, { showTyping: true });
+
+    let lastConnStatus = null;
+    let everConnected = false;
+    directLine.connectionStatus$.subscribe((s) => {
+      console.log('[dax] connection status:', s, '(0=Disconnected 1=Connecting 2=Connected)');
+      lastConnStatus = s;
+      if (s === 2) everConnected = true;
+    });
+    setTimeout(() => {
+      if (!everConnected && (lastConnStatus === 0 || lastConnStatus === 1)) {
+        showStatus(
+          'Cannot reach the DAX agent. Most likely cause: the agent has not been Published in Copilot Studio (open the agent and click Publish).',
+          true
+        );
+      }
+    }, 10000);
+
     const styleOptions = {
       backgroundColor: '#FFFFFF',
       bubbleBackground: '#F1F4FB',
