@@ -227,21 +227,34 @@
       return;
     }
   } else {
-    // No cached account — kick a redirect (no popup blocker, no user gesture needed).
-    if (sessionStorage.getItem(REDIRECT_FLAG)) {
+    // No cached account. Try ssoSilent first — uses the AAD session cookie
+    // established by SWA login moments ago, via an iframe to
+    // login.microsoftonline.com. If it succeeds, no visible second sign-in.
+    // If 3P cookies are blocked or the session is gone, fall back to redirect.
+    try {
+      showStatus('Single sign-on (silent)…');
+      tokenResp = await msalInstance.ssoSilent(scopeRequest);
+      if (tokenResp && tokenResp.account) {
+        msalInstance.setActiveAccount(tokenResp.account);
+      }
       sessionStorage.removeItem(REDIRECT_FLAG);
-      showAction('Sign-in did not complete on the previous redirect.',
-        'click here to try again',
-        () => {
-          sessionStorage.setItem(REDIRECT_FLAG, '1');
-          msalInstance.acquireTokenRedirect(scopeRequest);
-        });
+    } catch (ssoErr) {
+      console.warn('ssoSilent failed:', ssoErr);
+      if (sessionStorage.getItem(REDIRECT_FLAG)) {
+        sessionStorage.removeItem(REDIRECT_FLAG);
+        showAction('Sign-in did not complete on the previous redirect.',
+          'click here to try again',
+          () => {
+            sessionStorage.setItem(REDIRECT_FLAG, '1');
+            msalInstance.acquireTokenRedirect(scopeRequest);
+          });
+        return;
+      }
+      sessionStorage.setItem(REDIRECT_FLAG, '1');
+      showStatus('Authorizing DAX agent — redirecting to Microsoft sign-in…');
+      await msalInstance.acquireTokenRedirect(scopeRequest);
       return;
     }
-    sessionStorage.setItem(REDIRECT_FLAG, '1');
-    showStatus('Authorizing DAX agent — redirecting to Microsoft sign-in…');
-    await msalInstance.acquireTokenRedirect(scopeRequest);
-    return;
   }
 
   showStatus('Got token. Starting chat…');
