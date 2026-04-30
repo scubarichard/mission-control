@@ -5,10 +5,7 @@ inputs:
     propertyName: period
   - kind: AutomaticTaskInput
     propertyName: clientId
-modelDescription: |
-  Generates quarterly client review reports by triggering the n8n
-  schwab-processor pipeline. Use when an advisor asks to generate quarterly
-  reviews, review Schwab data, or produce client reports for a period.
+modelDescription: Use this tool to trigger generation of quarterly client reports via the n8n schwab-processor pipeline. Call this whenever the user asks to 'generate reports', 'produce quarterly reviews', 'review Schwab data', 'create Q1/Q2/Q3/Q4 reviews'. Pass the period (e.g. Q1-2026) and optional clientId.
 outputs:
   - propertyName: period
   - propertyName: result

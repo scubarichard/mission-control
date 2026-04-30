@@ -3,14 +3,7 @@ mode: Strict
 inputs:
   - kind: AutomaticTaskInput
     propertyName: name
-modelDescription: |
-  Looks up a client in Wealthbox CRM by full or partial name. Returns the
-  contact's profile, tags, contact info, and other Wealthbox fields. Use whenever
-  an advisor mentions ANY person's name — asking about them, saying they have a
-  meeting with them, saying they are a client, etc. ALWAYS call this BEFORE
-  responding when a person is mentioned. Do not answer from general knowledge
-  about people. Skip only if the person is clearly a public figure asked about
-  in a general context (e.g. "Warren Buffett's investment philosophy").
+modelDescription: Use this tool to look up a client by name in the firm's Wealthbox CRM. Call this whenever the user mentions any person's name in a client context — 'tell me about X', 'I have a meeting with X', 'find X', 'who is X'. Pass the full or partial name. Always call this BEFORE answering questions about specific people.
 outputs:
   - propertyName: query
   - propertyName: contacts

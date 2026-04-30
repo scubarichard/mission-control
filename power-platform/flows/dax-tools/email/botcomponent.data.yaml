@@ -5,11 +5,7 @@ inputs:
     propertyName: count
   - kind: AutomaticTaskInput
     propertyName: search
-modelDescription: |
-  Read recent emails from the advisor's Outlook inbox. Returns messages with
-  subject, sender, received time, body preview, read state, and web link.
-  Use when an advisor asks to read mail, check inbox, find an email, or
-  search by sender/subject. Pass count (default 5) and optional search query.
+modelDescription: Use this tool to read recent emails from the advisor's Outlook inbox. Call this whenever the user asks to 'read my email', 'check inbox', 'find an email', 'last X emails', 'unread emails', or asks about specific senders/subjects. Pass count (default 5) and optional search query.
 outputs:
   - propertyName: messages
   - propertyName: asOf

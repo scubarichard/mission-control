@@ -3,12 +3,7 @@ mode: Strict
 inputs:
   - kind: AutomaticTaskInput
     propertyName: query
-modelDescription: |
-  Returns current market news headlines plus live quotes for the major indices
-  (S&P 500, Dow, Nasdaq, Russell 2000, Treasuries, Gold, VIX, US Dollar). Use
-  for "what's driving markets", "any market news", "market update", or general
-  "the market today" questions. Always call this — never generate market
-  commentary from general knowledge.
+modelDescription: Use this tool to get current market news and live quotes for the major indices (S&P 500, Dow, Nasdaq, Russell 2000, Treasuries, Gold, US Dollar). Call this whenever the user asks 'what is driving markets', 'any market news', 'how are markets doing', 'market update', or general questions about today's market conditions. Optional query parameter.
 outputs:
   - propertyName: query
   - propertyName: news

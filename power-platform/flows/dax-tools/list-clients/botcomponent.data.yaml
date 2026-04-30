@@ -5,10 +5,7 @@ inputs:
     propertyName: tag
   - kind: AutomaticTaskInput
     propertyName: perPage
-modelDescription: |
-  Lists clients in Wealthbox CRM, optionally filtered by tag (e.g. "ESG",
-  "Hot", "A-tier"). Use when an advisor asks to see clients, list clients,
-  show all clients, or filter clients by tag, name, interest, or risk.
+modelDescription: Use this tool to list clients from Wealthbox CRM, optionally filtered by tag (e.g. ESG, Hot, A-tier, Retired). Call this whenever the user asks 'show me my clients', 'list clients', 'who are my X clients', 'find clients with tag Y'.
 outputs:
   - propertyName: tag
   - propertyName: contacts

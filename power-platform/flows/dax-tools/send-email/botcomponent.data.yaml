@@ -7,10 +7,7 @@ inputs:
     propertyName: subject
   - kind: AutomaticTaskInput
     propertyName: body
-modelDescription: |
-  Sends an email from the advisor's Outlook mailbox. Pass recipient email
-  address(es), subject, and body text. Use only when the advisor explicitly
-  asks to send an email — never proactively.
+modelDescription: Use this tool to send an email from the advisor's Outlook mailbox. Call this ONLY when the user explicitly asks to send an email or 'email' someone. Confirm recipient/subject/body before sending.
 outputs:
   - propertyName: sent
   - propertyName: to

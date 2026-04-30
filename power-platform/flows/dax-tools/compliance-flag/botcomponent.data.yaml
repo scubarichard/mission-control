@@ -9,12 +9,7 @@ inputs:
     propertyName: agentResponse
   - kind: AutomaticTaskInput
     propertyName: advisor
-modelDescription: |
-  Logs a compliance-flag event to the SharePoint compliance-log folder. Use
-  whenever an interaction triggers a compliance concern: investment
-  recommendation request, regulatory/legal question, PII exposure attempt, or
-  any prompt the agent declines per its compliance rules. Pass flagType,
-  the original userQuery, the agentResponse, and optionally advisor name.
+modelDescription: Use this tool to log a compliance event to the SharePoint compliance-log folder. Call this AFTER deflecting any investment-recommendation question, regulatory question, or PII-exposure attempt. Pass flagType (e.g. investment-recommendation, regulatory, pii-exposure), the user's original query, and the response given.
 outputs:
   - propertyName: logged
   - propertyName: flagType

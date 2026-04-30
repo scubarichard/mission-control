@@ -5,11 +5,7 @@ inputs:
     propertyName: start
   - kind: AutomaticTaskInput
     propertyName: end
-modelDescription: |
-  Read advisor's calendar events between start and end. Returns subject, start/end
-  times, location, attendees, body preview, link, and all-day flag. Use for
-  questions about today's calendar, this week's meetings, "what's on my schedule",
-  etc. Pass ISO datetimes for start/end (default: now to +7 days).
+modelDescription: Use this tool to read calendar events from the advisor's Outlook calendar. Call this whenever the user asks 'what's on my calendar', 'today's schedule', 'meetings this week', 'do I have anything tomorrow', or asks about upcoming events. Pass ISO start/end if specific dates.
 outputs:
   - propertyName: events
   - propertyName: start

@@ -11,10 +11,7 @@ inputs:
     propertyName: attendees
   - kind: AutomaticTaskInput
     propertyName: body
-modelDescription: |
-  Creates a calendar event in the advisor's Outlook calendar. Pass subject,
-  ISO start/end datetimes (with timezone), and optional attendees + body.
-  Use when an advisor asks to schedule, book, or create a meeting.
+modelDescription: Use this tool to create a calendar event in the advisor's Outlook calendar. Call this whenever the user asks to 'schedule', 'book', or 'create a meeting'. Pass subject, ISO start/end, optional attendees and body.
 outputs:
   - propertyName: id
   - propertyName: subject

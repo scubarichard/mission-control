@@ -7,10 +7,7 @@ inputs:
     propertyName: sitePath
   - kind: AutomaticTaskInput
     propertyName: folder
-modelDescription: |
-  Browse files in a SharePoint document library. Use when an advisor asks to
-  see SharePoint files, browse documents, or find files in DAX Documents folder.
-  Defaults to dakona.sharepoint.com/sites/DAX root if siteHost/sitePath not given.
+modelDescription: Use this tool to list files in a SharePoint folder. Call this whenever the user asks to 'see SharePoint files', 'browse documents', 'show me what's in DAX Documents', 'list files'. Default folder is 'DAX Documents'. Other folders: DAX Reports, DAX Templates, DAX Uploads, Schwab Exports.
 outputs:
   - propertyName: items
   - propertyName: siteId

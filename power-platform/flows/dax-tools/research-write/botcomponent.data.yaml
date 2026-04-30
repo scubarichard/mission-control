@@ -5,13 +5,7 @@ inputs:
     propertyName: prompt
   - kind: AutomaticTaskInput
     propertyName: wordCount
-modelDescription: |
-  Generates long-form written content — essays, reports, letters, memos,
-  summaries, articles, analyses, plans, marketing copy, client letters — using
-  Azure OpenAI. Pass the writing task and an optional target word count.
-  Returns markdown-formatted content. Note: this version does NOT save to
-  SharePoint (saving requires M365 consent — deferred). Use whenever an
-  advisor asks to write/draft/create written content.
+modelDescription: Use this tool to generate long-form written content (essay, report, letter, memo, summary, article, analysis, plan) AND save it to SharePoint DAX Documents in one step. Call this whenever the user asks to 'write', 'draft', 'create', or 'generate' written content of any kind. Pass the prompt (writing task) and optional target word count and filename.
 outputs:
   - propertyName: prompt
   - propertyName: content

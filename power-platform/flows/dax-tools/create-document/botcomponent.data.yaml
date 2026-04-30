@@ -5,11 +5,7 @@ inputs:
     propertyName: title
   - kind: AutomaticTaskInput
     propertyName: content
-modelDescription: |
-  Creates a markdown document in the firm's SharePoint Documents library
-  (dakona.sharepoint.com/sites/DAX/DAX-Documents/). Pass title (filename
-  without extension) and content. ALWAYS use this tool when an advisor asks
-  to write/create/draft/save/generate any document.
+modelDescription: Use this tool to save a markdown document to the firm's SharePoint DAX Documents folder. Call this whenever the user asks to save, store, or upload a specific piece of content as a file. Pass title (filename without extension) and content.
 outputs:
   - propertyName: name
   - propertyName: webUrl
