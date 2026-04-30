@@ -1,21 +1,12 @@
 {
   "routes": [
-    {
-      "route": "/api/token",
-      "allowedRoles": ["authenticated"]
-    },
-    {
-      "route": "/.auth/login/aad",
-      "rewrite": "/.auth/login/aad?post_login_redirect_uri=/"
-    },
-    {
-      "route": "/*",
-      "allowedRoles": ["authenticated"]
-    }
+    { "route": "/api/token", "allowedRoles": ["authenticated"] },
+    { "route": "/c", "allowedRoles": ["authenticated"], "rewrite": "/chat.html" },
+    { "route": "/c/*", "allowedRoles": ["authenticated"], "rewrite": "/chat.html" }
   ],
   "responseOverrides": {
     "401": {
-      "redirect": "/.auth/login/aad",
+      "redirect": "/.auth/login/aad?post_login_redirect_uri=/c",
       "statusCode": 302
     }
   },

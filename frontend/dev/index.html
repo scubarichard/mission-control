@@ -4,33 +4,29 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>DAX [DEV] — Dakona</title>
-    <link rel="icon" href="/logo.svg" />
+    <link rel="icon" href="/assets/logo.svg" />
     <link rel="stylesheet" href="/styles.css" />
-    <script
-      crossorigin="anonymous"
-      src="https://cdn.botframework.com/botframework-webchat/4.18.0/webchat.js"
-    ></script>
-    <script
-      crossorigin="anonymous"
-      src="https://unpkg.com/@azure/msal-browser@5.9.0/lib/msal-browser.min.js"
-    ></script>
-    <!-- Copilot Studio Agents SDK loader. External file so CSP `script-src`
-         doesn't block an inline module script. The loader's import is from
-         unpkg (allowed). Dev only — bundle locally for staging/prod. -->
-    <script type="module" src="/sdk-loader.mjs"></script>
   </head>
-  <body>
-    <header class="topbar">
-      <div class="brand">
-        <span class="brand-mark">DAX</span>
-        <span class="brand-tag">[DEV — dev.dax.dakona.com]</span>
-      </div>
-      <div class="user" id="user-slot"></div>
+  <body class="login-body">
+    <header class="login-topbar">
+      <img src="/assets/dakona-wordmark.png" alt="DAKONA" class="dakona-wordmark" />
+      <span class="env-badge">DEV — dev.dax.dakona.com</span>
     </header>
-    <main>
-      <div id="webchat" role="main" aria-label="DAX chat"></div>
-      <div id="status" class="status" hidden></div>
+    <main class="login-main">
+      <div class="login-card">
+        <img src="/assets/dax-avatar.png" alt="DAX" class="dax-avatar" />
+        <div class="brand-name">DAX</div>
+        <div class="brand-strip">
+          <span class="brand-strip-segment">Powered by Azure</span>
+          <span class="brand-strip-divider">|</span>
+          <span class="brand-strip-segment">Managed by <strong>DAKONA</strong></span>
+        </div>
+        <h1 class="welcome">Welcome back</h1>
+        <a class="ms-signin" href="/.auth/login/aad?post_login_redirect_uri=/c">
+          <img src="/assets/microsoft-signin.png" alt="Sign in with Microsoft" />
+        </a>
+        <p class="login-foot">Sign in with your Dakona account to continue.</p>
+      </div>
     </main>
-    <script src="/app.js" defer></script>
   </body>
 </html>
