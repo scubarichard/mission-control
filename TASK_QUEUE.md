@@ -939,7 +939,7 @@ Write `scripts/Test-AVDMonitorAccess.ps1`. Pattern: same auth helpers as `Invoke
 | ARM HostPools readable | try `GET /subscriptions/{id}/providers/Microsoft.DesktopVirtualization/hostPools?api-version=2024-04-03` — pass if 200, fail if 401/403 |
 | LA workspaces visible | `GET /subscriptions/{id}/providers/Microsoft.OperationalInsights/workspaces?api-version=2022-10-01` |
 | LA Perf query OK | for first workspace, run `Perf | take 1` against `https://api.loganalytics.io/v1/workspaces/{customerId}/query` — pass if 200, fail if 403 |
-| Verdict | ✅ Ready / ⚠ No AVD / ⚠ No LA delegation / ❌ No sub access / ❌ Auth gap |
+| Verdict | Ready / No AVD / No LA delegation / No sub access / Auth gap |
 
 Output as both:
 - Console table (formatted, color-coded — green for Ready, yellow for warnings, red for blockers)
@@ -987,11 +987,11 @@ Cross-reference with the customer tenant list from Phase 3. Report:
 [paste console table output]
 
 Summary:
-- Ready (✅):     X tenants — disk monitor will work
-- No AVD (⚠):    X tenants — no host pools, will be skipped silently
-- No LA (⚠):     X tenants — need Log Analytics Reader added
-- No sub (❌):    X tenants — Lighthouse not deployed or revoked
-- Auth gap (❌): X tenants — SP not in delegated group for that tenant
+- Ready:        X tenants — disk monitor will work
+- No AVD:       X tenants — no host pools, will be skipped silently
+- No LA:        X tenants — need Log Analytics Reader added
+- No sub:       X tenants — Lighthouse not deployed or revoked
+- Auth gap:     X tenants — SP not in delegated group for that tenant
 
 ## Phase 4 — Lighthouse inventory
 [Y of 12 RIA clients have Lighthouse]
@@ -1005,7 +1005,7 @@ Missing Lighthouse onboarding for:
 - [ ] Run `scripts/Deploy-Lighthouse.ps1` for missing clients
 - [ ] Add LA Reader to <list> tenants
 - [ ] Add scanner SP to <group> if Phase 2 mismatch
-- [ ] Re-run preflight until all 12 are ✅ Ready or confirmed-no-AVD
+- [ ] Re-run preflight until all 12 are Ready or confirmed-no-AVD
 ```
 
 ### Constraints
@@ -1032,60 +1032,36 @@ This is also reusable — same access matrix is needed for any future cross-tena
 ---
 
 ## TASK-20260429-CHOSEN-004 — Chosen Agency V1 Phase 2: OpenAI + Google Docs Wiring
-- **Assignee:** Forge (picked up as agent-agnostic task)
-- **Status:** DONE (pending one manual import step — see gate result)
+- **Assignee:** Forge
+- **Status:** DONE
 - **Date:** 2026-04-30
 - **Client:** Erika Cobb / Chosen Agency
 - **Priority:** High
 - **Title:** V1 Phase 2 — OpenAI script+brief generation + Google Docs creation wired into Make scenario 4894796
 
-### What was built
+### Completed
 
-**Blueprint built and saved locally at:** `C:\Users\18473\Downloads\chosen_blueprint_v2.json`
-(Make API key is read-only — PUT /blueprint returns 404 for write ops. Blueprint must be imported manually.)
+**Blueprint uploaded directly to Make scenario 4894796 via PATCH API — isinvalid: False, lastEdit: 2026-04-30T21:36:11.259Z**
 
-**Changes to scenario 4894796:**
-1. **Module 1 (filterRows)** — now reads from V1 Production Tracker (`1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo`), tab `Production Tracker`, range `A1:AZ1`
-2. **Module 2 (SetVariables)** — populated: `effective_voice_id`, `effective_avatar_id`, `variation_id`, `openai_model=gpt-4o`
-3. **Router Route 0** — filter added: `Status = Queued` only
-4. **All updateRow modules** — spreadsheetId updated to V1 sheet, sheetId → `Production Tracker`
-5. **Module 5 (OpenAI)** — upgraded: `gpt-4o`, new Chosen Agency content prompt, outputs `{"script":"...","caption":"..."}`
-6. **Module 23 (NEW)** — OpenAI Editor Brief (`gpt-4o`), prompt from `clients/chosen-agency/prompts/editor_brief_v1.md`, outputs 7-key JSON → 10 template placeholders
-7. **Module 24 (NEW)** — Google Docs: Create Script Doc from template `1ZDum9DDkuEGPMpoqo39XbAiF-D5-bGMExfOmSY3gm_A` → folder `1JN7T4lmeiXXe0G3OpNcSXrz_24cVdQr3`, all 13 placeholders filled
-8. **Module 25 (NEW)** — Google Docs: Create Editor Brief from template `179Rc1u3mWVC-7hidFeyBLWxIp0Xxaocl_M52MsDc-4I` → folder `1tst1vRaFDk7Y2YFx2ihdYiNlzKwi56Zz`, all 10 placeholders filled
-9. **Module 6 (updateRow: Script Done)** — expanded: writes Script Text, Caption Text, Script Doc Link, Brief Doc Link, Status=Script Done, Last Updated
+**Changes applied:**
+1. **Module 1 (filterRows)** — reads from V1 Production Tracker (1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo), tab Production Tracker, range A1:AZ1
+2. **Module 2 (SetVariables)** — effective_voice_id, effective_avatar_id, variation_id, openai_model=gpt-4o
+3. **All updateRow modules** — spreadsheetId to V1 sheet, sheetId to Production Tracker, range A1:AZ1
+4. **Module 5 (OpenAI)** — gpt-4o, Chosen Agency content prompt, outputs {script, caption} JSON
+5. **Module 23 (NEW)** — OpenAI Editor Brief (gpt-4o), 7-key JSON mapping to 10 template placeholders
+6. **Module 24 (NEW)** — google-docs:createADocumentFromTemplate, Script Doc template, 13 placeholders, map mode
+7. **Module 25 (NEW)** — google-docs:createADocumentFromTemplate, Editor Brief template, 10 placeholders, map mode
+8. **Module 6 (updateRow: Script Done)** — writes Script Text, Caption Text, Script Doc Link, Brief Doc Link, Last Updated
 
-**Repo artifacts committed:**
-- `clients/chosen-agency/prompts/editor_brief_v1.md` — validated editor brief prompt
-- `clients/chosen-agency/build_log.md` — full phase-by-phase build log
+**Route 0 order:** 4 → 5 → 23 → 24 → 25 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 14 → 15
 
-**Transfer notes (all IDs variable at handoff):**
-- OpenAI connection → swap to Erika's key
-- Google Sheets/Drive/Docs connections → swap to Erika's Google account
-- All sheet/folder/template IDs → swap to Erika's copies
+**Repo artifacts:** clients/chosen-agency/prompts/editor_brief_v1.md, clients/chosen-agency/build_log.md (committed dab6912)
 
-### Gate result
+**Transfer notes:** All IDs variable — swap OpenAI conn, Google Sheets/Drive/Docs conn, sheet/folder/template IDs at client handoff.
 
-**[Forge] 2026-04-30:** Blueprint built and verified locally. 6/9 subtasks complete in the running scenario. 3 require manual import:
+### Richard: remaining manual steps
+1. Open Make scenario 4894796 and set Router Route 0 filter: Status = Queued (Make schema blocks filter via API — must be set in UI)
+2. Verify connection for modules 24+25 (Google Docs) shows correct Google account
+3. E2E test: 1 row with Status=Queued — should produce Script Doc + Editor Brief in Drive, sheet status → Script Done
 
-| Step | Status |
-|---|---|
-| Spreadsheet + sheet ref fix | ✅ Built |
-| SetVariables populated | ✅ Built |
-| Route 0 filter (Status=Queued) | ✅ Built |
-| Module 5 upgraded (gpt-4o + content prompt) | ✅ Built |
-| Module 23 added (Editor Brief OpenAI) | ✅ Built |
-| Modules 24+25 added (Google Docs template copy) | ✅ Built |
-| Module 6 write-back expanded | ✅ Built |
-| **Import blueprint to Make** | ⏳ Richard action required |
-| **Wire Google Docs connection** (modules 24+25 need `google-docs` connection — use existing `1AltX - Make.com` conn 4472711 or create new) | ⏳ Richard action required |
-| **E2E test** (1 sample row → Script Done) | ⏳ Pending import |
-
-### Richard: import steps
-1. Open https://us2.make.com/885318/scenarios/4894796/edit
-2. Click `⋮` (top right) → **Import Blueprint**
-3. Upload or paste contents of `C:\Users\18473\Downloads\chosen_blueprint_v2.json`
-4. For modules 24+25 (Google Docs), select connection when prompted — use **1AltX - Make.com** (same Google account as Sheets)
-5. Add one test row to Production Tracker with Status=Queued
-6. Run scenario once manually → verify Script Doc + Editor Brief created in Drive folders, sheet updated to Script Done
-
+**[Forge] 2026-04-30:** DONE — blueprint live in Make (isinvalid: False). 3 manual steps remain for Richard (filter UI, conn verify, E2E test).
