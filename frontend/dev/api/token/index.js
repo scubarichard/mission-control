@@ -7,8 +7,23 @@ module.exports = async function (context, req) {
 
   const accessToken = req.headers['x-ms-token-aad-access-token'];
   if (!accessToken) {
-    context.log.error('No x-ms-token-aad-access-token header. Check SWA loginParameters scope.');
-    context.res = { status: 500, body: 'Server is not configured (no agent access token).' };
+    // Diagnostic: dump all x-ms-* headers so we can see what SWA actually forwards
+    const msHeaders = Object.keys(req.headers)
+      .filter((k) => k.toLowerCase().startsWith('x-ms-'))
+      .reduce((acc, k) => {
+        const v = req.headers[k];
+        acc[k] = typeof v === 'string' && v.length > 80 ? v.slice(0, 60) + '...(' + v.length + ')' : v;
+        return acc;
+      }, {});
+    context.log.error('No x-ms-token-aad-access-token header. x-ms-* headers seen:', JSON.stringify(msHeaders));
+    context.res = {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        error: 'Server is not configured (no agent access token).',
+        diag_x_ms_headers: msHeaders
+      }
+    };
     return;
   }
 
