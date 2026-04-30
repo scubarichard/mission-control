@@ -7,21 +7,43 @@ module.exports = async function (context, req) {
 
   const accessToken = req.headers['x-ms-token-aad-access-token'];
   if (!accessToken) {
-    // Diagnostic: dump all x-ms-* headers so we can see what SWA actually forwards
-    const msHeaders = Object.keys(req.headers)
+    // Diagnostic: decode x-ms-auth-token to see what audience it's for
+    let authTokenInfo = null;
+    const authTokenHeader = req.headers['x-ms-auth-token'];
+    if (authTokenHeader) {
+      try {
+        const raw = authTokenHeader.replace(/^Bearer\s+/i, '');
+        const parts = raw.split('.');
+        if (parts.length === 3) {
+          const padded = parts[1] + '==='.slice(0, (4 - (parts[1].length % 4)) % 4);
+          const payload = JSON.parse(
+            Buffer.from(padded.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
+          );
+          authTokenInfo = {
+            aud: payload.aud,
+            iss: payload.iss,
+            scp: payload.scp,
+            roles: payload.roles,
+            appid: payload.appid,
+            preferred_username: payload.preferred_username,
+            exp: payload.exp,
+            claims_keys: Object.keys(payload).sort()
+          };
+        }
+      } catch (e) {
+        authTokenInfo = { decode_error: String(e) };
+      }
+    }
+    const msHeaderNames = Object.keys(req.headers)
       .filter((k) => k.toLowerCase().startsWith('x-ms-'))
-      .reduce((acc, k) => {
-        const v = req.headers[k];
-        acc[k] = typeof v === 'string' && v.length > 80 ? v.slice(0, 60) + '...(' + v.length + ')' : v;
-        return acc;
-      }, {});
-    context.log.error('No x-ms-token-aad-access-token header. x-ms-* headers seen:', JSON.stringify(msHeaders));
+      .sort();
     context.res = {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
       body: {
-        error: 'Server is not configured (no agent access token).',
-        diag_x_ms_headers: msHeaders
+        error: 'No x-ms-token-aad-access-token. SWA built-in auth may not forward IdP access tokens.',
+        x_ms_header_names: msHeaderNames,
+        x_ms_auth_token_decoded: authTokenInfo
       }
     };
     return;
