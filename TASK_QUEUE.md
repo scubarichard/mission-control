@@ -856,3 +856,174 @@ When you're ready to go live with real money (weeks/months from now):
 5. Never risk more than you can afford to lose entirely — algo trading is speculative
 
 Not financial advice. This is a learning project.
+
+---
+
+## TASK-20260430-FORGE-DAKONA-001 — AVD Disk Monitor: Locate SP Credentials + Cross-Tenant Preflight
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Date:** 2026-04-30
+- **From:** Opus (session with Richard)
+- **Client:** Dakona (MSP — all 12 RIA tenants)
+- **Priority:** Medium — blocks deployment of `Invoke-AVDDiskMonitor.ps1`
+- **Title:** Find dakona-csp-scanner credentials and verify cross-tenant authorization for AVD disk monitoring
+
+### Context
+
+Opus drafted `scripts/Invoke-AVDDiskMonitor.ps1` this session — a cross-tenant AVD C: drive capacity monitor that opens NinjaOne tickets at 80% used, mirroring the pattern from `Invoke-TenantAudit.ps1`. Before deploying it (Azure Automation runbook, every 4h), Richard wants to verify two things:
+
+1. **Where do the scanner SP credentials live**, and do they actually work today?
+2. **Does the SP have working cross-tenant authorization** for the specific APIs the disk monitor needs — ARM (host pools, session hosts) and Log Analytics (Perf table query)?
+
+Richard noted that when he runs `az login` interactively, there are tenants he cannot see by design — that's fine for his user, but the SP authenticates differently (app-only client_credentials) and uses GDAP / Lighthouse delegation. The audit script's success doesn't prove the disk monitor will work, because they exercise different APIs at different scopes.
+
+The SP is named **`dakona-csp-scanner`** (created by `scripts/New-DakonaScanSP.ps1`). The Lighthouse onboarding pattern is in `scripts/Deploy-Lighthouse.ps1` — it grants Contributor + Reader to a `DakonaPrincipalId` (a security group, not the SP directly). Open question: is the scanner SP a member of that group, and was Lighthouse actually deployed for all 12 RIA tenants?
+
+### Tasks
+
+**Phase 1 — Locate the credentials (do this first, ~10 min)**
+
+Find where `AZURE_SP_TENANT_ID`, `AZURE_SP_CLIENT_ID`, `AZURE_SP_CLIENT_SECRET` live today. Check in this order and report what was found at each step:
+
+1. **MCP container env vars** (most likely):
+   ```powershell
+   az containerapp show --name ca-dax-mcp-dakona-pilot --resource-group rg-dax-dakona-pilot --query "properties.template.containers[0].env" -o json
+   ```
+   Report env var names + whether they reference Key Vault or are inline.
+
+2. **Key Vault `kvdaxdakonapilot`** (most likely storage):
+   ```powershell
+   az keyvault secret list --vault-name kvdaxdakonapilot --query "[?contains(name,'scan') || contains(name,'csp') || contains(name,'azure-sp')].name" -o tsv
+   ```
+   Then for any matches, confirm the secret exists (don't print the value to logs):
+   ```powershell
+   az keyvault secret show --vault-name kvdaxdakonapilot --name <name> --query "{name:name, enabled:attributes.enabled, expires:attributes.expires}" -o json
+   ```
+
+3. **Repo .env files / setup notes** (last resort):
+   ```bash
+   git -C /repo grep -l "AZURE_SP_CLIENT_ID" 2>/dev/null
+   ```
+
+**Deliverable for Phase 1:** A note posted in the gate result with:
+- Where the 3 env vars are stored (KV secret names, container app env keys)
+- Whether the client secret has expired (check `expires` attribute)
+- Whether the SP needs a new secret rotated
+
+**Phase 2 — Verify the SP can authenticate (~5 min)**
+
+Once credentials are located, do a clean token grab to confirm they still work:
+
+```powershell
+$body = @{
+    grant_type    = "client_credentials"
+    client_id     = $env:AZURE_SP_CLIENT_ID
+    client_secret = $env:AZURE_SP_CLIENT_SECRET
+    scope         = "https://management.azure.com/.default"
+}
+$r = Invoke-RestMethod -Method POST -Uri "https://login.microsoftonline.com/$env:AZURE_SP_TENANT_ID/oauth2/v2.0/token" -Body $body
+$r.access_token.Length  # should be ~1500-2000 chars
+```
+
+If this 401s, the secret has expired. Note in gate result and stop — Richard rotates before continuing.
+
+**Phase 3 — Build and run cross-tenant preflight (~30-45 min)**
+
+Write `scripts/Test-AVDMonitorAccess.ps1`. Pattern: same auth helpers as `Invoke-TenantAudit.ps1` (Get-GraphToken / Get-ArmToken / Get-LaToken). For each customer tenant the SP can see, produce a row with:
+
+| Column | How to determine |
+|---|---|
+| Client | tenant displayName from Lighthouse / contracts API |
+| TenantId | tenant.tenantId |
+| Subs visible | count of `subscriptions?api-version=2022-12-01` filtered to this tenantId |
+| ARM HostPools readable | try `GET /subscriptions/{id}/providers/Microsoft.DesktopVirtualization/hostPools?api-version=2024-04-03` — pass if 200, fail if 401/403 |
+| LA workspaces visible | `GET /subscriptions/{id}/providers/Microsoft.OperationalInsights/workspaces?api-version=2022-10-01` |
+| LA Perf query OK | for first workspace, run `Perf | take 1` against `https://api.loganalytics.io/v1/workspaces/{customerId}/query` — pass if 200, fail if 403 |
+| Verdict | ✅ Ready / ⚠ No AVD / ⚠ No LA delegation / ❌ No sub access / ❌ Auth gap |
+
+Output as both:
+- Console table (formatted, color-coded — green for Ready, yellow for warnings, red for blockers)
+- JSON file at `/tmp/avd-monitor-preflight-{timestamp}.json` with full per-tenant detail (HTTP status codes, error messages)
+
+Also check whether the scanner SP is a member of the Dakona security group used in Lighthouse delegations:
+
+```powershell
+$spObjId = az ad sp list --display-name "dakona-csp-scanner" --query "[0].id" -o tsv
+az rest --method GET --uri "https://graph.microsoft.com/v1.0/servicePrincipals/$spObjId/memberOf" --query "value[].displayName" -o json
+```
+
+Document the group(s) the SP is in. If the SP is NOT in the same group that `Deploy-Lighthouse.ps1` references as `DakonaPrincipalId`, that's the root cause of any cross-tenant ARM gaps — flag it clearly.
+
+**Phase 4 — Inventory Lighthouse delegations (~10 min)**
+
+List all Azure Lighthouse registrations the SP can see:
+
+```powershell
+az managedservices definition list -o json
+az managedservices assignment list -o json
+```
+
+Cross-reference with the customer tenant list from Phase 3. Report:
+- Which of the 12 RIA clients have Lighthouse delegated
+- Which don't (need `Deploy-Lighthouse.ps1` run for them)
+- For the delegated ones, what role assignments are in effect (Reader is the bare minimum; Contributor is overkill but fine)
+
+### Gate (post results in this format)
+
+```
+## Phase 1 — Credentials located
+- Stored in: <KV secret names or container env>
+- Tenant ID: <hint, last 4 chars only>
+- Client ID: <hint, last 4 chars only>
+- Secret expires: <date>
+- Auth test: PASS / FAIL
+
+## Phase 2 — SP membership
+- dakona-csp-scanner is a member of: <group names>
+- Deploy-Lighthouse.ps1 references DakonaPrincipalId: <group ID> = <group name>
+- Match: YES / NO (NO means cross-tenant ARM is broken by design)
+
+## Phase 3 — Per-tenant access matrix
+[paste console table output]
+
+Summary:
+- Ready (✅):     X tenants — disk monitor will work
+- No AVD (⚠):    X tenants — no host pools, will be skipped silently
+- No LA (⚠):     X tenants — need Log Analytics Reader added
+- No sub (❌):    X tenants — Lighthouse not deployed or revoked
+- Auth gap (❌): X tenants — SP not in delegated group for that tenant
+
+## Phase 4 — Lighthouse inventory
+[Y of 12 RIA clients have Lighthouse]
+
+Missing Lighthouse onboarding for:
+- <client name 1>
+- <client name 2>
+- ...
+
+## Recommended next steps
+- [ ] Run `scripts/Deploy-Lighthouse.ps1` for missing clients
+- [ ] Add LA Reader to <list> tenants  
+- [ ] Add scanner SP to <group> if Phase 2 mismatch
+- [ ] Re-run preflight until all 12 are ✅ Ready or confirmed-no-AVD
+```
+
+### Constraints
+
+- **Read-only** — this task does not deploy anything. No `Deploy-Lighthouse.ps1` runs, no role assignments created. Findings only.
+- **Don't print secret values** — for any KV lookups, only show metadata (name, enabled, expires). The secret stays in KV.
+- **Don't fix gaps in this task** — if you find a tenant missing Lighthouse, document it. Richard reviews and decides which to onboard.
+- **Don't deploy `Invoke-AVDDiskMonitor.ps1`** — that's a separate task after preflight is green.
+
+### Reference files
+
+- `scripts/Invoke-AVDDiskMonitor.ps1` — the script we're preflighting for
+- `scripts/Invoke-TenantAudit.ps1` — auth helpers + tenant enumeration pattern to mirror
+- `scripts/New-DakonaScanSP.ps1` — how the SP was created originally (look here for permissions granted)
+- `scripts/Deploy-Lighthouse.ps1` — Lighthouse onboarding pattern, references `DakonaPrincipalId`
+
+### Why this matters
+
+If we deploy the disk monitor without preflight and a tenant has Cat 2 access (can list subs but can't read AVD or query LA), the script will silently report "no hosts" or "no data" for that client and tickets will never fire. That's a worse outcome than "deploy not yet possible" because it looks like success. Preflight gives Richard a definitive map: where it works, where to fix Partner Center, where it doesn't apply.
+
+This is also reusable — same access matrix is needed for any future cross-tenant Dakona tooling (Compliance Pro, automated patch reports, etc.). Worth doing once, properly, and saving the script.
