@@ -1,4 +1,5 @@
 (async function bootDax() {
+  const REDIRECT_FLAG = 'dax_msal_redirect_pending';
   const statusEl = document.getElementById('status');
   const webchatEl = document.getElementById('webchat');
   const userSlot = document.getElementById('user-slot');
@@ -10,11 +11,27 @@
       statusEl.style.background = '#FDE8E8';
       statusEl.style.color = '#9B1C1C';
       statusEl.style.borderTopColor = '#F8B4B4';
+    } else {
+      statusEl.style.background = '';
+      statusEl.style.color = '';
+      statusEl.style.borderTopColor = '';
     }
+    statusEl.style.cursor = '';
+    statusEl.onclick = null;
     console.log('[dax]', msg);
   }
 
-  // Surface anything that escapes try/catch
+  function showAction(msg, label, onClick) {
+    statusEl.hidden = false;
+    statusEl.style.background = '#EFF6FF';
+    statusEl.style.color = '#1E40AF';
+    statusEl.style.borderTopColor = '#BFDBFE';
+    statusEl.style.cursor = 'pointer';
+    statusEl.textContent = msg + ' — ' + label;
+    statusEl.onclick = onClick;
+    console.log('[dax]', msg);
+  }
+
   window.addEventListener('error', (e) => {
     showStatus('JS error: ' + (e.message || e.error || 'unknown'), true);
   });
@@ -55,8 +72,7 @@
         msal: !!window.msal
       });
       const ready = (h) => h.cs && h.wc && h.msal;
-      const h0 = have();
-      if (ready(h0)) return resolve();
+      if (ready(have())) return resolve();
       const interval = setInterval(() => {
         const h = have();
         if (ready(h)) { clearInterval(interval); resolve(); return; }
@@ -68,13 +84,38 @@
     });
   }
 
+  async function renderChat(cfg, msalInstance, accessToken) {
+    const { CopilotStudioClient, CopilotStudioWebChat, ConnectionSettings } = window.CopilotStudio;
+    const settings = new ConnectionSettings({ directConnectUrl: cfg.directConnectUrl });
+    const client = new CopilotStudioClient(settings, accessToken);
+    const directLine = CopilotStudioWebChat.createConnection(client, { showTyping: true });
+    const styleOptions = {
+      backgroundColor: '#FFFFFF',
+      bubbleBackground: '#F1F4FB',
+      bubbleFromUserBackground: '#1F3864',
+      bubbleFromUserTextColor: '#FFFFFF',
+      bubbleTextColor: '#1A2540',
+      primaryFont: '"Segoe UI", system-ui, sans-serif',
+      sendBoxBackground: '#FFFFFF',
+      sendBoxButtonColor: '#1F3864',
+      sendBoxBorderTop: '1px solid #D6DCE8',
+      rootHeight: '100%',
+      rootWidth: '100%'
+    };
+    window.WebChat.renderWebChat(
+      { directLine, styleOptions, locale: 'en-US' },
+      webchatEl
+    );
+    setTimeout(() => { statusEl.hidden = true; }, 1500);
+  }
+
   showStatus('Loading user identity…');
   const principal = await loadUser();
   if (principal && principal.userDetails) {
     userSlot.textContent = principal.userDetails;
   }
 
-  showStatus('Waiting for SDKs (CopilotStudio + WebChat + MSAL)…');
+  showStatus('Waiting for SDKs…');
   try {
     await whenReady(15000);
   } catch (e) {
@@ -93,6 +134,7 @@
 
   showStatus('Initializing MSAL…');
   let msalInstance;
+  let redirectResponse;
   try {
     msalInstance = new window.msal.PublicClientApplication({
       auth: {
@@ -103,77 +145,77 @@
       cache: { cacheLocation: 'sessionStorage' }
     });
     await msalInstance.initialize();
-    await msalInstance.handleRedirectPromise();
+    redirectResponse = await msalInstance.handleRedirectPromise();
   } catch (e) {
     showStatus('MSAL init failed: ' + (e.message || e), true);
     return;
   }
 
-  showStatus('Acquiring agent access token…');
-  let account = msalInstance.getAllAccounts()[0];
-  let tokenResp;
-  const scopeRequest = { scopes: [cfg.scope], loginHint: cfg.user.name };
+  if (redirectResponse && redirectResponse.account) {
+    msalInstance.setActiveAccount(redirectResponse.account);
+  }
 
-  try {
-    if (account) {
-      showStatus('Acquiring token silently (existing account)…');
-      tokenResp = await msalInstance.acquireTokenSilent({ ...scopeRequest, account });
-    } else {
-      showStatus('No cached account — trying SSO silent…');
-      tokenResp = await msalInstance.ssoSilent(scopeRequest);
-      account = tokenResp.account;
-    }
-  } catch (silentErr) {
-    showStatus('Silent failed (' + (silentErr.errorCode || silentErr.name || 'err') + '), opening popup…');
-    console.warn('Silent token acquisition failed:', silentErr);
+  const scopeRequest = { scopes: [cfg.scope], loginHint: cfg.user.name };
+  const account = msalInstance.getActiveAccount() || msalInstance.getAllAccounts()[0];
+
+  let tokenResp;
+  if (redirectResponse && redirectResponse.accessToken) {
+    // Just came back from redirect with a fresh token — use it directly.
+    sessionStorage.removeItem(REDIRECT_FLAG);
+    tokenResp = redirectResponse;
+  } else if (account) {
+    showStatus('Acquiring agent token silently…');
     try {
-      tokenResp = await msalInstance.acquireTokenPopup(scopeRequest);
-      account = tokenResp.account;
-    } catch (popupErr) {
-      showStatus('Popup failed: ' + (popupErr.message || popupErr) + '. Click here to retry with redirect.', true);
-      statusEl.style.cursor = 'pointer';
-      statusEl.onclick = () => msalInstance.acquireTokenRedirect(scopeRequest);
+      tokenResp = await msalInstance.acquireTokenSilent({ ...scopeRequest, account });
+      sessionStorage.removeItem(REDIRECT_FLAG);
+    } catch (silentErr) {
+      console.warn('Silent acquisition failed:', silentErr);
+      const isInteraction = silentErr && (silentErr.errorCode === 'interaction_required' ||
+        silentErr.errorCode === 'consent_required' ||
+        silentErr.errorCode === 'login_required' ||
+        (silentErr.name && silentErr.name.includes('InteractionRequired')));
+      if (isInteraction) {
+        if (sessionStorage.getItem(REDIRECT_FLAG)) {
+          // Already tried a redirect this session — don't loop. Surface a click target.
+          sessionStorage.removeItem(REDIRECT_FLAG);
+          showAction('Sign-in did not complete on the previous redirect.',
+            'click here to try again',
+            () => {
+              sessionStorage.setItem(REDIRECT_FLAG, '1');
+              msalInstance.acquireTokenRedirect(scopeRequest);
+            });
+          return;
+        }
+        sessionStorage.setItem(REDIRECT_FLAG, '1');
+        showStatus('Need consent — redirecting to Microsoft sign-in…');
+        await msalInstance.acquireTokenRedirect(scopeRequest);
+        return;
+      }
+      showStatus('Token error: ' + (silentErr.message || silentErr), true);
       return;
     }
-  }
-
-  showStatus('Got token. Starting Copilot Studio client…');
-  let directLine;
-  try {
-    const { CopilotStudioClient, CopilotStudioWebChat, ConnectionSettings } = window.CopilotStudio;
-    const settings = new ConnectionSettings({ directConnectUrl: cfg.directConnectUrl });
-    const client = new CopilotStudioClient(settings, tokenResp.accessToken);
-    directLine = CopilotStudioWebChat.createConnection(client, { showTyping: true });
-  } catch (e) {
-    showStatus('Copilot Studio client error: ' + (e.message || e), true);
+  } else {
+    // No cached account — kick a redirect (no popup blocker, no user gesture needed).
+    if (sessionStorage.getItem(REDIRECT_FLAG)) {
+      sessionStorage.removeItem(REDIRECT_FLAG);
+      showAction('Sign-in did not complete on the previous redirect.',
+        'click here to try again',
+        () => {
+          sessionStorage.setItem(REDIRECT_FLAG, '1');
+          msalInstance.acquireTokenRedirect(scopeRequest);
+        });
+      return;
+    }
+    sessionStorage.setItem(REDIRECT_FLAG, '1');
+    showStatus('Authorizing DAX agent — redirecting to Microsoft sign-in…');
+    await msalInstance.acquireTokenRedirect(scopeRequest);
     return;
   }
 
-  const styleOptions = {
-    backgroundColor: '#FFFFFF',
-    bubbleBackground: '#F1F4FB',
-    bubbleFromUserBackground: '#1F3864',
-    bubbleFromUserTextColor: '#FFFFFF',
-    bubbleTextColor: '#1A2540',
-    primaryFont: '"Segoe UI", system-ui, sans-serif',
-    sendBoxBackground: '#FFFFFF',
-    sendBoxButtonColor: '#1F3864',
-    sendBoxBorderTop: '1px solid #D6DCE8',
-    rootHeight: '100%',
-    rootWidth: '100%'
-  };
-
-  showStatus('Rendering Web Chat…');
+  showStatus('Got token. Starting chat…');
   try {
-    window.WebChat.renderWebChat(
-      { directLine, styleOptions, locale: 'en-US' },
-      webchatEl
-    );
+    await renderChat(cfg, msalInstance, tokenResp.accessToken);
   } catch (e) {
-    showStatus('Web Chat render failed: ' + (e.message || e), true);
-    return;
+    showStatus('Chat render failed: ' + (e.message || e), true);
   }
-
-  // Hide the status bar after success
-  setTimeout(() => { statusEl.hidden = true; }, 1500);
 })();
