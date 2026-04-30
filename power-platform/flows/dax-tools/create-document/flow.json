@@ -4,11 +4,45 @@
     "definition": {
       "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
       "contentVersion": "1.0.0.0",
-      "parameters": {"$authentication": {"defaultValue": {}, "type": "SecureObject"}, "$connections": {"defaultValue": {}, "type": "Object"}},
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
       "triggers": {
         "manual": {
-          "type": "Request", "kind": "Skills",
-          "inputs": {"schema": {"type": "object", "properties": {"title": {"type": "string", "title": "Filename", "description": "Filename without extension (e.g. 'Q1-Review-Smith')", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}, "content": {"type": "string", "title": "Content", "description": "Markdown or plain-text content of the document", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}}, "required": ["title", "content"]}},
+          "type": "Request",
+          "kind": "Skills",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "title": "Filename",
+                  "description": "Filename without extension (e.g. 'Q1-Review-Smith')",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "content": {
+                  "type": "string",
+                  "title": "Content",
+                  "description": "Markdown or plain-text content of the document",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                }
+              },
+              "required": [
+                "title",
+                "content"
+              ]
+            }
+          },
           "description": "Create a markdown document in the firm's SharePoint Documents library."
         }
       },
@@ -16,37 +50,82 @@
         "Scope": {
           "type": "Scope",
           "actions": {
-            "Get_Graph_Token": {"type": "Http", "inputs": {"method": "POST", "uri": "https://login.microsoftonline.com/d2a3c346-00f3-47dd-a53e-caa3fca74714/oauth2/v2.0/token", "headers": {"Content-Type": "application/x-www-form-urlencoded"}, "body": "grant_type=client_credentials&client_id=37fe1021-88b3-4744-aa32-b5d7e104462b&client_secret=__PP_CI_SECRET__&scope=https%3A%2F%2Fgraph.microsoft.com%2F.default"}},
-            "Get_Site": {
+            "Get_Graph_Token": {
               "type": "Http",
-              "inputs": {"method": "GET", "uri": "https://graph.microsoft.com/v1.0/sites/dakona.sharepoint.com:/sites/DAX", "headers": {"Authorization": "Bearer @{body('Get_Graph_Token')?['access_token']}"}},
-              "runAfter": {"Get_Graph_Token": ["Succeeded"]}
+              "inputs": {
+                "method": "POST",
+                "uri": "https://login.microsoftonline.com/d2a3c346-00f3-47dd-a53e-caa3fca74714/oauth2/v2.0/token",
+                "headers": {
+                  "Content-Type": "application/x-www-form-urlencoded"
+                },
+                "body": "grant_type=client_credentials&client_id=37fe1021-88b3-4744-aa32-b5d7e104462b&client_secret=__PP_CI_SECRET__&scope=https%3A%2F%2Fgraph.microsoft.com%2F.default"
+              }
             },
             "Upload_File": {
               "type": "Http",
               "inputs": {
                 "method": "PUT",
-                "uri": "https://graph.microsoft.com/v1.0/sites/@{body('Get_Site')?['id']}/drive/root:/DAX-Documents/@{triggerBody()?['title']}.md:/content",
-                "headers": {"Authorization": "Bearer @{body('Get_Graph_Token')?['access_token']}", "Content-Type": "text/markdown"},
+                "uri": "https://graph.microsoft.com/v1.0/sites/root/drive/root:/DAX Documents/@{triggerBody()?['title']}.md:/content",
+                "headers": {
+                  "Authorization": "Bearer @{body('Get_Graph_Token')?['access_token']}",
+                  "Content-Type": "text/markdown"
+                },
                 "body": "@triggerBody()?['content']"
               },
-              "runAfter": {"Get_Site": ["Succeeded"]}
+              "runAfter": {
+                "Get_Graph_Token": [
+                  "Succeeded"
+                ]
+              }
             }
           }
         },
         "Respond_to_the_agent": {
-          "type": "Response", "kind": "Skills",
+          "type": "Response",
+          "kind": "Skills",
           "inputs": {
             "statusCode": 200,
-            "body": {"name": "@body('Upload_File')?['name']", "webUrl": "@body('Upload_File')?['webUrl']", "id": "@body('Upload_File')?['id']", "asOf": "@utcNow()"},
-            "schema": {"type": "object", "properties": {
-              "name": {"title": "Filename", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true},
-              "webUrl": {"title": "Web URL", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true},
-              "id": {"title": "Item id", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true},
-              "asOf": {"title": "As of", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}
-            }}
+            "body": {
+              "name": "@body('Upload_File')?['name']",
+              "webUrl": "@body('Upload_File')?['webUrl']",
+              "id": "@body('Upload_File')?['id']",
+              "asOf": "@utcNow()"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "title": "Filename",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "webUrl": {
+                  "title": "Web URL",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "id": {
+                  "title": "Item id",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "asOf": {
+                  "title": "As of",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                }
+              }
+            }
           },
-          "runAfter": {"Scope": ["Succeeded"]}
+          "runAfter": {
+            "Scope": [
+              "Succeeded"
+            ]
+          }
         }
       }
     },

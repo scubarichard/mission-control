@@ -4,11 +4,59 @@
     "definition": {
       "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
       "contentVersion": "1.0.0.0",
-      "parameters": {"$authentication": {"defaultValue": {}, "type": "SecureObject"}, "$connections": {"defaultValue": {}, "type": "Object"}},
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
       "triggers": {
         "manual": {
-          "type": "Request", "kind": "Skills",
-          "inputs": {"schema": {"type": "object", "properties": {"flagType": {"type": "string", "title": "Flag type", "description": "Investment-recommendation, regulatory, PII-exposure, etc.", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}, "userQuery": {"type": "string", "title": "Original query", "description": "What the advisor asked", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}, "agentResponse": {"type": "string", "title": "Agent response", "description": "How DAX responded", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}, "advisor": {"type": "string", "title": "Advisor", "description": "Advisor name or email", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}}, "required": ["flagType", "userQuery"]}},
+          "type": "Request",
+          "kind": "Skills",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "flagType": {
+                  "type": "string",
+                  "title": "Flag type",
+                  "description": "Investment-recommendation, regulatory, PII-exposure, etc.",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "userQuery": {
+                  "type": "string",
+                  "title": "Original query",
+                  "description": "What the advisor asked",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "agentResponse": {
+                  "type": "string",
+                  "title": "Agent response",
+                  "description": "How DAX responded",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "advisor": {
+                  "type": "string",
+                  "title": "Advisor",
+                  "description": "Advisor name or email",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                }
+              },
+              "required": [
+                "flagType",
+                "userQuery"
+              ]
+            }
+          },
           "description": "Log a compliance-flag event (uploads a markdown summary to SharePoint compliance-log folder)."
         }
       },
@@ -16,37 +64,81 @@
         "Scope": {
           "type": "Scope",
           "actions": {
-            "Get_Graph_Token": {"type": "Http", "inputs": {"method": "POST", "uri": "https://login.microsoftonline.com/d2a3c346-00f3-47dd-a53e-caa3fca74714/oauth2/v2.0/token", "headers": {"Content-Type": "application/x-www-form-urlencoded"}, "body": "grant_type=client_credentials&client_id=37fe1021-88b3-4744-aa32-b5d7e104462b&client_secret=__PP_CI_SECRET__&scope=https%3A%2F%2Fgraph.microsoft.com%2F.default"}},
-            "Get_Site": {
+            "Get_Graph_Token": {
               "type": "Http",
-              "inputs": {"method": "GET", "uri": "https://graph.microsoft.com/v1.0/sites/dakona.sharepoint.com:/sites/DAX", "headers": {"Authorization": "Bearer @{body('Get_Graph_Token')?['access_token']}"}},
-              "runAfter": {"Get_Graph_Token": ["Succeeded"]}
+              "inputs": {
+                "method": "POST",
+                "uri": "https://login.microsoftonline.com/d2a3c346-00f3-47dd-a53e-caa3fca74714/oauth2/v2.0/token",
+                "headers": {
+                  "Content-Type": "application/x-www-form-urlencoded"
+                },
+                "body": "grant_type=client_credentials&client_id=37fe1021-88b3-4744-aa32-b5d7e104462b&client_secret=__PP_CI_SECRET__&scope=https%3A%2F%2Fgraph.microsoft.com%2F.default"
+              }
             },
             "Upload_Log": {
               "type": "Http",
               "inputs": {
                 "method": "PUT",
-                "uri": "https://graph.microsoft.com/v1.0/sites/@{body('Get_Site')?['id']}/drive/root:/compliance-log/@{utcNow('yyyyMMdd-HHmmss')}-@{triggerBody()?['flagType']}.md:/content",
-                "headers": {"Authorization": "Bearer @{body('Get_Graph_Token')?['access_token']}", "Content-Type": "text/markdown"},
-                "body": "# Compliance flag — @{triggerBody()?['flagType']}\n\n**When:** @{utcNow()}\n**Advisor:** @{coalesce(triggerBody()?['advisor'],'unknown')}\n\n## Original query\n@{triggerBody()?['userQuery']}\n\n## Agent response\n@{coalesce(triggerBody()?['agentResponse'],'(none)')}\n"
+                "uri": "https://graph.microsoft.com/v1.0/sites/root/drive/root:/DAX Documents/compliance-log/@{utcNow('yyyyMMdd-HHmmss')}-@{triggerBody()?['flagType']}.md:/content",
+                "headers": {
+                  "Authorization": "Bearer @{body('Get_Graph_Token')?['access_token']}",
+                  "Content-Type": "text/markdown"
+                },
+                "body": "# Compliance flag \u2014 @{triggerBody()?['flagType']}\n\n**When:** @{utcNow()}\n**Advisor:** @{coalesce(triggerBody()?['advisor'],'unknown')}\n\n## Original query\n@{triggerBody()?['userQuery']}\n\n## Agent response\n@{coalesce(triggerBody()?['agentResponse'],'(none)')}\n"
               },
-              "runAfter": {"Get_Site": ["Succeeded"]}
+              "runAfter": {
+                "Get_Graph_Token": [
+                  "Succeeded"
+                ]
+              }
             }
           }
         },
         "Respond_to_the_agent": {
-          "type": "Response", "kind": "Skills",
+          "type": "Response",
+          "kind": "Skills",
           "inputs": {
             "statusCode": 200,
-            "body": {"logged": true, "flagType": "@{triggerBody()?['flagType']}", "logUrl": "@body('Upload_Log')?['webUrl']", "asOf": "@utcNow()"},
-            "schema": {"type": "object", "properties": {
-              "logged": {"title": "Logged", "type": "boolean", "x-ms-dynamically-added": true},
-              "flagType": {"title": "Flag type", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true},
-              "logUrl": {"title": "Log URL", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true},
-              "asOf": {"title": "As of", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}
-            }}
+            "body": {
+              "logged": true,
+              "flagType": "@{triggerBody()?['flagType']}",
+              "logUrl": "@body('Upload_Log')?['webUrl']",
+              "asOf": "@utcNow()"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "logged": {
+                  "title": "Logged",
+                  "type": "boolean",
+                  "x-ms-dynamically-added": true
+                },
+                "flagType": {
+                  "title": "Flag type",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "logUrl": {
+                  "title": "Log URL",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "asOf": {
+                  "title": "As of",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                }
+              }
+            }
           },
-          "runAfter": {"Scope": ["Succeeded"]}
+          "runAfter": {
+            "Scope": [
+              "Succeeded"
+            ]
+          }
         }
       }
     },

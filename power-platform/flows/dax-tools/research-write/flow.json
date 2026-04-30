@@ -34,6 +34,13 @@
                   "title": "Target word count",
                   "description": "Target word count, default 1000",
                   "x-ms-dynamically-added": true
+                },
+                "filename": {
+                  "type": "string",
+                  "title": "Filename (optional)",
+                  "description": "Filename without extension. Defaults to DAX-Generated-{timestamp}.",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
                 }
               },
               "required": [
@@ -73,6 +80,39 @@
                   "max_tokens": 4000
                 }
               }
+            },
+            "Get_Graph_Token": {
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "https://login.microsoftonline.com//oauth2/v2.0/token",
+                "headers": {
+                  "Content-Type": "application/x-www-form-urlencoded"
+                },
+                "body": "grant_type=client_credentials&client_id=&client_secret=__PP_CI_SECRET__&scope=https%3A%2F%2Fgraph.microsoft.com%2F.default"
+              },
+              "runAfter": {
+                "Call_Azure_OpenAI": [
+                  "Succeeded"
+                ]
+              }
+            },
+            "Save_To_SharePoint": {
+              "type": "Http",
+              "inputs": {
+                "method": "PUT",
+                "uri": "https://graph.microsoft.com/v1.0/sites/root/drive/root:/DAX Documents/@{coalesce(triggerBody()?['filename'],concat('DAX-Generated-',utcNow('yyyyMMdd-HHmmss')))}.md:/content",
+                "headers": {
+                  "Authorization": "Bearer @{body('Get_Graph_Token')?['access_token']}",
+                  "Content-Type": "text/markdown"
+                },
+                "body": "@{body('Call_Azure_OpenAI')?['choices']?[0]?['message']?['content']}"
+              },
+              "runAfter": {
+                "Get_Graph_Token": [
+                  "Succeeded"
+                ]
+              }
             }
           }
         },
@@ -84,6 +124,8 @@
             "body": {
               "prompt": "@{triggerBody()?['prompt']}",
               "content": "@body('Call_Azure_OpenAI')?['choices']?[0]?['message']?['content']",
+              "savedTo": "@body('Save_To_SharePoint')?['webUrl']",
+              "filename": "@body('Save_To_SharePoint')?['name']",
               "model": "gpt-4o",
               "asOf": "@utcNow()"
             },
@@ -91,14 +133,26 @@
               "type": "object",
               "properties": {
                 "prompt": {
-                  "title": "Original prompt",
+                  "title": "Prompt",
                   "type": "string",
                   "x-ms-content-hint": "TEXT",
                   "x-ms-dynamically-added": true
                 },
                 "content": {
-                  "title": "Generated content",
-                  "description": "Markdown-formatted long-form content",
+                  "title": "Content",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "savedTo": {
+                  "title": "SharePoint URL",
+                  "description": "Web URL of the saved markdown file",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "filename": {
+                  "title": "Filename",
                   "type": "string",
                   "x-ms-content-hint": "TEXT",
                   "x-ms-dynamically-added": true
