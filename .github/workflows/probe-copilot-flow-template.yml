@@ -29,18 +29,20 @@ jobs:
           echo "--- pac copilot extract-template help ---"
           "$PAC" copilot extract-template help || true
 
-          echo "--- attempt extract by GUID ---"
-          "$PAC" copilot extract-template --bot-id 389de172-2e44-f111-88b4-000d3a36c81b --output-file /tmp/probe/dax-template.zip || true
+          echo "--- attempt extract ---"
+          "$PAC" copilot extract-template --bot 389de172-2e44-f111-88b4-000d3a36c81b --templateFileName /tmp/probe/dax-template.yaml --overwrite || true
           ls -la /tmp/probe/
 
-          if [ -f /tmp/probe/dax-template.zip ]; then
-            echo "--- contents ---"
-            unzip -l /tmp/probe/dax-template.zip
-            mkdir -p /tmp/probe/unpacked
-            unzip -q /tmp/probe/dax-template.zip -d /tmp/probe/unpacked
-            echo "--- unpacked tree ---"
-            find /tmp/probe/unpacked -type f | head -30
+          if [ -f /tmp/probe/dax-template.yaml ]; then
+            echo "--- file size ---"
+            wc -l /tmp/probe/dax-template.yaml
+            echo "--- first 60 lines ---"
+            head -60 /tmp/probe/dax-template.yaml
           fi
+
+          # Also list copilots in env to see if any flow-related templates surface
+          echo "--- pac copilot list ---"
+          "$PAC" copilot list || true
 
       - name: Upload template artifact
         if: always()
