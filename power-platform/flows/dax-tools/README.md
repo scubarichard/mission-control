@@ -44,7 +44,27 @@ Recommendation flagged in #dax-collab: option 3 saves likely 1+ session of trial
 Power Automate's M365 connectors run under the **connection owner's** identity (= Richard in dev), not the chatting user's. Fine for dev (single user), but for staging/ICP we'll need to swap M365 connectors for direct Graph HTTP calls with delegated tokens passed from agent context. Re-architecture needed before promotion.
 
 ## Next session
-1. Create the first cloud flow record via Dataverse API (option 1 from above), iterate against errors until schema is known
-2. Once Tool 1 (Market Data) is working end-to-end, template the remaining 14
-3. Register flows as actions on the Dax agent (likely via `aicopilot_aiplugin` association table or similar — schema TBD)
-4. Test each tool via the chat UI; post pass/fail to #dax-collab per task spec
+
+### What's working ✅
+- Cloud flow JSON schema fully decoded (reference: `judeper/copilot-studio-agent-patterns` and `jonathandhaene/hr-agents-comparison` on GitHub).
+- Trigger: `kind: "PowerVirtualAgents"`, type Request, with input schema. Response: `kind: "PowerVirtualAgentsResponseV2"`.
+- Workflow row creation via Dataverse Web API works (POST `/workflows` with required fields including managed-property objects for `iscustomizable` / `iscustomprocessingstepallowedforotherpublishers`).
+- Solution import via `pac solution import` works end-to-end (workflow `import-dax-solution.yml`). Tool 1 flow is now living in DAX-Dev as workflow id `a3482ab8-ad44-f111-88b4-000d3a36c81b` with all 3 actions (FMP, Finnhub, Respond).
+- Tool 1 flow JSON template lives at `power-platform/flows/dax-tools/market-data/flow.json` with `__FMP_API_KEY__` / `__FINNHUB_API_KEY__` placeholders.
+
+### What's blocked ❌
+- **Activation**: PATCH statecode=1 returns `0x80060467 — Flow client error … DefinitionRequestMissingFields … missing required field 'definition'`. The Microsoft.Flow runtime's deployment API rejects activation regardless of payload shape. Flow stays in Draft (statecode=0/statuscode=1).
+- Tried: SP token, delegated user token, custom-property envelopes, with/without `Scope_*` wrapping, with/without `connectionReferences`, with/without `parameters`, post-`pac solution import` with `--activate-plugins`. All rejected with same error.
+- **Agent registration**: not attempted yet. Tables to investigate: `aiplugin`, `aipluginoperation`, `botcomponent` of action kind, `aicopilot_aiplugin`. Likely the M+1 step after activation works.
+
+### Hypotheses to test next session
+1. **Microsoft.Flow direct API**: bypass Dataverse PATCH; call `https://{region}.api.flow.microsoft.com/providers/Microsoft.ProcessSimple/environments/{envId}/flows/{flowId}/start?api-version=2016-11-01` directly with a token for `https://service.flow.microsoft.com`. Different envelope, may succeed where PATCH doesn't.
+2. **Pre-activated solution import**: include the workflow already in active state in customizations.xml. Tried StateCode=1 in customizations.xml; pac silently kept it Draft. Try `pac solution import --activate-plugins` against a *managed* solution build (zip with `<Managed>1</Managed>`), since managed import might trigger different activation behavior.
+3. **OpenAPI custom-connector route instead of cloud flow**: skip the cloud-flow vehicle entirely and register each tool as an OpenAPI plugin operation directly on the Dax agent (`aiplugin` + `aipluginoperation` tables). Bypasses Microsoft.Flow runtime; the agent calls the API directly. Probably the right architecture for HTTP-only tools (1, 6, 7, 11, 12, 14, 15) anyway. M365-connector tools (2-5, 9, 10) still need the cloud-flow vehicle for their connectors.
+4. **One UI-built reference flow** (option 3 from "Open question" above) — Richard creates a single empty flow with the trigger in `make.powerautomate.com`, saves, we export, compare envelope to ours. Most likely to surface the missing field/property quickly. Still recommended if and when Richard's well enough.
+
+### Resource state after this session
+- Workflow `DAX — Market Data` (id `a3482ab8-ad44-f111-88b4-000d3a36c81b`) — DRAFT, in DAX solution
+- Solution `DAX` v1.0.0.0 — bot + 14 botcomponents + 1 workflow
+- Test solution zip at `power-platform/solutions/DAX-dev-test.zip` — round-trip-validated import path
+- API keys still hardcoded in the live workflow's `clientdata` (FMP + Finnhub strings). Needs refactor to env-var or KV-connector before promotion.

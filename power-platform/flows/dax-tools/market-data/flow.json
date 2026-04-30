@@ -1,0 +1,87 @@
+{
+  "properties": {
+    "connectionReferences": {},
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "triggers": {
+        "When_an_agent_calls_the_flow": {
+          "type": "Request",
+          "kind": "PowerVirtualAgents",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "ticker": {
+                  "type": "string",
+                  "description": "Stock or ETF ticker symbol"
+                }
+              },
+              "required": [
+                "ticker"
+              ]
+            }
+          },
+          "description": "Returns live market data (price, change, day range, volume) for a given ticker."
+        }
+      },
+      "actions": {
+        "Get_FMP_Quote": {
+          "type": "Http",
+          "inputs": {
+            "method": "GET",
+            "uri": "https://financialmodelingprep.com/api/v3/quote/@{toUpper(triggerBody()?['ticker'])}?apikey=__FMP_API_KEY__"
+          }
+        },
+        "Get_Finnhub_Quote": {
+          "type": "Http",
+          "inputs": {
+            "method": "GET",
+            "uri": "https://finnhub.io/api/v1/quote?symbol=@{toUpper(triggerBody()?['ticker'])}&token=__FINNHUB_API_KEY__"
+          },
+          "runAfter": {}
+        },
+        "Respond_to_the_agent": {
+          "type": "Request",
+          "kind": "PowerVirtualAgentsResponseV2",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "ticker": "@{toUpper(triggerBody()?['ticker'])}",
+              "fmp": "@body('Get_FMP_Quote')",
+              "finnhub": "@body('Get_Finnhub_Quote')",
+              "asOf": "@utcNow()"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "ticker": {
+                  "type": "string"
+                },
+                "fmp": {
+                  "type": "array"
+                },
+                "finnhub": {
+                  "type": "object"
+                },
+                "asOf": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Get_FMP_Quote": [
+              "Succeeded"
+            ],
+            "Get_Finnhub_Quote": [
+              "Succeeded"
+            ]
+          }
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}
