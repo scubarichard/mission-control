@@ -3399,3 +3399,305 @@ Add `search_sharepoint` tool to ICP DAX router so Brett can search company Share
 **Regression: 143/143 PASS**
 
 **[Forge] 2026-04-26:** DONE â€” dev pushed, #dax-collab notified.
+
+---
+
+# TASK-20260429-CHOSEN-004 — V1 Phase 2: OpenAI + Google Docs Wiring
+
+**Status:** OPEN
+**Owner:** ANY (agent-agnostic)
+**Client:** Erika Cobb / Chosen Agency
+**Priority:** High
+**Created:** 2026-04-29 by Richard
+**Estimated effort:** 3-4 hours
+**Depends on:** CHOSEN-001 (DONE — Editor Brief prompt), CHOSEN-002 (DONE — V1 foundation), CHOSEN-003 (DONE — Drive cleanup)
+
+---
+
+## Strategic Context
+
+**Build approach:** Build entire V1 in Richard's dev environment using existing API keys. Transfer to Erika's accounts at handoff (clean credential swap). This unblocks build start without waiting on Erika's account signups.
+
+**Why this works:**
+- Make scenarios export/import cleanly between accounts
+- Google Sheets/Docs ownership transfers via Drive UI in seconds
+- API keys swap in Make connection settings (~30 sec each)
+- All assets are already in Richard's Drive, ready to transfer
+
+**Critical:** Build everything cleanly transferable. No baked-in dependencies that only work in Richard's environment.
+
+---
+
+## Reference
+
+- SOW: `clients/chosen-agency/builder-handoff.md`
+- Editor Brief prompt: `clients/chosen-agency/prompts/editor_brief_v1.md`
+- Sample outputs: `clients/chosen-agency/prompts/samples/` (test_1, test_2, test_3)
+- Build log: `clients/chosen-agency/build_log.md`
+
+**Asset IDs:**
+- V1 Production Tracker sheet: `1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo`
+- Script Doc template: `1ZDum9DDkuEGPMpoqo39XbAiF-D5-bGMExfOmSY3gm_A`
+- Editor Brief template: `179Rc1u3mWVC-7hidFeyBLWxIp0Xxaocl_M52MsDc-4I`
+- V1 Make scenario: `4894796` (us2.make.com/885318/scenarios/4894796/edit)
+- Drive parent folder: `1xCplt3J0RNAPwDpWyjpqqXXTeTf3USPb`
+- Test scenario (reference): `4820264` (proven working pattern)
+
+**Credentials in Key Vault `kvdaximpactcapital` (sub e1c109d7-9232-4e26-bed7-b1e1b5a6f611):**
+- `OPENAI-API-KEY-RICHARD` (working, gpt-4o tested)
+- `ELEVENLABS-API-KEY`
+- `ELEVENLABS-VOICE-ID-RICHARD`
+- `HEYGEN-API-KEY`
+
+**Make API key in Key Vault `kvdaxdakonapilot`:**
+- `make-api-key` (NOTE: read-scoped — write operations may fail. If clone/create fails, ask Richard to do it manually.)
+
+---
+
+## Goal
+
+Wire up Phase 2 of the V1 scenario per SOW Section 8: OpenAI text generation + Google Doc creation modules. Result: when a row is set to Status=Queued, the scenario generates a script, generates an editor brief, and creates two Google Docs (Script Doc + Editor Brief Doc) populated with the content.
+
+---
+
+## Subtasks (in order)
+
+### Subtask 1 — Audit V1 scenario starting state
+
+Fetch blueprint of scenario `4894796`. Confirm:
+- It is a clean clone of the test scenario (4820264)
+- All modules from test scenario are present
+- Scenario is INACTIVE
+- Scenario is in folder `232853` of org `5193163`
+
+Document the starting module list in `clients/chosen-agency/build_log.md` under a new "CHOSEN-004" section.
+
+### Subtask 2 — Update Module 1 (Trigger) to point to V1 sheet
+
+Current: trigger reads from test sheet (in 00_Test_Archive)
+Target: trigger reads from V1 Production Tracker sheet `1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo`
+
+Use Make's `google-sheets:filterRows` v2:
+- Spreadsheet: V1 sheet ID
+- Sheet: `Queue`
+- Filter: column F (Status) equals `Queued`
+- Limit: 1 (one row at a time)
+
+Verify all 28 column headers map cleanly. The V1 sheet has different columns than the test sheet (28 vs 14), so module output indices will differ.
+
+### Subtask 3 — Update Module 2 (Set Variables) for new schema
+
+Replace existing Module 2 mapper with V1 variable resolution. Variables to set (scope: roundtrip):
+
+- `row_hash` = sha1 of (script_id + variation_number + voice_id + avatar_id) — concatenation of dedup-relevant fields
+- `effective_voice_id` = `ifempty({{Override Voice ID}}; {{Voice ID}}; <Settings: Default Voice ID>)`
+- `effective_avatar_id` = `ifempty({{Override Avatar ID}}; {{Avatar ID}}; <Settings: Default Avatar ID>)`
+- `effective_tone` = `ifempty({{Override Tone}}; {{Tone}}; <Settings: Default Tone>)`
+- `effective_stability` = `ifempty({{Override ElevenLabs Stability}}; <Settings: Default Stability>)`
+- `effective_similarity_boost` = `ifempty({{Override ElevenLabs Similarity Boost}}; <Settings: Default Similarity Boost>)`
+- `variation_id` = generated as: `{{script_id}}-v{{variation_number}}`
+- `is_done` = false
+
+**Important:** The fallback chain reads from Override column ? main column ? System Settings tab. To read from System Settings, agent will need to add a Search Rows module against the System Settings tab BEFORE the SetVariables module, then reference its output.
+
+Alternative (simpler): hardcode reasonable defaults in the SetVariables formulas for now. Document that production should source from System Settings tab via a search module — flag as TODO for later subtask.
+
+**Recommendation:** Use the simpler approach (hardcoded defaults) for V1 to avoid extra module overhead. Document the System Settings lookup pattern in build_log.md as a future enhancement. Most settings will rarely change in practice.
+
+### Subtask 4 — Add Module: OpenAI Generate Script
+
+Add new module after Module 2, before Module 4 (Status ? Processing).
+
+Module: `openai-gpt-3:CreateCompletion` (or whichever current OpenAI module is in test scenario as Module 5)
+
+- Connection: existing OpenAI connection (uses Richard's key)
+- Model: `gpt-4o`
+- Prompt: generate a short-form video script based on:
+  - Topic: row's `Script Name` field
+  - Audience: row's `Audience`
+  - Tone: `effective_tone` variable
+  - Current Belief: row's `Current Belief`
+  - Desired Belief: row's `Desired Belief`
+  - Offer/CTA: row's `Offer / CTA`
+  - Target duration: 30 seconds
+  - Word count: ~75 words
+
+Output: `script_text`
+
+**Skip if Script Text already provided in row** (filter: Script Text is empty).
+
+**Note:** This is the script generation step. Editor Brief comes in a separate module.
+
+### Subtask 5 — Add Module: Update sheet with script_text
+
+Add Google Sheets `updateRow` v2 module:
+- Sheet: V1 sheet
+- Row: trigger row's __ROW_NUMBER__
+- Column N (Script Text): set to script_text from prior module (or row's existing value if it was provided)
+- Column F (Status): `Script Done`
+
+useColumnHeaders: true
+
+### Subtask 6 — Add Module: OpenAI Generate Editor Brief
+
+Add new OpenAI module:
+- Connection: existing OpenAI
+- Model: `gpt-4o`
+- Prompt: load the contents of `clients/chosen-agency/prompts/editor_brief_v1.md` and use it as the system prompt
+- User input: structured object with all the row fields the prompt expects (script_text, audience, tone, current_belief, desired_belief, offer_cta, etc.)
+- Response format: JSON (use OpenAI structured outputs / response_format)
+- Max tokens: 2000
+- Temperature: 0.7
+
+Output: structured JSON with keys matching the Editor Brief template placeholders:
+- `review_priorities` (array of strings)
+- `viewer_profile`
+- `emotional_state_at_open`
+- `emotional_state_at_close`
+- `arc_description`
+- `editing_directives` (array of strings)
+- `line_by_line_visual_direction` (array of {line, visual} objects)
+
+### Subtask 7 — Add Module: Format Brief arrays as text
+
+The Editor Brief template uses simple `{{placeholder}}` substitution, so JSON arrays need to be formatted as readable text before insertion.
+
+Add a Make `set multiple variables` or text aggregator module to:
+- `review_priorities_formatted` = numbered list (1. ... 2. ... 3. ...) joined with newlines
+- `editing_directives_formatted` = bulleted list joined with newlines
+- `line_by_line_visual_direction_formatted` = each item formatted as `"<line text>" ? <visual direction>` joined with newlines
+
+Document this transformation in build_log.md.
+
+### Subtask 8 — Add Module: Create Script Doc from template
+
+Use Google Docs `createDocumentFromTemplate` (or copy template + replace text):
+
+- Template ID: `1ZDum9DDkuEGPMpoqo39XbAiF-D5-bGMExfOmSY3gm_A` (Script_Doc_Template)
+- Destination folder: `02_Script_Docs` folder ID — fetch this from Drive (parent folder `1xCplt3J0RNAPwDpWyjpqqXXTeTf3USPb` has subfolder `02_Script_Docs`)
+- New doc name: `{{Script Name}} - {{Variation ID}}`
+- Replace placeholders with row values:
+  - `{{Script_ID}}` ? row Script ID
+  - `{{Script_Name}}` ? row Script Name
+  - `{{Variation_Number}}` ? row Variation Number
+  - `{{Created_Date}}` ? now()
+  - `{{Audience}}` ? row Audience
+  - `{{Offer_CTA}}` ? row Offer / CTA
+  - `{{Script_Text}}` ? script_text
+  - `{{Caption_Text}}` ? row Caption Text (or empty)
+
+Output: new Doc URL
+
+### Subtask 9 — Add Module: Create Editor Brief Doc from template
+
+Same pattern as Subtask 8:
+
+- Template ID: `179Rc1u3mWVC-7hidFeyBLWxIp0Xxaocl_M52MsDc-4I` (Editor_Brief_Template)
+- Destination folder: `03_Editor_Briefs`
+- New doc name: `Brief - {{Script Name}} - {{Variation ID}}`
+- Replace placeholders with Editor Brief output (use the formatted text versions from Subtask 7)
+
+Output: new Doc URL
+
+### Subtask 10 — Update sheet with both Doc URLs
+
+Google Sheets `updateRow` v2:
+- Column U (Script Doc Link): script doc URL
+- Column V (Brief Doc Link): editor brief doc URL
+- Column AB (Last Updated): now()
+
+useColumnHeaders: true
+
+**Do NOT change Status here.** Status will move to `Voice Done` later in Phase 3 after ElevenLabs runs. For now, leave at `Script Done`.
+
+### Subtask 11 — Test against one sample row
+
+Test row data to insert into V1 sheet (row 2):
+
+| Column | Value |
+|---|---|
+| Status (F) | Queued |
+| Script ID (B) | ERIKA-TEST-001 |
+| Script Name (C) | Sleep Tips Quick Win |
+| Variation Number (D) | 1 |
+| Avatar ID (G) | (leave blank — uses default) |
+| Voice ID (H) | (leave blank — uses default) |
+| Audience (I) | working professionals 30-50 with sleep issues |
+| Current Belief (J) | sleep is just bad luck |
+| Desired Belief (K) | sleep is a system you can improve |
+| Tone (L) | helpful, direct |
+| Emotional Arc (M) | frustrated ? hopeful |
+| Offer / CTA (N) | (leave blank) |
+
+Activate scenario and run once.
+
+### Subtask 12 — Verify outputs
+
+Check:
+- Script Doc was created in 02_Script_Docs folder
+- Editor Brief Doc was created in 03_Editor_Briefs folder
+- Sheet row 2 has Script Doc Link (col U) and Brief Doc Link (col V) populated
+- Sheet row 2 status = `Script Done`
+- Sheet row 2 has script_text (col N)
+- Both Docs are populated correctly with the row's data
+- Editor Brief Doc has all 4 sections filled with non-generic content
+
+If any check fails, document the failure in build_log.md and stop. Do not proceed to next subtask without resolution.
+
+### Subtask 13 — Deactivate scenario
+
+After successful test, deactivate the V1 scenario. It's not ready for production — Phases 3-4 still pending.
+
+### Subtask 14 — Update build_log.md
+
+Append a comprehensive CHOSEN-004 entry with:
+- All module IDs added
+- The starting + ending blueprint diff
+- Test results (which checks passed)
+- Any issues encountered
+- Next steps for CHOSEN-005
+
+Commit and push.
+
+---
+
+## Acceptance Criteria
+
+- [ ] V1 scenario reads from V1 Production Tracker sheet (correct sheet ID)
+- [ ] Module 2 sets all required variables with override fallback logic
+- [ ] OpenAI Script generation module returns valid script
+- [ ] OpenAI Editor Brief generation module returns valid 4-section brief in JSON
+- [ ] Brief JSON arrays are formatted as readable text before Doc insertion
+- [ ] Script Doc created in 02_Script_Docs folder, populated correctly
+- [ ] Editor Brief Doc created in 03_Editor_Briefs folder, populated correctly
+- [ ] Sheet updates: script_text in col N, Script Doc Link in col U, Brief Doc Link in col V, status = Script Done
+- [ ] Test row produces expected output end-to-end
+- [ ] Scenario deactivated after test
+- [ ] build_log.md updated with full CHOSEN-004 entry
+- [ ] Slack post to #dax-collab on completion with sheet URL, Doc URLs, and any issues encountered
+
+---
+
+## Constraints
+
+- Do NOT modify the test scenario (4820264)
+- Do NOT activate V1 scenario in production state — only for the single test run, then deactivate
+- Do NOT delete or modify Editor Brief template Doc structure (179Rc1u3mWVC-7hidFeyBLWxIp0Xxaocl_M52MsDc-4I) — placeholder structure is locked in CHOSEN-002
+- Do NOT delete or modify Script Doc template structure
+- Use Richard's existing API keys via Make connections (no client credentials needed)
+- Build everything cleanly TRANSFERABLE — no hardcoded references to Richard-specific accounts beyond what's in Make connections
+- If Make API write operations fail (read-scoped key), escalate to Richard for manual operation; document the blocker
+
+---
+
+## Done When
+
+All acceptance criteria met, Slack notification posted, build_log.md updated and pushed.
+
+---
+
+## Next Tasks (for context)
+
+- **CHOSEN-005:** Phase 3 — wire ElevenLabs + HeyGen with override fallback logic, test end-to-end through video generation
+- **CHOSEN-006:** Phase 4 — Render Checker scheduled scenario + error handling + 4 acceptance test cases + 4 override fallback tests
+- **CHOSEN-007:** Phase 6 — Operator SOP, field map, credential map, troubleshooting, Loom
