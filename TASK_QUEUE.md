@@ -704,21 +704,12 @@ Open-source Python crypto trading bot (github.com/freqtrade/freqtrade). Supports
 SSH into vm-dax-dev via the jumpbox. Install in Richard's home directory, NOT anywhere near the DAX/n8n stack:
 
 ```bash
-# Ensure deps
 sudo apt update && sudo apt install -y python3 python3-pip python3-venv git curl
-
-# Clone into home dir — isolated from DAX
 cd ~
 git clone https://github.com/freqtrade/freqtrade.git freqtrade-personal
 cd freqtrade-personal
-
-# Run the official install script
 ./setup.sh -i
-
-# Activate venv
 source .venv/bin/activate
-
-# Confirm install
 freqtrade --version
 ```
 
@@ -740,122 +731,60 @@ Do not add real API keys. Leave exchange keys empty for now — dry-run doesn't 
 
 **Step 3 — Download a community strategy**
 
-Pull one well-documented beginner strategy from the freqtrade community repo:
-
 ```bash
-# Create user_data structure
 freqtrade create-userdir --userdir user_data
-
-# Download the community strategies repo
 cd user_data/strategies
 git clone https://github.com/freqtrade/freqtrade-strategies.git community
 ```
 
-Recommended starting strategy: **NostalgiaForInfinityX** or **SMAOffset** — both are well-documented, widely backtested, and appropriate for a beginner exploring the platform. Pick whichever has the cleaner code and document which one was selected in the gate result.
+Recommended starting strategy: **NostalgiaForInfinityX** or **SMAOffset**. Pick whichever has the cleaner code and document which one was selected in the gate result.
 
 **Step 4 — Download historical data and run a backtest**
 
 ```bash
 cd ~/freqtrade-personal
 source .venv/bin/activate
-
-# Download 30 days of OHLCV data for top pairs
-freqtrade download-data \
-  --exchange binance \
-  --pairs BTC/USDT ETH/USDT SOL/USDT \
-  --timeframe 1h \
-  --days 30
-
-# Run backtest with chosen strategy
-freqtrade backtesting \
-  --config config.json \
-  --strategy SMAOffset \
-  --userdir user_data \
-  --timerange 20250301-20250401
+freqtrade download-data --exchange binance --pairs BTC/USDT ETH/USDT SOL/USDT --timeframe 1h --days 30
+freqtrade backtesting --config config.json --strategy SMAOffset --userdir user_data --timerange 20250301-20250401
 ```
 
 Capture the backtest output summary (win rate, total profit %, max drawdown, Sharpe ratio) and include in gate result.
 
 **Step 5 — Start dry-run with screen session**
 
-Start Freqtrade in a persistent `screen` session so it survives SSH disconnects:
-
 ```bash
-# Install screen if not present
 sudo apt install -y screen
-
-# Start a named session
 screen -S freqtrade-dryrun
-
-# Inside the screen session:
-cd ~/freqtrade-personal
-source .venv/bin/activate
-freqtrade trade \
-  --config config.json \
-  --strategy SMAOffset \
-  --userdir user_data \
-  --dry-run
-
+cd ~/freqtrade-personal && source .venv/bin/activate
+freqtrade trade --config config.json --strategy SMAOffset --userdir user_data --dry-run
 # Detach: Ctrl+A then D
+screen -ls
 ```
 
-Confirm it's running:
-```bash
-screen -ls  # should show freqtrade-dryrun session
-```
+**Step 6 — Enable Freqtrade REST API + UI (optional)**
 
-**Step 6 — Enable Freqtrade REST API + UI (optional but useful)**
-
-Freqtrade has a built-in web UI (FreqUI) that shows open trades, P&L, etc. Enable it in config.json:
-
+Add to config.json:
 ```json
-"api_server": {
-  "enabled": true,
-  "listen_ip_address": "127.0.0.1",
-  "listen_port": 8080,
-  "username": "richard",
-  "password": "choose-a-password"
-}
+"api_server": { "enabled": true, "listen_ip_address": "127.0.0.1", "listen_port": 8080, "username": "richard", "password": "choose-a-password" }
 ```
 
-Richard can then SSH tunnel to view it locally:
-```bash
-ssh -L 8080:localhost:8080 vm-dax-dev-user@n8n.dakona.net
-# Then open http://localhost:8080 in browser
-```
-
-Document the exact SSH tunnel command in the gate result so Richard can copy-paste it.
+SSH tunnel: `ssh -L 8080:localhost:8080 vm-dax-dev-user@n8n.dakona.net` → http://localhost:8080
 
 ### Constraints
 
-- **Personal project only** — do not integrate with DAX infrastructure, Key Vault, n8n, or any Dakona/1AltX systems
-- **Dry-run only** — config must have `"dry_run": true`. Do not configure real exchange API keys
-- **Isolated directory** — all files under `~/freqtrade-personal/`, nothing touching DAX paths
-- **No Azure resources** — this runs directly on the VM, not as a Container App
-- **No Slack alerts** — this is personal, not a monitored service
-- **screen, not systemd** — keep it simple, no service management needed for a personal experiment
+- **Personal project only** — no DAX/KV/n8n integration
+- **Dry-run only** — `"dry_run": true`, no real exchange API keys
+- **Isolated** — all files under `~/freqtrade-personal/`
+- **screen, not systemd** — keep it simple
 
 ### Gate
 
-Post results here when DONE:
 - [ ] Freqtrade installed and `freqtrade --version` confirmed
 - [ ] Config generated with dry_run: true
 - [ ] Strategy selected — name it here
 - [ ] Backtest results summary (win rate, profit %, max drawdown, Sharpe)
 - [ ] Dry-run started in screen session — `screen -ls` output
 - [ ] SSH tunnel command for FreqUI documented
-- [ ] Any surprises or issues encountered
-
-### Notes for Richard (read before going live someday)
-
-When you're ready to go live with real money (weeks/months from now):
-1. Create API keys on Binance/Coinbase — **read + trade only, never withdraw**
-2. Add keys to config.json under `exchange.key` and `exchange.secret`
-3. Change `"dry_run": false`
-4. Start with the smallest possible stake amount ($10/trade)
-5. Never risk more than you can afford to lose entirely — algo trading is speculative
-
-Not financial advice. This is a learning project.
 
 ---
 
@@ -875,159 +804,63 @@ Opus drafted `scripts/Invoke-AVDDiskMonitor.ps1` this session — a cross-tenant
 1. **Where do the scanner SP credentials live**, and do they actually work today?
 2. **Does the SP have working cross-tenant authorization** for the specific APIs the disk monitor needs — ARM (host pools, session hosts) and Log Analytics (Perf table query)?
 
-Richard noted that when he runs `az login` interactively, there are tenants he cannot see by design — that's fine for his user, but the SP authenticates differently (app-only client_credentials) and uses GDAP / Lighthouse delegation. The audit script's success doesn't prove the disk monitor will work, because they exercise different APIs at different scopes.
-
-The SP is named **`dakona-csp-scanner`** (created by `scripts/New-DakonaScanSP.ps1`). The Lighthouse onboarding pattern is in `scripts/Deploy-Lighthouse.ps1` — it grants Contributor + Reader to a `DakonaPrincipalId` (a security group, not the SP directly). Open question: is the scanner SP a member of that group, and was Lighthouse actually deployed for all 12 RIA tenants?
+The SP is named **`dakona-csp-scanner`** (created by `scripts/New-DakonaScanSP.ps1`). The Lighthouse onboarding pattern is in `scripts/Deploy-Lighthouse.ps1`.
 
 ### Tasks
 
-**Phase 1 — Locate the credentials (do this first, ~10 min)**
+**Phase 1 — Locate the credentials (~10 min)**
 
-Find where `AZURE_SP_TENANT_ID`, `AZURE_SP_CLIENT_ID`, `AZURE_SP_CLIENT_SECRET` live today. Check in this order and report what was found at each step:
+Check in this order:
+1. MCP container env vars: `az containerapp show --name ca-dax-mcp-dakona-pilot --resource-group rg-dax-dakona-pilot --query "properties.template.containers[0].env" -o json`
+2. KV `kvdaxdakonapilot`: `az keyvault secret list --vault-name kvdaxdakonapilot --query "[?contains(name,'scan') || contains(name,'csp') || contains(name,'azure-sp')].name" -o tsv`
+3. Repo grep: `git -C /repo grep -l "AZURE_SP_CLIENT_ID" 2>/dev/null`
 
-1. **MCP container env vars** (most likely):
-   ```powershell
-   az containerapp show --name ca-dax-mcp-dakona-pilot --resource-group rg-dax-dakona-pilot --query "properties.template.containers[0].env" -o json
-   ```
-   Report env var names + whether they reference Key Vault or are inline.
+Deliverable: where the 3 env vars are stored, whether secret has expired.
 
-2. **Key Vault `kvdaxdakonapilot`** (most likely storage):
-   ```powershell
-   az keyvault secret list --vault-name kvdaxdakonapilot --query "[?contains(name,'scan') || contains(name,'csp') || contains(name,'azure-sp')].name" -o tsv
-   ```
-   Then for any matches, confirm the secret exists (don't print the value to logs):
-   ```powershell
-   az keyvault secret show --vault-name kvdaxdakonapilot --name <name> --query "{name:name, enabled:attributes.enabled, expires:attributes.expires}" -o json
-   ```
+**Phase 2 — Verify SP can authenticate (~5 min)**
 
-3. **Repo .env files / setup notes** (last resort):
-   ```bash
-   git -C /repo grep -l "AZURE_SP_CLIENT_ID" 2>/dev/null
-   ```
-
-**Deliverable for Phase 1:** A note posted in the gate result with:
-- Where the 3 env vars are stored (KV secret names, container app env keys)
-- Whether the client secret has expired (check `expires` attribute)
-- Whether the SP needs a new secret rotated
-
-**Phase 2 — Verify the SP can authenticate (~5 min)**
-
-Once credentials are located, do a clean token grab to confirm they still work:
-
-```powershell
-$body = @{
-    grant_type    = "client_credentials"
-    client_id     = $env:AZURE_SP_CLIENT_ID
-    client_secret = $env:AZURE_SP_CLIENT_SECRET
-    scope         = "https://management.azure.com/.default"
-}
-$r = Invoke-RestMethod -Method POST -Uri "https://login.microsoftonline.com/$env:AZURE_SP_TENANT_ID/oauth2/v2.0/token" -Body $body
-$r.access_token.Length  # should be ~1500-2000 chars
-```
-
-If this 401s, the secret has expired. Note in gate result and stop — Richard rotates before continuing.
+Token grab using client_credentials flow against `https://management.azure.com/.default`. If 401 → secret expired, stop.
 
 **Phase 3 — Build and run cross-tenant preflight (~30-45 min)**
 
-Write `scripts/Test-AVDMonitorAccess.ps1`. Pattern: same auth helpers as `Invoke-TenantAudit.ps1` (Get-GraphToken / Get-ArmToken / Get-LaToken). For each customer tenant the SP can see, produce a row with:
+Write `scripts/Test-AVDMonitorAccess.ps1`. For each tenant, produce:
 
-| Column | How to determine |
+| Column | Check |
 |---|---|
-| Client | tenant displayName from Lighthouse / contracts API |
+| Client | displayName |
 | TenantId | tenant.tenantId |
-| Subs visible | count of `subscriptions?api-version=2022-12-01` filtered to this tenantId |
-| ARM HostPools readable | try `GET /subscriptions/{id}/providers/Microsoft.DesktopVirtualization/hostPools?api-version=2024-04-03` — pass if 200, fail if 401/403 |
-| LA workspaces visible | `GET /subscriptions/{id}/providers/Microsoft.OperationalInsights/workspaces?api-version=2022-10-01` |
-| LA Perf query OK | for first workspace, run `Perf | take 1` against `https://api.loganalytics.io/v1/workspaces/{customerId}/query` — pass if 200, fail if 403 |
-| Verdict | Ready / No AVD / No LA delegation / No sub access / Auth gap |
+| Subs visible | subscriptions API count |
+| ARM HostPools readable | GET hostPools — 200 vs 401/403 |
+| LA workspaces visible | GET workspaces |
+| LA Perf query OK | Perf | take 1 against loganalytics.io |
+| Verdict | Ready / No AVD / No LA / No sub / Auth gap |
 
-Output as both:
-- Console table (formatted, color-coded — green for Ready, yellow for warnings, red for blockers)
-- JSON file at `/tmp/avd-monitor-preflight-{timestamp}.json` with full per-tenant detail (HTTP status codes, error messages)
+Output: console table + JSON at `/tmp/avd-monitor-preflight-{timestamp}.json`
 
-Also check whether the scanner SP is a member of the Dakona security group used in Lighthouse delegations:
-
-```powershell
-$spObjId = az ad sp list --display-name "dakona-csp-scanner" --query "[0].id" -o tsv
-az rest --method GET --uri "https://graph.microsoft.com/v1.0/servicePrincipals/$spObjId/memberOf" --query "value[].displayName" -o json
-```
-
-Document the group(s) the SP is in. If the SP is NOT in the same group that `Deploy-Lighthouse.ps1` references as `DakonaPrincipalId`, that's the root cause of any cross-tenant ARM gaps — flag it clearly.
+Also check SP group membership vs `DakonaPrincipalId` in Deploy-Lighthouse.ps1.
 
 **Phase 4 — Inventory Lighthouse delegations (~10 min)**
 
-List all Azure Lighthouse registrations the SP can see:
+`az managedservices definition list` + `az managedservices assignment list`. Report which of 12 RIA clients have Lighthouse delegated.
 
-```powershell
-az managedservices definition list -o json
-az managedservices assignment list -o json
-```
-
-Cross-reference with the customer tenant list from Phase 3. Report:
-- Which of the 12 RIA clients have Lighthouse delegated
-- Which don't (need `Deploy-Lighthouse.ps1` run for them)
-- For the delegated ones, what role assignments are in effect (Reader is the bare minimum; Contributor is overkill but fine)
-
-### Gate (post results in this format)
+### Gate format
 
 ```
 ## Phase 1 — Credentials located
-- Stored in: <KV secret names or container env>
-- Tenant ID: <hint, last 4 chars only>
-- Client ID: <hint, last 4 chars only>
-- Secret expires: <date>
-- Auth test: PASS / FAIL
-
 ## Phase 2 — SP membership
-- dakona-csp-scanner is a member of: <group names>
-- Deploy-Lighthouse.ps1 references DakonaPrincipalId: <group ID> = <group name>
-- Match: YES / NO (NO means cross-tenant ARM is broken by design)
-
 ## Phase 3 — Per-tenant access matrix
-[paste console table output]
-
-Summary:
-- Ready:        X tenants — disk monitor will work
-- No AVD:       X tenants — no host pools, will be skipped silently
-- No LA:        X tenants — need Log Analytics Reader added
-- No sub:       X tenants — Lighthouse not deployed or revoked
-- Auth gap:     X tenants — SP not in delegated group for that tenant
-
 ## Phase 4 — Lighthouse inventory
-[Y of 12 RIA clients have Lighthouse]
-
-Missing Lighthouse onboarding for:
-- <client name 1>
-- <client name 2>
-- ...
-
 ## Recommended next steps
-- [ ] Run `scripts/Deploy-Lighthouse.ps1` for missing clients
-- [ ] Add LA Reader to <list> tenants
-- [ ] Add scanner SP to <group> if Phase 2 mismatch
-- [ ] Re-run preflight until all 12 are Ready or confirmed-no-AVD
 ```
 
 ### Constraints
 
-- **Read-only** — this task does not deploy anything. No `Deploy-Lighthouse.ps1` runs, no role assignments created. Findings only.
-- **Don't print secret values** — for any KV lookups, only show metadata (name, enabled, expires). The secret stays in KV.
-- **Don't fix gaps in this task** — if you find a tenant missing Lighthouse, document it. Richard reviews and decides which to onboard.
-- **Don't deploy `Invoke-AVDDiskMonitor.ps1`** — that's a separate task after preflight is green.
+- **Read-only** — no deployments, no role assignments
+- **Don't print secret values**
+- **Don't deploy `Invoke-AVDDiskMonitor.ps1`** — preflight only
 
 ### Reference files
-
-- `scripts/Invoke-AVDDiskMonitor.ps1` — the script we're preflighting for
-- `scripts/Invoke-TenantAudit.ps1` — auth helpers + tenant enumeration pattern to mirror
-- `scripts/New-DakonaScanSP.ps1` — how the SP was created originally (look here for permissions granted)
-- `scripts/Deploy-Lighthouse.ps1` — Lighthouse onboarding pattern, references `DakonaPrincipalId`
-
-### Why this matters
-
-If we deploy the disk monitor without preflight and a tenant has Cat 2 access (can list subs but can't read AVD or query LA), the script will silently report "no hosts" or "no data" for that client and tickets will never fire. That's a worse outcome than "deploy not yet possible" because it looks like success. Preflight gives Richard a definitive map: where it works, where to fix Partner Center, where it doesn't apply.
-
-This is also reusable — same access matrix is needed for any future cross-tenant Dakona tooling (Compliance Pro, automated patch reports, etc.). Worth doing once, properly, and saving the script.
-
+- `scripts/Invoke-AVDDiskMonitor.ps1`, `scripts/Invoke-TenantAudit.ps1`, `scripts/New-DakonaScanSP.ps1`, `scripts/Deploy-Lighthouse.ps1`
 
 ---
 
@@ -1041,27 +874,35 @@ This is also reusable — same access matrix is needed for any future cross-tena
 
 ### Completed
 
-**Blueprint uploaded directly to Make scenario 4894796 via PATCH API — isinvalid: False, lastEdit: 2026-04-30T21:36:11.259Z**
+**Blueprint uploaded directly to Make scenario 4894796 via PATCH API — fully automated, no manual UI steps required.**
+
+Final upload: `lastEdit: 2026-04-30T21:51:26.569Z`, `isinvalid: False`
 
 **Changes applied:**
 1. **Module 1 (filterRows)** — reads from V1 Production Tracker (1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo), tab Production Tracker, range A1:AZ1
 2. **Module 2 (SetVariables)** — effective_voice_id, effective_avatar_id, variation_id, openai_model=gpt-4o
-3. **All updateRow modules** — spreadsheetId to V1 sheet, sheetId to Production Tracker, range A1:AZ1
-4. **Module 5 (OpenAI)** — gpt-4o, Chosen Agency content prompt, outputs {script, caption} JSON
-5. **Module 23 (NEW)** — OpenAI Editor Brief (gpt-4o), 7-key JSON mapping to 10 template placeholders
-6. **Module 24 (NEW)** — google-docs:createADocumentFromTemplate, Script Doc template, 13 placeholders, map mode
-7. **Module 25 (NEW)** — google-docs:createADocumentFromTemplate, Editor Brief template, 10 placeholders, map mode
-8. **Module 6 (updateRow: Script Done)** — writes Script Text, Caption Text, Script Doc Link, Brief Doc Link, Last Updated
+3. **Module 4 (route entry)** — filter: Status = Queued (stored on first module in route, not route object — Make schema quirk)
+4. **All updateRow modules** — spreadsheetId to V1 sheet, sheetId to Production Tracker, range A1:AZ1
+5. **Module 5 (OpenAI)** — gpt-4o, Chosen Agency content prompt, outputs {script, caption} JSON
+6. **Module 23 (NEW)** — OpenAI Editor Brief (gpt-4o), 7-key JSON mapping to 10 template placeholders
+7. **Module 24 (NEW)** — google-docs:createADocumentFromTemplate (map mode), Script Doc template, 13 placeholders
+8. **Module 25 (NEW)** — google-docs:createADocumentFromTemplate (map mode), Editor Brief template, 10 placeholders
+9. **Module 6 (updateRow: Script Done)** — writes Script Text, Caption Text, Script Doc Link, Brief Doc Link, Last Updated
 
 **Route 0 order:** 4 → 5 → 23 → 24 → 25 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 14 → 15
 
+**Key learnings (for future Make blueprint work):**
+- Route filters go on the FIRST MODULE in the route's flow, not on the route object
+- Module name is `google-docs:createADocumentFromTemplate` (not `createADocumentFromATemplate`)
+- Template mapper uses `document`/`name`/`requests` (flat dict), not `fileId`/`title`/`values` array
+- Blueprint PATCH accepts `filter` on modules but rejects it on route objects
+
 **Repo artifacts:** clients/chosen-agency/prompts/editor_brief_v1.md, clients/chosen-agency/build_log.md (committed dab6912)
 
-**Transfer notes:** All IDs variable — swap OpenAI conn, Google Sheets/Drive/Docs conn, sheet/folder/template IDs at client handoff.
+**Transfer notes:** Swap OpenAI conn, Google Sheets/Drive/Docs conn, all sheet/folder/template IDs at client handoff.
 
-### Richard: remaining manual steps
-1. Open Make scenario 4894796 and set Router Route 0 filter: Status = Queued (Make schema blocks filter via API — must be set in UI)
-2. Verify connection for modules 24+25 (Google Docs) shows correct Google account
-3. E2E test: 1 row with Status=Queued — should produce Script Doc + Editor Brief in Drive, sheet status → Script Done
+### Richard: remaining steps
+1. Verify Google Docs connection on modules 24+25 shows correct Google account
+2. E2E test: 1 row with Status=Queued — should produce Script Doc + Editor Brief in Drive, sheet status → Script Done
 
-**[Forge] 2026-04-30:** DONE — blueprint live in Make (isinvalid: False). 3 manual steps remain for Richard (filter UI, conn verify, E2E test).
+**[Forge] 2026-04-30:** DONE — blueprint fully live via API (filter, docs modules, all refs). 2 verification steps for Richard.
