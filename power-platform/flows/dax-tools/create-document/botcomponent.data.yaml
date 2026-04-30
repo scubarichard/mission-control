@@ -1,0 +1,18 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: title
+  - kind: AutomaticTaskInput
+    propertyName: content
+modelDescription: Use this tool to save a markdown document to the firm's SharePoint DAX Documents folder. Call this whenever the user asks to save, store, or upload a specific piece of content as a file. Pass title (filename without extension) and content.
+outputs:
+  - propertyName: name
+  - propertyName: webUrl
+  - propertyName: id
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false

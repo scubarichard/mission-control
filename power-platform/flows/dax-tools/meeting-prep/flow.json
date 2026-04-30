@@ -1,0 +1,58 @@
+{
+  "properties": {
+    "connectionReferences": {},
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {"defaultValue": {}, "type": "SecureObject"},
+        "$connections": {"defaultValue": {}, "type": "Object"}
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request", "kind": "Skills",
+          "inputs": {"schema": {"type": "object", "properties": {"name": {"type": "string", "title": "Client name", "description": "Full or partial client name", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}}, "required": ["name"]}},
+          "description": "Builds a meeting prep brief for a client: profile, notes, recent tasks. Use Tool 6 first to confirm the client; this combines that with notes + tasks history."
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Find_Client": {
+              "type": "Http",
+              "inputs": {"method": "GET", "uri": "https://api.crmworkspace.com/v1/contacts?name=@{encodeUriComponent(triggerBody()?['name'])}", "headers": {"ACCESS_TOKEN": "__WEALTHBOX_API_KEY__"}}
+            },
+            "Get_Client_Notes": {
+              "type": "Http",
+              "inputs": {"method": "GET", "uri": "https://api.crmworkspace.com/v1/notes?contact_id=@{first(body('Find_Client')?['contacts'])?['id']}&per_page=20", "headers": {"ACCESS_TOKEN": "__WEALTHBOX_API_KEY__"}},
+              "runAfter": {"Find_Client": ["Succeeded"]}
+            },
+            "Get_Client_Tasks": {
+              "type": "Http",
+              "inputs": {"method": "GET", "uri": "https://api.crmworkspace.com/v1/tasks?contact_id=@{first(body('Find_Client')?['contacts'])?['id']}&per_page=20", "headers": {"ACCESS_TOKEN": "__WEALTHBOX_API_KEY__"}},
+              "runAfter": {"Find_Client": ["Succeeded"]}
+            }
+          }
+        },
+        "Respond_to_the_agent": {
+          "type": "Response", "kind": "Skills",
+          "inputs": {
+            "statusCode": 200,
+            "body": {"clientName": "@{triggerBody()?['name']}", "client": "@{first(body('Find_Client')?['contacts'])}", "notes": "@body('Get_Client_Notes')?['notes']", "tasks": "@body('Get_Client_Tasks')?['tasks']", "asOf": "@utcNow()"},
+            "schema": {"type": "object", "properties": {
+              "clientName": {"title": "Query", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true},
+              "client": {"title": "Client profile", "type": "object", "x-ms-dynamically-added": true},
+              "notes": {"title": "Notes", "description": "Recent Wealthbox notes for this client", "type": "array", "x-ms-dynamically-added": true},
+              "tasks": {"title": "Tasks", "description": "Open and recent tasks for this client", "type": "array", "x-ms-dynamically-added": true},
+              "asOf": {"title": "As of", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}
+            }}
+          },
+          "runAfter": {"Scope": ["Succeeded"]}
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

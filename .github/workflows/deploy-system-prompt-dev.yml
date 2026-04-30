@@ -1,0 +1,48 @@
+name: Deploy DAX system prompt (DAX-Dev)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Prompt version (e.g. v70)'
+        required: true
+        type: string
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (SP, no subscription needed)
+        env:
+          PP_APP_ID: ${{ secrets.PP_APP_ID }}
+          PP_CLIENT_SECRET: ${{ secrets.PP_CLIENT_SECRET }}
+          PP_TENANT_ID: ${{ secrets.PP_TENANT_ID }}
+        run: |
+          # SP doesn't need a subscription assignment — use --allow-no-subscriptions
+          az login --service-principal \
+            -u "$PP_APP_ID" \
+            -p "$PP_CLIENT_SECRET" \
+            --tenant "$PP_TENANT_ID" \
+            --allow-no-subscriptions
+
+      - name: PATCH botcomponent + escape braces
+        env:
+          DAX_RESOURCE: https://orgbe02eacf.api.crm.dynamics.com
+          DAX_COMPONENT_ID: 8fc7b220-10e0-4978-8ed0-0d5c472cb4c9
+          DAX_DISPLAY_NAME: Dax
+          DAX_DEV_PREFIX: "[DEV — dev.dax.dakona.com]"
+        run: |
+          set -euo pipefail
+          SRC="docs/DAX-system-prompt-${{ inputs.version }}.md"
+          if [ ! -f "$SRC" ]; then
+            echo "::error::Source file not found: $SRC"
+            exit 1
+          fi
+          python3 scripts/patch-prompt-for-copilot.py --source "$SRC"
+
+      - name: Reminder
+        run: |
+          echo "::notice title=Manual step required::Open Copilot Studio (DAX-Dev > Dax) and click Publish to make the new prompt live. Service-principal publish is a no-op for this bot; only the UI publish endpoint works."

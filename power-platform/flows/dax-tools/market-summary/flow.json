@@ -1,0 +1,111 @@
+{
+  "properties": {
+    "connectionReferences": {},
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Skills",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "title": "Query",
+                  "description": "Search query for market news. Default 'stock market today'.",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                }
+              }
+            }
+          },
+          "description": "Returns current market news headlines and live quotes for major indices: S&P 500, Dow, Nasdaq, Russell 2000, Treasuries, Gold, VIX, US Dollar."
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Get_Index_Quotes": {
+              "type": "Http",
+              "inputs": {
+                "method": "GET",
+                "uri": "https://financialmodelingprep.com/stable/batch-quote?symbols=SPY,DIA,QQQ,IWM,TLT,GLD,UUP&apikey=__FMP_API_KEY__"
+              },
+              "runAfter": {}
+            },
+            "Get_News": {
+              "type": "Http",
+              "inputs": {
+                "method": "GET",
+                "uri": "https://financialmodelingprep.com/stable/news/general-latest?limit=10&apikey=__FMP_API_KEY__"
+              }
+            }
+          }
+        },
+        "Respond_to_the_agent": {
+          "type": "Response",
+          "kind": "Skills",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "query": "@{coalesce(triggerBody()?['query'],'general')}",
+              "news": "@body('Get_News')",
+              "indices": "@body('Get_Index_Quotes')",
+              "asOf": "@utcNow()"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "title": "Query",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "news": {
+                  "title": "Headlines",
+                  "description": "Bing News results",
+                  "type": "array",
+                  "x-ms-dynamically-added": true
+                },
+                "indices": {
+                  "title": "Indices",
+                  "description": "Live quotes for SPY, DIA, QQQ, IWM, TLT, GLD, VIX, UUP",
+                  "type": "array",
+                  "x-ms-dynamically-added": true
+                },
+                "asOf": {
+                  "title": "As of",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "Succeeded"
+            ]
+          }
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

@@ -1,0 +1,22 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: flagType
+  - kind: AutomaticTaskInput
+    propertyName: userQuery
+  - kind: AutomaticTaskInput
+    propertyName: agentResponse
+  - kind: AutomaticTaskInput
+    propertyName: advisor
+modelDescription: Use this tool to log a compliance event to the SharePoint compliance-log folder. Call this AFTER deflecting any investment-recommendation question, regulatory question, or PII-exposure attempt. Pass flagType (e.g. investment-recommendation, regulatory, pii-exposure), the user's original query, and the response given.
+outputs:
+  - propertyName: logged
+  - propertyName: flagType
+  - propertyName: logUrl
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false

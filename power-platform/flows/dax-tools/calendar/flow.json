@@ -1,0 +1,50 @@
+{
+  "properties": {
+    "connectionReferences": {},
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {"$authentication": {"defaultValue": {}, "type": "SecureObject"}, "$connections": {"defaultValue": {}, "type": "Object"}},
+      "triggers": {
+        "manual": {
+          "type": "Request", "kind": "Skills",
+          "inputs": {"schema": {"type": "object", "properties": {"start": {"type": "string", "title": "Start (ISO)", "description": "ISO datetime, default now", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}, "end": {"type": "string", "title": "End (ISO)", "description": "ISO datetime, default 7 days from start", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}}}},
+          "description": "Read advisor's calendar events between start and end via Microsoft Graph calendarView."
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Get_Graph_Token": {"type": "Http", "inputs": {"method": "POST", "uri": "https://login.microsoftonline.com/d2a3c346-00f3-47dd-a53e-caa3fca74714/oauth2/v2.0/token", "headers": {"Content-Type": "application/x-www-form-urlencoded"}, "body": "grant_type=client_credentials&client_id=37fe1021-88b3-4744-aa32-b5d7e104462b&client_secret=__PP_CI_SECRET__&scope=https%3A%2F%2Fgraph.microsoft.com%2F.default"}},
+            "Get_Events": {
+              "type": "Http",
+              "inputs": {
+                "method": "GET",
+                "uri": "https://graph.microsoft.com/v1.0/users/1740bd16-eb72-4ace-913d-96150cec19fd/calendarView?startDateTime=@{coalesce(triggerBody()?['start'],utcNow())}&endDateTime=@{coalesce(triggerBody()?['end'],addDays(coalesce(triggerBody()?['start'],utcNow()),7))}&$orderby=start/dateTime&$top=50&$select=subject,start,end,location,attendees,bodyPreview,webLink,isAllDay",
+                "headers": {"Authorization": "Bearer @{body('Get_Graph_Token')?['access_token']}"}
+              },
+              "runAfter": {"Get_Graph_Token": ["Succeeded"]}
+            }
+          }
+        },
+        "Respond_to_the_agent": {
+          "type": "Response", "kind": "Skills",
+          "inputs": {
+            "statusCode": 200,
+            "body": {"events": "@body('Get_Events')?['value']", "start": "@{coalesce(triggerBody()?['start'],utcNow())}", "end": "@{coalesce(triggerBody()?['end'],addDays(coalesce(triggerBody()?['start'],utcNow()),7))}", "asOf": "@utcNow()"},
+            "schema": {"type": "object", "properties": {
+              "events": {"title": "Events", "type": "array", "x-ms-dynamically-added": true},
+              "start": {"title": "Start", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true},
+              "end": {"title": "End", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true},
+              "asOf": {"title": "As of", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}
+            }}
+          },
+          "runAfter": {"Scope": ["Succeeded"]}
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

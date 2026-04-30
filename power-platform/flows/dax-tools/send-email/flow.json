@@ -1,0 +1,58 @@
+{
+  "properties": {
+    "connectionReferences": {},
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {"$authentication": {"defaultValue": {}, "type": "SecureObject"}, "$connections": {"defaultValue": {}, "type": "Object"}},
+      "triggers": {
+        "manual": {
+          "type": "Request", "kind": "Skills",
+          "inputs": {"schema": {"type": "object", "properties": {"to": {"type": "string", "title": "To (email)", "description": "Recipient email address(es), comma-separated", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}, "subject": {"type": "string", "title": "Subject", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}, "body": {"type": "string", "title": "Body", "description": "Email body, plain text or HTML", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}}, "required": ["to", "subject", "body"]}},
+          "description": "Send an email from the advisor's mailbox via Microsoft Graph."
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Get_Graph_Token": {"type": "Http", "inputs": {"method": "POST", "uri": "https://login.microsoftonline.com/d2a3c346-00f3-47dd-a53e-caa3fca74714/oauth2/v2.0/token", "headers": {"Content-Type": "application/x-www-form-urlencoded"}, "body": "grant_type=client_credentials&client_id=37fe1021-88b3-4744-aa32-b5d7e104462b&client_secret=__PP_CI_SECRET__&scope=https%3A%2F%2Fgraph.microsoft.com%2F.default"}},
+            "Send_Email": {
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "https://graph.microsoft.com/v1.0/users/1740bd16-eb72-4ace-913d-96150cec19fd/sendMail",
+                "headers": {"Authorization": "Bearer @{body('Get_Graph_Token')?['access_token']}", "Content-Type": "application/json"},
+                "body": {
+                  "message": {
+                    "subject": "@{triggerBody()?['subject']}",
+                    "body": {"contentType": "Text", "content": "@{triggerBody()?['body']}"},
+                    "toRecipients": "@array(json(concat('{\"emailAddress\":{\"address\":\"', triggerBody()?['to'], '\"}}')))"
+                  },
+                  "saveToSentItems": true
+                }
+              },
+              "runAfter": {"Get_Graph_Token": ["Succeeded"]}
+            }
+          }
+        },
+        "Respond_to_the_agent": {
+          "type": "Response", "kind": "Skills",
+          "inputs": {
+            "statusCode": 200,
+            "body": {"sent": true, "to": "@{triggerBody()?['to']}", "subject": "@{triggerBody()?['subject']}", "asOf": "@utcNow()"},
+            "schema": {"type": "object", "properties": {
+              "sent": {"title": "Sent", "type": "boolean", "x-ms-dynamically-added": true},
+              "to": {"title": "To", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true},
+              "subject": {"title": "Subject", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true},
+              "asOf": {"title": "As of", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}
+            }}
+          },
+          "runAfter": {"Scope": ["Succeeded"]}
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

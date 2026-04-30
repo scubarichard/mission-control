@@ -1,0 +1,47 @@
+{
+  "properties": {
+    "connectionReferences": {},
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {"defaultValue": {}, "type": "SecureObject"},
+        "$connections": {"defaultValue": {}, "type": "Object"}
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request", "kind": "Skills",
+          "inputs": {"schema": {"type": "object", "properties": {"name": {"type": "string", "title": "Client name", "description": "Full name or partial name to search Wealthbox for", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}}, "required": ["name"]}},
+          "description": "Look up a client by name in Wealthbox CRM and return profile, contact info, and tags."
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Search_Wealthbox": {
+              "type": "Http",
+              "inputs": {"method": "GET", "uri": "https://api.crmworkspace.com/v1/contacts?name=@{encodeUriComponent(triggerBody()?['name'])}", "headers": {"ACCESS_TOKEN": "__WEALTHBOX_API_KEY__"}}
+            }
+          }
+        },
+        "Respond_to_the_agent": {
+          "type": "Response", "kind": "Skills",
+          "inputs": {
+            "statusCode": 200,
+            "body": {"query": "@{triggerBody()?['name']}", "contacts": "@body('Search_Wealthbox')?['contacts']", "totalResults": "@body('Search_Wealthbox')?['meta']?['total_entries']", "asOf": "@utcNow()"},
+            "schema": {"type": "object", "properties": {
+              "query": {"title": "Query", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true},
+              "contacts": {"title": "Contacts", "description": "Array of matching Wealthbox contacts", "type": "array", "x-ms-dynamically-added": true},
+              "totalResults": {"title": "Total results", "type": "integer", "x-ms-dynamically-added": true},
+              "asOf": {"title": "As of", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}
+            }}
+          },
+          "runAfter": {"Scope": ["Succeeded"]}
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

@@ -1,0 +1,16 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: name
+modelDescription: Use this tool to look up a client by name in the firm's Wealthbox CRM. Call this whenever the user mentions any person's name in a client context — 'tell me about X', 'I have a meeting with X', 'find X', 'who is X'. Pass the full or partial name. Always call this BEFORE answering questions about specific people.
+outputs:
+  - propertyName: query
+  - propertyName: contacts
+  - propertyName: totalResults
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false
