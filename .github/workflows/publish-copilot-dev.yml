@@ -1,0 +1,41 @@
+name: Publish Dax copilot (DAX-Dev)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Power Platform CLI
+        uses: microsoft/powerplatform-actions/actions-install@v1
+
+      - name: Auth + run pac copilot publish
+        shell: bash
+        env:
+          PP_APP_ID: ${{ secrets.PP_APP_ID }}
+          PP_CLIENT_SECRET: ${{ secrets.PP_CLIENT_SECRET }}
+          PP_TENANT_ID: ${{ secrets.PP_TENANT_ID }}
+          DAX_DEV_URL: ${{ secrets.DAX_DEV_URL }}
+          BOT_SCHEMA: auto_agent_BotRI
+        run: |
+          set -euo pipefail
+          pac --version
+          pac auth create \
+            --name dax-dev \
+            --url "$DAX_DEV_URL" \
+            --applicationId "$PP_APP_ID" \
+            --clientSecret "$PP_CLIENT_SECRET" \
+            --tenant "$PP_TENANT_ID"
+          pac auth select --name dax-dev
+          pac auth list
+
+          echo "--- pac copilot help ---"
+          pac copilot --help || true
+          pac copilot publish --help || pac chatbot publish --help || true
+
+          echo "--- attempting publish (modern syntax) ---"
+          pac copilot publish --schemaName "$BOT_SCHEMA" || \
+          pac copilot publish --schema-name "$BOT_SCHEMA" || \
+          pac chatbot publish --schemaName "$BOT_SCHEMA" || \
+          (echo "All publish syntaxes failed"; exit 1)
