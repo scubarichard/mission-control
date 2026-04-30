@@ -20,22 +20,30 @@ jobs:
           BOT_SCHEMA: auto_agent_BotRI
         run: |
           set -euo pipefail
-          pac --version
-          pac auth create \
+          PAC="$POWERPLATFORMTOOLS_PACPATH/tools/pac"
+          if [ ! -x "$PAC" ]; then PAC="$(find "$POWERPLATFORMTOOLS_PACPATH" -name pac -type f | head -1)"; fi
+          echo "Using pac at: $PAC"
+          ls -la "$(dirname "$PAC")" || true
+          "$PAC" --version
+
+          "$PAC" auth create \
             --name dax-dev \
             --url "$DAX_DEV_URL" \
             --applicationId "$PP_APP_ID" \
             --clientSecret "$PP_CLIENT_SECRET" \
             --tenant "$PP_TENANT_ID"
-          pac auth select --name dax-dev
-          pac auth list
+          "$PAC" auth select --name dax-dev
+          "$PAC" auth list
 
           echo "--- pac copilot help ---"
-          pac copilot --help || true
-          pac copilot publish --help || pac chatbot publish --help || true
+          "$PAC" copilot --help || true
+          echo "--- pac copilot publish help ---"
+          "$PAC" copilot publish --help || true
+          echo "--- pac chatbot help (legacy) ---"
+          "$PAC" chatbot --help || true
 
-          echo "--- attempting publish (modern syntax) ---"
-          pac copilot publish --schemaName "$BOT_SCHEMA" || \
-          pac copilot publish --schema-name "$BOT_SCHEMA" || \
-          pac chatbot publish --schemaName "$BOT_SCHEMA" || \
+          echo "--- attempting publish ---"
+          "$PAC" copilot publish --schemaName "$BOT_SCHEMA" || \
+          "$PAC" copilot publish --schema-name "$BOT_SCHEMA" || \
+          "$PAC" chatbot publish --schemaName "$BOT_SCHEMA" || \
           (echo "All publish syntaxes failed"; exit 1)
