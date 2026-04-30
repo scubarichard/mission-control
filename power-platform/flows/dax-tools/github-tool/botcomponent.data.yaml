@@ -1,0 +1,18 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: path
+modelDescription: |
+  Internal-use GitHub REST API GET tool. Pass any GitHub API path (without
+  leading slash, e.g. "repos/scubarichard/dax/issues" or "users/scubarichard").
+  Returns raw JSON. Use sparingly — only for explicit DevOps queries.
+outputs:
+  - propertyName: path
+  - propertyName: data
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false

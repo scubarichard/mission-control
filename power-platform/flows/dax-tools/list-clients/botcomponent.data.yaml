@@ -1,0 +1,21 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: tag
+  - kind: AutomaticTaskInput
+    propertyName: perPage
+modelDescription: |
+  Lists clients in Wealthbox CRM, optionally filtered by tag (e.g. "ESG",
+  "Hot", "A-tier"). Use when an advisor asks to see clients, list clients,
+  show all clients, or filter clients by tag, name, interest, or risk.
+outputs:
+  - propertyName: tag
+  - propertyName: contacts
+  - propertyName: totalResults
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false

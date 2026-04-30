@@ -43,28 +43,53 @@ Recommendation flagged in #dax-collab: option 3 saves likely 1+ session of trial
 ## Phase 4 caveat (raised, not yet acted on)
 Power Automate's M365 connectors run under the **connection owner's** identity (= Richard in dev), not the chatting user's. Fine for dev (single user), but for staging/ICP we'll need to swap M365 connectors for direct Graph HTTP calls with delegated tokens passed from agent context. Re-architecture needed before promotion.
 
-## Next session
+## Phase 2 status — 2026-04-30 17:30 UTC
 
-### What's working ✅
-- Cloud flow JSON schema fully decoded (reference: `judeper/copilot-studio-agent-patterns` and `jonathandhaene/hr-agents-comparison` on GitHub).
-- Trigger: `kind: "PowerVirtualAgents"`, type Request, with input schema. Response: `kind: "PowerVirtualAgentsResponseV2"`.
-- Workflow row creation via Dataverse Web API works (POST `/workflows` with required fields including managed-property objects for `iscustomizable` / `iscustomprocessingstepallowedforotherpublishers`).
-- Solution import via `pac solution import` works end-to-end (workflow `import-dax-solution.yml`). Tool 1 flow is now living in DAX-Dev as workflow id `a3482ab8-ad44-f111-88b4-000d3a36c81b` with all 3 actions (FMP, Finnhub, Respond).
-- Tool 1 flow JSON template lives at `power-platform/flows/dax-tools/market-data/flow.json` with `__FMP_API_KEY__` / `__FINNHUB_API_KEY__` placeholders.
+### Working pattern (decoded from `microsoft/Power-CAT-Copilot-Studio-Kit`)
+1. **POST flow JSON** to Microsoft.Flow API at `https://api.flow.microsoft.com/providers/Microsoft.ProcessSimple/environments/{envId}/flows?api-version=2016-11-01` with body `{"properties": {"displayName": "...", "definition": {...}, "state": "Started", "connectionReferences": {...}}}`. Trigger uses `"type": "Request", "kind": "Skills"`. Response uses `"type": "Response", "kind": "Skills"`. Auto-syncs to Dataverse `workflows` table within ~10s.
+2. **Add workflow to DAX solution** (componenttype 29) via `AddSolutionComponent`.
+3. **Create action botcomponent** (componenttype 9) with `data` field = TaskDialog YAML containing `action.kind: InvokeFlowTaskAction` and `action.flowId: <workflowid>`.
+4. **Associate botcomponent <-> workflow** via N:N table `botcomponent_workflow` ($ref POST).
+5. **Add botcomponent to DAX solution** (componenttype 10222).
+6. **Manual UI Publish click** on the bot — service-principal `PvaPublish` returns 200 with empty job (no-op). UI is the only working publish path.
 
-### What's blocked ❌
-- **Activation**: PATCH statecode=1 returns `0x80060467 — Flow client error … DefinitionRequestMissingFields … missing required field 'definition'`. The Microsoft.Flow runtime's deployment API rejects activation regardless of payload shape. Flow stays in Draft (statecode=0/statuscode=1).
-- Tried: SP token, delegated user token, custom-property envelopes, with/without `Scope_*` wrapping, with/without `connectionReferences`, with/without `parameters`, post-`pac solution import` with `--activate-plugins`. All rejected with same error.
-- **Agent registration**: not attempted yet. Tables to investigate: `aiplugin`, `aipluginoperation`, `botcomponent` of action kind, `aicopilot_aiplugin`. Likely the M+1 step after activation works.
+`scripts/deploy-dax-tool.py` automates steps 1-5. Reads `flow.json` + `botcomponent.data.yaml` + `secrets.json` from a tool dir; replaces `__SECRET_NAME__` placeholders from KV.
 
-### Hypotheses to test next session
-1. **Microsoft.Flow direct API**: bypass Dataverse PATCH; call `https://{region}.api.flow.microsoft.com/providers/Microsoft.ProcessSimple/environments/{envId}/flows/{flowId}/start?api-version=2016-11-01` directly with a token for `https://service.flow.microsoft.com`. Different envelope, may succeed where PATCH doesn't.
-2. **Pre-activated solution import**: include the workflow already in active state in customizations.xml. Tried StateCode=1 in customizations.xml; pac silently kept it Draft. Try `pac solution import --activate-plugins` against a *managed* solution build (zip with `<Managed>1</Managed>`), since managed import might trigger different activation behavior.
-3. **OpenAPI custom-connector route instead of cloud flow**: skip the cloud-flow vehicle entirely and register each tool as an OpenAPI plugin operation directly on the Dax agent (`aiplugin` + `aipluginoperation` tables). Bypasses Microsoft.Flow runtime; the agent calls the API directly. Probably the right architecture for HTTP-only tools (1, 6, 7, 11, 12, 14, 15) anyway. M365-connector tools (2-5, 9, 10) still need the cloud-flow vehicle for their connectors.
-4. **One UI-built reference flow** (option 3 from "Open question" above) — Richard creates a single empty flow with the trigger in `make.powerautomate.com`, saves, we export, compare envelope to ours. Most likely to surface the missing field/property quickly. Still recommended if and when Richard's well enough.
+### Earlier dead ends (documented for future-me)
+- **Dataverse `workflows` PATCH activation** (`statecode=1, statuscode=2`) → `0x80060467 DefinitionRequestMissingFields` regardless of envelope. The Dataverse layer can't activate cloud flows.
+- **Solution import via `pac solution import --activate-plugins`** → imports flow but leaves `state=Stopped`. Activation must be a separate Flow Management API call after import.
+- **Trigger kind `PowerVirtualAgents`** (older naming) is rejected by Flow API. Use `Skills`. Both `PowerVirtualAgents` and `Skills` work in solution-import path; only `Skills` works in Flow API direct create.
 
-### Resource state after this session
-- Workflow `DAX — Market Data` (id `a3482ab8-ad44-f111-88b4-000d3a36c81b`) — DRAFT, in DAX solution
-- Solution `DAX` v1.0.0.0 — bot + 14 botcomponents + 1 workflow
-- Test solution zip at `power-platform/solutions/DAX-dev-test.zip` — round-trip-validated import path
-- API keys still hardcoded in the live workflow's `clientdata` (FMP + Finnhub strings). Needs refactor to env-var or KV-connector before promotion.
+### Tools deployed (8/15 — all programmatic, no M365 consent needed)
+
+| # | Tool | Workflow ID | Status |
+|---|---|---|---|
+| 1 | Market Data (FMP + Finnhub) | `b85b3b06-b244-f111-88b4-000d3a36c81b` | ✅ active in env |
+| 6 | Client Lookup (Wealthbox) | `7531f8df-b244-f111-88b4-000d3a36c81b` | ✅ active in env |
+| 7 | List Clients (Wealthbox) | `666e3a34-b344-f111-88b4-000d3a36c81b` | ✅ active in env |
+| 8 | Meeting Prep (Wealthbox composite — defers SharePoint storage) | `606598be-b344-f111-88b4-000d3a36c81b` | ✅ active in env |
+| 11 | Market Summary (Bing News + FMP indices) | `72da0243-b344-f111-88b4-000d3a36c81b` | ✅ active in env |
+| 12 | Research and Write (OpenAI.com gpt-4o; SharePoint storage deferred) | `109a6f97-b344-f111-88b4-000d3a36c81b` | ✅ active in env |
+| 14 | Generate Reports (proxy to n8n schwab-processor) | `cdc30d4a-b344-f111-88b4-000d3a36c81b` | ✅ active in env |
+| 15 | GitHub Tool (REST GET) | `202d1459-b344-f111-88b4-000d3a36c81b` | ✅ active in env |
+
+All in DAX solution. Bot publish click in Copilot Studio UI required for them to surface in chat.
+
+### Tools deferred (need user OAuth consent for M365 connectors — can't fully automate without Richard at the keyboard)
+
+| # | Tool | Connector(s) needed |
+|---|---|---|
+| 2 | Email (read) | Outlook |
+| 3 | Calendar (read) | Calendar |
+| 4 | SharePoint Browser | SharePoint |
+| 5 | Create Document | SharePoint |
+| 9 | Send Email | Outlook |
+| 10 | Manage Calendar | Calendar |
+| 13 | Compliance Flag Check | SharePoint (logging only — could omit and rely on prompt rules) |
+
+**Unblock path**: Richard creates 3 connections in `make.powerautomate.com` (Outlook, Calendar, SharePoint) — one auth flow each, ~30 sec total. Then `deploy-dax-tool.py` adds connection refs to flow JSON for those tools.
+
+**Alternative**: rebuild M365-connector tools as direct Microsoft Graph HTTP calls. Requires Graph app-only permissions on a service principal + admin consent. Gives all-user access (fine for dev where Richard is the only user; unacceptable for staging/ICP). Better long-term path for multi-tenant.
+
+### Phase 2 progress: ~55% by tool count, ~70% by usefulness
+The 8 deployed tools cover all market data, all client CRM lookup, meeting prep, generated long-form content, and the n8n proxy. The remaining 7 are M365 productivity tools (read mail, draft email, calendar, SharePoint files) — important but not blocking general DAX usefulness.

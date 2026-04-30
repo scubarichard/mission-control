@@ -1,0 +1,47 @@
+{
+  "properties": {
+    "connectionReferences": {},
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {"defaultValue": {}, "type": "SecureObject"},
+        "$connections": {"defaultValue": {}, "type": "Object"}
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request", "kind": "Skills",
+          "inputs": {"schema": {"type": "object", "properties": {"tag": {"type": "string", "title": "Tag filter (optional)", "description": "Filter clients by Wealthbox tag (e.g. ESG, Hot, A-tier). Leave blank for all clients.", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}, "perPage": {"type": "integer", "title": "Per page", "description": "Page size, default 50, max 200", "x-ms-dynamically-added": true}}}},
+          "description": "List all clients in Wealthbox, optionally filtered by a tag."
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "List_Wealthbox_Clients": {
+              "type": "Http",
+              "inputs": {"method": "GET", "uri": "https://api.crmworkspace.com/v1/contacts?per_page=@{coalesce(triggerBody()?['perPage'],50)}@{if(equals(triggerBody()?['tag'],null),'',concat('&tags=',encodeUriComponent(triggerBody()?['tag'])))}", "headers": {"ACCESS_TOKEN": "__WEALTHBOX_API_KEY__"}}
+            }
+          }
+        },
+        "Respond_to_the_agent": {
+          "type": "Response", "kind": "Skills",
+          "inputs": {
+            "statusCode": 200,
+            "body": {"tag": "@{triggerBody()?['tag']}", "contacts": "@body('List_Wealthbox_Clients')?['contacts']", "totalResults": "@body('List_Wealthbox_Clients')?['meta']?['total_entries']", "asOf": "@utcNow()"},
+            "schema": {"type": "object", "properties": {
+              "tag": {"title": "Tag filter", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true},
+              "contacts": {"title": "Contacts", "type": "array", "x-ms-dynamically-added": true},
+              "totalResults": {"title": "Total results", "type": "integer", "x-ms-dynamically-added": true},
+              "asOf": {"title": "As of", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}
+            }}
+          },
+          "runAfter": {"Scope": ["Succeeded"]}
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

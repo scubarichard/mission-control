@@ -1,0 +1,20 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: period
+  - kind: AutomaticTaskInput
+    propertyName: clientId
+modelDescription: |
+  Generates quarterly client review reports by triggering the n8n
+  schwab-processor pipeline. Use when an advisor asks to generate quarterly
+  reviews, review Schwab data, or produce client reports for a period.
+outputs:
+  - propertyName: period
+  - propertyName: result
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false

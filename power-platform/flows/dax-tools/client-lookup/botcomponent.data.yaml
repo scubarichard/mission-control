@@ -1,0 +1,23 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: name
+modelDescription: |
+  Looks up a client in Wealthbox CRM by full or partial name. Returns the
+  contact's profile, tags, contact info, and other Wealthbox fields. Use whenever
+  an advisor mentions ANY person's name — asking about them, saying they have a
+  meeting with them, saying they are a client, etc. ALWAYS call this BEFORE
+  responding when a person is mentioned. Do not answer from general knowledge
+  about people. Skip only if the person is clearly a public figure asked about
+  in a general context (e.g. "Warren Buffett's investment philosophy").
+outputs:
+  - propertyName: query
+  - propertyName: contacts
+  - propertyName: totalResults
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false

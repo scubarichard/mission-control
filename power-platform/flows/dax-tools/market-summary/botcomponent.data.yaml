@@ -1,0 +1,21 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: query
+modelDescription: |
+  Returns current market news headlines plus live quotes for the major indices
+  (S&P 500, Dow, Nasdaq, Russell 2000, Treasuries, Gold, VIX, US Dollar). Use
+  for "what's driving markets", "any market news", "market update", or general
+  "the market today" questions. Always call this — never generate market
+  commentary from general knowledge.
+outputs:
+  - propertyName: query
+  - propertyName: news
+  - propertyName: indices
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false

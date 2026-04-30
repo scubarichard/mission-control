@@ -1,0 +1,21 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: name
+modelDescription: |
+  Builds a meeting prep brief for a client. Returns the client's Wealthbox
+  profile + recent notes + open tasks in one call. Use when an advisor asks
+  to prep for a meeting with a client (e.g. "prep me for George Jetson",
+  "what should I know about my 3pm with Homer Simpson", "meeting brief").
+outputs:
+  - propertyName: clientName
+  - propertyName: client
+  - propertyName: notes
+  - propertyName: tasks
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false

@@ -1,0 +1,132 @@
+{
+  "properties": {
+    "connectionReferences": {},
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Skills",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "prompt": {
+                  "type": "string",
+                  "title": "Writing prompt",
+                  "description": "The writing/research task \u2014 what to write, audience, length, style.",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "wordCount": {
+                  "type": "integer",
+                  "title": "Target word count",
+                  "description": "Target word count, default 1000",
+                  "x-ms-dynamically-added": true
+                }
+              },
+              "required": [
+                "prompt"
+              ]
+            }
+          },
+          "description": "Generates long-form written content (essay, report, letter, memo, summary, article, analysis, plan) using Azure OpenAI gpt-4o."
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Call_Azure_OpenAI": {
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "https://api.openai.com/v1/chat/completions",
+                "headers": {
+                  "Content-Type": "application/json",
+                  "Authorization": "Bearer __OPENAI_API_KEY__"
+                },
+                "body": {
+                  "model": "gpt-4o",
+                  "messages": [
+                    {
+                      "role": "system",
+                      "content": "You are DAX, a writing assistant for an RIA firm. Produce well-structured, polished written content. Write in plain markdown. Aim for the target word count if specified."
+                    },
+                    {
+                      "role": "user",
+                      "content": "@{triggerBody()?['prompt']}\n\nTarget word count: @{coalesce(triggerBody()?['wordCount'], 1000)}"
+                    }
+                  ],
+                  "temperature": 0.4,
+                  "max_tokens": 4000
+                }
+              }
+            }
+          }
+        },
+        "Respond_to_the_agent": {
+          "type": "Response",
+          "kind": "Skills",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "prompt": "@{triggerBody()?['prompt']}",
+              "content": "@body('Call_Azure_OpenAI')?['choices']?[0]?['message']?['content']",
+              "model": "gpt-4o",
+              "asOf": "@utcNow()"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "prompt": {
+                  "title": "Original prompt",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "content": {
+                  "title": "Generated content",
+                  "description": "Markdown-formatted long-form content",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "model": {
+                  "title": "Model",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "asOf": {
+                  "title": "As of",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "Succeeded"
+            ]
+          }
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

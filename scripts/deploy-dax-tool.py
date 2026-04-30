@@ -61,8 +61,10 @@ def kv_secret(vault: str, name: str) -> str:
     return out.decode().strip()
 
 
-def http(method: str, url: str, token: str, body=None):
+def http(method: str, url: str, token: str, body=None, prefer_repr: bool = False):
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json", "OData-MaxVersion": "4.0", "OData-Version": "4.0"}
+    if prefer_repr:
+        headers["Prefer"] = "return=representation"
     if body is not None:
         data = json.dumps(body).encode()
     else:
@@ -73,7 +75,10 @@ def http(method: str, url: str, token: str, body=None):
             content = resp.read().decode()
             return resp.status, json.loads(content) if content else {}
     except urllib.error.HTTPError as e:
-        return e.code, json.loads(e.read().decode())
+        try:
+            return e.code, json.loads(e.read().decode())
+        except Exception:
+            return e.code, {}
 
 
 def main():
@@ -134,7 +139,9 @@ def main():
     workflow_id = None
     for attempt in range(15):
         time.sleep(3)
-        s, r = http("GET", f"{args.dataverse_url}/api/data/v9.2/workflows?$filter=name eq '{flow_create_body['properties']['displayName']}'&$select=name,workflowid,statecode", dv_token)
+        from urllib.parse import quote
+        flt = quote(f"name eq '{flow_create_body['properties']['displayName']}'")
+        s, r = http("GET", f"{args.dataverse_url}/api/data/v9.2/workflows?$filter={flt}&$select=name,workflowid,statecode", dv_token)
         if s == 200 and r.get("value"):
             workflow_id = r["value"][0]["workflowid"]
             print(f"     ✓ Dataverse workflowid: {workflow_id} state={r['value'][0]['statecode']}")
@@ -158,8 +165,8 @@ def main():
         "statecode": 0,
         "statuscode": 1,
     }
-    s, r = http("POST", f"{args.dataverse_url}/api/data/v9.2/botcomponents", dv_token, body)
-    if s != 201:
+    s, r = http("POST", f"{args.dataverse_url}/api/data/v9.2/botcomponents", dv_token, body, prefer_repr=True)
+    if s not in (200, 201):
         sys.exit(f"botcomponent create failed: {s} {json.dumps(r)[:500]}")
     bc_id = r["botcomponentid"]
     print(f"     ✓ botcomponentid: {bc_id}")

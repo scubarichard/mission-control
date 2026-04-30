@@ -1,0 +1,24 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: prompt
+  - kind: AutomaticTaskInput
+    propertyName: wordCount
+modelDescription: |
+  Generates long-form written content — essays, reports, letters, memos,
+  summaries, articles, analyses, plans, marketing copy, client letters — using
+  Azure OpenAI. Pass the writing task and an optional target word count.
+  Returns markdown-formatted content. Note: this version does NOT save to
+  SharePoint (saving requires M365 consent — deferred). Use whenever an
+  advisor asks to write/draft/create written content.
+outputs:
+  - propertyName: prompt
+  - propertyName: content
+  - propertyName: model
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false
