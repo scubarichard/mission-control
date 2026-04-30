@@ -42,6 +42,9 @@ jobs:
           echo "publish exit=$ECODE"
 
           echo "--- pac copilot status (by GUID) ---"
-          "$PAC" copilot status --bot "$BOT_ID" || true
+          "$PAC" copilot status --bot-id "$BOT_ID" || true
+
+          echo "--- list again to see current state ---"
+          "$PAC" copilot list || true
 
           exit $ECODE
