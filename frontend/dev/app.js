@@ -13,34 +13,27 @@
       const res = await fetch('/.auth/me', { credentials: 'include' });
       if (!res.ok) return null;
       const data = await res.json();
-      const principal = data.clientPrincipal;
-      if (principal && principal.userDetails) {
-        userSlot.textContent = principal.userDetails;
-      }
-      return principal;
+      return data.clientPrincipal;
     } catch (_) {
       return null;
     }
   }
 
-  async function fetchAgentToken() {
+  async function fetchAgentConfig() {
     const res = await fetch('/api/token', { credentials: 'include' });
     if (!res.ok) {
       const text = await res.text().catch(() => '');
-      throw new Error('Token endpoint failed: ' + res.status + ' ' + text);
+      throw new Error('Config endpoint failed: ' + res.status + ' ' + text);
     }
     return res.json();
   }
 
-  function whenSdkReady() {
-    if (window.CopilotStudio && window.WebChat) return Promise.resolve();
+  function whenReady() {
     return new Promise((resolve) => {
-      const check = () => {
-        if (window.CopilotStudio && window.WebChat) resolve();
-      };
-      document.addEventListener('cs-sdk-ready', check, { once: false });
+      const check = () => window.CopilotStudio && window.WebChat && window.msal;
+      if (check()) return resolve();
       const interval = setInterval(() => {
-        if (window.CopilotStudio && window.WebChat) {
+        if (check()) {
           clearInterval(interval);
           resolve();
         }
@@ -48,16 +41,58 @@
     });
   }
 
-  await loadUser();
-  await whenSdkReady();
+  const principal = await loadUser();
+  if (principal && principal.userDetails) {
+    userSlot.textContent = principal.userDetails;
+  }
 
-  let agentInfo;
+  await whenReady();
+
+  let cfg;
   try {
-    agentInfo = await fetchAgentToken();
+    cfg = await fetchAgentConfig();
   } catch (err) {
-    showStatus('Could not start DAX chat: ' + err.message);
+    showStatus('Could not load DAX config: ' + err.message);
     return;
   }
+
+  const msalInstance = new window.msal.PublicClientApplication({
+    auth: {
+      clientId: cfg.clientId,
+      authority: 'https://login.microsoftonline.com/' + cfg.tenantId,
+      redirectUri: window.location.origin + '/'
+    },
+    cache: { cacheLocation: 'sessionStorage' }
+  });
+  await msalInstance.initialize();
+  await msalInstance.handleRedirectPromise();
+
+  let account = msalInstance.getAllAccounts()[0];
+  let tokenResp;
+  const scopeRequest = { scopes: [cfg.scope], loginHint: cfg.user.name };
+
+  try {
+    if (account) {
+      tokenResp = await msalInstance.acquireTokenSilent({ ...scopeRequest, account });
+    } else {
+      tokenResp = await msalInstance.ssoSilent(scopeRequest);
+      account = tokenResp.account;
+    }
+  } catch (silentErr) {
+    console.warn('Silent token acquisition failed, falling back to popup:', silentErr);
+    try {
+      tokenResp = await msalInstance.acquireTokenPopup(scopeRequest);
+      account = tokenResp.account;
+    } catch (popupErr) {
+      showStatus('Could not get agent access token: ' + (popupErr.message || popupErr));
+      return;
+    }
+  }
+
+  const { CopilotStudioClient, CopilotStudioWebChat, ConnectionSettings } = window.CopilotStudio;
+  const settings = new ConnectionSettings({ directConnectUrl: cfg.directConnectUrl });
+  const client = new CopilotStudioClient(settings, tokenResp.accessToken);
+  const directLine = CopilotStudioWebChat.createConnection(client, { showTyping: true });
 
   const styleOptions = {
     backgroundColor: '#FFFFFF',
@@ -72,15 +107,6 @@
     rootHeight: '100%',
     rootWidth: '100%'
   };
-
-  const { CopilotStudioClient, CopilotStudioWebChat, ConnectionSettings } = window.CopilotStudio;
-
-  const settings = new ConnectionSettings({
-    directConnectUrl: agentInfo.directConnectUrl
-  });
-
-  const client = new CopilotStudioClient(settings, agentInfo.token);
-  const directLine = CopilotStudioWebChat.createConnection(client, { showTyping: true });
 
   window.WebChat.renderWebChat(
     {

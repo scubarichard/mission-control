@@ -26,17 +26,12 @@
           "openIdIssuer": "https://login.microsoftonline.com/d2a3c346-00f3-47dd-a53e-caa3fca74714/v2.0",
           "clientIdSettingName": "AAD_CLIENT_ID",
           "clientSecretSettingName": "AAD_CLIENT_SECRET"
-        },
-        "login": {
-          "loginParameters": [
-            "scope=openid profile email offline_access https://api.powerplatform.com/CopilotStudio.Copilots.Invoke"
-          ]
         }
       }
     }
   },
   "globalHeaders": {
-    "Content-Security-Policy": "default-src 'self'; script-src 'self' https://cdn.botframework.com https://unpkg.com; connect-src 'self' https://*.environment.api.powerplatform.com https://*.botframework.com; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:;",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' https://cdn.botframework.com https://unpkg.com; connect-src 'self' https://*.environment.api.powerplatform.com https://*.botframework.com https://login.microsoftonline.com; frame-src https://login.microsoftonline.com; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:;",
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin"
   }
