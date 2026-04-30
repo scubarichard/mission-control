@@ -14,14 +14,10 @@
       crossorigin="anonymous"
       src="https://unpkg.com/@azure/msal-browser@5.9.0/lib/msal-browser.min.js"
     ></script>
-    <!-- Copilot Studio Agents SDK (browser ESM bundle).
-         Dev only: loaded from unpkg. For staging/prod, bundle via build step. -->
-    <script type="module">
-      import { CopilotStudioClient, CopilotStudioWebChat, ConnectionSettings }
-        from 'https://unpkg.com/@microsoft/agents-copilotstudio-client@1.5.1/dist/src/browser.mjs';
-      window.CopilotStudio = { CopilotStudioClient, CopilotStudioWebChat, ConnectionSettings };
-      document.dispatchEvent(new Event('cs-sdk-ready'));
-    </script>
+    <!-- Copilot Studio Agents SDK loader. External file so CSP `script-src`
+         doesn't block an inline module script. The loader's import is from
+         unpkg (allowed). Dev only — bundle locally for staging/prod. -->
+    <script type="module" src="/sdk-loader.mjs"></script>
   </head>
   <body>
     <header class="topbar">
