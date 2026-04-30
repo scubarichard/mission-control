@@ -92,8 +92,17 @@ Each flow's first action POSTs to `login.microsoftonline.com/{tenant}/oauth2/v2.
 
 **Permission scope = the entire tenant.** Fine for dev (Richard is the only user; flows hardcode his OID `1740bd16-eb72-4ace-913d-96150cec19fd` as the target user). For staging/ICP this needs to change to delegated user identity (passed from agent context) — currently a known Phase 4 blocker.
 
-### What's left to make Tool 1-15 chat-callable
-**Bot publish click** in Copilot Studio UI (Microsoft.Flow's bot-publish endpoint is undocumented; SP/user `PvaPublish` returns 200 no-op). One click, ~5 sec, exposes all 15 actions to the agent.
+### Bot publish — FULLY AUTOMATED (corrected 2026-04-30 17:57 UTC)
+Earlier this session I dismissed `pac copilot publish` as a no-op. **That was wrong.** pac's console output prints the *prior* publish job's status (e.g. `Failed [04/30/2026 13:12:44]`) which made me think the new publish hadn't fired. It HAD — `bot.publishedon` advances every time the workflow runs.
+
+Trigger from anywhere:
+```
+gh workflow run publish-copilot-dev.yml --ref master
+```
+
+`.github/workflows/publish-copilot-dev.yml` runs `pac copilot publish --bot 389de172-2e44-f111-88b4-000d3a36c81b` under the DAX-PP-CI service principal. ~50 seconds end-to-end.
+
+The Dataverse `bots(...).PvaPublish` action *does* in fact return a no-op — pac uses a different (undocumented) authoring API endpoint that Microsoft hasn't published.
 
 ### Smoke-test results (2026-04-30 16:55 UTC)
 | Backend | Status | Note |

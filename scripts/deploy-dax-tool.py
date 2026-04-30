@@ -180,9 +180,12 @@ def main():
     print(f"     ✓ HTTP {s}")
 
     print()
-    print(f"DONE. Tool 1 components in env. To make available in chat, click Publish in Copilot Studio UI.")
-    print(f"  flow workflowid: {workflow_id}")
-    print(f"  botcomponentid:  {bc_id}")
+    print(f"DONE. flow workflowid: {workflow_id}")
+    print(f"      botcomponentid:  {bc_id}")
+    print()
+    print(f"To make available in chat, run: gh workflow run publish-copilot-dev.yml --ref master")
+    print(f"(`pac copilot publish` via SP — verified working 2026-04-30. Misleading 'Failed [...]'")
+    print(f" message in pac output is the prior-job status, not the new publish.)")
 
 
 if __name__ == "__main__":
