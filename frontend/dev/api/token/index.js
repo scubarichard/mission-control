@@ -5,10 +5,17 @@ module.exports = async function (context, req) {
     return;
   }
 
-  const directLineSecret = process.env.DIRECTLINE_SECRET;
-  if (!directLineSecret) {
-    context.log.error('DIRECTLINE_SECRET app setting is missing.');
-    context.res = { status: 500, body: 'Server is not configured.' };
+  const accessToken = req.headers['x-ms-token-aad-access-token'];
+  if (!accessToken) {
+    context.log.error('No x-ms-token-aad-access-token header. Check SWA loginParameters scope.');
+    context.res = { status: 500, body: 'Server is not configured (no agent access token).' };
+    return;
+  }
+
+  const directConnectUrl = process.env.CONNECTION_STRING;
+  if (!directConnectUrl) {
+    context.log.error('CONNECTION_STRING app setting is missing.');
+    context.res = { status: 500, body: 'Server is not configured (no agent endpoint).' };
     return;
   }
 
@@ -20,34 +27,7 @@ module.exports = async function (context, req) {
     return;
   }
 
-  const userId = 'dl_' + (principal.userId || principal.userDetails || 'anon').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 60);
-
-  let dlRes;
-  try {
-    dlRes = await fetch('https://directline.botframework.com/v3/directline/tokens/generate', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + directLineSecret,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        user: { id: userId, name: principal.userDetails || userId }
-      })
-    });
-  } catch (err) {
-    context.log.error('Direct Line fetch failed', err);
-    context.res = { status: 502, body: 'Could not reach Direct Line.' };
-    return;
-  }
-
-  if (!dlRes.ok) {
-    const body = await dlRes.text().catch(() => '');
-    context.log.error('Direct Line token exchange failed', dlRes.status, body);
-    context.res = { status: 502, body: 'Direct Line rejected the token request.' };
-    return;
-  }
-
-  const data = await dlRes.json();
+  const expiresOnHeader = req.headers['x-ms-token-aad-expires-on'];
 
   context.res = {
     status: 200,
@@ -56,10 +36,10 @@ module.exports = async function (context, req) {
       'Cache-Control': 'no-store'
     },
     body: {
-      token: data.token,
-      expires_in: data.expires_in,
-      conversationId: data.conversationId,
-      user: { id: userId, name: principal.userDetails || userId }
+      token: accessToken,
+      directConnectUrl,
+      expiresOn: expiresOnHeader || null,
+      user: { id: principal.userId, name: principal.userDetails }
     }
   };
 };

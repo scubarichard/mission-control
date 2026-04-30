@@ -23,7 +23,7 @@
     }
   }
 
-  async function fetchDirectLineToken() {
+  async function fetchAgentToken() {
     const res = await fetch('/api/token', { credentials: 'include' });
     if (!res.ok) {
       const text = await res.text().catch(() => '');
@@ -32,11 +32,28 @@
     return res.json();
   }
 
-  await loadUser();
+  function whenSdkReady() {
+    if (window.CopilotStudio && window.WebChat) return Promise.resolve();
+    return new Promise((resolve) => {
+      const check = () => {
+        if (window.CopilotStudio && window.WebChat) resolve();
+      };
+      document.addEventListener('cs-sdk-ready', check, { once: false });
+      const interval = setInterval(() => {
+        if (window.CopilotStudio && window.WebChat) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 50);
+    });
+  }
 
-  let tokenInfo;
+  await loadUser();
+  await whenSdkReady();
+
+  let agentInfo;
   try {
-    tokenInfo = await fetchDirectLineToken();
+    agentInfo = await fetchAgentToken();
   } catch (err) {
     showStatus('Could not start DAX chat: ' + err.message);
     return;
@@ -56,7 +73,14 @@
     rootWidth: '100%'
   };
 
-  const directLine = window.WebChat.createDirectLine({ token: tokenInfo.token });
+  const { CopilotStudioClient, CopilotStudioWebChat, ConnectionSettings } = window.CopilotStudio;
+
+  const settings = new ConnectionSettings({
+    directConnectUrl: agentInfo.directConnectUrl
+  });
+
+  const client = new CopilotStudioClient(settings, agentInfo.token);
+  const directLine = CopilotStudioWebChat.createConnection(client, { showTyping: true });
 
   window.WebChat.renderWebChat(
     {
