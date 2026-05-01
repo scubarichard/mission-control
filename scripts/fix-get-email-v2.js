@@ -20,9 +20,9 @@ function graphGet(path, token) {
 }
 
 // Get token
-var tokenBody = "client_id=218064ac-bee2-4246-9709-ae7518ae71cb&client_secret=6LR8Q~ZCn5FTBlg894LtCGlXZ9GV3NAhS4BY9bla&scope=https://graph.microsoft.com/.default&grant_type=client_credentials";
+var tokenBody = "client_id=" + process.env.GRAPH_CLIENT_ID + "&client_secret=" + encodeURIComponent(process.env.GRAPH_CLIENT_SECRET) + "&scope=https://graph.microsoft.com/.default&grant_type=client_credentials";
 var tokenRes = await new Promise(function(resolve) {
-  var req = https.request({ hostname: "login.microsoftonline.com", path: "/d2a3c346-00f3-47dd-a53e-caa3fca74714/oauth2/v2.0/token", method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "Content-Length": Buffer.byteLength(tokenBody) } }, function(res) {
+  var req = https.request({ hostname: "login.microsoftonline.com", path: "/" + process.env.GRAPH_TENANT_ID + "/oauth2/v2.0/token", method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "Content-Length": Buffer.byteLength(tokenBody) } }, function(res) {
     var d = ""; res.on("data", function(c) { d += c; }); res.on("end", function() { try { resolve(JSON.parse(d)); } catch(e) { resolve({}); } });
   });
   req.on("error", function() { resolve({}); });
