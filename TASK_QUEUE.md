@@ -1,4 +1,27 @@
 
+## TASK-20260501-FORGE-KEYVAULT-001 â€” Grant Atlas Key Vault Access
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** HIGH
+- **From:** Richard (Telegram 2026-05-01 20:54 UTC)
+- **Client:** Atlas / Infrastructure
+
+### Task
+Grant the Atlas service principal (`9ddd0bc6-4ff2-4579-9292-bce677a06fd1`) access to read secrets in `kvdaxdakonapilot` Key Vault.
+
+**What to do:**
+1. Go to **Azure Portal** â†’ Search `kvdaxdakonapilot`
+2. Click the vault â†’ **Access Control (IAM)** on the left
+3. Click **+ Add** â†’ **Add role assignment**
+4. Role: `Key Vault Secrets Officer`
+5. Assign to: Service principal â†’ Search `9ddd0bc6-4ff2-4579-9292-bce677a06fd1`
+6. Click **Save**
+7. Report back in task queue when done
+
+**Why:** Atlas needs to pull Google Calendar OAuth tokens and other secrets from the vault to set up calendar/email access for Richard's three accounts (rmabbun@dakona.com, richard@1altx.com, richard@mabbun.com).
+
+---
+
 ## TASK-20260429-NAUTILUS-002 â€” Copilot Studio Migration Setup
 - **Assignee:** Nautilus
 - **Status:** PENDING
@@ -3402,7 +3425,7 @@ Add `search_sharepoint` tool to ICP DAX router so Brett can search company Share
 
 ---
 
-# TASK-20260429-CHOSEN-004 — V1 Phase 2: OpenAI + Google Docs Wiring
+# TASK-20260429-CHOSEN-004 ï¿½ V1 Phase 2: OpenAI + Google Docs Wiring
 
 **Status:** OPEN
 **Owner:** ANY (agent-agnostic)
@@ -3410,7 +3433,7 @@ Add `search_sharepoint` tool to ICP DAX router so Brett can search company Share
 **Priority:** High
 **Created:** 2026-04-29 by Richard
 **Estimated effort:** 3-4 hours
-**Depends on:** CHOSEN-001 (DONE — Editor Brief prompt), CHOSEN-002 (DONE — V1 foundation), CHOSEN-003 (DONE — Drive cleanup)
+**Depends on:** CHOSEN-001 (DONE ï¿½ Editor Brief prompt), CHOSEN-002 (DONE ï¿½ V1 foundation), CHOSEN-003 (DONE ï¿½ Drive cleanup)
 
 ---
 
@@ -3450,7 +3473,7 @@ Add `search_sharepoint` tool to ICP DAX router so Brett can search company Share
 - `HEYGEN-API-KEY`
 
 **Make API key in Key Vault `kvdaxdakonapilot`:**
-- `make-api-key` (NOTE: read-scoped — write operations may fail. If clone/create fails, ask Richard to do it manually.)
+- `make-api-key` (NOTE: read-scoped ï¿½ write operations may fail. If clone/create fails, ask Richard to do it manually.)
 
 ---
 
@@ -3462,7 +3485,7 @@ Wire up Phase 2 of the V1 scenario per SOW Section 8: OpenAI text generation + G
 
 ## Subtasks (in order)
 
-### Subtask 1 — Audit V1 scenario starting state
+### Subtask 1 ï¿½ Audit V1 scenario starting state
 
 Fetch blueprint of scenario `4894796`. Confirm:
 - It is a clean clone of the test scenario (4820264)
@@ -3472,7 +3495,7 @@ Fetch blueprint of scenario `4894796`. Confirm:
 
 Document the starting module list in `clients/chosen-agency/build_log.md` under a new "CHOSEN-004" section.
 
-### Subtask 2 — Update Module 1 (Trigger) to point to V1 sheet
+### Subtask 2 ï¿½ Update Module 1 (Trigger) to point to V1 sheet
 
 Current: trigger reads from test sheet (in 00_Test_Archive)
 Target: trigger reads from V1 Production Tracker sheet `1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo`
@@ -3485,11 +3508,11 @@ Use Make's `google-sheets:filterRows` v2:
 
 Verify all 28 column headers map cleanly. The V1 sheet has different columns than the test sheet (28 vs 14), so module output indices will differ.
 
-### Subtask 3 — Update Module 2 (Set Variables) for new schema
+### Subtask 3 ï¿½ Update Module 2 (Set Variables) for new schema
 
 Replace existing Module 2 mapper with V1 variable resolution. Variables to set (scope: roundtrip):
 
-- `row_hash` = sha1 of (script_id + variation_number + voice_id + avatar_id) — concatenation of dedup-relevant fields
+- `row_hash` = sha1 of (script_id + variation_number + voice_id + avatar_id) ï¿½ concatenation of dedup-relevant fields
 - `effective_voice_id` = `ifempty({{Override Voice ID}}; {{Voice ID}}; <Settings: Default Voice ID>)`
 - `effective_avatar_id` = `ifempty({{Override Avatar ID}}; {{Avatar ID}}; <Settings: Default Avatar ID>)`
 - `effective_tone` = `ifempty({{Override Tone}}; {{Tone}}; <Settings: Default Tone>)`
@@ -3500,11 +3523,11 @@ Replace existing Module 2 mapper with V1 variable resolution. Variables to set (
 
 **Important:** The fallback chain reads from Override column ? main column ? System Settings tab. To read from System Settings, agent will need to add a Search Rows module against the System Settings tab BEFORE the SetVariables module, then reference its output.
 
-Alternative (simpler): hardcode reasonable defaults in the SetVariables formulas for now. Document that production should source from System Settings tab via a search module — flag as TODO for later subtask.
+Alternative (simpler): hardcode reasonable defaults in the SetVariables formulas for now. Document that production should source from System Settings tab via a search module ï¿½ flag as TODO for later subtask.
 
 **Recommendation:** Use the simpler approach (hardcoded defaults) for V1 to avoid extra module overhead. Document the System Settings lookup pattern in build_log.md as a future enhancement. Most settings will rarely change in practice.
 
-### Subtask 4 — Add Module: OpenAI Generate Script
+### Subtask 4 ï¿½ Add Module: OpenAI Generate Script
 
 Add new module after Module 2, before Module 4 (Status ? Processing).
 
@@ -3528,7 +3551,7 @@ Output: `script_text`
 
 **Note:** This is the script generation step. Editor Brief comes in a separate module.
 
-### Subtask 5 — Add Module: Update sheet with script_text
+### Subtask 5 ï¿½ Add Module: Update sheet with script_text
 
 Add Google Sheets `updateRow` v2 module:
 - Sheet: V1 sheet
@@ -3538,7 +3561,7 @@ Add Google Sheets `updateRow` v2 module:
 
 useColumnHeaders: true
 
-### Subtask 6 — Add Module: OpenAI Generate Editor Brief
+### Subtask 6 ï¿½ Add Module: OpenAI Generate Editor Brief
 
 Add new OpenAI module:
 - Connection: existing OpenAI
@@ -3558,7 +3581,7 @@ Output: structured JSON with keys matching the Editor Brief template placeholder
 - `editing_directives` (array of strings)
 - `line_by_line_visual_direction` (array of {line, visual} objects)
 
-### Subtask 7 — Add Module: Format Brief arrays as text
+### Subtask 7 ï¿½ Add Module: Format Brief arrays as text
 
 The Editor Brief template uses simple `{{placeholder}}` substitution, so JSON arrays need to be formatted as readable text before insertion.
 
@@ -3569,12 +3592,12 @@ Add a Make `set multiple variables` or text aggregator module to:
 
 Document this transformation in build_log.md.
 
-### Subtask 8 — Add Module: Create Script Doc from template
+### Subtask 8 ï¿½ Add Module: Create Script Doc from template
 
 Use Google Docs `createDocumentFromTemplate` (or copy template + replace text):
 
 - Template ID: `1ZDum9DDkuEGPMpoqo39XbAiF-D5-bGMExfOmSY3gm_A` (Script_Doc_Template)
-- Destination folder: `02_Script_Docs` folder ID — fetch this from Drive (parent folder `1xCplt3J0RNAPwDpWyjpqqXXTeTf3USPb` has subfolder `02_Script_Docs`)
+- Destination folder: `02_Script_Docs` folder ID ï¿½ fetch this from Drive (parent folder `1xCplt3J0RNAPwDpWyjpqqXXTeTf3USPb` has subfolder `02_Script_Docs`)
 - New doc name: `{{Script Name}} - {{Variation ID}}`
 - Replace placeholders with row values:
   - `{{Script_ID}}` ? row Script ID
@@ -3588,7 +3611,7 @@ Use Google Docs `createDocumentFromTemplate` (or copy template + replace text):
 
 Output: new Doc URL
 
-### Subtask 9 — Add Module: Create Editor Brief Doc from template
+### Subtask 9 ï¿½ Add Module: Create Editor Brief Doc from template
 
 Same pattern as Subtask 8:
 
@@ -3599,7 +3622,7 @@ Same pattern as Subtask 8:
 
 Output: new Doc URL
 
-### Subtask 10 — Update sheet with both Doc URLs
+### Subtask 10 ï¿½ Update sheet with both Doc URLs
 
 Google Sheets `updateRow` v2:
 - Column U (Script Doc Link): script doc URL
@@ -3610,7 +3633,7 @@ useColumnHeaders: true
 
 **Do NOT change Status here.** Status will move to `Voice Done` later in Phase 3 after ElevenLabs runs. For now, leave at `Script Done`.
 
-### Subtask 11 — Test against one sample row
+### Subtask 11 ï¿½ Test against one sample row
 
 Test row data to insert into V1 sheet (row 2):
 
@@ -3620,8 +3643,8 @@ Test row data to insert into V1 sheet (row 2):
 | Script ID (B) | ERIKA-TEST-001 |
 | Script Name (C) | Sleep Tips Quick Win |
 | Variation Number (D) | 1 |
-| Avatar ID (G) | (leave blank — uses default) |
-| Voice ID (H) | (leave blank — uses default) |
+| Avatar ID (G) | (leave blank ï¿½ uses default) |
+| Voice ID (H) | (leave blank ï¿½ uses default) |
 | Audience (I) | working professionals 30-50 with sleep issues |
 | Current Belief (J) | sleep is just bad luck |
 | Desired Belief (K) | sleep is a system you can improve |
@@ -3631,7 +3654,7 @@ Test row data to insert into V1 sheet (row 2):
 
 Activate scenario and run once.
 
-### Subtask 12 — Verify outputs
+### Subtask 12 ï¿½ Verify outputs
 
 Check:
 - Script Doc was created in 02_Script_Docs folder
@@ -3644,11 +3667,11 @@ Check:
 
 If any check fails, document the failure in build_log.md and stop. Do not proceed to next subtask without resolution.
 
-### Subtask 13 — Deactivate scenario
+### Subtask 13 ï¿½ Deactivate scenario
 
-After successful test, deactivate the V1 scenario. It's not ready for production — Phases 3-4 still pending.
+After successful test, deactivate the V1 scenario. It's not ready for production ï¿½ Phases 3-4 still pending.
 
-### Subtask 14 — Update build_log.md
+### Subtask 14 ï¿½ Update build_log.md
 
 Append a comprehensive CHOSEN-004 entry with:
 - All module IDs added
@@ -3681,11 +3704,11 @@ Commit and push.
 ## Constraints
 
 - Do NOT modify the test scenario (4820264)
-- Do NOT activate V1 scenario in production state — only for the single test run, then deactivate
-- Do NOT delete or modify Editor Brief template Doc structure (179Rc1u3mWVC-7hidFeyBLWxIp0Xxaocl_M52MsDc-4I) — placeholder structure is locked in CHOSEN-002
+- Do NOT activate V1 scenario in production state ï¿½ only for the single test run, then deactivate
+- Do NOT delete or modify Editor Brief template Doc structure (179Rc1u3mWVC-7hidFeyBLWxIp0Xxaocl_M52MsDc-4I) ï¿½ placeholder structure is locked in CHOSEN-002
 - Do NOT delete or modify Script Doc template structure
 - Use Richard's existing API keys via Make connections (no client credentials needed)
-- Build everything cleanly TRANSFERABLE — no hardcoded references to Richard-specific accounts beyond what's in Make connections
+- Build everything cleanly TRANSFERABLE ï¿½ no hardcoded references to Richard-specific accounts beyond what's in Make connections
 - If Make API write operations fail (read-scoped key), escalate to Richard for manual operation; document the blocker
 
 ---
@@ -3698,6 +3721,6 @@ All acceptance criteria met, Slack notification posted, build_log.md updated and
 
 ## Next Tasks (for context)
 
-- **CHOSEN-005:** Phase 3 — wire ElevenLabs + HeyGen with override fallback logic, test end-to-end through video generation
-- **CHOSEN-006:** Phase 4 — Render Checker scheduled scenario + error handling + 4 acceptance test cases + 4 override fallback tests
-- **CHOSEN-007:** Phase 6 — Operator SOP, field map, credential map, troubleshooting, Loom
+- **CHOSEN-005:** Phase 3 ï¿½ wire ElevenLabs + HeyGen with override fallback logic, test end-to-end through video generation
+- **CHOSEN-006:** Phase 4 ï¿½ Render Checker scheduled scenario + error handling + 4 acceptance test cases + 4 override fallback tests
+- **CHOSEN-007:** Phase 6 ï¿½ Operator SOP, field map, credential map, troubleshooting, Loom
