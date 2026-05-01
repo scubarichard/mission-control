@@ -646,6 +646,54 @@ function registerTools(server) {
     }
   );
 
+  // ── Telegram tools ────────────────────────────────────────────────
+
+  const TELEGRAM_API = "https://api.telegram.org";
+
+  server.tool("telegram_send_message",
+    "Send a Telegram message to Richard (chat 7337480629). Use for notifications, alerts, or direct communication.",
+    { text: z.string(), chat_id: z.string().optional() },
+    async ({ text, chat_id }) => {
+      try {
+        const cid = chat_id || creds.TELEGRAM_CHAT_ID || "7337480629";
+        const res = await fetch(`${TELEGRAM_API}/bot${creds.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: cid, text, parse_mode: "Markdown" }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.description);
+        return { content: [{ type: "text", text: `Sent (msg_id: ${data.result.message_id})` }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `ERROR: ${err.message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool("telegram_get_updates",
+    "Get recent Telegram messages sent to the bot. Returns last N messages from Richard.",
+    { limit: z.number().optional().default(10), offset: z.number().optional() },
+    async ({ limit, offset }) => {
+      try {
+        const params = new URLSearchParams({ limit: String(limit) });
+        if (offset !== undefined) params.set("offset", String(offset));
+        const res = await fetch(`${TELEGRAM_API}/bot${creds.TELEGRAM_BOT_TOKEN}/getUpdates?${params}`);
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.description);
+        const messages = data.result.map(u => ({
+          update_id: u.update_id,
+          from: u.message?.from?.username || u.message?.from?.first_name,
+          text: u.message?.text,
+          date: u.message?.date ? new Date(u.message.date * 1000).toISOString() : null,
+          chat_id: u.message?.chat?.id,
+        })).filter(m => m.text);
+        return { content: [{ type: "text", text: JSON.stringify(messages, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `ERROR: ${err.message}` }], isError: true };
+      }
+    }
+  );
+
   // ── Desktop Bridge tools ───────────────────────────────────────────
 
   server.tool("desktop_run_powershell", "Run PowerShell on Richard's local Windows desktop.",
