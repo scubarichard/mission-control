@@ -1,7 +1,10 @@
 
 ## TASK-20260501-FORGE-KEYVAULT-001 — Grant Atlas Key Vault Access
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
+- **Completed:** 2026-05-01
+- **Completed_by:** Forge
+- **Notes:** Key Vault Secrets Officer granted to Atlas SP (9ddd0bc6) on kvdaxdakonapilot. Role assignment ID: 78762b73.
 - **Priority:** HIGH
 - **From:** Richard (Telegram 2026-05-01 20:54 UTC)
 - **Client:** Atlas / Infrastructure
