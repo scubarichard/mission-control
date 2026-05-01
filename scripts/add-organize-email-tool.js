@@ -6,9 +6,6 @@
 const N8N_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiYWM0MmE5ODUtMTA5Ni00ODkxLTliYzQtZGQxYTBiNDNiYjFhIiwiaWF0IjoxNzczNzE0OTgwfQ.gBSwNl_frCaOvQylr5DLQubJmRGqcT-LRJpzcTWdCP4';
 const N8N_URL = 'https://n8n.dakona.net';
 const WF_ID = '3tniyxZREqfnAbfo';
-const GRAPH_TENANT = 'd2a3c346-00f3-47dd-a53e-caa3fca74714';
-const GRAPH_CLIENT_ID = '218064ac-bee2-4246-9709-ae7518ae71cb';
-const GRAPH_CLIENT_SECRET = '6LR8Q~ZCn5FTBlg894LtCGlXZ9GV3NAhS4BY9bla';
 
 const ORGANIZE_CODE = `var https = require("https");
 var input = $input.all()[0].json || {};
@@ -35,9 +32,9 @@ function graphRequest(method, path, body) {
 }
 
 // Get token
-var tokenBody = "client_id=${GRAPH_CLIENT_ID}&client_secret=${GRAPH_CLIENT_SECRET}&scope=https://graph.microsoft.com/.default&grant_type=client_credentials";
+var tokenBody = "client_id=" + process.env.GRAPH_CLIENT_ID + "&client_secret=" + encodeURIComponent(process.env.GRAPH_CLIENT_SECRET) + "&scope=https://graph.microsoft.com/.default&grant_type=client_credentials";
 var tokenRes = await new Promise(function(resolve) {
-  var req = https.request({ hostname: "login.microsoftonline.com", path: "/${GRAPH_TENANT}/oauth2/v2.0/token", method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "Content-Length": Buffer.byteLength(tokenBody) } }, function(res) {
+  var req = https.request({ hostname: "login.microsoftonline.com", path: "/" + process.env.GRAPH_TENANT_ID + "/oauth2/v2.0/token", method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "Content-Length": Buffer.byteLength(tokenBody) } }, function(res) {
     var d = ""; res.on("data", function(c) { d += c; }); res.on("end", function() { try { resolve(JSON.parse(d)); } catch(e) { resolve({}); } });
   });
   req.on("error", function() { resolve({}); });
