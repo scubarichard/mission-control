@@ -629,3 +629,618 @@ npm run phase-f -- --story path/to/story.md --project my-project [--output final
 **LeadLUX story document:** `Working Docs/VIDEO-STORY-DOCUMENT.md` (committed in earlier session) — 10 scenes ready to run against this pipeline. Next step: provision HeyGen API key + avatar/voice IDs in Key Vault and run live.
 
 **[Forge] 2026-04-25:** DONE — all 9 sub-tasks complete, branch pushed, smoke test green.
+
+---
+
+## TASK-20260428-FORGE-1ALTX-001 — SP-API Keep-Alive + Amazon Automation Skill
+- **Assignee:** Forge
+- **Status:** DONE
+- **Completed:** 2026-04-28
+- **Client:** 1AltX
+- **Title:** SP-API Keep-Alive (n8n) + Amazon Automation Skill
+
+### Completed
+
+**Part 1 — n8n keep-alive workflow**
+- Workflow ID: `BMwkR3GgNbn5csx2` — "Amazon SP-API Keep-Alive" — ACTIVE
+- Schedule: `0 14 * * *` (9:00 AM CDT / 14:00 UTC daily)
+- Flow: Azure KV token → fetch 4 LWA secrets → LWA exchange → `/sellers/v1/marketplaceParticipations` → Slack #dax-collab
+- Success path: `:white_check_mark: SP-API Keep-Alive OK — N marketplaces (US) — timestamp`
+- Failure path: `:x: SP-API Keep-Alive FAILED — error — timestamp`
+
+**Part 2 — Credential storage (KV from n8n)**
+- SP created: `sp-n8n-spapi-keepalive` (appId: `b0c684b1-3683-46e8-b684-29141f8053e6`)
+- Role: Key Vault Secrets User on `kvdaxdakonapilot` (rg-dax-dakona-pilot, DAKONA 001 sub)
+- SP credentials embedded in n8n Code node (encrypted in n8n DB)
+- LWA secrets stay in KV — only fetched at runtime
+
+**Part 3 — Windows task reduction**
+- PENDING: requires 3+ successful n8n runs first
+- After 3 confirmed runs: `Set-ScheduledTask -TaskName "SP-API Keep-Alive" -Trigger (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At "09:00")`
+- First n8n run will be 2026-04-29 at 9 AM CDT
+
+**Part 4 — SKILL.md**
+- Created: `P:\_tools\skills\amazon-spapi\SKILL.md`
+- Covers: LWA flow, KV secrets, multi-seller model, regional endpoints, common endpoints, rate limits, error codes, starter n8n template, rotation checklist
+
+### ACTION REQUIRED (Richard)
+**Rotate `spapi-lwa-client-secret`** — was briefly exposed in chat history during today's setup:
+1. Amazon Developer Console → Your Apps → Edit → LWA credentials → Generate new client secret
+2. `az keyvault secret set --vault-name kvdaxdakonapilot --name spapi-lwa-client-secret --value "{new-secret}"`
+3. Verify keep-alive runs successfully after rotation
+
+**[Forge] 2026-04-28:** DONE — workflow live, SKILL.md written. Windows task reduction pending 3 successful n8n runs. Client secret rotation required (Richard action).
+
+---
+
+## TASK-20260429-FORGE-PERSONAL-001 — Freqtrade Install on vm-dax-dev
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Date:** 2026-04-29
+- **From:** Sonnet (session with Richard)
+- **Client:** Personal (Richard Mabbun — not Dakona, not 1AltX)
+- **Priority:** Low — personal project, no client dependency
+- **Title:** Install and configure Freqtrade crypto trading bot on vm-dax-dev
+
+### Context
+
+Richard wants to explore algorithmic crypto trading as a personal learning project. He's moving soon and his local machine (Nautilus) may be down for an extended period — the Azure VM is the right host since it stays up regardless of what's happening at his house. This is completely separate from DAX infrastructure; no Azure Container Apps, no ACR, no Key Vault integration needed. Keep it simple.
+
+### Why vm-dax-dev
+
+- Already running Ubuntu 24 — perfect for Freqtrade
+- Accessible via SSH through the jumpbox at n8n.dakona.net anytime
+- Runs 24/7 regardless of Richard's local machine status
+- Existing stack: n8n lives here too — Freqtrade runs in its own directory, completely isolated
+
+### What Freqtrade is
+
+Open-source Python crypto trading bot (github.com/freqtrade/freqtrade). Supports backtesting, dry-run (paper trading), and live trading. Connects to 30+ exchanges via the `ccxt` library. Richard wants to start in dry-run mode — no real money until he's reviewed at least 2-4 weeks of paper trading results.
+
+### Tasks
+
+**Step 1 — Install Freqtrade (isolated from DAX stack)**
+
+SSH into vm-dax-dev via the jumpbox. Install in Richard's home directory, NOT anywhere near the DAX/n8n stack:
+
+```bash
+sudo apt update && sudo apt install -y python3 python3-pip python3-venv git curl
+cd ~
+git clone https://github.com/freqtrade/freqtrade.git freqtrade-personal
+cd freqtrade-personal
+./setup.sh -i
+source .venv/bin/activate
+freqtrade --version
+```
+
+**Step 2 — Generate baseline config**
+
+```bash
+freqtrade new-config --config config.json
+```
+
+During config generation, set:
+- Exchange: **binance** (most Freqtrade community strategies are Binance-tested)
+- Trading mode: **spot** (not futures — simpler for learning)
+- Stake currency: **USDT**
+- Stake amount: **10** (small per-trade size for dry-run)
+- Max open trades: **3**
+- Dry run: **true** — DO NOT set to false
+
+Do not add real API keys. Leave exchange keys empty for now — dry-run doesn't need them.
+
+**Step 3 — Download a community strategy**
+
+```bash
+freqtrade create-userdir --userdir user_data
+cd user_data/strategies
+git clone https://github.com/freqtrade/freqtrade-strategies.git community
+```
+
+Recommended starting strategy: **NostalgiaForInfinityX** or **SMAOffset**. Pick whichever has the cleaner code and document which one was selected in the gate result.
+
+**Step 4 — Download historical data and run a backtest**
+
+```bash
+cd ~/freqtrade-personal
+source .venv/bin/activate
+freqtrade download-data --exchange binance --pairs BTC/USDT ETH/USDT SOL/USDT --timeframe 1h --days 30
+freqtrade backtesting --config config.json --strategy SMAOffset --userdir user_data --timerange 20250301-20250401
+```
+
+Capture the backtest output summary (win rate, total profit %, max drawdown, Sharpe ratio) and include in gate result.
+
+**Step 5 — Start dry-run with screen session**
+
+```bash
+sudo apt install -y screen
+screen -S freqtrade-dryrun
+cd ~/freqtrade-personal && source .venv/bin/activate
+freqtrade trade --config config.json --strategy SMAOffset --userdir user_data --dry-run
+# Detach: Ctrl+A then D
+screen -ls
+```
+
+**Step 6 — Enable Freqtrade REST API + UI (optional)**
+
+Add to config.json:
+```json
+"api_server": { "enabled": true, "listen_ip_address": "127.0.0.1", "listen_port": 8080, "username": "richard", "password": "choose-a-password" }
+```
+
+SSH tunnel: `ssh -L 8080:localhost:8080 vm-dax-dev-user@n8n.dakona.net` → http://localhost:8080
+
+### Constraints
+
+- **Personal project only** — no DAX/KV/n8n integration
+- **Dry-run only** — `"dry_run": true`, no real exchange API keys
+- **Isolated** — all files under `~/freqtrade-personal/`
+- **screen, not systemd** — keep it simple
+
+### Gate
+
+- [ ] Freqtrade installed and `freqtrade --version` confirmed
+- [ ] Config generated with dry_run: true
+- [ ] Strategy selected — name it here
+- [ ] Backtest results summary (win rate, profit %, max drawdown, Sharpe)
+- [ ] Dry-run started in screen session — `screen -ls` output
+- [ ] SSH tunnel command for FreqUI documented
+
+---
+
+## TASK-20260430-FORGE-DAKONA-001 — AVD Disk Monitor: Locate SP Credentials + Cross-Tenant Preflight
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Date:** 2026-04-30
+- **From:** Opus (session with Richard)
+- **Client:** Dakona (MSP — all 12 RIA tenants)
+- **Priority:** Medium — blocks deployment of `Invoke-AVDDiskMonitor.ps1`
+- **Title:** Find dakona-csp-scanner credentials and verify cross-tenant authorization for AVD disk monitoring
+
+### Context
+
+Opus drafted `scripts/Invoke-AVDDiskMonitor.ps1` this session — a cross-tenant AVD C: drive capacity monitor that opens NinjaOne tickets at 80% used, mirroring the pattern from `Invoke-TenantAudit.ps1`. Before deploying it (Azure Automation runbook, every 4h), Richard wants to verify two things:
+
+1. **Where do the scanner SP credentials live**, and do they actually work today?
+2. **Does the SP have working cross-tenant authorization** for the specific APIs the disk monitor needs — ARM (host pools, session hosts) and Log Analytics (Perf table query)?
+
+The SP is named **`dakona-csp-scanner`** (created by `scripts/New-DakonaScanSP.ps1`). The Lighthouse onboarding pattern is in `scripts/Deploy-Lighthouse.ps1`.
+
+### Tasks
+
+**Phase 1 — Locate the credentials (~10 min)**
+
+Check in this order:
+1. MCP container env vars: `az containerapp show --name ca-dax-mcp-dakona-pilot --resource-group rg-dax-dakona-pilot --query "properties.template.containers[0].env" -o json`
+2. KV `kvdaxdakonapilot`: `az keyvault secret list --vault-name kvdaxdakonapilot --query "[?contains(name,'scan') || contains(name,'csp') || contains(name,'azure-sp')].name" -o tsv`
+3. Repo grep: `git -C /repo grep -l "AZURE_SP_CLIENT_ID" 2>/dev/null`
+
+Deliverable: where the 3 env vars are stored, whether secret has expired.
+
+**Phase 2 — Verify SP can authenticate (~5 min)**
+
+Token grab using client_credentials flow against `https://management.azure.com/.default`. If 401 → secret expired, stop.
+
+**Phase 3 — Build and run cross-tenant preflight (~30-45 min)**
+
+Write `scripts/Test-AVDMonitorAccess.ps1`. For each tenant, produce:
+
+| Column | Check |
+|---|---|
+| Client | displayName |
+| TenantId | tenant.tenantId |
+| Subs visible | subscriptions API count |
+| ARM HostPools readable | GET hostPools — 200 vs 401/403 |
+| LA workspaces visible | GET workspaces |
+| LA Perf query OK | Perf | take 1 against loganalytics.io |
+| Verdict | Ready / No AVD / No LA / No sub / Auth gap |
+
+Output: console table + JSON at `/tmp/avd-monitor-preflight-{timestamp}.json`
+
+Also check SP group membership vs `DakonaPrincipalId` in Deploy-Lighthouse.ps1.
+
+**Phase 4 — Inventory Lighthouse delegations (~10 min)**
+
+`az managedservices definition list` + `az managedservices assignment list`. Report which of 12 RIA clients have Lighthouse delegated.
+
+### Gate format
+
+```
+## Phase 1 — Credentials located
+## Phase 2 — SP membership
+## Phase 3 — Per-tenant access matrix
+## Phase 4 — Lighthouse inventory
+## Recommended next steps
+```
+
+### Constraints
+
+- **Read-only** — no deployments, no role assignments
+- **Don't print secret values**
+- **Don't deploy `Invoke-AVDDiskMonitor.ps1`** — preflight only
+
+### Reference files
+- `scripts/Invoke-AVDDiskMonitor.ps1`, `scripts/Invoke-TenantAudit.ps1`, `scripts/New-DakonaScanSP.ps1`, `scripts/Deploy-Lighthouse.ps1`
+
+---
+
+## TASK-20260429-CHOSEN-004 — Chosen Agency V1 Phase 2: OpenAI + Google Docs Wiring
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-04-30
+- **Client:** Erika Cobb / Chosen Agency
+- **Priority:** High
+- **Title:** V1 Phase 2 — OpenAI script+brief generation + Google Docs creation wired into Make scenario 4894796
+
+### Completed
+
+**Blueprint uploaded directly to Make scenario 4894796 via PATCH API — fully automated, no manual UI steps required.**
+
+Final upload: `lastEdit: 2026-04-30T21:51:26.569Z`, `isinvalid: False`
+
+**Changes applied:**
+1. **Module 1 (filterRows)** — reads from V1 Production Tracker (1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo), tab Production Tracker, range A1:AZ1
+2. **Module 2 (SetVariables)** — effective_voice_id, effective_avatar_id, variation_id, openai_model=gpt-4o
+3. **Module 4 (route entry)** — filter: Status = Queued (stored on first module in route, not route object — Make schema quirk)
+4. **All updateRow modules** — spreadsheetId to V1 sheet, sheetId to Production Tracker, range A1:AZ1
+5. **Module 5 (OpenAI)** — gpt-4o, Chosen Agency content prompt, outputs {script, caption} JSON
+6. **Module 23 (NEW)** — OpenAI Editor Brief (gpt-4o), 7-key JSON mapping to 10 template placeholders
+7. **Module 24 (NEW)** — google-docs:createADocumentFromTemplate (map mode), Script Doc template, 13 placeholders
+8. **Module 25 (NEW)** — google-docs:createADocumentFromTemplate (map mode), Editor Brief template, 10 placeholders
+9. **Module 6 (updateRow: Script Done)** — writes Script Text, Caption Text, Script Doc Link, Brief Doc Link, Last Updated
+
+**Route 0 order:** 4 → 5 → 23 → 24 → 25 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 14 → 15
+
+**Key learnings (for future Make blueprint work):**
+- Route filters go on the FIRST MODULE in the route's flow, not on the route object
+- Module name is `google-docs:createADocumentFromTemplate` (not `createADocumentFromATemplate`)
+- Template mapper uses `document`/`name`/`requests` (flat dict), not `fileId`/`title`/`values` array
+- Blueprint PATCH accepts `filter` on modules but rejects it on route objects
+
+**Repo artifacts:** clients/chosen-agency/prompts/editor_brief_v1.md, clients/chosen-agency/build_log.md (committed dab6912)
+
+**Transfer notes:** Swap OpenAI conn, Google Sheets/Drive/Docs conn, all sheet/folder/template IDs at client handoff.
+
+### Richard: remaining steps
+1. Verify Google Docs connection on modules 24+25 shows correct Google account
+2. E2E test: 1 row with Status=Queued — should produce Script Doc + Editor Brief in Drive, sheet status → Script Done
+
+**[Forge] 2026-04-30:** DONE — blueprint fully live via API (filter, docs modules, all refs). 2 verification steps for Richard.
+
+
+---
+
+# TASK-20260430-CHOSEN-005 — V1 Phase 4: Render Checker + Acceptance Test Suite
+
+**Status:** IN_PROGRESS
+**Owner:** Forge
+**Client:** Erika Cobb / Chosen Agency
+**Priority:** High
+**Created:** 2026-04-30 (late evening) by Richard
+**Started:** 2026-04-30 by Forge
+**Estimated effort:** 3-5 hours
+**Depends on:** CHOSEN-004 (DONE)
+**Chained with:** CHOSEN-006 (must complete this BEFORE CHOSEN-006 starts)
+
+---
+
+## STRATEGIC CONTEXT
+
+V1 scenario (4894796) is functionally complete through Phase 3 but has zero error handling, no acceptance tests, and no standalone Render Checker. Per Erika's SOW Section 9 Step 6, the Render Checker is REQUIRED — safety net for HeyGen renders that exceed inline polling capacity.
+
+V1 today: inline polling in main scenario (Modules 12-18, 60 iter × 60s = 60 min max). HeyGen typically completes 2-5 min. For batch runs or slow renders, we need standalone Render Checker.
+
+This task delivers Render Checker + acceptance tests + error handling.
+
+---
+
+## CRITICAL RULES
+
+1. **SAVE PROGRESS AFTER EVERY SUBTASK.** Commit + push after each. Use messages like "[Forge] CHOSEN-005 Subtask N DONE: <description>".
+2. **TEST EACH SUBTASK BEFORE MOVING TO NEXT.**
+3. **IF ERROR:** Read it, attempt fix, re-test. Up to 3 retries per subtask. After 3 fails, post detailed error to Slack #dax-collab and STOP.
+4. **DO NOT modify V1 scenario 4894796 module logic** unless instructed — only ADD modules or error handler routes.
+5. **DO NOT touch test scenario 4820264.**
+6. **DO NOT delete V1 sheet or templates.**
+7. **DO NOT activate Render Checker schedule** until acceptance tests pass.
+
+---
+
+## REFERENCE
+
+- SOW: `clients/chosen-agency/builder-handoff.md`
+- Build log: `clients/chosen-agency/build_log.md`
+- V1 scenario: `4894796`
+- V1 sheet: `1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo`
+- Make API key: `kvdaxdakonapilot/make-api-key` (read-scoped — escalate write fails to Richard)
+- HeyGen API key: live in V1 scenario Module 14 headers (rotated tonight, fresh)
+- Other secrets: `kvdaximpactcapital`
+
+**Working blueprint patterns proven tonight:**
+- OpenAI modules: must have `response_format: json_object` set
+- OpenAI integers: `max_tokens` (int), `temperature` (double), `top_p` (double), `n_completions` (int) — never strings
+- ElevenLabs body: use `replace(29.script; (newline); " ")` to strip control chars
+- Sheet refs: `spreadsheetId` no leading slash; `sheetName` must be set explicitly
+- Column names: V1 schema uses Title Case (`Status`, `Voice File URL`, `Render Job ID`)
+- Filters on inner-route modules go on the module itself, not on the route — see test scenario 4820264 pattern
+- `is_done` lives in Module 2's variables array, set to `"false"` initially, flipped to `"true"` by Module 21/22
+
+---
+
+## SUBTASKS
+
+### Subtask 1 — Build Render Checker scenario skeleton
+
+Create new Make scenario via API (or escalate to Richard for manual clone if write-scoped fails).
+- Name: `Chosen Agency — Render Checker`
+- Folder: `232853` (same as V1)
+- Schedule: every 5 min
+- Initially: INACTIVE
+
+Module flow:
+1. Trigger: `google-sheets:filterRows` — V1 sheet, Queue tab, filter Status = Rendering, limit 10
+2. `http:ActionSendData` — HeyGen check status URL `https://api.heygen.com/v1/video_status.get?video_id={{1.`Render Job ID`}}`, GET, X-Api-Key header (use V1 Module 14's key), parseResponse: true
+3. `builtin:BasicRouter` 2 routes: Completed and Failed
+4. `google-sheets:updateRow` (Completed): filter `{{2.data.data.status}} = "completed"`, sets Status=Done, Raw Video Link, Last Updated
+5. `google-sheets:updateRow` (Failed): filter `{{2.data.data.status}} = "failed"`, sets Status=Failed, Error Message, Last Updated
+
+No "still processing" route — leave row as Rendering for next checker run.
+
+ACCEPTANCE: scenario exists, all 5 modules present, filters on module level, inactive.
+SAVE: Update build_log.md with new scenario ID. Commit + push.
+
+### Subtask 2 — Test Render Checker
+
+Don't activate schedule. Manually click "Run once" via Make API.
+
+Test: V1 sheet has rows in "Rendering" state from earlier tests. Render Checker should pick them up, query HeyGen, update them.
+
+Expected: rows where HeyGen status=completed → Status=Done, Raw Video Link populated.
+
+ACCEPTANCE: at least one row updated successfully, no errors in scenario log.
+SAVE: Commit Render Checker test results to build_log.md.
+
+### Subtask 3 — Add error handler routes to V1 scenario (4894796)
+
+Add error handler routes to these 5 critical modules:
+- Module 5 (OpenAI Script + Caption)
+- Module 23 (OpenAI Editor Brief)
+- Module 7 (ElevenLabs)
+- Module 8 (Drive upload)
+- Module 10 (HeyGen create)
+
+Pattern:
+- Route filter: Make's `[Error]` built-in filter
+- First module in route: google-sheets:updateRow
+  - Status = "Error"
+  - Error Message = `"<Module name>: " + {{error.message}}`
+  - Last Updated = now()
+
+ACCEPTANCE: all 5 critical modules have error handlers, error route writes to V1 sheet correctly.
+SAVE: Push V1 scenario via Make API. Commit blueprint snapshot.
+
+### Subtask 4 — Build acceptance test row data
+
+Add 8 test rows to V1 sheet (rows 3-10) per SOW Section 18:
+
+Happy-path (rows 3-6): standard short-form content (sleep tips, productivity, mindset, business). Status=Queued, complete fields, overrides blank.
+
+Override (rows 7-10):
+- Row 7: Override Voice ID set
+- Row 8: Override Avatar ID set
+- Row 9: Override Tone set
+- Row 10: Override Stability + Override Similarity Boost set
+
+Use Google Sheets API via service account.
+
+ACCEPTANCE: 8 rows present, unique Script IDs, override columns populated only on rows 7-10.
+SAVE: Commit "test data populated" to build_log.md.
+
+### Subtask 5 — Run acceptance tests
+
+For each row 3-10:
+1. Trigger V1 scenario via Make API "Run once" (POST `/api/v2/scenarios/4894796/run`)
+2. Wait for completion (poll Make execution log)
+3. Verify outputs:
+   - Happy-path (3-6): all output cols populated, Status=Done
+   - Override (7-10): outputs reflect override values
+
+If row fails: log it, attempt 1 retry, move on.
+
+Expected runtime per row: 3-7 min.
+
+ACCEPTANCE: 8 of 8 rows produce expected outputs (or documented failures), override behavior verified on rows 7-10.
+SAVE: Append full test results matrix to build_log.md.
+
+### Subtask 6 — Final completion summary
+
+Append CHOSEN-005 completion entry to build_log.md:
+- Render Checker scenario ID + URL
+- Error handlers added to which V1 modules
+- Test results matrix
+- Deferred items
+- Slack post to #dax-collab
+
+ACCEPTANCE: build_log.md fully updated, Slack posted.
+SAVE: Final commit + push.
+
+---
+
+## ERROR-RECOVERY PROTOCOL
+
+If subtask fails:
+1. Read error
+2. Identify failing module/operation
+3. Check tonight's known patterns:
+   - String/int type errors → cast
+   - parseJSON → use Parse JSON modules
+   - Sheet name blank → set explicitly
+   - Column case → V1 uses Title Case
+   - Filter on route → move to module
+   - Control chars in body → `replace(text; (newline); " ")`
+4. Apply fix, re-test
+5. Up to 3 retries
+6. After 3 fails: post to Slack with subtask number + attempt + error. STOP.
+
+---
+
+## DONE WHEN
+
+All 6 subtasks complete. CHOSEN-006 unblocked.
+
+---
+
+# TASK-20260430-CHOSEN-006 — V1 Phase 6: Documentation Suite
+
+**Status:** OPEN (do NOT start until CHOSEN-005 is DONE)
+**Owner:** ANY (agent-agnostic)
+**Client:** Erika Cobb / Chosen Agency
+**Priority:** High
+**Created:** 2026-04-30 by Richard
+**Estimated effort:** 3-4 hours
+**Depends on:** CHOSEN-005 (Render Checker + tests passed)
+
+---
+
+## STRATEGIC CONTEXT
+
+Phase 6 deliverables per SOW Section 14:
+- Operator SOP
+- Field map
+- Credential map
+- Troubleshooting guide
+
+These go in Drive folder `10_Documentation` with Markdown copies in repo.
+
+Loom recordings (3 separate per SOW) are NOT in this task — Richard records.
+
+---
+
+## CRITICAL RULES
+
+1. SAVE AFTER EVERY DOC. Commit each as soon as drafted.
+2. DON'T BLOCK ON PERFECT. 80% draft — Richard polishes.
+3. REFERENCE ACTUAL ASSET STATE. Pull live blueprint from Make API for credential map. Pull live sheet schema from Sheets API for field map.
+4. NO LOOM RECORDINGS.
+
+---
+
+## SUBTASKS
+
+### Subtask 1 — Operator SOP
+
+Output: `clients/chosen-agency/docs/operator_sop.md`
+Audience: Erika and her editor — non-technical operators.
+
+Sections:
+1. What this system does (2-3 paragraphs, plain English)
+2. Daily workflow — step-by-step adding a row, field-by-field guidance, when to use Override
+3. Status meanings — what each of 8 statuses means + what to do when you see it
+4. Where outputs go — Drive folder map, Doc links, Sheet links
+5. What to do when something breaks — 3-step recovery (check Status, check Error Message, run Render Checker manually)
+6. What NOT to do — never edit Status manually except retry, never delete System Settings rows, etc.
+
+Length: 5-8 pages. Friendly second person.
+
+ACCEPTANCE: Markdown file created, scannable, no jargon.
+SAVE: Commit + push.
+
+### Subtask 2 — Field map
+
+Output: `clients/chosen-agency/docs/field_map.md`
+
+Format: Markdown table with: Source / Type / Required (Y/N) / Used by Module(s) / Sent to API as / Result column.
+
+Pull live V1 blueprint from Make API for accurate Module IDs. Pull live V1 sheet schema from Sheets API.
+
+Document all 28 V1 sheet columns + 13 System Settings rows.
+
+Length: 3-5 pages.
+
+ACCEPTANCE: All columns + settings documented.
+SAVE: Commit + push.
+
+### Subtask 3 — Credential map
+
+Output: `clients/chosen-agency/docs/credential_map.md`
+
+Sections:
+1. API keys table: Service / Where stored during build / Where stored long-term (Key Vault path) / Used by Modules / Rotation procedure
+2. Make connections table: name / service / owner / modules using
+3. Service accounts: Google SA email + permissions
+4. Handoff procedure: 5-step checklist for transferring to Erika + verification steps
+
+Pull live blueprint from Make API for connection IDs.
+
+Length: 2-4 pages.
+
+ACCEPTANCE: All services documented, handoff procedure clear.
+SAVE: Commit + push.
+
+### Subtask 4 — Troubleshooting guide
+
+Output: `clients/chosen-agency/docs/troubleshooting.md`
+
+Format: Symptom → Diagnosis → Fix.
+
+Include all issues debugged tonight:
+- "Module 5 fails with imageDetail error"
+- "Module 23 fails with parseJSON not found"
+- "Module 23 fails: max_tokens expected integer"
+- "Module 30 fails: Source is not valid JSON"
+- "Module 7 fails: Invalid control character"
+- "Module 7 fails: 404 Not Found"
+- "Module 10 fails: 401 Unauthorized"
+- "Polling never completes"
+- "Status stuck at Rendering"
+- "Sheet refs failing: rowNumber missing"
+- "Wrong column updated"
+
+For each: 2-4 sentences.
+
+Length: 2-4 pages.
+
+ACCEPTANCE: At least 10 issues documented.
+SAVE: Commit + push.
+
+### Subtask 5 — Upload all 4 docs to Drive
+
+Upload Markdown files as Google Docs to `10_Documentation` folder in Chosen Agency Drive.
+
+Use Drive API:
+1. Convert .md to Google Doc format
+2. Upload with appropriate name
+3. Verify in folder
+
+ACCEPTANCE: 4 Google Docs visible in 10_Documentation folder.
+SAVE: Commit "docs uploaded" + Drive Doc IDs to build_log.md.
+
+### Subtask 6 — Final completion summary
+
+Append CHOSEN-006 entry to build_log.md.
+Slack post to #dax-collab summarizing:
+- 4 docs drafted and uploaded
+- Loom recordings still needed (Richard's task)
+- Final acceptance run with Erika still needed
+- Migration to Erika's Drive folder still needed (waiting on her share)
+- Credential swap still needed (waiting on her account setup)
+
+---
+
+## ERROR-RECOVERY PROTOCOL
+
+Same as CHOSEN-005: 3 retries per subtask, then post to Slack and STOP.
+
+---
+
+## DONE WHEN
+
+All 4 docs drafted, uploaded, build_log.md updated, Slack notified.
+
+Richard's remaining work after CHOSEN-006:
+- Record 3 Loom walkthroughs
+- Final acceptance test with Erika
+- Migrate assets to Erika's Drive (waiting)
+- Swap credentials at handoff (waiting)
+
+---
