@@ -100,7 +100,7 @@ NOTES: Full pipeline built and documented. 97 videos rendered end-to-end (record
 
 ## TASK-20260421-FORGE-1ALTX-001 — PVC Pipeline Follow-up
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **Date:** 2026-04-21
 - **From:** Sonnet (session handover)
 - **Client:** 1AltX
@@ -168,6 +168,32 @@ Key files:
 - Pipeline is resume-safe, works today for Richard's 22 pending rerecords (61, 65, 79, 87, 107-124)
 - Do not break current pipeline during refactor — Richard will run it again soon
 
+
+### Results
+
+**Phase 1 — Absorbed (DONE)**
+Read RESULTS/task_1altx_010_results.md fully. Inspected ecord_videos.py.
+
+Key findings:
+- VIDEO_COL = 22 (col V) was writing local MP4 filenames, but col V holds Descript share URLs
+- Sheet had 53 rows with local filenames in col V (not just rows 34-41 as estimated — pipeline ran many more times since the handover)
+- populate_aj.ps1 uses col B regex matching, so the col V write was never load-bearing for the rest of the pipeline
+
+**Phase 2 — Col V collision fixed (DONE)**
+- ecord_videos.py: VIDEO_COL changed from 22 (col V) to 38 (col AL — "Recording Filename")
+- Sheet updated: all 53 local filenames cleared from col V; sheet expanded to 38 cols; "Recording Filename" header added to col AL row 1
+- ix_col_v.py: one-time cleanup script committed to repo for traceability
+- Committed d23a055 to scubarichard/autovid-outreach (branch: main)
+
+**Gate result:** Col V is now clean — 0 local filenames remain. Col V contains only Descript share URLs (manually managed). Future recordings will write filenames to col AL.
+
+**Phase 3 (Descript API uploader) — DEFERRED**
+Not started — pending Richard's decision on whether to script Descript upload. Token validated and in KV kvdaxdakonapilot/descript-api-token. Can pick up when requested.
+
+**Phase 4 (rename to PVC convention) — DEFERRED**
+Not started — Richard can confirm if/when rename is wanted.
+
+**[Forge] 2026-04-30:** DONE (Phase 1+2). Col V clean, record_videos.py fixed, committed. Phases 3+4 deferred.
 ---
 
 ## TASK-20260422-FORGE-DAX-001 — DAX ICP Critical Fixes
