@@ -912,8 +912,9 @@ Final upload: `lastEdit: 2026-04-30T21:51:26.569Z`, `isinvalid: False`
 
 # TASK-20260430-CHOSEN-005 — V1 Phase 4: Render Checker + Acceptance Test Suite
 
-**Status:** OPEN
-**Owner:** ANY (agent-agnostic)
+**Status:** PARTIAL — 3 Make UI actions required from Richard before full completion
+**Completed (partial):** 2026-05-01 by Forge
+**Owner:** Forge
 **Client:** Erika Cobb / Chosen Agency
 **Priority:** High
 **Created:** 2026-04-30 (late evening) by Richard
@@ -1091,8 +1092,10 @@ All 6 subtasks complete. CHOSEN-006 unblocked.
 
 # TASK-20260430-CHOSEN-006 — V1 Phase 6: Documentation Suite
 
-**Status:** OPEN (do NOT start until CHOSEN-005 is DONE)
-**Owner:** ANY (agent-agnostic)
+**Status:** DONE
+**Owner:** Forge
+**Started:** 2026-05-01 by Forge
+**Completed:** 2026-05-01 by Forge
 **Client:** Erika Cobb / Chosen Agency
 **Priority:** High
 **Created:** 2026-04-30 by Richard
