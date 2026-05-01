@@ -821,7 +821,7 @@ SSH tunnel: `ssh -L 8080:localhost:8080 vm-dax-dev-user@n8n.dakona.net` → http
 
 ## TASK-20260430-FORGE-DAKONA-001 — AVD Disk Monitor: Locate SP Credentials + Cross-Tenant Preflight
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Date:** 2026-04-30
 - **From:** Opus (session with Richard)
 - **Client:** Dakona (MSP — all 12 RIA tenants)
