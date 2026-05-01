@@ -100,7 +100,7 @@ NOTES: Full pipeline built and documented. 97 videos rendered end-to-end (record
 
 ## TASK-20260421-FORGE-1ALTX-001 — PVC Pipeline Follow-up
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Date:** 2026-04-21
 - **From:** Sonnet (session handover)
 - **Client:** 1AltX
@@ -168,6 +168,34 @@ Key files:
 - Pipeline is resume-safe, works today for Richard's 22 pending rerecords (61, 65, 79, 87, 107-124)
 - Do not break current pipeline during refactor — Richard will run it again soon
 
+
+### Results
+
+**Phase 1 — Absorbed (DONE)**
+Read RESULTS/task_1altx_010_results.md fully. Inspected 
+ecord_videos.py.
+
+Key findings:
+- VIDEO_COL = 22 (col V) was writing local MP4 filenames, but col V holds Descript share URLs
+- Sheet had 53 rows with local filenames in col V (not just rows 34-41 as estimated — pipeline ran many more times since the handover)
+- populate_aj.ps1 uses col B regex matching, so the col V write was never load-bearing for the rest of the pipeline
+
+**Phase 2 — Col V collision fixed (DONE)**
+- 
+ecord_videos.py: VIDEO_COL changed from 22 (col V) to 38 (col AL — "Recording Filename")
+- Sheet updated: all 53 local filenames cleared from col V; sheet expanded to 38 cols; "Recording Filename" header added to col AL row 1
+- ix_col_v.py: one-time cleanup script committed to repo for traceability
+- Committed d23a055 to scubarichard/autovid-outreach (branch: main)
+
+**Gate result:** Col V is now clean — 0 local filenames remain. Col V contains only Descript share URLs (manually managed). Future recordings will write filenames to col AL.
+
+**Phase 3 (Descript API uploader) — DEFERRED**
+Not started — pending Richard's decision on whether to script Descript upload. Token validated and in KV kvdaxdakonapilot/descript-api-token. Can pick up when requested.
+
+**Phase 4 (rename to PVC convention) — DEFERRED**
+Not started — Richard can confirm if/when rename is wanted.
+
+**[Forge] 2026-04-30:** DONE (Phase 1+2). Col V clean, record_videos.py fixed, committed. Phases 3+4 deferred.
 ---
 
 ## TASK-20260422-FORGE-DAX-001 — DAX ICP Critical Fixes
@@ -675,12 +703,15 @@ npm run phase-f -- --story path/to/story.md --project my-project [--output final
 
 ## TASK-20260429-FORGE-PERSONAL-001 — Freqtrade Install on vm-dax-dev
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** BLOCKED (Forge) — reassign to Triton
 - **Date:** 2026-04-29
 - **From:** Sonnet (session with Richard)
 - **Client:** Personal (Richard Mabbun — not Dakona, not 1AltX)
 - **Priority:** Low — personal project, no client dependency
 - **Title:** Install and configure Freqtrade crypto trading bot on vm-dax-dev
+
+### Blocking note (Forge — 2026-04-30)
+[Forge] Cannot execute from RICHARD-WS — SSH to 52.150.28.158:22 times out. NSG allows port 22, VM running. Likely local network block. **Triton should pick this up** — reassign to Triton (192.168.1.159).
 
 ### Context
 
@@ -790,7 +821,7 @@ SSH tunnel: `ssh -L 8080:localhost:8080 vm-dax-dev-user@n8n.dakona.net` → http
 
 ## TASK-20260430-FORGE-DAKONA-001 — AVD Disk Monitor: Locate SP Credentials + Cross-Tenant Preflight
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Date:** 2026-04-30
 - **From:** Opus (session with Richard)
 - **Client:** Dakona (MSP — all 12 RIA tenants)
@@ -862,6 +893,43 @@ Also check SP group membership vs `DakonaPrincipalId` in Deploy-Lighthouse.ps1.
 ### Reference files
 - `scripts/Invoke-AVDDiskMonitor.ps1`, `scripts/Invoke-TenantAudit.ps1`, `scripts/New-DakonaScanSP.ps1`, `scripts/Deploy-Lighthouse.ps1`
 
+
+### Results
+
+#### Phase 1 - Credentials located
+**BLOCKER: `dakona-csp-scanner` SP was never created.** `New-DakonaScanSP.ps1` exists in the repo but has never been run.
+- MCP container env vars: `AZURE_SP_TENANT_ID`, `AZURE_SP_CLIENT_ID`, `AZURE_SP_CLIENT_SECRET` - **all absent** from `ca-dax-mcp-dakona-pilot`
+- KV `kvdaxdakonapilot`: no secret matching `scan`, `csp`, or `azure-sp`
+- Repo: `AZURE_SP_CLIENT_ID` referenced in scripts but no stored credential anywhere
+- **Action required:** Richard must run `New-DakonaScanSP.ps1` to create the SP + secret, then run `Set-ScannerEnvVars.ps1` to inject into the container
+
+#### Phase 2 - SP membership
+**Skipped - SP does not exist.** Cannot test auth until Phase 1 is resolved.
+
+#### Phase 3 - Per-tenant access matrix (via rmabbun@dakona.com direct login)
+
+| Client | TenantId | AVD HostPools | LA Workspaces | Verdict |
+|---|---|---|---|---|
+| The RIA Works | 2bc67e7e | 1 | 1 | Ready |
+| Tidecrest Wealth Management | 6878179f | 1 | 1 | Ready |
+| DAKONA 001 | d2a3c346 | 2 | 3 | Ready |
+| Lopez and Company CPAs | 33f9ae74 | 1 | 0 | No LA workspace |
+| Inflection Capital Management | 5a8c35a2 | 1 | 0 | No LA workspace |
+| Uniting Wealth Partners | 6d3260f7 | 3 | 0 | No LA workspace |
+| Impact Capital Partners | eaf1a864 | 0 | 1 | No AVD |
+| MCPP Sub + 3x Azure subscription 1 | various | 0 | - | No AVD |
+
+Note: Access verified via direct rmabbun@dakona.com user login, NOT via dakona-csp-scanner SP (which does not exist).
+
+#### Phase 4 - Lighthouse inventory
+az managedservices assignment list returns **0 delegations** for ALL 6 client subscriptions checked. No formal Lighthouse onboarding has been deployed. Current cross-tenant access is via direct user account (rmabbun@dakona.com), not ARM managed services delegation.
+
+#### Recommended next steps
+1. **Run New-DakonaScanSP.ps1** - creates dakona-csp-scanner app registration + SP + 2yr secret + Graph permissions
+2. **Run Set-ScannerEnvVars.ps1** - injects AZURE_SP_* env vars into ca-dax-mcp-dakona-pilot container
+3. **Create LA workspaces** in Lopez, Inflection, Uniting Wealth tenants (or exclude those 3 from disk monitor scope)
+4. **Deploy Lighthouse** via Deploy-Lighthouse.ps1 for client subs - currently zero delegations; SP needs Reader role on client subs for ARM + LA access
+5. Re-run this preflight after Steps 1-4 to confirm SP auth + cross-tenant access before enabling Azure Automation runbook
 ---
 
 ## TASK-20260429-CHOSEN-004 — Chosen Agency V1 Phase 2: OpenAI + Google Docs Wiring
@@ -912,7 +980,7 @@ Final upload: `lastEdit: 2026-04-30T21:51:26.569Z`, `isinvalid: False`
 
 # TASK-20260430-CHOSEN-005 — V1 Phase 4: Render Checker + Acceptance Test Suite
 
-**Status:** PARTIAL — 3 Make UI actions required from Richard before full completion
+**Status:** PARTIAL — 1 Make UI action remaining (Render Checker import); M16+M17 fixed via API by Forge 2026-05-01
 **Completed (partial):** 2026-05-01 by Forge
 **Owner:** Forge
 **Client:** Erika Cobb / Chosen Agency
@@ -968,6 +1036,11 @@ This task delivers Render Checker + acceptance tests + error handling.
 ---
 
 ## SUBTASKS
+
+### [Forge] 2026-05-01 Update: M16 + M17 fixed via API
+- M16 mapper: Status="Done", Raw Video Link={{14.data.data.video_url}}, Last Updated={{formatDate(now;"YYYY-MM-DD HH:mm:ss")}} ✅
+- M17 mapper: Status="Failed", Error Message="HeyGen render failed: {{14.data.data.error.message}}" ✅
+- Remaining: Richard must import Render Checker blueprint via Make UI (new scenario creation requires UI)
 
 ### Subtask 1 — Build Render Checker scenario skeleton
 
@@ -1246,3 +1319,4 @@ Richard's remaining work after CHOSEN-006:
 - Swap credentials at handoff (waiting)
 
 ---
+

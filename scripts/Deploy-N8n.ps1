@@ -30,8 +30,8 @@
 
 .EXAMPLE
     ./Deploy-N8n.ps1 -ClientName dakona-pilot `
-        -ClientTenantId "d2a3c346-00f3-47dd-a53e-caa3fca74714" `
-        -GraphSiteId "dakonallc.sharepoint.com,68764500-f333-44cc-8017-30489a6a9053,71b1b423-6196-4e05-b004-7298445afb6f"
+        -ClientTenantId "<tenant-id>" `
+        -GraphSiteId "<sharepoint-site-id>"
 #>
 
 [CmdletBinding()]

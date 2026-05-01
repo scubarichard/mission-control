@@ -279,7 +279,7 @@ function registerTools(server) {
   server.tool("deploy_sso_config", "Run Deploy-SSOConfig.ps1 for the dakona-pilot client", {},
     async () => {
       const script = join(REPO, "scripts", "Deploy-SSOConfig.ps1");
-      return { content: [{ type: "text", text: runPowerShell(`& "${script}" -ClientName "dakona-pilot" -ClientTenantId "d2a3c346-00f3-47dd-a53e-caa3fca74714" -LibreChatUrl "https://dax.dakona.com"`, { timeout: 180_000 }) }] };
+      return { content: [{ type: "text", text: runPowerShell(`& "${script}" -ClientName "dakona-pilot" -ClientTenantId "${process.env.GRAPH_TENANT_ID}" -LibreChatUrl "https://dax.dakona.com"`, { timeout: 180_000 }) }] };
     }
   );
 

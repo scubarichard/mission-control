@@ -7,7 +7,6 @@
 const N8N_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiYWM0MmE5ODUtMTA5Ni00ODkxLTliYzQtZGQxYTBiNDNiYjFhIiwiaWF0IjoxNzczNzE0OTgwfQ.gBSwNl_frCaOvQylr5DLQubJmRGqcT-LRJpzcTWdCP4';
 const N8N_URL = 'https://n8n.dakona.net';
 const WF_ID = '3tniyxZREqfnAbfo';
-const SITE_ID = 'dakonallc.sharepoint.com,68764500-f333-44cc-8017-30489a6a9053,71b1b423-6196-4e05-b004-7298445afb6f';
 
 // SharePoint reading code — ES5 compatible, no optional chaining
 const SP_READ_CODE = [
@@ -17,7 +16,7 @@ const SP_READ_CODE = [
   'var prevReportSummary = "";',
   'if (gToken) {',
   '  var spFolderEncoded = "DAX%20Reports/" + encodeURIComponent(contact.name);',
-  '  var spListPath = "/v1.0/sites/' + SITE_ID + '/drive/root:/" + spFolderEncoded + ":/children?$select=name,createdDateTime,size&$orderby=createdDateTime%20desc&$top=10";',
+  '  var spListPath = "/v1.0/sites/" + process.env.SHAREPOINT_SITE_ID + "/drive/root:/" + spFolderEncoded + ":/children?$select=name,createdDateTime,size&$orderby=createdDateTime%20desc&$top=10";',
   '  var spData = await get("graph.microsoft.com", spListPath, { "Authorization": "Bearer " + gToken });',
   '  var spFiles = spData.value || [];',
   '  for (var sf = 0; sf < spFiles.length; sf++) {',
@@ -32,7 +31,7 @@ const SP_READ_CODE = [
   '  }',
   '',
   '  if (latestQR) {',
-  '    var qrFilePath = "/v1.0/sites/' + SITE_ID + '/drive/root:/" + spFolderEncoded + "/" + encodeURIComponent(latestQR.name);',
+  '    var qrFilePath = "/v1.0/sites/" + process.env.SHAREPOINT_SITE_ID + "/drive/root:/" + spFolderEncoded + "/" + encodeURIComponent(latestQR.name);',
   '    var qrMeta = await get("graph.microsoft.com", qrFilePath, { "Authorization": "Bearer " + gToken });',
   '    var qrDlUrl = qrMeta["@microsoft.graph.downloadUrl"] || "";',
   '    if (qrDlUrl) {',

@@ -8,7 +8,6 @@
 const N8N_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiYWM0MmE5ODUtMTA5Ni00ODkxLTliYzQtZGQxYTBiNDNiYjFhIiwiaWF0IjoxNzczNzE0OTgwfQ.gBSwNl_frCaOvQylr5DLQubJmRGqcT-LRJpzcTWdCP4';
 const N8N_URL = 'https://n8n.dakona.net';
 const WF_ID = '3tniyxZREqfnAbfo';
-const WB_KEY = '2565bf3734934e0facbe77c7c2accd40';
 
 // Code node: scans for triggers, outputs { sseBody, _flagged, _noteContent }
 const FLAG_CHECK_CODE = `
@@ -135,7 +134,7 @@ return [{ json: { sseBody, _userMessage, _agentOutput: agentOutput } }];`
       sendHeaders: true,
       headerParameters: {
         parameters: [
-          { name: 'ACCESS_TOKEN', value: WB_KEY },
+          { name: 'ACCESS_TOKEN', value: '={{ $env.WEALTHBOX_TOKEN }}' },
           { name: 'Content-Type', value: 'application/json' }
         ]
       },

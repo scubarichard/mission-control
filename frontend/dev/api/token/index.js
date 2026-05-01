@@ -16,7 +16,7 @@ module.exports = async function (context, req) {
     body: {
       directConnectUrl,
       clientId,
-      tenantId: 'd2a3c346-00f3-47dd-a53e-caa3fca74714',
+      tenantId: process.env.GRAPH_TENANT_ID,
       scope: 'https://api.powerplatform.com/CopilotStudio.Copilots.Invoke'
     }
   };

@@ -7,7 +7,6 @@
  */
 const N8N_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiYWM0MmE5ODUtMTA5Ni00ODkxLTliYzQtZGQxYTBiNDNiYjFhIiwiaWF0IjoxNzczNzE0OTgwfQ.gBSwNl_frCaOvQylr5DLQubJmRGqcT-LRJpzcTWdCP4';
 const N8N_URL = 'https://n8n.dakona.net';
-const WB_KEY = '2565bf3734934e0facbe77c7c2accd40';
 
 // ── Workflow 1: DAX Compliance Flagging ─────────────────────────────
 
@@ -81,7 +80,7 @@ if (contactId) {
 await $http.request({
   method: 'POST',
   url: 'https://api.crmworkspace.com/v1/notes',
-  headers: { 'ACCESS_TOKEN': '${WB_KEY}', 'Content-Type': 'application/json' },
+  headers: { 'ACCESS_TOKEN': process.env.WEALTHBOX_TOKEN, 'Content-Type': 'application/json' },
   body: notePayload
 });
 

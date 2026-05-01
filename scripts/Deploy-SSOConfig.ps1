@@ -33,7 +33,7 @@
 
 .EXAMPLE
     ./Deploy-SSOConfig.ps1 -ClientName dakona-pilot `
-        -ClientTenantId "d2a3c346-00f3-47dd-a53e-caa3fca74714" `
+        -ClientTenantId "<tenant-id>" `
         -LibreChatUrl "https://dax.dakona.com"
 #>
 
@@ -278,7 +278,7 @@ Write-Host "  Revision restarted." -ForegroundColor Green
 
 Write-Host "`nVerifying service principal permissions..." -ForegroundColor Yellow
 
-$spId = "218064ac-bee2-4246-9709-ae7518ae71cb"
+$spId = $entraClientId
 $subscriptionId = az account show --query "id" -o tsv
 $spAssignments = az role assignment list --assignee $spId --resource-group $rgName --subscription $subscriptionId --query "[?roleDefinitionName=='Contributor']" -o json | ConvertFrom-Json
 
