@@ -149,7 +149,7 @@ async function update() {
         url: '=https://api.crmworkspace.com/v1/contacts?per_page=250',
         sendHeaders: true,
         specifyHeaders: 'json',
-        jsonHeaders: '{ "ACCESS_TOKEN": "2565bf3734934e0facbe77c7c2accd40" }',
+        jsonHeaders: '={{ JSON.stringify({ACCESS_TOKEN: $env.WEALTHBOX_TOKEN}) }}',
         method: 'GET',
         placeholderDefinitions: {
           values: []

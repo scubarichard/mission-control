@@ -6,7 +6,6 @@
 const N8N_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiYWM0MmE5ODUtMTA5Ni00ODkxLTliYzQtZGQxYTBiNDNiYjFhIiwiaWF0IjoxNzczNzE0OTgwfQ.gBSwNl_frCaOvQylr5DLQubJmRGqcT-LRJpzcTWdCP4';
 const N8N_URL = 'https://n8n.dakona.net';
 const ROUTER_WF_ID = '3tniyxZREqfnAbfo';
-const WB_KEY = '2565bf3734934e0facbe77c7c2accd40';
 
 // ── List Clients workflow Code ───────────────────────────────────────
 
@@ -44,7 +43,7 @@ const contacts = await new Promise((resolve, reject) => {
   https.get({
     hostname: 'api.crmworkspace.com',
     path: '/v1/contacts?per_page=250',
-    headers: { 'ACCESS_TOKEN': '${WB_KEY}' }
+    headers: { 'ACCESS_TOKEN': process.env.WEALTHBOX_TOKEN }
   }, (res) => {
     let data = '';
     res.on('data', c => data += c);

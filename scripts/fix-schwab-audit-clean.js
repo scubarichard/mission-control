@@ -5,7 +5,6 @@
 const N8N_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiYWM0MmE5ODUtMTA5Ni00ODkxLTliYzQtZGQxYTBiNDNiYjFhIiwiaWF0IjoxNzczNzE0OTgwfQ.gBSwNl_frCaOvQylr5DLQubJmRGqcT-LRJpzcTWdCP4';
 const N8N_URL = 'https://n8n.dakona.net';
 const WF_ID = '8y1fZmL1anhRDY0K';
-const WB_KEY = '2565bf3734934e0facbe77c7c2accd40';
 
 const AGG_CODE = `var items = $("Generate Document").all();
 var mergeItems = $("Merge WB Data").all();
@@ -40,7 +39,7 @@ function postNote(contactId, clientName, pv, ytd) {
     });
     var req = https.request({
       hostname: "api.crmworkspace.com", path: "/v1/notes", method: "POST",
-      headers: { "ACCESS_TOKEN": "${WB_KEY}", "Content-Type": "application/json", "Content-Length": Buffer.byteLength(body) }
+      headers: { "ACCESS_TOKEN": process.env.WEALTHBOX_TOKEN, "Content-Type": "application/json", "Content-Length": Buffer.byteLength(body) }
     }, function(res) {
       var d = ""; res.on("data", function(c) { d += c; });
       res.on("end", function() { resolve(d); });

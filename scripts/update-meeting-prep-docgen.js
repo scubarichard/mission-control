@@ -5,11 +5,6 @@
 const N8N_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiYWM0MmE5ODUtMTA5Ni00ODkxLTliYzQtZGQxYTBiNDNiYjFhIiwiaWF0IjoxNzczNzE0OTgwfQ.gBSwNl_frCaOvQylr5DLQubJmRGqcT-LRJpzcTWdCP4';
 const N8N_URL = 'https://n8n.dakona.net';
 const WF_ID = '3tniyxZREqfnAbfo';
-const WB_KEY = '2565bf3734934e0facbe77c7c2accd40';
-const GRAPH_TENANT = 'd2a3c346-00f3-47dd-a53e-caa3fca74714';
-const GRAPH_CLIENT_ID = '218064ac-bee2-4246-9709-ae7518ae71cb';
-const GRAPH_CLIENT_SECRET = '6LR8Q~ZCn5FTBlg894LtCGlXZ9GV3NAhS4BY9bla';
-const SITE_ID = 'dakonallc.sharepoint.com,68764500-f333-44cc-8017-30489a6a9053,71b1b423-6196-4e05-b004-7298445afb6f';
 
 // Read the current meeting prep code and append document generation
 async function deploy() {
@@ -28,9 +23,9 @@ async function deploy() {
 var PizZip = require("pizzip");
 
 // Get Graph token
-var graphTokenBody = "client_id=${GRAPH_CLIENT_ID}&client_secret=${GRAPH_CLIENT_SECRET}&scope=https://graph.microsoft.com/.default&grant_type=client_credentials";
+var graphTokenBody = "client_id=" + process.env.GRAPH_CLIENT_ID + "&client_secret=" + encodeURIComponent(process.env.GRAPH_CLIENT_SECRET) + "&scope=https://graph.microsoft.com/.default&grant_type=client_credentials";
 var graphTokenRes = await new Promise(function(resolve) {
-  var req = https.request({ hostname: "login.microsoftonline.com", path: "/${GRAPH_TENANT}/oauth2/v2.0/token", method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "Content-Length": Buffer.byteLength(graphTokenBody) } }, function(res) {
+  var req = https.request({ hostname: "login.microsoftonline.com", path: "/" + process.env.GRAPH_TENANT_ID + "/oauth2/v2.0/token", method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "Content-Length": Buffer.byteLength(graphTokenBody) } }, function(res) {
     var d = ""; res.on("data", function(c) { d += c; }); res.on("end", function() { try { resolve(JSON.parse(d)); } catch(e) { resolve({}); } });
   });
   req.on("error", function() { resolve({}); });
@@ -40,7 +35,7 @@ var graphTok = graphTokenRes.access_token || "";
 
 if (graphTok) {
   // Download template
-  var tplMeta = await get("graph.microsoft.com", "/v1.0/sites/${SITE_ID}/drive/root:/DAX Templates/Meeting-Prep-TEMPLATE.docx", { "Authorization": "Bearer " + graphTok });
+  var tplMeta = await get("graph.microsoft.com", "/v1.0/sites/" + process.env.SHAREPOINT_SITE_ID + "/drive/root:/DAX Templates/Meeting-Prep-TEMPLATE.docx", { "Authorization": "Bearer " + graphTok });
   var dlUrl = tplMeta["@microsoft.graph.downloadUrl"] || "";
 
   if (dlUrl) {
@@ -101,7 +96,7 @@ if (graphTok) {
       // Upload
       var uploadBody = docBuf;
       var uploadResult = await new Promise(function(resolve) {
-        var uploadPath = "/v1.0/sites/${SITE_ID}/drive/root:/" + encodeURIComponent(folderPath) + "/" + encodeURIComponent(fileName) + ":/content";
+        var uploadPath = "/v1.0/sites/" + process.env.SHAREPOINT_SITE_ID + "/drive/root:/" + encodeURIComponent(folderPath) + "/" + encodeURIComponent(fileName) + ":/content";
         var req = https.request({ hostname: "graph.microsoft.com", path: uploadPath, method: "PUT", headers: { "Authorization": "Bearer " + graphTok, "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Content-Length": uploadBody.length } }, function(res) {
           var d = ""; res.on("data", function(c) { d += c; }); res.on("end", function() { try { resolve(JSON.parse(d)); } catch(e) { resolve({}); } });
         });
