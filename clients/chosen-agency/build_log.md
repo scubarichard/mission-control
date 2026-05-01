@@ -91,9 +91,9 @@ Placeholders inserted (matching `editor_brief_v1.md`):
 4. **Phase 2 build**: Connect Make scenario modules (Sheets trigger → OpenAI → Copy Script Doc → Copy Editor Brief → ElevenLabs → HeyGen → write-back)
 
 
-### Subtask 4 � Clone Make Scenario ? DONE (manual)
-**Source scenario:** 4820264 ("Chosen Agency � Content Pipeline (Test)")
-**New scenario:** 4894796 ("Chosen Agency � Content Pipeline V1")
+### Subtask 4 � Clone Make Scenario ? DONE (manual)
+**Source scenario:** 4820264 ("Chosen Agency � Content Pipeline (Test)")
+**New scenario:** 4894796 ("Chosen Agency � Content Pipeline V1")
 **URL:** https://us2.make.com/885318/scenarios/4894796/edit
 **Status:** Inactive (will be modified after Erika confirms model + provides keys)
 
@@ -258,4 +258,58 @@ Ran V1 scenario once via MCP (Execution ID: 9ce46cefc3d140a3b566e866e9bb1439). P
 | HeyGen API | Hardcoded in V1 scenario Modules 10 + 14 | Working — rotated tonight |
 | Google Sheets SA | `kvdaxdakonapilot/google-sa-pvc-sheets` | Working |
 | Google Sheets OAuth | n8n cred `fhAvmmHWXh2VIsWu` | Expired — SA used instead |
+
+---
+
+# CHOSEN-006 — V1 Phase 6: Documentation Suite
+
+**Date:** 2026-05-01  
+**Agent:** Forge  
+**Status:** COMPLETE
+
+---
+
+## Summary
+
+All 4 V1 documentation files drafted, committed to repo, and uploaded to Google Drive `10_Documentation` folder (`1dsc327ZGi2nR_bl_1qJnbFkreUitamaU`).
+
+---
+
+## Drive Doc IDs
+
+| Document | Title | Google Doc ID |
+|---|---|---|
+| Operator SOP | Chosen Agency V1 — Operator SOP | `1BKiEAp2XH3z8LOkaVdwQ6onNujH168mu6yNZ_1RXAOA` |
+| Field Map | Chosen Agency V1 — Field Map | `1MzAE7JGdNkKbLQoXc1l-H0YUN9MfIXDS333n4rdttio` |
+| Credential Map | Chosen Agency V1 — Credential Map | `1U6dcWhIxNHEVCG5J3qs7DAuM1f8p_LWoLugRKfc4AeU` |
+| Troubleshooting Guide | Chosen Agency V1 — Troubleshooting Guide | `1dpkiXqrVQ3wkovY1lPqtFP7OrBiF7azWcgDXYEvjmzU` |
+
+---
+
+## Repo Files
+
+| File | Path |
+|---|---|
+| Operator SOP | `clients/chosen-agency/docs/operator_sop.md` |
+| Field Map | `clients/chosen-agency/docs/field_map.md` |
+| Credential Map | `clients/chosen-agency/docs/credential_map.md` |
+| Troubleshooting Guide | `clients/chosen-agency/docs/troubleshooting.md` |
+
+---
+
+## Doc Coverage
+
+- **Operator SOP** — 8 sections: what system does, daily workflow, status meanings, override settings, output locations, recovery steps, what not to do, getting help
+- **Field Map** — 4 parts: 28 Queue columns, 13 System Settings rows, full Make module list (M1–M30), Render Checker module spec (RC-M1–RC-M5)
+- **Credential Map** — 5 sections: API keys, Make connections, Google service accounts, 5-step handoff procedure, current build environment key previews
+- **Troubleshooting Guide** — 13 issues documented (all bugs from CHOSEN-004/005 build sessions, including M16/17 column name bug, Make API 403, ElevenLabs control chars, HeyGen 401)
+
+---
+
+## Remaining (Richard's tasks — not in scope)
+
+- Record 3 Loom walkthrough videos (Operator SOP, Field Map, Troubleshooting)
+- Final acceptance run with Erika after Make UI fixes (CHOSEN-005 actions)
+- Migrate Drive assets to Erika's Google Drive folder (waiting on her share)
+- Credential swap at handoff (waiting on Erika account setup)
 
