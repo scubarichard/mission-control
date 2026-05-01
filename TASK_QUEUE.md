@@ -1,25 +1,52 @@
 
+## TASK-20260501-ATLAS-001 — Create Google OAuth Credentials for Calendar/Email
+- **Assignee:** Richard (manual OAuth flow required)
+- **Status:** PENDING
+- **Priority:** HIGH
+- **From:** Atlas
+- **Client:** Atlas / Infrastructure
+- **Deliverable:** Google OAuth tokens in Key Vault for both Gmail accounts
+
+### Requirements
+1. **richard@1altx.com** — Google OAuth token
+   - Visit: https://console.cloud.google.com
+   - Create OAuth 2.0 Client ID (Desktop)
+   - Grant Calendar API + Gmail API scopes
+   - Store in Key Vault:
+     - `google-oauth-1altx-client-id`
+     - `google-oauth-1altx-client-secret`
+     - `google-oauth-1altx-refresh-token` (preferred, or run OAuth flow)
+
+2. **richard@mabbun.com** — Google OAuth token
+   - Same process, store as `google-oauth-mabbun-*`
+
+### Why This Matters
+Atlas currently has access to M365/Outlook (rmabbun@dakona.com) but cannot read Gmail calendars or emails. Once these tokens exist, daily briefings will include events from all three calendars + inbox digests.
+
+### Handoff
+Once tokens are in the vault, Atlas will:
+- Deploy n8n workflows for calendar fetch
+- Deploy n8n workflows for email digest
+- Wire into morning briefing + EOD recap
+
+
+---
+
+
 ## TASK-20260501-FORGE-KEYVAULT-001 — Grant Atlas Key Vault Access
 - **Assignee:** Forge
-- **Status:** BLOCKED (RBAC role assigned, but vault still blocking)
-- **Completed:** 2026-05-01 (attempted)
-- **Completed_by:** Forge
-- **Notes:** Key Vault Secrets Officer granted to Atlas SP (9ddd0bc6) on kvdaxdakonapilot. Role assignment ID: 78762b73. **BUT: Vault still returns "Assignment: (not found)" on secret reads. Root cause: Key Vault has Access Policies enabled, which override RBAC. RBAC role alone won't work.**
+- **Status:** DONE
+- **Completed:** 2026-05-01 23:51 UTC
+- **Completed_by:** Forge (Access Policies method)
+- **Notes:** ✅ Atlas can now read all 68 secrets in kvdaxdakonapilot. Verified via `az keyvault secret list`.
 - **Priority:** HIGH
 - **From:** Richard (Telegram 2026-05-01 20:54 UTC)
 - **Client:** Atlas / Infrastructure
 
-### ALERT — Atlas Test Result (2026-05-01 22:37 UTC)
-Tested after Forge's RBAC grant. Result: **STILL BLOCKED**. Error shows `"Assignment: (not found)"` despite role assignment existing. This indicates the vault uses Access Policies (not just RBAC).
-
-### Required Fix
-Use **Access Policies** instead of RBAC:
-1. Azure Portal → `kvdaxdakonapilot` vault
-2. **Access Policies** (left sidebar)
-3. **+ Add Access Policy**
-4. Permissions: Check **Get** and **List** under Secrets
-5. Select Principal: `9ddd0bc6-4ff2-4579-9292-bce677a06fd1`
-6. **Add** → **Save**
+### Completion Notes
+- First attempt (RBAC role) failed because vault uses Access Policies
+- Forge corrected approach and added SP to Access Policies
+- Atlas verified access works at 2026-05-01 23:51 UTC
 
 ### Task
 Grant the Atlas service principal (`9ddd0bc6-4ff2-4579-9292-bce677a06fd1`) access to read secrets in `kvdaxdakonapilot` Key Vault.
