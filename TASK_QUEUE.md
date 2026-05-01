@@ -906,3 +906,340 @@ Final upload: `lastEdit: 2026-04-30T21:51:26.569Z`, `isinvalid: False`
 2. E2E test: 1 row with Status=Queued — should produce Script Doc + Editor Brief in Drive, sheet status → Script Done
 
 **[Forge] 2026-04-30:** DONE — blueprint fully live via API (filter, docs modules, all refs). 2 verification steps for Richard.
+
+
+---
+
+# TASK-20260430-CHOSEN-005 — V1 Phase 4: Render Checker + Acceptance Test Suite
+
+**Status:** OPEN
+**Owner:** ANY (agent-agnostic)
+**Client:** Erika Cobb / Chosen Agency
+**Priority:** High
+**Created:** 2026-04-30 (late evening) by Richard
+**Estimated effort:** 3-5 hours
+**Depends on:** CHOSEN-004 (DONE)
+**Chained with:** CHOSEN-006 (must complete this BEFORE CHOSEN-006 starts)
+
+---
+
+## STRATEGIC CONTEXT
+
+V1 scenario (4894796) is functionally complete through Phase 3 but has zero error handling, no acceptance tests, and no standalone Render Checker. Per Erika's SOW Section 9 Step 6, the Render Checker is REQUIRED — safety net for HeyGen renders that exceed inline polling capacity.
+
+V1 today: inline polling in main scenario (Modules 12-18, 60 iter × 60s = 60 min max). HeyGen typically completes 2-5 min. For batch runs or slow renders, we need standalone Render Checker.
+
+This task delivers Render Checker + acceptance tests + error handling.
+
+---
+
+## CRITICAL RULES
+
+1. **SAVE PROGRESS AFTER EVERY SUBTASK.** Commit + push after each. Use messages like "[Forge] CHOSEN-005 Subtask N DONE: <description>".
+2. **TEST EACH SUBTASK BEFORE MOVING TO NEXT.**
+3. **IF ERROR:** Read it, attempt fix, re-test. Up to 3 retries per subtask. After 3 fails, post detailed error to Slack #dax-collab and STOP.
+4. **DO NOT modify V1 scenario 4894796 module logic** unless instructed — only ADD modules or error handler routes.
+5. **DO NOT touch test scenario 4820264.**
+6. **DO NOT delete V1 sheet or templates.**
+7. **DO NOT activate Render Checker schedule** until acceptance tests pass.
+
+---
+
+## REFERENCE
+
+- SOW: `clients/chosen-agency/builder-handoff.md`
+- Build log: `clients/chosen-agency/build_log.md`
+- V1 scenario: `4894796`
+- V1 sheet: `1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo`
+- Make API key: `kvdaxdakonapilot/make-api-key` (read-scoped — escalate write fails to Richard)
+- HeyGen API key: live in V1 scenario Module 14 headers (rotated tonight, fresh)
+- Other secrets: `kvdaximpactcapital`
+
+**Working blueprint patterns proven tonight:**
+- OpenAI modules: must have `response_format: json_object` set
+- OpenAI integers: `max_tokens` (int), `temperature` (double), `top_p` (double), `n_completions` (int) — never strings
+- ElevenLabs body: use `replace(29.script; (newline); " ")` to strip control chars
+- Sheet refs: `spreadsheetId` no leading slash; `sheetName` must be set explicitly
+- Column names: V1 schema uses Title Case (`Status`, `Voice File URL`, `Render Job ID`)
+- Filters on inner-route modules go on the module itself, not on the route — see test scenario 4820264 pattern
+- `is_done` lives in Module 2's variables array, set to `"false"` initially, flipped to `"true"` by Module 21/22
+
+---
+
+## SUBTASKS
+
+### Subtask 1 — Build Render Checker scenario skeleton
+
+Create new Make scenario via API (or escalate to Richard for manual clone if write-scoped fails).
+- Name: `Chosen Agency — Render Checker`
+- Folder: `232853` (same as V1)
+- Schedule: every 5 min
+- Initially: INACTIVE
+
+Module flow:
+1. Trigger: `google-sheets:filterRows` — V1 sheet, Queue tab, filter Status = Rendering, limit 10
+2. `http:ActionSendData` — HeyGen check status URL `https://api.heygen.com/v1/video_status.get?video_id={{1.`Render Job ID`}}`, GET, X-Api-Key header (use V1 Module 14's key), parseResponse: true
+3. `builtin:BasicRouter` 2 routes: Completed and Failed
+4. `google-sheets:updateRow` (Completed): filter `{{2.data.data.status}} = "completed"`, sets Status=Done, Raw Video Link, Last Updated
+5. `google-sheets:updateRow` (Failed): filter `{{2.data.data.status}} = "failed"`, sets Status=Failed, Error Message, Last Updated
+
+No "still processing" route — leave row as Rendering for next checker run.
+
+ACCEPTANCE: scenario exists, all 5 modules present, filters on module level, inactive.
+SAVE: Update build_log.md with new scenario ID. Commit + push.
+
+### Subtask 2 — Test Render Checker
+
+Don't activate schedule. Manually click "Run once" via Make API.
+
+Test: V1 sheet has rows in "Rendering" state from earlier tests. Render Checker should pick them up, query HeyGen, update them.
+
+Expected: rows where HeyGen status=completed → Status=Done, Raw Video Link populated.
+
+ACCEPTANCE: at least one row updated successfully, no errors in scenario log.
+SAVE: Commit Render Checker test results to build_log.md.
+
+### Subtask 3 — Add error handler routes to V1 scenario (4894796)
+
+Add error handler routes to these 5 critical modules:
+- Module 5 (OpenAI Script + Caption)
+- Module 23 (OpenAI Editor Brief)
+- Module 7 (ElevenLabs)
+- Module 8 (Drive upload)
+- Module 10 (HeyGen create)
+
+Pattern:
+- Route filter: Make's `[Error]` built-in filter
+- First module in route: google-sheets:updateRow
+  - Status = "Error"
+  - Error Message = `"<Module name>: " + {{error.message}}`
+  - Last Updated = now()
+
+ACCEPTANCE: all 5 critical modules have error handlers, error route writes to V1 sheet correctly.
+SAVE: Push V1 scenario via Make API. Commit blueprint snapshot.
+
+### Subtask 4 — Build acceptance test row data
+
+Add 8 test rows to V1 sheet (rows 3-10) per SOW Section 18:
+
+Happy-path (rows 3-6): standard short-form content (sleep tips, productivity, mindset, business). Status=Queued, complete fields, overrides blank.
+
+Override (rows 7-10):
+- Row 7: Override Voice ID set
+- Row 8: Override Avatar ID set
+- Row 9: Override Tone set
+- Row 10: Override Stability + Override Similarity Boost set
+
+Use Google Sheets API via service account.
+
+ACCEPTANCE: 8 rows present, unique Script IDs, override columns populated only on rows 7-10.
+SAVE: Commit "test data populated" to build_log.md.
+
+### Subtask 5 — Run acceptance tests
+
+For each row 3-10:
+1. Trigger V1 scenario via Make API "Run once" (POST `/api/v2/scenarios/4894796/run`)
+2. Wait for completion (poll Make execution log)
+3. Verify outputs:
+   - Happy-path (3-6): all output cols populated, Status=Done
+   - Override (7-10): outputs reflect override values
+
+If row fails: log it, attempt 1 retry, move on.
+
+Expected runtime per row: 3-7 min.
+
+ACCEPTANCE: 8 of 8 rows produce expected outputs (or documented failures), override behavior verified on rows 7-10.
+SAVE: Append full test results matrix to build_log.md.
+
+### Subtask 6 — Final completion summary
+
+Append CHOSEN-005 completion entry to build_log.md:
+- Render Checker scenario ID + URL
+- Error handlers added to which V1 modules
+- Test results matrix
+- Deferred items
+- Slack post to #dax-collab
+
+ACCEPTANCE: build_log.md fully updated, Slack posted.
+SAVE: Final commit + push.
+
+---
+
+## ERROR-RECOVERY PROTOCOL
+
+If subtask fails:
+1. Read error
+2. Identify failing module/operation
+3. Check tonight's known patterns:
+   - String/int type errors → cast
+   - parseJSON → use Parse JSON modules
+   - Sheet name blank → set explicitly
+   - Column case → V1 uses Title Case
+   - Filter on route → move to module
+   - Control chars in body → `replace(text; (newline); " ")`
+4. Apply fix, re-test
+5. Up to 3 retries
+6. After 3 fails: post to Slack with subtask number + attempt + error. STOP.
+
+---
+
+## DONE WHEN
+
+All 6 subtasks complete. CHOSEN-006 unblocked.
+
+---
+
+# TASK-20260430-CHOSEN-006 — V1 Phase 6: Documentation Suite
+
+**Status:** OPEN (do NOT start until CHOSEN-005 is DONE)
+**Owner:** ANY (agent-agnostic)
+**Client:** Erika Cobb / Chosen Agency
+**Priority:** High
+**Created:** 2026-04-30 by Richard
+**Estimated effort:** 3-4 hours
+**Depends on:** CHOSEN-005 (Render Checker + tests passed)
+
+---
+
+## STRATEGIC CONTEXT
+
+Phase 6 deliverables per SOW Section 14:
+- Operator SOP
+- Field map
+- Credential map
+- Troubleshooting guide
+
+These go in Drive folder `10_Documentation` with Markdown copies in repo.
+
+Loom recordings (3 separate per SOW) are NOT in this task — Richard records.
+
+---
+
+## CRITICAL RULES
+
+1. SAVE AFTER EVERY DOC. Commit each as soon as drafted.
+2. DON'T BLOCK ON PERFECT. 80% draft — Richard polishes.
+3. REFERENCE ACTUAL ASSET STATE. Pull live blueprint from Make API for credential map. Pull live sheet schema from Sheets API for field map.
+4. NO LOOM RECORDINGS.
+
+---
+
+## SUBTASKS
+
+### Subtask 1 — Operator SOP
+
+Output: `clients/chosen-agency/docs/operator_sop.md`
+Audience: Erika and her editor — non-technical operators.
+
+Sections:
+1. What this system does (2-3 paragraphs, plain English)
+2. Daily workflow — step-by-step adding a row, field-by-field guidance, when to use Override
+3. Status meanings — what each of 8 statuses means + what to do when you see it
+4. Where outputs go — Drive folder map, Doc links, Sheet links
+5. What to do when something breaks — 3-step recovery (check Status, check Error Message, run Render Checker manually)
+6. What NOT to do — never edit Status manually except retry, never delete System Settings rows, etc.
+
+Length: 5-8 pages. Friendly second person.
+
+ACCEPTANCE: Markdown file created, scannable, no jargon.
+SAVE: Commit + push.
+
+### Subtask 2 — Field map
+
+Output: `clients/chosen-agency/docs/field_map.md`
+
+Format: Markdown table with: Source / Type / Required (Y/N) / Used by Module(s) / Sent to API as / Result column.
+
+Pull live V1 blueprint from Make API for accurate Module IDs. Pull live V1 sheet schema from Sheets API.
+
+Document all 28 V1 sheet columns + 13 System Settings rows.
+
+Length: 3-5 pages.
+
+ACCEPTANCE: All columns + settings documented.
+SAVE: Commit + push.
+
+### Subtask 3 — Credential map
+
+Output: `clients/chosen-agency/docs/credential_map.md`
+
+Sections:
+1. API keys table: Service / Where stored during build / Where stored long-term (Key Vault path) / Used by Modules / Rotation procedure
+2. Make connections table: name / service / owner / modules using
+3. Service accounts: Google SA email + permissions
+4. Handoff procedure: 5-step checklist for transferring to Erika + verification steps
+
+Pull live blueprint from Make API for connection IDs.
+
+Length: 2-4 pages.
+
+ACCEPTANCE: All services documented, handoff procedure clear.
+SAVE: Commit + push.
+
+### Subtask 4 — Troubleshooting guide
+
+Output: `clients/chosen-agency/docs/troubleshooting.md`
+
+Format: Symptom → Diagnosis → Fix.
+
+Include all issues debugged tonight:
+- "Module 5 fails with imageDetail error"
+- "Module 23 fails with parseJSON not found"
+- "Module 23 fails: max_tokens expected integer"
+- "Module 30 fails: Source is not valid JSON"
+- "Module 7 fails: Invalid control character"
+- "Module 7 fails: 404 Not Found"
+- "Module 10 fails: 401 Unauthorized"
+- "Polling never completes"
+- "Status stuck at Rendering"
+- "Sheet refs failing: rowNumber missing"
+- "Wrong column updated"
+
+For each: 2-4 sentences.
+
+Length: 2-4 pages.
+
+ACCEPTANCE: At least 10 issues documented.
+SAVE: Commit + push.
+
+### Subtask 5 — Upload all 4 docs to Drive
+
+Upload Markdown files as Google Docs to `10_Documentation` folder in Chosen Agency Drive.
+
+Use Drive API:
+1. Convert .md to Google Doc format
+2. Upload with appropriate name
+3. Verify in folder
+
+ACCEPTANCE: 4 Google Docs visible in 10_Documentation folder.
+SAVE: Commit "docs uploaded" + Drive Doc IDs to build_log.md.
+
+### Subtask 6 — Final completion summary
+
+Append CHOSEN-006 entry to build_log.md.
+Slack post to #dax-collab summarizing:
+- 4 docs drafted and uploaded
+- Loom recordings still needed (Richard's task)
+- Final acceptance run with Erika still needed
+- Migration to Erika's Drive folder still needed (waiting on her share)
+- Credential swap still needed (waiting on her account setup)
+
+---
+
+## ERROR-RECOVERY PROTOCOL
+
+Same as CHOSEN-005: 3 retries per subtask, then post to Slack and STOP.
+
+---
+
+## DONE WHEN
+
+All 4 docs drafted, uploaded, build_log.md updated, Slack notified.
+
+Richard's remaining work after CHOSEN-006:
+- Record 3 Loom walkthroughs
+- Final acceptance test with Erika
+- Migrate assets to Erika's Drive (waiting)
+- Swap credentials at handoff (waiting)
+
+---
