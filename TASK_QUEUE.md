@@ -100,7 +100,7 @@ NOTES: Full pipeline built and documented. 97 videos rendered end-to-end (record
 
 ## TASK-20260421-FORGE-1ALTX-001 — PVC Pipeline Follow-up
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** IN_PROGRESS
 - **Date:** 2026-04-21
 - **From:** Sonnet (session handover)
 - **Client:** 1AltX
