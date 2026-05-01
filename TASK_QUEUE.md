@@ -980,7 +980,7 @@ Final upload: `lastEdit: 2026-04-30T21:51:26.569Z`, `isinvalid: False`
 
 # TASK-20260430-CHOSEN-005 — V1 Phase 4: Render Checker + Acceptance Test Suite
 
-**Status:** PARTIAL — 3 Make UI actions required from Richard before full completion
+**Status:** PARTIAL — 1 Make UI action remaining (Render Checker import); M16+M17 fixed via API by Forge 2026-05-01
 **Completed (partial):** 2026-05-01 by Forge
 **Owner:** Forge
 **Client:** Erika Cobb / Chosen Agency
@@ -1036,6 +1036,11 @@ This task delivers Render Checker + acceptance tests + error handling.
 ---
 
 ## SUBTASKS
+
+### [Forge] 2026-05-01 Update: M16 + M17 fixed via API
+- M16 mapper: Status="Done", Raw Video Link={{14.data.data.video_url}}, Last Updated={{formatDate(now;"YYYY-MM-DD HH:mm:ss")}} ✅
+- M17 mapper: Status="Failed", Error Message="HeyGen render failed: {{14.data.data.error.message}}" ✅
+- Remaining: Richard must import Render Checker blueprint via Make UI (new scenario creation requires UI)
 
 ### Subtask 1 — Build Render Checker scenario skeleton
 
@@ -1314,3 +1319,4 @@ Richard's remaining work after CHOSEN-006:
 - Swap credentials at handoff (waiting)
 
 ---
+
