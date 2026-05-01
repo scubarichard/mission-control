@@ -1,0 +1,17 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: name
+modelDescription: Use this tool to build a meeting prep brief for a specific client — returns profile, recent notes, open tasks. Call this whenever the user asks to 'prep for' or 'brief me on' or 'meeting with' a named client. Pass the client name.
+outputs:
+  - propertyName: clientName
+  - propertyName: client
+  - propertyName: notes
+  - propertyName: tasks
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false

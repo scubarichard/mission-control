@@ -1,0 +1,38 @@
+name: Import DAX solution (with flow activation)
+
+on:
+  workflow_dispatch:
+    inputs:
+      file:
+        description: 'Solution zip path in repo (e.g. power-platform/solutions/DAX-dev-test.zip)'
+        required: true
+        default: 'power-platform/solutions/DAX-dev-test.zip'
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install pac
+        uses: microsoft/powerplatform-actions/actions-install@v1
+      - name: Import solution
+        env:
+          PP_APP_ID: ${{ secrets.PP_APP_ID }}
+          PP_CLIENT_SECRET: ${{ secrets.PP_CLIENT_SECRET }}
+          PP_TENANT_ID: ${{ secrets.PP_TENANT_ID }}
+          DAX_DEV_URL: ${{ secrets.DAX_DEV_URL }}
+        run: |
+          set -uo pipefail
+          PAC="$POWERPLATFORMTOOLS_PACPATH/tools/pac"
+          if [ ! -x "$PAC" ]; then PAC="$(find "$POWERPLATFORMTOOLS_PACPATH" -name pac -type f | head -1)"; fi
+          "$PAC" auth create --name dax-dev --url "$DAX_DEV_URL" \
+            --applicationId "$PP_APP_ID" --clientSecret "$PP_CLIENT_SECRET" --tenant "$PP_TENANT_ID"
+          "$PAC" auth select --name dax-dev
+
+          echo "--- pac solution import help ---"
+          "$PAC" solution import help
+
+          echo ""
+          echo "--- attempting import: ${{ inputs.file }} ---"
+          "$PAC" solution import --path "${{ inputs.file }}" --activate-plugins --force-overwrite

@@ -1,0 +1,56 @@
+{
+  "properties": {
+    "connectionReferences": {},
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {"$authentication": {"defaultValue": {}, "type": "SecureObject"}, "$connections": {"defaultValue": {}, "type": "Object"}},
+      "triggers": {
+        "manual": {
+          "type": "Request", "kind": "Skills",
+          "inputs": {"schema": {"type": "object", "properties": {"subject": {"type": "string", "title": "Subject", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}, "start": {"type": "string", "title": "Start (ISO)", "description": "Start datetime in ISO format with timezone", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}, "end": {"type": "string", "title": "End (ISO)", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}, "attendees": {"type": "string", "title": "Attendees", "description": "Comma-separated attendee emails (optional)", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}, "body": {"type": "string", "title": "Body", "description": "Meeting body/agenda (optional)", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}}, "required": ["subject", "start", "end"]}},
+          "description": "Create a calendar event in the advisor's Outlook calendar via Microsoft Graph."
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Get_Graph_Token": {"type": "Http", "inputs": {"method": "POST", "uri": "https://login.microsoftonline.com/d2a3c346-00f3-47dd-a53e-caa3fca74714/oauth2/v2.0/token", "headers": {"Content-Type": "application/x-www-form-urlencoded"}, "body": "grant_type=client_credentials&client_id=37fe1021-88b3-4744-aa32-b5d7e104462b&client_secret=__PP_CI_SECRET__&scope=https%3A%2F%2Fgraph.microsoft.com%2F.default"}},
+            "Create_Event": {
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "https://graph.microsoft.com/v1.0/users/1740bd16-eb72-4ace-913d-96150cec19fd/events",
+                "headers": {"Authorization": "Bearer @{body('Get_Graph_Token')?['access_token']}", "Content-Type": "application/json"},
+                "body": {
+                  "subject": "@{triggerBody()?['subject']}",
+                  "start": {"dateTime": "@{triggerBody()?['start']}", "timeZone": "UTC"},
+                  "end": {"dateTime": "@{triggerBody()?['end']}", "timeZone": "UTC"},
+                  "body": {"contentType": "Text", "content": "@{coalesce(triggerBody()?['body'],'')}"}
+                }
+              },
+              "runAfter": {"Get_Graph_Token": ["Succeeded"]}
+            }
+          }
+        },
+        "Respond_to_the_agent": {
+          "type": "Response", "kind": "Skills",
+          "inputs": {
+            "statusCode": 200,
+            "body": {"id": "@body('Create_Event')?['id']", "subject": "@body('Create_Event')?['subject']", "webLink": "@body('Create_Event')?['webLink']", "asOf": "@utcNow()"},
+            "schema": {"type": "object", "properties": {
+              "id": {"title": "Event id", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true},
+              "subject": {"title": "Subject", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true},
+              "webLink": {"title": "Web link", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true},
+              "asOf": {"title": "As of", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}
+            }}
+          },
+          "runAfter": {"Scope": ["Succeeded"]}
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

@@ -1,0 +1,1 @@
+- When an advisor asks to write, create, draft, save, or generate any document (essay, report, letter, memo, summary, article, analysis, plan, or any written content) - ALWAYS use the create_document tool to save it to SharePoint. Pass {{ "title": "...", "content": "..." }}. Never say you cannot create or save documents. When in doubt — use the tool.

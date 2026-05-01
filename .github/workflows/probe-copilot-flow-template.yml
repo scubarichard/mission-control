@@ -1,0 +1,53 @@
+name: Probe — extract Copilot Studio template (one-shot diagnostic)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install pac
+        uses: microsoft/powerplatform-actions/actions-install@v1
+      - name: Auth + extract Dax bot template
+        env:
+          PP_APP_ID: ${{ secrets.PP_APP_ID }}
+          PP_CLIENT_SECRET: ${{ secrets.PP_CLIENT_SECRET }}
+          PP_TENANT_ID: ${{ secrets.PP_TENANT_ID }}
+          DAX_DEV_URL: ${{ secrets.DAX_DEV_URL }}
+        run: |
+          set -euo pipefail
+          PAC="$POWERPLATFORMTOOLS_PACPATH/tools/pac"
+          if [ ! -x "$PAC" ]; then PAC="$(find "$POWERPLATFORMTOOLS_PACPATH" -name pac -type f | head -1)"; fi
+          "$PAC" auth create --name dax-dev \
+            --url "$DAX_DEV_URL" --applicationId "$PP_APP_ID" \
+            --clientSecret "$PP_CLIENT_SECRET" --tenant "$PP_TENANT_ID"
+          "$PAC" auth select --name dax-dev
+
+          mkdir -p /tmp/probe
+          cd /tmp/probe
+          echo "--- pac copilot extract-template help ---"
+          "$PAC" copilot extract-template help || true
+
+          echo "--- attempt extract ---"
+          "$PAC" copilot extract-template --bot 389de172-2e44-f111-88b4-000d3a36c81b --templateFileName /tmp/probe/dax-template.yaml --overwrite || true
+          ls -la /tmp/probe/
+
+          if [ -f /tmp/probe/dax-template.yaml ]; then
+            echo "--- file size ---"
+            wc -l /tmp/probe/dax-template.yaml
+            echo "--- first 60 lines ---"
+            head -60 /tmp/probe/dax-template.yaml
+          fi
+
+          # Also list copilots in env to see if any flow-related templates surface
+          echo "--- pac copilot list ---"
+          "$PAC" copilot list || true
+
+      - name: Upload template artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dax-template
+          path: /tmp/probe/
+          if-no-files-found: warn

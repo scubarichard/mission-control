@@ -1,0 +1,15 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: path
+modelDescription: Internal-use only. Use this tool to make a GET request to GitHub REST API. Call only for explicit DevOps queries (e.g. 'open issues on the dax repo'). Pass the API path (without leading slash, e.g. 'repos/scubarichard/dax/issues').
+outputs:
+  - propertyName: path
+  - propertyName: data
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false

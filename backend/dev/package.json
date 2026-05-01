@@ -1,0 +1,17 @@
+{
+  "name": "dax-dev-bff",
+  "version": "0.1.0",
+  "description": "DAX dev BFF — Easy Auth + OBO + Copilot Studio agent proxy",
+  "private": true,
+  "engines": {
+    "node": ">=24"
+  },
+  "main": "src/{index.js,functions/*.js}",
+  "scripts": {
+    "start": "func start"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.5.0",
+    "@microsoft/agents-copilotstudio-client": "1.5.1"
+  }
+}

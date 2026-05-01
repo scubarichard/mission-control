@@ -1,0 +1,19 @@
+{
+  "$schema": "../environment-vars.schema.md",
+  "environment": "DAX-ICP",
+  "tenant": "Impact Capital Partners (eaf1a864-97ff-451c-87e7-88cf7512e98c)",
+  "subscription": "e1c109d7-9232-4e26-bed7-b1e1b5a6f611",
+  "notes": "LOCKED — Phase 5 only. Do not populate values until Richard provides ICP unlock passcode. Vault is in ICP tenant (kvdaximpactcapital).",
+  "variables": [
+    { "name": "DAX_TENANT_ID",            "type": "Text",   "source": "literal" },
+    { "name": "DAX_CLIENT_ID",            "type": "Text",   "source": "literal" },
+    { "name": "DAX_CLIENT_SECRET",        "type": "Secret", "source": "key-vault", "vault": "kvdaximpactcapital", "secret": "ICP-ClientSecret" },
+    { "name": "DAX_SHAREPOINT_SITE_ID",   "type": "Text",   "source": "literal" },
+    { "name": "DAX_SHAREPOINT_DOCS_FOLDER","type": "Text",  "source": "literal" },
+    { "name": "DAX_ADVISOR_EMAIL",        "type": "Text",   "source": "literal" },
+    { "name": "DAX_FIRM_NAME",            "type": "Text",   "source": "literal" },
+    { "name": "DAX_COSMOS_ENDPOINT",      "type": "Secret", "source": "key-vault", "vault": "kvdaximpactcapital", "secret": "DAX-ICP-CosmosEndpoint" },
+    { "name": "DAX_OPENAI_ENDPOINT",      "type": "Text",   "source": "literal" },
+    { "name": "DAX_DIRECTLINE_SECRET",    "type": "Secret", "source": "key-vault", "vault": "kvdaximpactcapital", "secret": "DAX-ICP-DirectLine-Secret" }
+  ]
+}

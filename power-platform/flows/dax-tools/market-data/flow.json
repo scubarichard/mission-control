@@ -1,0 +1,116 @@
+{
+  "properties": {
+    "connectionReferences": {},
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Skills",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "ticker": {
+                  "type": "string",
+                  "title": "Ticker",
+                  "description": "Stock or ETF ticker symbol (e.g. SPY, AAPL)",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                }
+              },
+              "required": [
+                "ticker"
+              ]
+            }
+          },
+          "description": "Returns live market data (price, change, day range, volume) for a given ticker."
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Get_FMP_Quote": {
+              "type": "Http",
+              "inputs": {
+                "method": "GET",
+                "uri": "https://financialmodelingprep.com/stable/quote?symbol=@{toUpper(triggerBody()?['ticker'])}&apikey=__FMP_API_KEY__"
+              }
+            },
+            "Get_Finnhub_Quote": {
+              "type": "Http",
+              "inputs": {
+                "method": "GET",
+                "uri": "https://finnhub.io/api/v1/quote?symbol=@{toUpper(triggerBody()?['ticker'])}&token=__FINNHUB_API_KEY__"
+              },
+              "runAfter": {}
+            }
+          }
+        },
+        "Respond_to_the_agent": {
+          "type": "Response",
+          "kind": "Skills",
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "ticker": "@{toUpper(triggerBody()?['ticker'])}",
+              "fmp": "@body('Get_FMP_Quote')",
+              "finnhub": "@body('Get_Finnhub_Quote')",
+              "asOf": "@utcNow()"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "ticker": {
+                  "title": "Ticker",
+                  "description": "Ticker queried",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                },
+                "fmp": {
+                  "title": "FMP Quote",
+                  "description": "FMP quote payload",
+                  "type": "array",
+                  "x-ms-dynamically-added": true
+                },
+                "finnhub": {
+                  "title": "Finnhub Quote",
+                  "description": "Finnhub quote (c=current, d=change, dp=%, h=high, l=low, o=open, pc=prev close, t=ts)",
+                  "type": "object",
+                  "x-ms-dynamically-added": true
+                },
+                "asOf": {
+                  "title": "As of",
+                  "description": "UTC timestamp",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true
+                }
+              }
+            }
+          },
+          "runAfter": {
+            "Scope": [
+              "Succeeded"
+            ]
+          }
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

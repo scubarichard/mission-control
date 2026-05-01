@@ -1,0 +1,18 @@
+{
+  "$schema": "../environment-vars.schema.md",
+  "environment": "DAX-Dev",
+  "tenant": "Dakona (d2a3c346-00f3-47dd-a53e-caa3fca74714)",
+  "notes": "Variable NAMES + types only. Actual values set inside the Power Platform environment, not committed.",
+  "variables": [
+    { "name": "DAX_TENANT_ID",            "type": "Text",   "source": "literal" },
+    { "name": "DAX_CLIENT_ID",            "type": "Text",   "source": "literal" },
+    { "name": "DAX_CLIENT_SECRET",        "type": "Secret", "source": "key-vault", "vault": "kvdaxdakonapilot", "secret": "DAX-Client-Secret" },
+    { "name": "DAX_SHAREPOINT_SITE_ID",   "type": "Text",   "source": "literal" },
+    { "name": "DAX_SHAREPOINT_DOCS_FOLDER","type": "Text",  "source": "literal" },
+    { "name": "DAX_ADVISOR_EMAIL",        "type": "Text",   "source": "literal" },
+    { "name": "DAX_FIRM_NAME",            "type": "Text",   "source": "literal" },
+    { "name": "DAX_COSMOS_ENDPOINT",      "type": "Secret", "source": "key-vault", "vault": "kvdaxdakonapilot", "secret": "DAX-Dev-CosmosEndpoint" },
+    { "name": "DAX_OPENAI_ENDPOINT",      "type": "Text",   "source": "literal" },
+    { "name": "DAX_DIRECTLINE_SECRET",    "type": "Secret", "source": "key-vault", "vault": "kvdaxdakonapilot", "secret": "DAX-Dev-DirectLine-Secret" }
+  ]
+}

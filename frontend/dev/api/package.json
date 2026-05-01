@@ -1,0 +1,12 @@
+{
+  "name": "dax-dev-api",
+  "version": "0.3.0",
+  "private": true,
+  "description": "DAX dev SWA API — /api/token (config) + /api/log (cosmos audit trail).",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "mongodb": "^6.10.0"
+  }
+}

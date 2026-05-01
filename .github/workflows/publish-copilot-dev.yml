@@ -1,0 +1,50 @@
+name: Publish Dax copilot (DAX-Dev)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Power Platform CLI
+        uses: microsoft/powerplatform-actions/actions-install@v1
+
+      - name: Auth + run pac copilot publish
+        shell: bash
+        env:
+          PP_APP_ID: ${{ secrets.PP_APP_ID }}
+          PP_CLIENT_SECRET: ${{ secrets.PP_CLIENT_SECRET }}
+          PP_TENANT_ID: ${{ secrets.PP_TENANT_ID }}
+          DAX_DEV_URL: ${{ secrets.DAX_DEV_URL }}
+          BOT_SCHEMA: auto_agent_BotRI
+          BOT_ID: 389de172-2e44-f111-88b4-000d3a36c81b
+        run: |
+          set -uo pipefail
+          PAC="$POWERPLATFORMTOOLS_PACPATH/tools/pac"
+          if [ ! -x "$PAC" ]; then PAC="$(find "$POWERPLATFORMTOOLS_PACPATH" -name pac -type f | head -1)"; fi
+          echo "Using pac at: $PAC"
+
+          "$PAC" auth create \
+            --name dax-dev \
+            --url "$DAX_DEV_URL" \
+            --applicationId "$PP_APP_ID" \
+            --clientSecret "$PP_CLIENT_SECRET" \
+            --tenant "$PP_TENANT_ID"
+          "$PAC" auth select --name dax-dev
+
+          echo "--- pac copilot list ---"
+          "$PAC" copilot list || true
+
+          echo "--- pac copilot publish (by GUID) ---"
+          "$PAC" copilot publish --bot "$BOT_ID"
+          ECODE=$?
+          echo "publish exit=$ECODE"
+
+          echo "--- pac copilot status (by GUID) ---"
+          "$PAC" copilot status --bot-id "$BOT_ID" || true
+
+          echo "--- list again to see current state ---"
+          "$PAC" copilot list || true
+
+          exit $ECODE

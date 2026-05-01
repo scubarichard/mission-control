@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DAX [DEV] — Dakona</title>
+    <link rel="icon" href="/assets/logo.svg" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script
+      crossorigin="anonymous"
+      src="https://cdn.botframework.com/botframework-webchat/4.18.0/webchat.js"
+    ></script>
+    <script
+      crossorigin="anonymous"
+      src="https://unpkg.com/@azure/msal-browser@5.9.0/lib/msal-browser.min.js"
+    ></script>
+    <!-- Copilot Studio Agents SDK loader. External file so CSP `script-src`
+         doesn't block an inline module script. The loader's import is from
+         unpkg (allowed). Dev only — bundle locally for staging/prod. -->
+    <script type="module" src="/sdk-loader.mjs"></script>
+  </head>
+  <body class="chat-body">
+    <header class="chat-topbar">
+      <div class="brand">
+        <img src="/assets/dax-avatar.png" alt="DAX" class="topbar-avatar" />
+        <span class="brand-mark">DAX</span>
+        <span class="brand-tag">DEV</span>
+      </div>
+      <div class="user-area">
+        <span class="user" id="user-slot"></span>
+        <button class="signout" type="button" onclick="sessionStorage.clear(); window.location.replace('/');">Sign out</button>
+      </div>
+    </header>
+    <main class="chat-main">
+      <div id="webchat" role="main" aria-label="DAX chat"></div>
+      <div id="status" class="status" hidden></div>
+    </main>
+    <script src="/app.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "routes": [
+    { "route": "/c", "rewrite": "/chat.html" },
+    { "route": "/c/*", "rewrite": "/chat.html" }
+  ],
+  "mimeTypes": {
+    ".mjs": "text/javascript"
+  },
+  "globalHeaders": {
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.botframework.com https://unpkg.com; connect-src 'self' https://*.environment.api.powerplatform.com https://*.botframework.com https://login.microsoftonline.com https://unpkg.com; frame-src https://login.microsoftonline.com; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:;",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
+  }
+}

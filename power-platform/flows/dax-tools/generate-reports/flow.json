@@ -1,0 +1,46 @@
+{
+  "properties": {
+    "connectionReferences": {},
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {"defaultValue": {}, "type": "SecureObject"},
+        "$connections": {"defaultValue": {}, "type": "Object"}
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request", "kind": "Skills",
+          "inputs": {"schema": {"type": "object", "properties": {"period": {"type": "string", "title": "Period", "description": "Quarter or period label (e.g. Q1-2026)", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}, "clientId": {"type": "string", "title": "Client ID (optional)", "description": "Wealthbox contact ID. Omit to generate for all clients.", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}}, "required": ["period"]}},
+          "description": "Generate quarterly client review reports (one per client). Proxies to the n8n schwab-processor webhook."
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Trigger_n8n_Webhook": {
+              "type": "Http",
+              "inputs": {"method": "POST", "uri": "https://n8n.dakona.net/webhook/schwab-processor", "body": {"period": "@{triggerBody()?['period']}", "clientId": "@{triggerBody()?['clientId']}", "source": "DAX-Dev"}, "headers": {"Content-Type": "application/json"}}
+            }
+          }
+        },
+        "Respond_to_the_agent": {
+          "type": "Response", "kind": "Skills",
+          "inputs": {
+            "statusCode": 200,
+            "body": {"period": "@{triggerBody()?['period']}", "result": "@body('Trigger_n8n_Webhook')", "asOf": "@utcNow()"},
+            "schema": {"type": "object", "properties": {
+              "period": {"title": "Period", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true},
+              "result": {"title": "n8n result", "description": "Result payload from n8n schwab-processor", "type": "object", "x-ms-dynamically-added": true},
+              "asOf": {"title": "As of", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}
+            }}
+          },
+          "runAfter": {"Scope": ["Succeeded"]}
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}

@@ -1,0 +1,18 @@
+kind: TaskDialog
+mode: Strict
+inputs:
+  - kind: AutomaticTaskInput
+    propertyName: prompt
+  - kind: AutomaticTaskInput
+    propertyName: wordCount
+modelDescription: Use this tool to generate long-form written content (essay, report, letter, memo, summary, article, analysis, plan) AND save it to SharePoint DAX Documents in one step. Call this whenever the user asks to 'write', 'draft', 'create', or 'generate' written content of any kind. Pass the prompt (writing task) and optional target word count and filename.
+outputs:
+  - propertyName: prompt
+  - propertyName: content
+  - propertyName: model
+  - propertyName: asOf
+action:
+  kind: InvokeFlowTaskAction
+  flowId: __FLOW_ID__
+outputMode: All
+triggerCondition: false

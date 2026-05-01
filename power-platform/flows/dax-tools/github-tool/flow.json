@@ -1,0 +1,46 @@
+{
+  "properties": {
+    "connectionReferences": {},
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {"defaultValue": {}, "type": "SecureObject"},
+        "$connections": {"defaultValue": {}, "type": "Object"}
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request", "kind": "Skills",
+          "inputs": {"schema": {"type": "object", "properties": {"path": {"type": "string", "title": "API path", "description": "GitHub REST API path (without leading slash, e.g. 'repos/scubarichard/dax/issues')", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}}, "required": ["path"]}},
+          "description": "Generic GitHub REST API GET tool — query issues, PRs, commits, repos, etc. Internal-use."
+        }
+      },
+      "actions": {
+        "Scope": {
+          "type": "Scope",
+          "actions": {
+            "Get_GitHub": {
+              "type": "Http",
+              "inputs": {"method": "GET", "uri": "https://api.github.com/@{triggerBody()?['path']}", "headers": {"Authorization": "Bearer __GITHUB_TOKEN__", "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}}
+            }
+          }
+        },
+        "Respond_to_the_agent": {
+          "type": "Response", "kind": "Skills",
+          "inputs": {
+            "statusCode": 200,
+            "body": {"path": "@{triggerBody()?['path']}", "data": "@body('Get_GitHub')", "asOf": "@utcNow()"},
+            "schema": {"type": "object", "properties": {
+              "path": {"title": "Path", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true},
+              "data": {"title": "GitHub response", "description": "Raw GitHub API JSON response", "type": "object", "x-ms-dynamically-added": true},
+              "asOf": {"title": "As of", "type": "string", "x-ms-content-hint": "TEXT", "x-ms-dynamically-added": true}
+            }}
+          },
+          "runAfter": {"Scope": ["Succeeded"]}
+        }
+      }
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}
