@@ -1,4 +1,18 @@
 
+---
+
+## 🔧 INFRASTRUCTURE STATUS — May 2, 2026 18:40 UTC
+
+**✅ Key Vault Access Verified**
+- Vault: `kvdaxdakonapilot` (Azure East US, DAKONA 001 subscription)
+- Atlas service principal: Full secret read access (77 secrets)
+- Status: READY for OAuth token storage
+
+**⏳ Waiting On:**
+- TASK-20260501-ATLAS-001 (Google OAuth credentials for both Gmail accounts)
+
+---
+
 ## TASK-20260501-ATLAS-001 — Create Google OAuth Credentials for Calendar/Email
 - **Assignee:** Richard (manual OAuth flow required)
 - **Status:** PENDING
