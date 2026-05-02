@@ -1,15 +1,66 @@
 
 ---
 
-## 🔧 INFRASTRUCTURE STATUS — May 2, 2026 18:40 UTC
+## 🔧 INFRASTRUCTURE STATUS — May 2, 2026 19:54 UTC
 
 **✅ Key Vault Access Verified**
 - Vault: `kvdaxdakonapilot` (Azure East US, DAKONA 001 subscription)
 - Atlas service principal: Full secret read access (77 secrets)
 - Status: READY for OAuth token storage
 
-**⏳ Waiting On:**
-- TASK-20260501-ATLAS-001 (Google OAuth credentials for both Gmail accounts)
+**✅ Gmail OAuth Found in n8n**
+- "1altX.com" Gmail OAuth exists (n8n credential id: `yr8s5B6McaB6dEEB`)
+- Last updated: May 2, 2026 19:20:04 UTC
+- **TASK-20260502-FORGE-OAUTH-001:** Export credentials to Key Vault (see below)
+
+---
+
+## TASK-20260502-FORGE-OAUTH-001 — Export Gmail OAuth + Create mabbun Credential
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** HIGH
+- **From:** Atlas (Richard delegated due to post-stroke cognitive load)
+- **Deadline:** Today if possible
+- **Client:** Atlas / Infrastructure
+
+### What to Do
+
+**Part 1: Export Existing "1altX.com" Gmail Credential**
+1. In n8n: Credentials → "1altX.com" (gmailOAuth2, id: `yr8s5B6McaB6dEEB`)
+2. Extract: client_id, client_secret, refresh_token
+3. Store in Key Vault (`kvdaxdakonapilot`):
+   - `google-oauth-1altx-client-id`
+   - `google-oauth-1altx-client-secret`
+   - `google-oauth-1altx-refresh-token`
+
+**Part 2: Create New Gmail OAuth for richard@mabbun.com**
+1. Go to https://console.cloud.google.com
+2. Create OAuth 2.0 Client ID (Desktop application)
+3. Grant scopes: `https://www.googleapis.com/auth/calendar` + `https://www.googleapis.com/auth/gmail.readonly`
+4. Complete OAuth flow (authenticate richard@mabbun.com)
+5. Store in Key Vault:
+   - `google-oauth-mabbun-client-id`
+   - `google-oauth-mabbun-client-secret`
+   - `google-oauth-mabbun-refresh-token`
+
+**Part 3: Verify + Create n8n Credential**
+1. Test both tokens are valid (simple API call to Calendar API)
+2. Create new n8n Gmail OAuth credential named "mabbun@gmail.com" with the new token
+3. Confirm both "1altX.com" and "mabbun@gmail.com" credentials work
+
+### Why This Matters
+Atlas needs Gmail calendar + email access for richard@1altx.com and richard@mabbun.com to build daily briefing (morning 7 AM CT, EOD 6 PM CT). Currently blocked on credential availability.
+
+### Success Criteria
+- ✅ All 6 secrets in Key Vault (`google-oauth-1altx-*` + `google-oauth-mabbun-*`)
+- ✅ Both n8n credentials functional
+- ✅ Atlas confirms it can read both tokens via Azure CLI
+- ✅ Commit to task queue with completion note
+
+---
+
+⏳ Waiting On:
+- TASK-20260502-FORGE-OAUTH-001 (above)
 
 ---
 
