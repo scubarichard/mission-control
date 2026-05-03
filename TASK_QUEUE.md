@@ -3831,3 +3831,138 @@ All acceptance criteria met, Slack notification posted, build_log.md updated and
 - **CHOSEN-005:** Phase 3 ï¿½ wire ElevenLabs + HeyGen with override fallback logic, test end-to-end through video generation
 - **CHOSEN-006:** Phase 4 ï¿½ Render Checker scheduled scenario + error handling + 4 acceptance test cases + 4 override fallback tests
 - **CHOSEN-007:** Phase 6 ï¿½ Operator SOP, field map, credential map, troubleshooting, Loom
+
+---
+
+## TASK-20260502-FORGE-1ALTX-CATALOG-OVERNIGHT-003
+
+- **Assignee:** Forge
+- **Status:** PENDING — full agentic execution authorized
+- **From:** Richard (via Sonnet)
+- **Priority:** High
+- **Date:** 2026-05-02
+- **Repo:** scubarichard/catalogmint
+- **Supersedes:** Pre-empts any prior 1AltX catalog expansion task
+- **Authority:** Richard has authorized full agentic execution. Forge makes the best decisions it can. Richard expects all 12 videos complete and ready for review by morning (~07:00 CT 2026-05-03).
+
+### Task
+
+Produce 12 finished CatalogMint videos for 12 new project candidates, with all supporting catalog infrastructure (entries, audit notes, sanitization checklist, synthetic demo workspaces). End state: 12 videos uploaded to YouTube as Unlisted, `catalog.json` updated, PR opened, Slack summary posted.
+
+Use the standard CatalogMint avatar and voice already in use across the existing catalog. Forge knows which one — do not deviate.
+
+### Context (from Sonnet)
+
+Sonnet flagged a hard blocker before approving this scope: raw demo footage requires a human in the loop. Forge has never historically produced a CatalogMint video without Richard recording the demo first. Richard has nonetheless authorized full agentic execution and accepted the risk.
+
+**Forge's decision authority:** for each candidate, Forge picks the production approach that produces the highest-quality publishable artifact given the constraint that Forge cannot record live screen footage of client tenants. Acceptable approaches: avatar-only explainer, synthetic demo render (Playwright/Puppeteer against synthetic n8n/Airtable/etc.), animated workflow visualization (SVG/Mermaid ? MP4), or hybrid.
+
+**Forge does NOT:** log into any real client tenant, use real client data, publish to public YouTube (Unlisted only), post to LinkedIn/blog/email, or fabricate metrics that aren't verifiable in repos/ClickUp/Slack.
+
+**Forge MUST:** document its production approach for each video in `production-log.md`, flag every video where the synthetic/avatar-only approach is materially weaker than a real demo would be, run all generated content through the sanitization checklist before render, and genericize all client identifiers.
+
+### The 12 Candidates
+
+| # | Project | Source | Production Note |
+|---|---------|--------|-----------------|
+| 1 | Signal-to-Sale: Call ? CRM Pipeline | Haywire / Dennis Lagares — n8n + GHL + WhatConverts | Synthetic demo recommended |
+| 2 | AI Content Pipeline: Idea ? Avatar Video | Chosen Agency / Erika — Make.com + HeyGen + Sheets | Animated diagram or synthetic |
+| 3 | Multi-Tenant AVD Disk Capacity Monitor | Dakona internal — PowerShell + Azure + NinjaOne | Off-positioning — flag |
+| 4 | Commission Reconciliation: Multi-Processor ? CRM | OPT / Sunny — HubSpot + Airtable + n8n + AI | Synthetic demo recommended |
+| 5 | Subaccount Onboarding Orchestrator | RPE / Carey — n8n + GHL Snapshot API | Synthetic demo recommended |
+| 6 | AI Email Triage & Auto-Categorize | 1AltX internal — n8n + GPT-4o-mini | Synthetic demo with fake inbox |
+| 7 | Multi-System Tenant Audit & Drift Detection | Dakona internal — PowerShell + GDAP + NinjaOne | Off-positioning — flag |
+| 8 | Cowork-as-RemoteApp on AVD | Inflection / Justin — Azure AVD + Cowork | Architecture diagram + avatar |
+| 9 | Tour Operations Central Brain | PNT / Ari — Airtable + Cloudflare Workers + n8n | Synthetic demo recommended |
+| 10 | Linguist Intake & Auto-Match | Heartland / Robin — n8n 4-workflow | Synthetic demo recommended |
+| 11 | BEC Incident Response Runbook | Lopez & Co — incident playbook | Likely drop — service not product |
+| 12 | DAX (Dakona AI Workspace) | Internal — Azure OpenAI + LibreChat + Entra | Architecture diagram + avatar |
+
+Forge: validate against n8n.dakona.net + GitHub repos + ClickUp before producing. Drop any that aren't real or are too thin.
+
+### Phases (Forge owns sequencing)
+
+1. **Validation + catalog entries** — append to `catalog.json` as IDs 21-N. Genericize all client refs. Off-positioning candidates get `"flag": "off_positioning"` plus AUDIT-NOTES explanation.
+2. **Sanitization checklist + synthetic workspaces** — build `PRE-FLIGHT-CHECKLIST.md` (browser isolation, notification mute, demo data only, transcript scrub, four-corners visual scrub, audio scrub, URL bar check). Spin up synthetic n8n on `vm-dax-dev`, synthetic Airtable bases, HTML/CSS mockups for HubSpot/GHL/Make where Forge can't create real test accounts. All synthetic data uses obviously-fake identifiers (Acme Industrial, example.com emails, round dollar amounts).
+3. **Scripts** — intro (15-20s), demo narration (45-70s), outro (10-15s, locked CTA wording). Save to `scripts/<project_id>/`.
+4. **Avatar renders** — HeyGen API, standard CatalogMint avatar+voice. Failures queued and continued.
+5. **Visual assets** — title cards, architecture diagrams or synthetic demo footage, CTA cards. Brand colors #0a0a0a bg / #58a6ff accent.
+6. **Concatenation** — FFmpeg lossless: intro_avatar ? title_card ? demo_segment ? outro_avatar ? cta_card ? `final/<project_id>.mp4`.
+7. **YouTube upload** — 1AltX channel as UNLISTED, standard title format, generated chapters from script timecodes. Update `catalog.json` with `youtube_status: "live_unlisted"` (NEW status, not `live`).
+8. **Sanitization pass** — frame-by-frame OCR + transcript scrub before any upload. Failures go to `quarantine/`.
+
+### Locked CTA Wording (Outros)
+
+> "You'll be amazed how much manual work disappears when the right automation kicks in. Visit onealtx.com and schedule a call — we'll scope it, size it, and give you a straight price."
+
+### Hard Limits (Cannot Be Overridden)
+
+1. No public YouTube — Unlisted only
+2. No publishing outside YouTube
+3. No real client tenant access — synthetic data and mockups only
+4. No fabricated metrics or outcomes
+5. No PR auto-merge
+6. No modification of catalog entries 1-20
+7. No experimental avatar/voice changes
+8. No CatalogMint-itself catalog entry (deferred meta question)
+
+### Time Budget
+
+~8 hours. If off-pace, prioritize: validation+entries ? sanitization+workspaces ? scripts ? avatar renders ? visual assets+concat ? upload. Better 6 finished than 12 broken. Atlas: if Forge significantly off-pace by 03:00 CT, reduce candidate count.
+
+### Deliverables
+
+1. Branch `catalog-overnight-v1` in `scubarichard/catalogmint`
+2. `catalog.json` updated (status `live_unlisted`)
+3. `AUDIT-NOTES.md`, `PRE-FLIGHT-CHECKLIST.md`, `production-log.md`
+4. `scripts/<project_id>/` with three scripts each
+5. `final/<project_id>.mp4` per produced video
+6. `quarantine/` for sanitization failures
+7. YouTube uploads as Unlisted with chapters
+8. PR opened against master, NOT auto-merged
+9. Slack summary in #dax-collab (C0APVGG486M) at completion
+
+### Slack Summary Format (Required)
+
+```
+## Overnight Catalog Production — Complete
+
+Started: <ts>
+Finished: <ts>
+Duration: <Xh Ym>
+
+Videos produced: X / 12
+Videos quarantined: X
+Candidates dropped: X
+Off-positioning flags: X
+
+Per-video status:
+- [?] <project_id> — approach: <avatar-only|synthetic|diagram|hybrid> — strength: <strong|acceptable|weak>
+- [?] <project_id> — approach: <...> — strength: weak — recommend re-record with real footage
+- [?] <project_id> — quarantined — reason: <...>
+
+PR: <link>
+YouTube playlist (unlisted): <link>
+
+Recommendations for Richard:
+- <publish-ready as-is>
+- <need real footage>
+- <sanitization concerns>
+- <move to dakona-catalog>
+```
+
+### Done When
+
+1. Slack summary posted with above format
+2. PR open with all branches/commits
+3. `catalog.json` valid JSON (`jq .` passes)
+4. All completed renders uploaded as Unlisted
+5. `production-log.md` honest about what worked and what didn't
+6. No public surfaces touched
+
+### Notes for Forge
+
+- Sonnet flagged at length that this scope is risky for an overnight unattended run. Richard accepted the risk. The sanitization checklist + synthetic-data rule + Unlisted-only + no-fabricated-metrics rules exist specifically to mitigate. Don't bypass under deadline pressure.
+- A documented drop is a successful outcome. A bad video that ships is a failure.
+- Atlas: track as single overnight sprint. Reduce candidate count rather than letting Forge ship rushed work.
+- Sonnet and Richard both asleep during execution. Forge owns every judgment call. Make the call you'd defend to Richard in the morning.
