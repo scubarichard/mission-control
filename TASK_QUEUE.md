@@ -17,44 +17,34 @@
 
 ## TASK-20260502-FORGE-OAUTH-001 ‚Äî Export Gmail OAuth to Key Vault (1altx only)
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
+- **Completed:** 2026-05-03 03:30 UTC
+- **Completed_by:** Forge
 - **Priority:** HIGH
 - **From:** Atlas (Richard updated scope ‚Äî skip mabbun@gmail.com for now)
-- **Deadline:** When possible
 - **Client:** Atlas / Infrastructure
 
-### What to Do
+### Completion Notes
+‚úÖ All 3 secrets stored in `kvdaxdakonapilot`:
+- `google-oauth-1altx-client-id`
+- `google-oauth-1altx-client-secret`
+- `google-oauth-1altx-refresh-token`
 
-**Export Existing "1altX.com" Gmail Credential**
-1. In n8n: Credentials ‚Üí "1altX.com" (gmailOAuth2, id: `yr8s5B6McaB6dEEB`)
-2. Extract: client_id, client_secret, refresh_token
-3. Store in Key Vault (`kvdaxdakonapilot`):
-   - `google-oauth-1altx-client-id`
-   - `google-oauth-1altx-client-secret`
-   - `google-oauth-1altx-refresh-token`
+‚úÖ Token verified valid ‚Äî refresh_token ‚Üí access_token exchange succeeded
 
-**Verify**
-1. Test token is valid (simple API call to Calendar API)
-2. Confirm Atlas can read the secrets via Azure CLI
-3. Commit to task queue with completion note
+‚ö†Ô∏è **SCOPE GAP for Atlas:** The existing OAuth consent only covers **Gmail** scopes, NOT Calendar API.
+- Granted: `mail.google.com`, `gmail.modify`, `gmail.compose`, `gmail.labels`
+- Missing: `https://www.googleapis.com/auth/calendar`
+- **For email digest**: credentials are ready to use now
+- **For calendar access**: Richard must re-authorize the OAuth app with Calendar scope added (`https://www.googleapis.com/auth/calendar`). Until then, Atlas can only read Gmail for richard@1altx.com ‚Äî not calendar events.
 
-### Why This Matters
-Atlas needs Gmail calendar + email access for richard@1altx.com to build daily briefing (morning 7 AM CT, EOD 6 PM CT). Blocked on credential export to Key Vault.
-
-### Success Criteria
-- ‚úÖ All 3 secrets in Key Vault (`google-oauth-1altx-*`)
-- ‚úÖ Token verified valid
-- ‚úÖ Atlas confirms it can read tokens via Azure CLI
-- ‚úÖ Commit to task queue with completion note
-
-### Notes
-- richard@mabbun.com skipped per Richard's request (2026-05-03 02:41 UTC) ‚Äî revisit later if needed
-- Only 1altx briefing integration in scope
+**Extraction method:** Azure VM run-command ‚Üí SQLite query ‚Üí AES-256-CBC decrypt with n8n encryption key from `/home/dkn8n/.n8n/config`
 
 ---
 
 ‚è≥ Waiting On:
-- TASK-20260502-FORGE-OAUTH-001 (above)
+- Atlas to confirm secrets readable via `az keyvault secret show`
+- Richard to re-authorize with Calendar scope when convenient
 
 ---
 
@@ -3831,7 +3821,7 @@ All acceptance criteria met, Slack notification posted, build_log.md updated and
 ## TASK-20260502-FORGE-1ALTX-CATALOG-OVERNIGHT-003
 
 - **Assignee:** Forge
-- **Status:** PENDING ó full agentic execution authorized
+- **Status:** PENDING ÔøΩ full agentic execution authorized
 - **From:** Richard (via Sonnet)
 - **Priority:** High
 - **Date:** 2026-05-02
@@ -3843,7 +3833,7 @@ All acceptance criteria met, Slack notification posted, build_log.md updated and
 
 Produce 12 finished CatalogMint videos for 12 new project candidates, with all supporting catalog infrastructure (entries, audit notes, sanitization checklist, synthetic demo workspaces). End state: 12 videos uploaded to YouTube as Unlisted, `catalog.json` updated, PR opened, Slack summary posted.
 
-Use the standard CatalogMint avatar and voice already in use across the existing catalog. Forge knows which one ó do not deviate.
+Use the standard CatalogMint avatar and voice already in use across the existing catalog. Forge knows which one ÔøΩ do not deviate.
 
 ### Context (from Sonnet)
 
@@ -3859,41 +3849,41 @@ Sonnet flagged a hard blocker before approving this scope: raw demo footage requ
 
 | # | Project | Source | Production Note |
 |---|---------|--------|-----------------|
-| 1 | Signal-to-Sale: Call ? CRM Pipeline | Haywire / Dennis Lagares ó n8n + GHL + WhatConverts | Synthetic demo recommended |
-| 2 | AI Content Pipeline: Idea ? Avatar Video | Chosen Agency / Erika ó Make.com + HeyGen + Sheets | Animated diagram or synthetic |
-| 3 | Multi-Tenant AVD Disk Capacity Monitor | Dakona internal ó PowerShell + Azure + NinjaOne | Off-positioning ó flag |
-| 4 | Commission Reconciliation: Multi-Processor ? CRM | OPT / Sunny ó HubSpot + Airtable + n8n + AI | Synthetic demo recommended |
-| 5 | Subaccount Onboarding Orchestrator | RPE / Carey ó n8n + GHL Snapshot API | Synthetic demo recommended |
-| 6 | AI Email Triage & Auto-Categorize | 1AltX internal ó n8n + GPT-4o-mini | Synthetic demo with fake inbox |
-| 7 | Multi-System Tenant Audit & Drift Detection | Dakona internal ó PowerShell + GDAP + NinjaOne | Off-positioning ó flag |
-| 8 | Cowork-as-RemoteApp on AVD | Inflection / Justin ó Azure AVD + Cowork | Architecture diagram + avatar |
-| 9 | Tour Operations Central Brain | PNT / Ari ó Airtable + Cloudflare Workers + n8n | Synthetic demo recommended |
-| 10 | Linguist Intake & Auto-Match | Heartland / Robin ó n8n 4-workflow | Synthetic demo recommended |
-| 11 | BEC Incident Response Runbook | Lopez & Co ó incident playbook | Likely drop ó service not product |
-| 12 | DAX (Dakona AI Workspace) | Internal ó Azure OpenAI + LibreChat + Entra | Architecture diagram + avatar |
+| 1 | Signal-to-Sale: Call ? CRM Pipeline | Haywire / Dennis Lagares ÔøΩ n8n + GHL + WhatConverts | Synthetic demo recommended |
+| 2 | AI Content Pipeline: Idea ? Avatar Video | Chosen Agency / Erika ÔøΩ Make.com + HeyGen + Sheets | Animated diagram or synthetic |
+| 3 | Multi-Tenant AVD Disk Capacity Monitor | Dakona internal ÔøΩ PowerShell + Azure + NinjaOne | Off-positioning ÔøΩ flag |
+| 4 | Commission Reconciliation: Multi-Processor ? CRM | OPT / Sunny ÔøΩ HubSpot + Airtable + n8n + AI | Synthetic demo recommended |
+| 5 | Subaccount Onboarding Orchestrator | RPE / Carey ÔøΩ n8n + GHL Snapshot API | Synthetic demo recommended |
+| 6 | AI Email Triage & Auto-Categorize | 1AltX internal ÔøΩ n8n + GPT-4o-mini | Synthetic demo with fake inbox |
+| 7 | Multi-System Tenant Audit & Drift Detection | Dakona internal ÔøΩ PowerShell + GDAP + NinjaOne | Off-positioning ÔøΩ flag |
+| 8 | Cowork-as-RemoteApp on AVD | Inflection / Justin ÔøΩ Azure AVD + Cowork | Architecture diagram + avatar |
+| 9 | Tour Operations Central Brain | PNT / Ari ÔøΩ Airtable + Cloudflare Workers + n8n | Synthetic demo recommended |
+| 10 | Linguist Intake & Auto-Match | Heartland / Robin ÔøΩ n8n 4-workflow | Synthetic demo recommended |
+| 11 | BEC Incident Response Runbook | Lopez & Co ÔøΩ incident playbook | Likely drop ÔøΩ service not product |
+| 12 | DAX (Dakona AI Workspace) | Internal ÔøΩ Azure OpenAI + LibreChat + Entra | Architecture diagram + avatar |
 
 Forge: validate against n8n.dakona.net + GitHub repos + ClickUp before producing. Drop any that aren't real or are too thin.
 
 ### Phases (Forge owns sequencing)
 
-1. **Validation + catalog entries** ó append to `catalog.json` as IDs 21-N. Genericize all client refs. Off-positioning candidates get `"flag": "off_positioning"` plus AUDIT-NOTES explanation.
-2. **Sanitization checklist + synthetic workspaces** ó build `PRE-FLIGHT-CHECKLIST.md` (browser isolation, notification mute, demo data only, transcript scrub, four-corners visual scrub, audio scrub, URL bar check). Spin up synthetic n8n on `vm-dax-dev`, synthetic Airtable bases, HTML/CSS mockups for HubSpot/GHL/Make where Forge can't create real test accounts. All synthetic data uses obviously-fake identifiers (Acme Industrial, example.com emails, round dollar amounts).
-3. **Scripts** ó intro (15-20s), demo narration (45-70s), outro (10-15s, locked CTA wording). Save to `scripts/<project_id>/`.
-4. **Avatar renders** ó HeyGen API, standard CatalogMint avatar+voice. Failures queued and continued.
-5. **Visual assets** ó title cards, architecture diagrams or synthetic demo footage, CTA cards. Brand colors #0a0a0a bg / #58a6ff accent.
-6. **Concatenation** ó FFmpeg lossless: intro_avatar ? title_card ? demo_segment ? outro_avatar ? cta_card ? `final/<project_id>.mp4`.
-7. **YouTube upload** ó 1AltX channel as UNLISTED, standard title format, generated chapters from script timecodes. Update `catalog.json` with `youtube_status: "live_unlisted"` (NEW status, not `live`).
-8. **Sanitization pass** ó frame-by-frame OCR + transcript scrub before any upload. Failures go to `quarantine/`.
+1. **Validation + catalog entries** ÔøΩ append to `catalog.json` as IDs 21-N. Genericize all client refs. Off-positioning candidates get `"flag": "off_positioning"` plus AUDIT-NOTES explanation.
+2. **Sanitization checklist + synthetic workspaces** ÔøΩ build `PRE-FLIGHT-CHECKLIST.md` (browser isolation, notification mute, demo data only, transcript scrub, four-corners visual scrub, audio scrub, URL bar check). Spin up synthetic n8n on `vm-dax-dev`, synthetic Airtable bases, HTML/CSS mockups for HubSpot/GHL/Make where Forge can't create real test accounts. All synthetic data uses obviously-fake identifiers (Acme Industrial, example.com emails, round dollar amounts).
+3. **Scripts** ÔøΩ intro (15-20s), demo narration (45-70s), outro (10-15s, locked CTA wording). Save to `scripts/<project_id>/`.
+4. **Avatar renders** ÔøΩ HeyGen API, standard CatalogMint avatar+voice. Failures queued and continued.
+5. **Visual assets** ÔøΩ title cards, architecture diagrams or synthetic demo footage, CTA cards. Brand colors #0a0a0a bg / #58a6ff accent.
+6. **Concatenation** ÔøΩ FFmpeg lossless: intro_avatar ? title_card ? demo_segment ? outro_avatar ? cta_card ? `final/<project_id>.mp4`.
+7. **YouTube upload** ÔøΩ 1AltX channel as UNLISTED, standard title format, generated chapters from script timecodes. Update `catalog.json` with `youtube_status: "live_unlisted"` (NEW status, not `live`).
+8. **Sanitization pass** ÔøΩ frame-by-frame OCR + transcript scrub before any upload. Failures go to `quarantine/`.
 
 ### Locked CTA Wording (Outros)
 
-> "You'll be amazed how much manual work disappears when the right automation kicks in. Visit onealtx.com and schedule a call ó we'll scope it, size it, and give you a straight price."
+> "You'll be amazed how much manual work disappears when the right automation kicks in. Visit onealtx.com and schedule a call ÔøΩ we'll scope it, size it, and give you a straight price."
 
 ### Hard Limits (Cannot Be Overridden)
 
-1. No public YouTube ó Unlisted only
+1. No public YouTube ÔøΩ Unlisted only
 2. No publishing outside YouTube
-3. No real client tenant access ó synthetic data and mockups only
+3. No real client tenant access ÔøΩ synthetic data and mockups only
 4. No fabricated metrics or outcomes
 5. No PR auto-merge
 6. No modification of catalog entries 1-20
@@ -3919,7 +3909,7 @@ Forge: validate against n8n.dakona.net + GitHub repos + ClickUp before producing
 ### Slack Summary Format (Required)
 
 ```
-## Overnight Catalog Production ó Complete
+## Overnight Catalog Production ÔøΩ Complete
 
 Started: <ts>
 Finished: <ts>
@@ -3931,9 +3921,9 @@ Candidates dropped: X
 Off-positioning flags: X
 
 Per-video status:
-- [?] <project_id> ó approach: <avatar-only|synthetic|diagram|hybrid> ó strength: <strong|acceptable|weak>
-- [?] <project_id> ó approach: <...> ó strength: weak ó recommend re-record with real footage
-- [?] <project_id> ó quarantined ó reason: <...>
+- [?] <project_id> ÔøΩ approach: <avatar-only|synthetic|diagram|hybrid> ÔøΩ strength: <strong|acceptable|weak>
+- [?] <project_id> ÔøΩ approach: <...> ÔøΩ strength: weak ÔøΩ recommend re-record with real footage
+- [?] <project_id> ÔøΩ quarantined ÔøΩ reason: <...>
 
 PR: <link>
 YouTube playlist (unlisted): <link>
