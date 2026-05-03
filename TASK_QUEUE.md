@@ -99,6 +99,7 @@ Once tokens are in the vault, Atlas will:
 - ⏳ **Night 1** (03:00 CT May 3): `CatalogMint-YT-Upload` fires → uploads 20 pending videos (11-21, 22-30), gets ~15 uploaded (11-25)
 - ⏳ **Night 2** (03:00 CT May 4): `CatalogMint-YT-Upload-D2` fires → uploads remaining 5 (26-30)
 - ✅ upload-youtube.py token fix applied (expiry parsing added; exit code on failure added)
+- ✅ PR created: https://github.com/scubarichard/catalogmint/pull/1 (catalog-overnight-v1 → master)
 
 ### narrate-slideshow.py fix
 Added Playwright Chromium fallback when Chrome debug port 9222 not available (needed for overnight unattended run)
