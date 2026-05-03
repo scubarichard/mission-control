@@ -15,17 +15,17 @@
 
 ---
 
-## TASK-20260502-FORGE-OAUTH-001 — Export Gmail OAuth + Create mabbun Credential
+## TASK-20260502-FORGE-OAUTH-001 — Export Gmail OAuth to Key Vault (1altx only)
 - **Assignee:** Forge
 - **Status:** PENDING
 - **Priority:** HIGH
-- **From:** Atlas (Richard delegated due to post-stroke cognitive load)
-- **Deadline:** Today if possible
+- **From:** Atlas (Richard updated scope — skip mabbun@gmail.com for now)
+- **Deadline:** When possible
 - **Client:** Atlas / Infrastructure
 
 ### What to Do
 
-**Part 1: Export Existing "1altX.com" Gmail Credential**
+**Export Existing "1altX.com" Gmail Credential**
 1. In n8n: Credentials → "1altX.com" (gmailOAuth2, id: `yr8s5B6McaB6dEEB`)
 2. Extract: client_id, client_secret, refresh_token
 3. Store in Key Vault (`kvdaxdakonapilot`):
@@ -33,29 +33,23 @@
    - `google-oauth-1altx-client-secret`
    - `google-oauth-1altx-refresh-token`
 
-**Part 2: Create New Gmail OAuth for richard@mabbun.com**
-1. Go to https://console.cloud.google.com
-2. Create OAuth 2.0 Client ID (Desktop application)
-3. Grant scopes: `https://www.googleapis.com/auth/calendar` + `https://www.googleapis.com/auth/gmail.readonly`
-4. Complete OAuth flow (authenticate richard@mabbun.com)
-5. Store in Key Vault:
-   - `google-oauth-mabbun-client-id`
-   - `google-oauth-mabbun-client-secret`
-   - `google-oauth-mabbun-refresh-token`
-
-**Part 3: Verify + Create n8n Credential**
-1. Test both tokens are valid (simple API call to Calendar API)
-2. Create new n8n Gmail OAuth credential named "mabbun@gmail.com" with the new token
-3. Confirm both "1altX.com" and "mabbun@gmail.com" credentials work
+**Verify**
+1. Test token is valid (simple API call to Calendar API)
+2. Confirm Atlas can read the secrets via Azure CLI
+3. Commit to task queue with completion note
 
 ### Why This Matters
-Atlas needs Gmail calendar + email access for richard@1altx.com and richard@mabbun.com to build daily briefing (morning 7 AM CT, EOD 6 PM CT). Currently blocked on credential availability.
+Atlas needs Gmail calendar + email access for richard@1altx.com to build daily briefing (morning 7 AM CT, EOD 6 PM CT). Blocked on credential export to Key Vault.
 
 ### Success Criteria
-- ✅ All 6 secrets in Key Vault (`google-oauth-1altx-*` + `google-oauth-mabbun-*`)
-- ✅ Both n8n credentials functional
-- ✅ Atlas confirms it can read both tokens via Azure CLI
+- ✅ All 3 secrets in Key Vault (`google-oauth-1altx-*`)
+- ✅ Token verified valid
+- ✅ Atlas confirms it can read tokens via Azure CLI
 - ✅ Commit to task queue with completion note
+
+### Notes
+- richard@mabbun.com skipped per Richard's request (2026-05-03 02:41 UTC) — revisit later if needed
+- Only 1altx briefing integration in scope
 
 ---
 
