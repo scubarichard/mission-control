@@ -95,8 +95,10 @@ Once tokens are in the vault, Atlas will:
 - ✅ Scene-03 (narration + slideshow recording): complete for all 9
 - ✅ Finals: all 9 concatenated (22-30, 9.1-11.3MB each)
 - ✅ Committed and pushed to `catalog-overnight-v1` (d7e2bf4)
-- ⚠️ YouTube upload: `uploadLimitExceeded` — 10 uploads already done today. Resets midnight PT.
-- ⏳ Scheduled task `CatalogMint-YT-Upload` fires 03:00 CT → uploads 11-30 (30 videos total)
+- ⚠️ YouTube upload: `uploadLimitExceeded` — 16 uploads already done today (5 row + 1 LeadLUX + 10 catalog 01-10). Limit: ~15/day, resets midnight PT (02:00 CT).
+- ⏳ **Night 1** (03:00 CT May 3): `CatalogMint-YT-Upload` fires → uploads 20 pending videos (11-21, 22-30), gets ~15 uploaded (11-25)
+- ⏳ **Night 2** (03:00 CT May 4): `CatalogMint-YT-Upload-D2` fires → uploads remaining 5 (26-30)
+- ✅ upload-youtube.py token fix applied (expiry parsing added; exit code on failure added)
 
 ### narrate-slideshow.py fix
 Added Playwright Chromium fallback when Chrome debug port 9222 not available (needed for overnight unattended run)
