@@ -102,9 +102,9 @@ Once tokens are in the vault, Atlas will:
     - YouTube: deleted video 09 (f-1CO9zofi4), updated video 08 title/desc to cover both use cases
     - 08 scene-03 re-rendered (ElevenLabs narration, raw MP4 muted 90s), final rebuilt (141s, 13.8MB)
     - catalogmint catalog.json: pushed 0e246c0; 1altx-site catalog.json: pushed 15e3965
-- ⚠️ YouTube upload: `uploadLimitExceeded` — 16 uploads already done today (5 row + 1 LeadLUX + 10 catalog 01-10). Limit: ~15/day, resets midnight PT (02:00 CT).
-- ⏳ **Night 1** (03:00 CT May 3): `CatalogMint-YT-Upload` fires → uploads 20 pending videos (11-21, 22-30), gets ~15 uploaded (11-25)
-- ⏳ **Night 2** (03:00 CT May 4): `CatalogMint-YT-Upload-D2` fires → uploads remaining 5 (26-30)
+- ⚠️ YouTube upload Night 1 (02:05am CDT May 3): ALL 19 FAILED — `uploadLimitExceeded` on every video. Limit had not reset despite firing 5min after midnight PDT.
+- ⏳ **Retry** (10:05am CDT May 3): `CatalogMint-YT-Upload` rescheduled → limit should be clear by then (19 videos pending: 11-19, 21-30)
+- ⏳ **Night 2** (03:00 CT May 4): `CatalogMint-YT-Upload-D2` fires → handles any remaining after retry
 - ✅ upload-youtube.py token fix applied (expiry parsing added; exit code on failure added)
 - ✅ PR created: https://github.com/scubarichard/catalogmint/pull/1 (catalog-overnight-v1 → master)
 
