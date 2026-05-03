@@ -95,6 +95,8 @@ Once tokens are in the vault, Atlas will:
 - ✅ Scene-03 (narration + slideshow recording): complete for all 9
 - ✅ Finals: all 9 concatenated (22-30, 9.1-11.3MB each)
 - ✅ Committed and pushed to `catalog-overnight-v1` (d7e2bf4)
+- ✅ catalog.json: `project_id` backfilled on all 32 entries (commit 6311597)
+- ⚠️ Duplicate source URLs flagged for Richard: 04/20 share `7pXYtY3rkS0`, 08/09 share `FpwC1PVwVXD` (raw files identical) — see `_flag` fields in catalog.json
 - ⚠️ YouTube upload: `uploadLimitExceeded` — 16 uploads already done today (5 row + 1 LeadLUX + 10 catalog 01-10). Limit: ~15/day, resets midnight PT (02:00 CT).
 - ⏳ **Night 1** (03:00 CT May 3): `CatalogMint-YT-Upload` fires → uploads 20 pending videos (11-21, 22-30), gets ~15 uploaded (11-25)
 - ⏳ **Night 2** (03:00 CT May 4): `CatalogMint-YT-Upload-D2` fires → uploads remaining 5 (26-30)
