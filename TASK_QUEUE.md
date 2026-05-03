@@ -81,6 +81,27 @@ Once tokens are in the vault, Atlas will:
 
 ---
 
+## TASK-20260502-FORGE-1ALTX-CATALOG-OVERNIGHT-003 — CatalogMint Overnight Batch 22-30
+- **Assignee:** Forge
+- **Status:** DONE (production complete; upload pending scheduled task)
+- **Started:** 2026-05-03 04:14 UTC
+- **Production complete:** 2026-05-03 04:34 UTC
+- **Target:** All 9 videos complete and uploaded by 07:00 CT (13:00 UTC) 2026-05-03
+- **Client:** 1AltX / CatalogMint
+
+### Completion Notes (04:34 UTC)
+- ✅ HeyGen: all 18 intros+outros rendered and downloaded (22-30)
+- ✅ Cards: title + CTA cards generated for all 9
+- ✅ Scene-03 (narration + slideshow recording): complete for all 9
+- ✅ Finals: all 9 concatenated (22-30, 9.1-11.3MB each)
+- ✅ Committed and pushed to `catalog-overnight-v1` (d7e2bf4)
+- ⚠️ YouTube upload: `uploadLimitExceeded` — 10 uploads already done today. Resets midnight PT.
+- ⏳ Scheduled task `CatalogMint-YT-Upload` fires 03:00 CT → uploads 11-30 (30 videos total)
+
+### narrate-slideshow.py fix
+Added Playwright Chromium fallback when Chrome debug port 9222 not available (needed for overnight unattended run)
+
+---
 
 ## TASK-20260501-FORGE-KEYVAULT-001 — Grant Atlas Key Vault Access
 - **Assignee:** Forge
