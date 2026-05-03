@@ -3821,7 +3821,7 @@ All acceptance criteria met, Slack notification posted, build_log.md updated and
 ## TASK-20260502-FORGE-1ALTX-CATALOG-OVERNIGHT-003
 
 - **Assignee:** Forge
-- **Status:** PENDING � full agentic execution authorized
+- **Status:** IN_PROGRESS — pipeline running, videos 23-24 done, 25 in progress; video 22 scene-03 failed (retrying after batch)
 - **From:** Richard (via Sonnet)
 - **Priority:** High
 - **Date:** 2026-05-02
