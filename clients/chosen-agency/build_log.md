@@ -100,3 +100,112 @@ Modules 7–19 are already stubbed. Need:
 ---
 
 ## Phase 4–6 — Hardening, Notify, Handoff (NOT STARTED)
+
+---
+
+## Phase 3 — Audio + Video ✅ DONE (2026-05-01 → 2026-05-04)
+
+**Major architecture pivot mid-phase: V1 → V1.5**
+
+Original V1 architecture (Phase 3 first attempt, 2026-05-01):
+- Modules 7-9: ElevenLabs TTS direct → Drive upload → HeyGen audio mode
+- Modules 10-19: HeyGen render with audio_url + 40-iter polling
+- Result: Pipeline produced complete videos but with FLAT PACING (no pauses)
+
+Root cause discovered:
+- ElevenLabs REST `/text-to-speech` endpoint silently strips SSML `<break>` tags
+- Confirmed by direct PowerShell test: `elevenlabs-pause-test.mp3` had no audible pauses despite explicit 2-second break tags
+- ElevenLabs documentation suggests SSML works only via websocket endpoint with `enable_ssml_parsing: true`
+
+V1.5 Architecture (2026-05-04):
+- Modeled on CatalogMint's proven approach (script.text mode in HeyGen)
+- Module 5: SSML break tags re-enabled (HeyGen DOES honor them)
+- Module 10: switched from `voice.audio_url` to `voice.text` mode
+- Module 10: input_text = `{{29.script}}` (full script with break tags)
+- Module 10: voice_id = HeyGen-linked voice (Richard's: a9c42ba3dd4b441eac3fb3221c6fcf59)
+- Modules 7, 8, 9: disabled with always-false filters
+
+Bugs fixed during Phase 3:
+1. Module 6 broken Doc URLs: changed `{{24.documentId}}/edit` → `{{24.webViewLink}}`
+2. Trigger row references: 41 references converted from `1.\`Header Name\`` to `1.\`numeric position\`` (0-indexed)
+3. Module 5 user prompt: fixed unbacticked `1.Audience` and `1.Tone` → `1.\`7\`` and `1.\`10\``
+4. Polling iterations: bumped 20 → 30 → 40 (40-min ceiling)
+5. Default avatar restored to Tyler-incasualsuit-20220721
+
+Test results before V1.5 pivot (V1 architecture, flat pacing):
+- 9/9 acceptance test rows completed end-to-end
+- 4 happy-path + 4 override variants all passed
+- Doc Links + Voice File URL + Raw Video Link all populated correctly
+- Architecture proven; only quality issue was pacing
+
+V1.5 testing: pending Richard manual reset + run.
+
+---
+
+## Phase 4 — Render Checker (PARTIAL)
+
+Forge generated Render Checker blueprint per spec but couldn't deploy due to Make API write-permission limitations.
+
+Status: blueprint pending manual import. Documented in Troubleshooting Guide.
+
+Functionality covered by Make scenario history audit + manual recovery procedures in operator SOP.
+
+---
+
+## Phase 5 — Notify ✅ DEFERRED to Phase 2
+
+Per SOW Section 14 — notification of editor when Status flips to Done. Deferred to post-V1 enhancement.
+
+---
+
+## Phase 6 — Documentation Suite ✅ DONE (2026-05-04 by Sonnet)
+
+Four docs created at `clients/chosen-agency/docs/`:
+
+1. **01-operator-sop.md** (~6.7KB) — Day-to-day operations guide:
+   - Adding new content briefs
+   - Status lifecycle explanations
+   - Override columns usage
+   - Editor workflow handoff
+   - Daily checklist
+
+2. **02-field-map.md** (~11.6KB) — Complete schema documentation:
+   - V1 sheet schema with column positions and sources
+   - Module-by-module data flow (Modules 1-30)
+   - Critical 0-indexed positional reference syntax
+   - Status lifecycle diagram
+   - File naming conventions
+
+3. **03-credential-map.md** (~8.3KB) — API key and auth procedures:
+   - OAuth connection setup (Google services)
+   - API key locations (OpenAI, HeyGen, ElevenLabs)
+   - Drive resource IDs catalog
+   - Make.com account structure
+   - Step-by-step handoff procedure (Drive migration, OAuth swap, key swap, voice/avatar defaults, test run)
+   - Cost tracking estimates
+
+4. **04-troubleshooting.md** (~12.8KB) — 10-section diagnostic guide:
+   - Quick diagnostic flow chart
+   - Section A: Stuck at Processing (OpenAI issues)
+   - Section B: Stuck at Script Done (HeyGen issues)
+   - Section C: Stuck at Rendering (polling/checker issues)
+   - Section D: Failed status (error message decoding)
+   - Section E: Error status (Render Checker reachability)
+   - Section F: Empty output columns
+   - Section G: Broken Doc URLs
+   - Section H: Pacing issues (SSML troubleshooting)
+   - Section I: Make UI lock issues
+   - Section J: Render Checker not picking up
+
+CHOSEN-006 PHASE 6 — DONE.
+
+---
+
+## Outstanding Items
+
+- [ ] V1.5 acceptance test (manual reset + run by Richard)
+- [ ] Render Checker manual import to Make
+- [ ] Drive migration to Erika's parent folder (blocked on her share)
+- [ ] OAuth + API key swap to Erika's accounts (blocked on her signups)
+- [ ] Final Loom walkthrough video for Erika
+- [ ] Higgsfield decision (defer or pay add-on)
