@@ -102,6 +102,35 @@ Placeholders inserted (matching `editor_brief_v1.md`):
 
 ---
 
+## TASK-20260429-CHOSEN-004 — V1 Phase 2: OpenAI + Google Docs Wiring
+**Status:** DONE (completed prior session, log written 2026-05-06)
+**Date:** 2026-04-29 / 2026-04-30
+**Agent:** Forge
+
+### Summary
+Phase 2 wiring completed. V1 scenario (4894796) built out from the cloned test scenario (4820264) to a 23-module pipeline covering: Sheets trigger → SetVariables → OpenAI script gen → OpenAI editor brief → ElevenLabs TTS → Drive upload → HeyGen render submission → sheet write-back.
+
+### Module list (starting state confirmed per Subtask 1)
+Scenario 4894796 was a clean clone of 4820264 at Phase 2 start. Phase 2 added:
+- **Module 5** — `openai-gpt-3`: Script + Caption generation (gpt-4o)
+- **Module 23** — `openai-gpt-3`: Editor Brief generation (gpt-4o, JSON output)
+- **Module 24** — `google-docs`: Create Script Doc from template `1ZDum9DDkuEGPMpoqo39XbAiF-D5-bGMExfOmSY3gm_A`
+- **Module 25** — `google-docs`: Create Editor Brief Doc from template `179Rc1u3mWVC-7hidFeyBLWxIp0Xxaocl_M52MsDc-4I`
+- **Module 11** — `google-sheets:updateRow` v2: write script_text, Script Doc Link, Brief Doc Link, status
+- JSON parse modules for OpenAI structured outputs
+
+### V1 sheet wired
+Trigger (Module 1) updated to read from `1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo` (V1 Production Tracker), Queue tab, Status=Queued.
+
+### Known bugs discovered during CHOSEN-005 test run
+1. **Script Doc / Brief Doc links malformed** — `https://docs.google.com/document/d//edit` (empty doc ID). Modules 24/25 create call succeeds but output field mapping is wrong — doc URL not captured correctly.
+2. **Module 5 field mapping** — generated script content doesn't match row input; likely wrong column index reference in the prompt template.
+3. **Module 16/17 column names** — wrong key names (`status`, `video_url`) instead of Title Case (`Status`, `Raw Video Link`); missing `sheetName: "Queue"`. Rows stuck in "Rendering".
+
+All 3 bugs require Make UI access to fix (Make API is read-only). Logged in CHOSEN-005.
+
+---
+
 ## TASK-20260428-FORGE-CHOSEN-003 — Drive Cleanup
 **Status:** DONE
 **Date:** 2026-04-28
