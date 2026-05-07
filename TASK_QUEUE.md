@@ -3552,8 +3552,8 @@ Add `search_sharepoint` tool to ICP DAX router so Brett can search company Share
 
 # TASK-20260429-CHOSEN-004 � V1 Phase 2: OpenAI + Google Docs Wiring
 
-**Status:** OPEN
-**Owner:** ANY (agent-agnostic)
+**Status:** IN_PROGRESS
+**Owner:** Forge
 **Client:** Erika Cobb / Chosen Agency
 **Priority:** High
 **Created:** 2026-04-29 by Richard
@@ -3855,7 +3855,8 @@ All acceptance criteria met, Slack notification posted, build_log.md updated and
 ## TASK-20260502-FORGE-1ALTX-CATALOG-OVERNIGHT-003
 
 - **Assignee:** Forge
-- **Status:** IN_PROGRESS — pipeline running, videos 23-24 done, 25 in progress; video 22 scene-03 failed (retrying after batch)
+- **Status:** DONE
+- **Completed:** 2026-05-02
 - **From:** Richard (via Sonnet)
 - **Priority:** High
 - **Date:** 2026-05-02
