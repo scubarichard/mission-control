@@ -184,7 +184,7 @@ Key findings:
 - 
 ecord_videos.py: VIDEO_COL changed from 22 (col V) to 38 (col AL — "Recording Filename")
 - Sheet updated: all 53 local filenames cleared from col V; sheet expanded to 38 cols; "Recording Filename" header added to col AL row 1
-- ix_col_v.py: one-time cleanup script committed to repo for traceability
+- ix_col_v.py: one-time cleanup script committed to repo for traceability
 - Committed d23a055 to scubarichard/autovid-outreach (branch: main)
 
 **Gate result:** Col V is now clean — 0 local filenames remain. Col V contains only Descript share URLs (manually managed). Future recordings will write filenames to col AL.
@@ -1320,3 +1320,58 @@ Richard's remaining work after CHOSEN-006:
 
 ---
 
+## TASK-20260507-FORGE-ATLAS-001 — Update Atlas Persona (Softer Voice/Tone)
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Date:** 2026-05-07
+- **From:** Sonnet (Richard request)
+- **Priority:** Medium
+- **Title:** Replace Atlas CLAUDE.md persona with softer, Claude-like tone
+
+### Context
+
+Richard finds Atlas's current communication style too abrasive and intense. He wants Atlas to communicate more like Claude (Sonnet) — calm, warm, clear, structured, direct without being harsh. Atlas runs via OpenClaw (Claude Code CLI) on vm-dax-dev, interacts with Richard primarily via Telegram.
+
+### Task
+
+Find and update Atlas's CLAUDE.md (persona/system prompt) on vm-dax-dev.
+
+**Likely locations (check in order):**
+1. `~/.openclaw/CLAUDE.md`
+2. `~/.openclaw/agents/main/CLAUDE.md`
+3. `~/.openclaw/workspace/CLAUDE.md`
+4. Any CLAUDE.md under `~/` or `/opt/dax/`
+
+**Replace the personality/communication section with the following:**
+
+```
+## Communication Style
+
+You are Atlas. Your tone mirrors Claude (Anthropic Sonnet) — calm, grounded, and warm without being soft.
+
+Core principles:
+- Lead with the most important point first
+- Be direct and clear — no filler, no preamble
+- Keep responses concise and structured
+- Break complex things into small, manageable steps
+- Use plain language — avoid jargon unless necessary
+- Maintain a steady, patient tone even when tasks are difficult or repeated
+- Never sound urgent, alarming, or intense unless the situation genuinely requires it
+- When something is wrong, state it plainly and move immediately to the fix
+- Acknowledge the human side of requests — Richard is managing a lot; don't add cognitive load
+- When in doubt, do less and confirm rather than doing more and surprising
+
+You are helpful, capable, and calm. You don't perform urgency. You get things done quietly and report back clearly.
+```
+
+### Gate
+- [ ] CLAUDE.md located — post the path
+- [ ] Old persona section captured (post first 20 lines of old content for reference)
+- [ ] New persona section written
+- [ ] Atlas restarted / session refreshed so new persona takes effect
+- [ ] Post confirmation to #dax-collab (C0APVGG486M): "[Atlas] Persona updated — tone softened per Richard's request 2026-05-07"
+
+### Notes
+- SSH access: `ssh -T -i ~/.ssh/id_rsa -J dkn8n@n8n.dakona.net daxadmin@172.16.0.5`
+- If CLAUDE.md doesn't exist yet, create it at `~/.openclaw/CLAUDE.md`
+- Do NOT change any tool configs, MCP settings, or workflow logic — persona text only
