@@ -3986,3 +3986,58 @@ Recommendations for Richard:
 - A documented drop is a successful outcome. A bad video that ships is a failure.
 - Atlas: track as single overnight sprint. Reduce candidate count rather than letting Forge ship rushed work.
 - Sonnet and Richard both asleep during execution. Forge owns every judgment call. Make the call you'd defend to Richard in the morning.
+
+---
+
+## TASK-20260507-FORGE-RPE-001 — RPE Assessment Form Bugs: Findings + Fix Approval
+
+- **Assignee:** Forge
+- **Status:** PENDING APPROVAL
+- **Priority:** HIGH (billable)
+- **From:** Richard (via Sonnet → dax-collab, 2026-05-05 20:56 CDT)
+- **Client:** RPE Systems / Carey
+- **GHL Subaccount:** OkpQxkeSnF4wqI31WmUg
+
+### Task
+
+Carey reported 3 bugs on the RPE Assessment form (https://chaos.rpesystems.com). Investigation complete (2026-05-05). Findings below — awaiting Richard's approval before applying fixes.
+
+### Findings (all 3 bugs diagnosed)
+
+**Root cause shared by all 3 bugs:** The second `<script>` block on chaos.rpesystems.com has a stray `}` causing a SyntaxError — the entire block fails silently. `sendAssessmentToGHL()` and `writeScoresToMostRecentContact()` are called but never defined (ReferenceError, caught silently). The GHL webhook never fires for any submission.
+
+**Bug 1 — Always "Moderate" rating:**
+- `sev.label` is computed correctly by `getSeverity()` but is never included in the webhook payload
+- Webhook never fires → GHL workflow defaults to Moderate
+
+**Bug 2 — Monthly/annual chaos tax totals not transmitted:**
+- Same root cause (webhook never fires)
+- Secondary issue: field name mismatch — payload uses `rpe_chaos_tax_total` (single `_`), `window._rpeScores` uses `rpe__chaos_tax_total` (double `__`) — needs GHL field name confirmation
+
+**Bug 3 — 7 individual score fields not transmitted:**
+- Same root cause (webhook never fires)
+- Same underscore mismatch: `rpe_score_labor` vs `rpe__score_labor` (7 fields)
+
+### Proposed Fix (3 changes to chaos.rpesystems.com page JS)
+
+1. Fix the stray `}` SyntaxError in second script block
+2. Define `sendAssessmentToGHL()` properly — fire webhook with `sev.label`, chaos tax totals, and 7 score fields
+3. Confirm single vs double underscore field names against GHL "RPE Chaos Tax - Webhook Intake" workflow before writing payload
+
+### One Remaining Unknown (needs GHL check before fixing)
+
+- Are GHL custom field internal names single `_` or double `__`? (e.g. `rpe_score_labor` vs `rpe__score_labor`)
+- GHL PIT token was provided (pit-7653a5db-ece6-4a9d-9694-074ecb52d8ea) — may be expired since issued 2026-05-05
+
+### Next Steps (awaiting approval)
+
+1. [Forge] Use PIT token (or request fresh one) to check GHL custom field names
+2. [Richard] Approve the 3-point fix above
+3. [Forge] Apply fixes to chaos.rpesystems.com page source
+4. [Forge] Run diagnostic script to verify webhook fires correctly
+5. [Forge] Confirm in GHL execution history
+
+### Notes
+
+- Diagnostic script already built: `P:/_clients/rpe-systems/assessment-diagnostic.js`
+- No changes made to production yet
