@@ -150,12 +150,12 @@ This document maps every field through the pipeline: where data originates, how 
 
 ### Module 15 — Inner Router (builtin:BasicRouter)
 
-3 routes based on `{{14.data.data.status}}`:
+3 routes based on `{{14.data.status}}`:
 
 ### Module 16 — Status → Done + save video URL (google-sheets:updateRow)
 
-- **Filter:** `{{14.data.data.status}} == "completed"`
-- Sets: Status = `Done`, Raw Video Link = `{{14.data.data.video_url}}`, Last Updated
+- **Filter:** `{{14.data.status}} == "completed"`
+- Sets: Status = `Done`, Raw Video Link = `{{14.data.video_url}}`, Last Updated
 
 ### Module 21 — Mark done (completed)
 
@@ -164,7 +164,7 @@ This document maps every field through the pipeline: where data originates, how 
 
 ### Module 17 — Status → Failed + save error (google-sheets:updateRow)
 
-- **Filter:** `{{14.data.data.status}} == "failed"`
+- **Filter:** `{{14.data.status}} == "failed"`
 - Sets: Status = `Failed`, Error Message, Last Updated
 
 ### Module 22 — Mark done (failed)

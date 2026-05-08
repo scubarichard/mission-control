@@ -309,3 +309,47 @@ Include in your message:
 - **Module:** A box in the Make scenario canvas (e.g., Module 5 = OpenAI Script)
 - **Variation ID:** Auto-generated unique identifier per row, includes timestamp
 - **Polling:** Repeated API calls to check on a long-running job (HeyGen render)
+
+---
+
+## Section K: Polling never detects HeyGen completion
+
+**Symptom:** Status sits at `Rendering` indefinitely. Make scenario history shows ~170+ ops and ~45 min duration. HeyGen dashboard shows the video as completed.
+
+### K1. Verify Module 14 URL references
+
+- Open Module 14 in V1 scenario
+- URL should be: `https://api.heygen.com/v1/video_status.get?video_id={{10.data.video_id}}`
+- WRONG: `{{10.data.data.video_id}}` (double-nested) — caused tonight's bug
+- WRONG: `{{10.video_id}}` (missing `.data`)
+
+### K2. Verify Module 15 inner router filters
+
+- Each route's filter should reference `{{14.data.status}}`
+- WRONG: `{{14.data.data.status}}`
+- The accepted values are: `completed`, `failed`, `processing`, `pending`, `waiting`
+
+### K3. Verify Module 16 mapping
+
+- Raw Video Link should map to `{{14.data.video_url}}`
+- WRONG: `{{14.data.data.video_url}}`
+
+### K4. The fix
+
+If you find `.data.data.` anywhere in references to Module 10 or Module 14 outputs, replace with `.data.` (single dot). HeyGen's API returns:
+
+```json
+{
+  "data": {
+    "video_id": "abc",
+    "status": "completed",
+    "video_url": "https://..."
+  }
+}
+```
+
+Note: Some Make modules return `data.data.X` because Make wraps the entire response. HeyGen's `/v1/video_status.get` returns a single-level data object — not double-wrapped.
+
+### K5. Recovery
+
+After fixing the references, the next scheduled or manual run will work correctly. Existing stuck rows can be manually flipped to `Done` if you have the video URL from HeyGen dashboard.

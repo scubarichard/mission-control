@@ -209,3 +209,78 @@ CHOSEN-006 PHASE 6 — DONE.
 - [ ] OAuth + API key swap to Erika's accounts (blocked on her signups)
 - [ ] Final Loom walkthrough video for Erika
 - [ ] Higgsfield decision (defer or pay add-on)
+
+---
+
+## Phase 7 — Tonight's End-to-End Smoke Test (2026-05-08)
+
+**Goal:** Run V1.5 end-to-end via Make API to surface remaining issues before tomorrow's handoff.
+
+### Major Bug Discovered: `.data.data.` Double-Nesting
+
+Triggered V1 scenario via `/api/v2/scenarios/4894796/run`. Execution started at 23:16. After 14+ minutes still in RUNNING state.
+
+Cross-checked HeyGen API directly — the test render had completed in 37.8 seconds at HeyGen's side. So the polling loop wasn't detecting completion.
+
+Inspected Module 14's URL and Module 15's filter conditions:
+
+```
+Module 14 URL (BROKEN): https://api.heygen.com/v1/video_status.get?video_id={{10.data.data.video_id}}
+Filter (BROKEN):        {{14.data.data.status}} == "completed"
+```
+
+But HeyGen's actual response structure is:
+```json
+{
+  "data": {
+    "video_id": "...",
+    "status": "completed",
+    "video_url": "..."
+  }
+}
+```
+
+The `.data.data.` references were querying a non-existent path, so:
+- Module 14's URL had an undefined video_id (HeyGen returned an error response)
+- Filters never matched any of `completed`/`failed`/`processing`/`pending`/`waiting`
+- Bundle stayed in the polling loop until 40 iterations exhausted
+
+### Why This Hid for Days
+
+This bug was inherited from Forge's original CHOSEN-004 build. It was masked by:
+- The May 5 runs ending in WARN status (170-182 ops, 2700 sec duration) — looked like timeouts, but actually polling-exhaustion
+- The Sheet showing rows as "Done" — but these were either pre-existing Done rows or rows manually flipped during testing
+- Direct HeyGen API tests (which we did multiple times to verify text mode) bypassed Module 14 entirely
+
+### Fix Applied (23:25)
+
+Global string replacement on blueprint: `.data.data.` → `.data.` (9 instances)
+
+After fix:
+- Module 14 URL: `https://api.heygen.com/v1/video_status.get?video_id={{10.data.video_id}}`
+- Filter: `{{14.data.status}} == "completed"`
+
+### Other Findings
+
+- Render Checker scenario (id 5007919) was correctly built with `.data.` references — bug only in V1 scenario
+- Direct HeyGen API tests showed renders completing in 30-90 seconds — fast (the long durations in Make logs were polling overhead, not HeyGen)
+- The `sequential: true` setting (set 18:07 today) correctly prevents phantom-lock issues; today's stuck execution was different — it's a real long-running execution waiting for polling exhaustion
+
+### Acceptance Status (Updated)
+
+| Criterion | Status |
+|---|---|
+| 1. Single row → all artifacts in 15 min | ⚠️ Pending verification with `.data.` fix |
+| 2. 5 concurrent rows in 30 min | ⚠️ Pending |
+| 3. Override columns work | ⚠️ Pending |
+| 4. Failed render → Status="Failed" | ⚠️ Not yet tested |
+| 5. Render >30 min → Render Checker handles | ✅ Render Checker deployed (id 5007919, INACTIVE) |
+
+### Next Steps
+
+1. Wait for current stuck execution to exhaust (~00:01)
+2. Trigger fresh test run
+3. Verify Module 14 detects completion correctly
+4. Verify Module 16 fires Status=Done with Raw Video Link populated
+5. Run remaining acceptance criteria
+
