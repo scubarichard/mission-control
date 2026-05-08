@@ -4041,3 +4041,41 @@ Carey reported 3 bugs on the RPE Assessment form (https://chaos.rpesystems.com).
 
 - Diagnostic script already built: `P:/_clients/rpe-systems/assessment-diagnostic.js`
 - No changes made to production yet
+
+---
+
+## TASK-20260507-FORGE-DAKONA-HELPDSK-001 — AI Help Desk Triage Engine: Phase 1 Standby
+
+- **Assignee:** Forge
+- **Status:** PENDING (awaiting morning go/no-go from Richard)
+- **Priority:** HIGH
+- **From:** Richard (dax-collab, 2026-05-07 22:31 CDT)
+- **Client:** Dakona MSP
+- **ClickUp:** 901713590959 — 1AltX → Dakona → DAX → AI Help Desk Triage Engine (22 tasks, 6 phases)
+
+### Project Summary
+
+RAG-powered ticket triage system. When a new NinjaOne ticket comes in, agents see top 3 suggested solutions pulled from 5,000+ AI-enriched ConnectWise tickets. Self-improves via feedback loop at ticket close.
+
+**Data already in place:**
+- `Dakona CW Data` Google Sheet — Tickets tab with AIIssue, AIResolution, AICategory, AIActionsTaken columns
+- Time_Entries tab linked by TicketID
+- n8n workflows 08 (CW Time Entries Export) and 15 (NinjaOne End User Import) already built
+
+### Phase Breakdown
+
+- Phase 0 — Validate AI extraction quality (manual gate — Richard spot-checks 30 tickets)
+- Phase 1 — Vector DB setup + bulk ticket ingest (Supabase pgvector) ← **Forge workstream**
+- Phase 2 — NinjaOne webhook + live triage + client symptom email
+- Phase 3 — External KB fallback (Microsoft, HP, Canon, Epson)
+- Phase 4 — Feedback loop + nightly re-ranking
+- Phase 5 — Agent dashboard (optional, post Phase 4)
+
+### Forge Action (Phase 1: P1-1 through P1-4)
+
+1. Provision Supabase project
+2. Build pgvector schema for ticket embeddings
+3. Build bulk ingest workflow (n8n → Supabase)
+4. Validate ingest end-to-end
+
+**Gate:** Phase 0 is Richard's manual go/no-go call in the morning. Do NOT start Phase 1 until Richard confirms Phase 0 passed and assigns priorities.
