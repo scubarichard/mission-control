@@ -48,6 +48,112 @@
 
 ---
 
+## TASK-20260508-FORGE-001 — Save Upwork Triage Memory & 2026-05-08 Run Log
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Priority:** NORMAL
+- **From:** Richard (via Atlas, 2026-05-08 03:40 UTC)
+- **Client:** 1AltX
+- **Deliverable:** CLAUDE.md + 2026-05-08.md committed and pushed
+
+### What to Do
+
+In RICHARD-WS PowerShell, from repo root (`$HOME\1altx-site`), run:
+
+```powershell
+cd $HOME\1altx-site
+git pull
+mkdir tools\upwork-triage\runs -Force | Out-Null
+
+$claudeMd = @'
+# 1AltX site - project memory
+
+## Upwork application triage
+
+This repo includes the upwork-triage subagent for reviewing Upwork
+application rows in Richard's Upwork tracking sheet.
+
+Invoke in any Claude Code session in this repo:
+
+ triage rows N-M
+
+Files:
+- .claude/agents/upwork-triage.md - agent definition (rubric, skip criteria, product catalog)
+- tools/upwork-triage/upwork_triage.py - CLI for Sheets I/O
+- tools/upwork-triage/runs/ - historical run logs
+
+Setup required to run end-to-end:
+1. Google Cloud service account, Sheets API enabled, JSON key downloaded
+2. Sheet shared with service account email as Editor
+3. Env vars set:
+ - UPWORK_SHEET_ID=11cydvXB7zb38FGSqrLTXEnikIK5gec1FSe3nK3Hy_BY
+ - UPWORK_SA_KEY=<path to service account JSON>
+4. pip install -r tools/upwork-triage/requirements.txt
+
+Until setup is complete, the agent can still produce paste-down lists
+by reading the sheet through the Google Drive MCP and outputting the
+column W values for manual paste.
+
+Process flow: read sheet rows -> apply skip criteria + rubric ->
+write column W decisions back. The "sending to n8n" step (downstream
+proposal submission) is a SEPARATE process - triage stops at writing
+column W.
+'@
+
+$runLog = @'
+# Upwork triage run - 2026-05-08
+
+Rows triaged across this session: 94-144 (multiple passes as the sheet
+was refreshed), then 98-105 after the latest refresh.
+
+## Decisions for rows 98-105 (latest pass)
+
+| Row | Title | Decision |
+|----:|--------------------------------------------------------|----------|
+| 98 | AI Automation Specialist - n8n Cloud + Claude API | Hot |
+| 99 | AI Voice + SMS Booking Agent (GHL + Retell + n8n) | Apply |
+| 100 | GHL Magic Link Button | Apply |
+| 101 | SMS-Based AI + CRM Integration | skip |
+| 102 | Principal Architect AI-Native SaaS | skip |
+| 103 | AI-Powered Executive Assistant ($500/mo flat) | skip |
+| 104 | AI Voice Calling (self-hosted) | skip |
+| 105 | HubSpot Marketing Specialist | skip |
+
+## Skip reasons
+
+- 101 - client avg paid $8/hr (below $10/hr floor)
+- 102 - Go/React/Python/PostgreSQL full-stack as primary deliverable
+- 103 - $500/month flat full-time (full-time embedded + under rate)
+- 104 - self-hosted STT/TTS/LLM + telephony backend engineering primary
+- 105 - HubSpot marketing ops (landing pages, campaigns); limited automation depth
+
+## Earlier passes
+
+See sheet column W for rows 94-144 decisions already pasted by Richard
+during this session.
+'@
+
+[IO.File]::WriteAllText("$PWD\CLAUDE.md", $claudeMd)
+[IO.File]::WriteAllText("$PWD\tools\upwork-triage\runs\2026-05-08.md", $runLog)
+
+git add CLAUDE.md tools\upwork-triage\runs\2026-05-08.md
+git commit -m "Save triage memory and 2026-05-08 run log"
+git push
+```
+
+### Success Criteria
+- ✅ CLAUDE.md created with project memory content
+- ✅ tools/upwork-triage/runs/2026-05-08.md created with run log
+- ✅ Both files committed to GitHub (git push succeeds)
+- ✅ Commit message: "Save triage memory and 2026-05-08 run log"
+
+### Notes
+- Repo: scubarichard/1altx-site
+- Requires: Git credentials + network access to push
+- Windows PowerShell syntax (RICHARD-WS only)
+
+---
+
 ## TASK-20260501-ATLAS-001 — Create Google OAuth Credentials for Calendar/Email
 - **Assignee:** Richard (manual OAuth flow required)
 - **Status:** PENDING
