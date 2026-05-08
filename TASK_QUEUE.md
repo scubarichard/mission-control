@@ -50,11 +50,18 @@
 
 ## TASK-20260508-FORGE-001 — Save Upwork Triage Memory & 2026-05-08 Run Log
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
+- **Completed:** 2026-05-08 UTC
 - **Priority:** NORMAL
 - **From:** Richard (via Atlas, 2026-05-08 03:40 UTC)
 - **Client:** 1AltX
 - **Deliverable:** CLAUDE.md + 2026-05-08.md committed and pushed
+
+### Completion Notes (Forge)
+- ✅ CLAUDE.md already present in 1altx-site with correct upwork-triage memory content
+- ✅ tools/upwork-triage/runs/2026-05-08.md created with rows 98-105 decisions + skip reasons
+- ✅ Commit: `ce3807e` "Save triage memory and 2026-05-08 run log"
+- ✅ Pushed to scubarichard/1altx-site branch `claude/review-upwork-applications-BVOEB`
 
 ### What to Do
 
