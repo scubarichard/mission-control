@@ -1,0 +1,149 @@
+{
+  "name": "Chosen Agency - Render Checker",
+  "flow": [
+    {
+      "id": 1,
+      "module": "google-sheets:filterRows",
+      "version": 2,
+      "metadata": {
+        "designer": { "x": 0, "y": 0, "name": "Trigger: Rendering rows" }
+      },
+      "mapper": {
+        "from": "drive",
+        "limit": "10",
+        "filter": [[{"a":"A","b":"Rendering","o":"text:equal"}]],
+        "sheetId": "Queue",
+        "sortOrder": "asc",
+        "spreadsheetId": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo",
+        "tableFirstRow": "A1:BZ1",
+        "includesHeaders": true,
+        "valueRenderOption": "FORMATTED_VALUE",
+        "dateTimeRenderOption": "FORMATTED_STRING"
+      }
+    },
+    {
+      "id": 2,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "metadata": {
+        "designer": { "x": 300, "y": 0, "name": "HeyGen: Check render status" }
+      },
+      "mapper": {
+        "qs": [],
+        "url": "https://api.heygen.com/v1/video_status.get?video_id={{1.`24`}}",
+        "gzip": true,
+        "method": "get",
+        "headers": [
+          {"name":"X-Api-Key","value":"sk_V2_hgu_k8ZrvzbzULJ_9kthjbeYQyc2MXZM3URBoAHk0VvwZJvD"}
+        ],
+        "timeout": "60",
+        "useMtls": false,
+        "bodyType": "raw",
+        "contentType": "application/json",
+        "serializeUrl": false,
+        "shareCookies": false,
+        "parseResponse": true,
+        "followRedirect": true,
+        "useQuerystring": false,
+        "followAllRedirects": false,
+        "rejectUnauthorized": true
+      }
+    },
+    {
+      "id": 3,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "metadata": {
+        "designer": { "x": 600, "y": 0, "name": "Router: Status decision" }
+      },
+      "routes": [
+        {
+          "flow": [
+            {
+              "id": 4,
+              "module": "google-sheets:updateRow",
+              "version": 2,
+              "metadata": {
+                "designer": { "x": 900, "y": -150, "name": "Status -> Done + save URL" }
+              },
+              "filter": {
+                "name": "Completed",
+                "conditions": [[{"a":"{{2.data.status}}","b":"completed","o":"text:equal"}]]
+              },
+              "mapper": {
+                "from": "drive",
+                "mode": "select",
+                "values": {
+                  "Status": "Done",
+                  "Last Updated": "{{formatDate(now; \"YYYY-MM-DD HH:mm:ss\")}}",
+                  "Raw Video Link": "{{2.data.video_url}}"
+                },
+                "sheetId": "Queue",
+                "rowNumber": "{{1.`__ROW_NUMBER__`}}",
+                "spreadsheetId": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo",
+                "tableFirstRow": "A1:BZ1",
+                "includesHeaders": true,
+                "useColumnHeaders": true,
+                "valueInputOption": "USER_ENTERED"
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 5,
+              "module": "google-sheets:updateRow",
+              "version": 2,
+              "metadata": {
+                "designer": { "x": 900, "y": 0, "name": "Status -> Failed + save error" }
+              },
+              "filter": {
+                "name": "Failed",
+                "conditions": [[{"a":"{{2.data.status}}","b":"failed","o":"text:equal"}]]
+              },
+              "mapper": {
+                "from": "drive",
+                "mode": "select",
+                "values": {
+                  "Status": "Failed",
+                  "Last Updated": "{{formatDate(now; \"YYYY-MM-DD HH:mm:ss\")}}",
+                  "Error Message": "Render Checker: HeyGen render failed - {{2.data.error.message}}"
+                },
+                "sheetId": "Queue",
+                "rowNumber": "{{1.`__ROW_NUMBER__`}}",
+                "spreadsheetId": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo",
+                "tableFirstRow": "A1:BZ1",
+                "includesHeaders": true,
+                "useColumnHeaders": true,
+                "valueInputOption": "USER_ENTERED"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "instant": false,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": true,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": { "orphans": [] },
+    "zone": "us2.make.com",
+    "notes": []
+  },
+  "scheduling": {
+    "type": "indefinitely",
+    "interval": 300
+  }
+}
