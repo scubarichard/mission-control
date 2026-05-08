@@ -4185,3 +4185,62 @@ RAG-powered ticket triage system. When a new NinjaOne ticket comes in, agents se
 4. Validate ingest end-to-end
 
 **Gate:** Phase 0 is Richard's manual go/no-go call in the morning. Do NOT start Phase 1 until Richard confirms Phase 0 passed and assigns priorities.
+
+---
+
+## TASK-20260508-TRITON-LEADLUX-001 — LeadLUX v1.2 Addendum Video Production
+
+- **Assignee:** Triton
+- **Status:** PENDING
+- **Priority:** MID (target delivery Wed-Thu May 13-14)
+- **From:** Forge (relayed from Richard's production brief, 2026-05-08)
+- **Client:** LeadLUX / 1AltX
+- **Slack thread:** #dax-collab `1777169102.709209`
+
+### Task
+
+Produce the LeadLUX v1.2 addendum video (5-7 min standalone MP4) per the production brief.
+
+**Source materials** (all on Triton at /mnt/user-data/):
+- `/mnt/user-data/outputs/leadlux-v1.2/` — spec, handoff README, open questions, field mapping
+- `/mnt/user-data/outputs/leadlux-v1.2-walkthrough.svg` — three-panel diagram for screen-share scenes
+- `/mnt/user-data/outputs/VIDEO-PRODUCTION-METHODOLOGY.md` — full per-scene methodology
+- `/mnt/user-data/outputs/architecture-walkthrough-video.skill` — skill bundle (voice ID, avatar ID)
+- `/mnt/user-data/uploads/produce_video.py` — per-scene production script
+- `/mnt/user-data/uploads/render_card.py` — card renderer
+
+**8 scenes:**
+1. Avatar intro (~30s) — HeyGen, Richard avatar
+2. Title card "v1.2 Addendum" (3s hold) — render_card.py
+3. Topic 1: Channel Compliance Two-Stage Gate (~90s) — VO over SVG panel 1
+4. Topic 2: Tiered SLA (~75s) — VO over SVG panel 2
+5. Topic 3: Downstream Visibility / Phase Boundary (~90s) — VO over SVG panel 3
+6. Topic 4: Open Questions Recap (~60s) — VO over SVG Q&A table
+7. Avatar outro (~25s) — HeyGen, Richard avatar
+8. Closing card (5s hold) — render_card.py
+
+**Production parameters (locked — match v1.1):**
+- ElevenLabs: Richard's cloned voice, stability 0.65, similarity 0.75, style 0.0
+- HeyGen: Richard's avatar (from skill bundle)
+- Resolution: 1920x1080, 30fps, H.264/AAC
+- Audio: -16 LUFS normalized
+- Pauses: [pause]=0.7s, [pause-think]=1.0s, [pause-long]=1.5s
+
+**Scripts:** All 8 scene scripts are in the production brief. Use exact text with pronunciation corrections applied (GCLID->"G-C-L-I-D", DNC->"D-N-C", API->"A-P-I", etc.).
+
+### Deliverables
+
+1. `video-walkthrough-v1.2-addendum.mp4` — final concat, 5-7 min
+2. `video-walkthrough-v1.2-addendum-script.md` — final script with timing
+3. Per-scene MP4s: `scene-01-intro.mp4` through `scene-08-closing.mp4`
+4. `video-walkthrough-v1.2-addendum-index.md` — chapter timestamps
+
+### Milestones — Post to Slack #dax-collab thread `1777169102.709209` at each:
+1. Script locked
+2. Voices rendered
+3. Concat complete (final MP4 ready for Richard review — NO upload until approved)
+
+### Notes
+- Avatar bookends only (Scenes 1 and 7) — no avatar in middle scenes
+- No personal names, no AI tool brand names in script
+- Forge posted Slack handoff 2026-05-08 — Triton picks up production from here
