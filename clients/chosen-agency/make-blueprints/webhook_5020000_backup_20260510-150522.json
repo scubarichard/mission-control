@@ -1,0 +1,160 @@
+{
+  "code": "OK",
+  "response": {
+    "blueprint": {
+      "flow": [
+        {
+          "id": 1,
+          "mapper": {},
+          "module": "gateway:CustomWebHook",
+          "version": 1,
+          "metadata": {
+            "designer": {
+              "x": 0,
+              "y": 0,
+              "name": "Webhook: HeyGen render complete"
+            }
+          },
+          "parameters": {
+            "hook": 2285825,
+            "maxResults": 1
+          }
+        },
+        {
+          "id": 2,
+          "filter": {
+            "name": "Completed",
+            "conditions": [
+              [
+                {
+                  "a": "{{1.event_type}}",
+                  "b": "avatar_video.success",
+                  "o": "text:equal"
+                }
+              ]
+            ]
+          },
+          "mapper": {
+            "from": "drive",
+            "mode": "select",
+            "values": {
+              "Status": "Done",
+              "Last Updated": "{{formatDate(now; \"YYYY-MM-DD HH:mm:ss\")}}",
+              "Raw Video Link": "{{1.event_data.url}}"
+            },
+            "sheetId": "Queue",
+            "rowNumber": "{{1.event_data.callback_id}}",
+            "spreadsheetId": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo",
+            "tableFirstRow": "A1:AZ1",
+            "includesHeaders": true,
+            "useColumnHeaders": true,
+            "valueInputOption": "USER_ENTERED"
+          },
+          "module": "google-sheets:updateRow",
+          "version": 2,
+          "metadata": {
+            "designer": {
+              "x": 300,
+              "y": 0,
+              "name": "Update Sheet: Status -> Done"
+            }
+          },
+          "parameters": {
+            "__IMTCONN__": 4472711
+          }
+        },
+        {
+          "id": 3,
+          "filter": {
+            "name": "Failed",
+            "conditions": [
+              [
+                {
+                  "a": "{{1.event_type}}",
+                  "b": "avatar_video.fail",
+                  "o": "text:equal"
+                }
+              ]
+            ]
+          },
+          "mapper": {
+            "from": "drive",
+            "mode": "select",
+            "values": {
+              "Status": "Failed",
+              "Last Updated": "{{formatDate(now; \"YYYY-MM-DD HH:mm:ss\")}}",
+              "Error Message": "Webhook: HeyGen render failed - {{1.event_data.msg}}"
+            },
+            "sheetId": "Queue",
+            "rowNumber": "{{1.event_data.callback_id}}",
+            "spreadsheetId": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo",
+            "tableFirstRow": "A1:AZ1",
+            "includesHeaders": true,
+            "useColumnHeaders": true,
+            "valueInputOption": "USER_ENTERED"
+          },
+          "module": "google-sheets:updateRow",
+          "version": 2,
+          "metadata": {
+            "designer": {
+              "x": 600,
+              "y": 0,
+              "name": "Update Sheet: Status -> Failed"
+            }
+          },
+          "parameters": {
+            "__IMTCONN__": 4472711
+          }
+        }
+      ],
+      "name": "Chosen Agency - HeyGen Webhook Receiver",
+      "metadata": {
+        "instant": true,
+        "version": 1,
+        "designer": {
+          "orphans": [],
+          "samples": {
+            "1": {
+              "event_data": {
+                "url": "https://test.example/video.mp4",
+                "video_id": "test-12345",
+                "callback_id": "3"
+              },
+              "event_type": "avatar_video.success"
+            },
+            "2": {
+              "updatedRows": 1,
+              "updatedCells": 3,
+              "updatedRange": "Queue!A3:AB3",
+              "spreadsheetId": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo",
+              "updatedColumns": 3
+            }
+          }
+        },
+        "scenario": {
+          "dlq": false,
+          "slots": null,
+          "dataloss": false,
+          "maxErrors": 3,
+          "autoCommit": true,
+          "roundtrips": 1,
+          "sequential": true,
+          "confidential": false,
+          "freshVariables": false,
+          "autoCommitTriggerLast": true
+        }
+      }
+    },
+    "scheduling": {
+      "type": "immediately"
+    },
+    "concept": false,
+    "created": "2026-05-10T13:44:12.517Z",
+    "last_edit": "2026-05-10T14:28:06.498Z",
+    "metadata": {
+      "input_spec": [],
+      "output_spec": []
+    },
+    "idSequence": 4
+  }
+}

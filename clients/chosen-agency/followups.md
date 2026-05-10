@@ -67,3 +67,13 @@ Items intentionally deferred from V1 build. Worth revisiting in Phase 2 conversa
 - Architecture is layered � current solution is "right-sized for V1"
 
 ---
+
+
+---
+
+
+## 2026-05-10 — STATUS UPDATE: HeyGen Webhook conversion (above) → DONE
+
+Shipped in CHOSEN-007 (see build_log). V1 scenario 4894796 polling stripped (M12-M22 removed); webhook scenario 5020000 now handles all completion via `event_data.callback_id` row lookup. End-to-end verified on TEST-HP-002.
+
+Render Checker (originally CHOSEN-005 Subtask 1) reframed: no longer the primary completion path, now a backstop for missed webhook callbacks. Still worth building.

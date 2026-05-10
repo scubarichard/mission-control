@@ -342,3 +342,75 @@ All 4 V1 documentation files drafted, committed to repo, and uploaded to Google 
 - Migrate Drive assets to Erika's Google Drive folder (waiting on her share)
 - Credential swap at handoff (waiting on Erika account setup)
 
+
+
+---
+
+## TASK-20260510-CHOSEN-007 — Polling → Webhook Conversion + Bug Fixes
+**Status:** DONE (end-to-end verified)
+**Date:** 2026-05-10
+**Agent:** Forge (with Richard supervision)
+
+### Summary
+Replaced inline HeyGen polling with webhook-driven completion. V1 scenario now ends at `Status=Rendering`; webhook scenario 5020000 receives HeyGen callback and flips row to `Status=Done` (or `Error` on failure). Confirmed end-to-end on row 4 (TEST-HP-002): Queued → Done with valid Script Doc, Brief Doc, and Raw Video Link.
+
+### Architecture change
+**Before (CHOSEN-005 state):** V1 scenario polled HeyGen every 30s up to 30 iterations after submission. Modules 12-22 inside Route 0 of the Duplicate-gate router handled the poll loop, status routing, and final write-back.
+
+**After:** V1 ends at Module 11 (`Status → Rendering` + save Render Job ID). Module 10 (HeyGen create) sends `callback_url` and `callback_id` (= row number) in the POST body. Webhook scenario 5020000 (`Chosen Agency - HeyGen Webhook Receiver`) listens on hook 2285825, matches `event_type` (`avatar_video.success` / `avatar_video.fail`), and updates the source row by `rowNumber = event_data.callback_id`.
+
+### Make API key — write access confirmed
+The `make-api-key` in `kvdaxdakonapilot` now has scenario blueprint write scope (was read-only at CHOSEN-005). PATCH `/api/v2/scenarios/{id}` with stringified `blueprint` + `scheduling` works. Build_log credential note above (CHOSEN-005) is now stale.
+
+### Changes applied to V1 scenario (4894796)
+**Removed modules** from Route 0 of M3 router:
+- M12 — `builtin:BasicRepeater` (Poll loop 30x)
+- M13 — `util:FunctionSleep` (30s wait between polls)
+- M14 — `http:ActionSendData` (HeyGen status check)
+- M15 — `builtin:BasicRouter` (Completed/Failed/Still processing)
+- M16 — `google-sheets:updateRow` (Status → Done, polling path)
+- M17 — `google-sheets:updateRow` (Status → Failed, polling path)
+- M18 — `google-sheets:updateRow` (Update poll counter)
+- M21 / M22 — `util:SetVariable` (Mark done flags)
+
+**Kept modules** (Route 0): M4 → M5 → M29 → M23 → M30 → M24 → M25 → M6 → M10 → M11
+**Kept module** (Route 1): M19 (duplicate-gate Status → Done).
+
+Net module count: 23 → 14. Used packages: 23 entries → 14.
+
+### Changes applied to webhook scenario (5020000)
+- M3 (Failed route): Status value `"Failed"` → `"Error"` to match the SOW status enum (`Queued, Processing, Rendering, Ready for Editing, Editing, Ready for QA, Done, Error`).
+
+### Bugs cleared by removal (no longer applicable)
+- M16 corrupt `spreadsheetId` (had leading slash `/1reHZ...`)
+- M16 missing `sheetName: "Queue"`
+- M17 corrupt `spreadsheetId` + missing `sheetName` + Status `"Failed"` + missing `Last Updated`
+- 30-min HeyGen polling ceiling (followups.md 2026-04-30 issue)
+
+### Bugs cleared earlier in V1 (verified during this session)
+- M6 now uses `{{24.webViewLink}}` and `{{25.webViewLink}}` for Doc URLs (was malformed `/d//edit`)
+- M11 has Title Case columns + `sheetName: "Queue"` (CHOSEN-005 Subtask 3b root bug)
+
+### Acceptance test result (row 4 — TEST-HP-002)
+- Triggered by reactivation at 2026-05-10 15:06 UTC
+- Status: **Done** at 10:09:41 (local)
+- Script Doc Link: `https://docs.google.com/document/d/1IC0mJ0AL_8s5-6tcvGazjowX_azAHDB7tLLKRZG6KEk/edit?usp=drivesdk` ✅
+- Brief Doc Link: `https://docs.google.com/document/d/18QGxrAIJDlzR75n3kTQj0RFtKIO_JkMAUd3UmJFdScw/edit?usp=drivesdk` ✅
+- Raw Video Link: HeyGen CDN URL populated ✅
+- Render Job ID: `ef7c305315f74f54b4cf9a9610a33dcd` ✅
+
+### Backups
+Pre-change blueprints saved for rollback:
+- `clients/chosen-agency/make-blueprints/v1_4894796_backup_20260510-150522.json` (pre-strip, ~182KB)
+- `clients/chosen-agency/make-blueprints/webhook_5020000_backup_20260510-150522.json` (pre-Status fix, ~4KB)
+
+### Still open after this session
+1. **Render Checker scenario** — never created (CHOSEN-005 Subtask 1). With webhook as primary, Render Checker is now a backstop for missed callbacks (e.g., if webhook scenario is paused). Lower priority but still worth shipping for robustness.
+2. **Error handlers on M5, M23, M10** — never added (CHOSEN-005 Subtask 3). With polling gone, errors mid-pipeline now leave rows in `Processing` or `Script Done` with no `Error` status. Should be added.
+3. **HeyGen API key hardcoded in M10** — security/rotation pain. Move to Make connection or env-style param.
+4. **Rows 5-10 still Queued** — V1 trigger picks one row per execution every 15 min; will process naturally.
+
+### Files touched
+- `clients/chosen-agency/build_log.md` (this entry)
+- `clients/chosen-agency/make-blueprints/v1_4894796_backup_20260510-150522.json` (new)
+- `clients/chosen-agency/make-blueprints/webhook_5020000_backup_20260510-150522.json` (new)
