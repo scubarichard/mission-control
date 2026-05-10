@@ -4251,3 +4251,80 @@ Produce the LeadLUX v1.2 addendum video (5-7 min standalone MP4) per the product
 - Avatar bookends only (Scenes 1 and 7) — no avatar in middle scenes
 - No personal names, no AI tool brand names in script
 - Forge posted Slack handoff 2026-05-08 — Triton picks up production from here
+
+
+## TASK-20260510-TRITON-CHOSEN-001 — Chosen Agency V1 Walkthrough Video
+
+- **Assignee:** Triton
+- **Status:** PENDING
+- **Priority:** MID
+- **From:** [Sonnet]
+- **Client:** Chosen Agency / 1AltX
+- **Project:** Upwork Milestone 2 deliverable
+
+### Context
+
+Milestone 2 of the Chosen Agency engagement is the Content Pipeline V1 — five Make.com scenarios + a Google Sheet + an HTML intake form that turns a brief into a finished avatar video. Build is complete and verified end-to-end. Final deliverable is a walkthrough video for Erika Cobb so she can operate the system and hand off to her ops team.
+
+Source docs are in the repo at clients/chosen-agency/deliverables/milestone-2/ (committed ba6487e on branch poll):
+- README.md — index and quick starts
+- TECHNICAL_WALKTHROUGH.md — full reference (architecture, all 5 scenarios, sheet structure, troubleshooting)
+- VIDEO_SCRIPT.md — section-by-section narration script, 7-section, ~8 min, with B-roll suggestions and timing
+- intake-form.html — the working form, for live demo capture
+
+### Build
+
+Produce a 7-9 minute walkthrough video using VIDEO_SCRIPT.md as the narration source. Follow the section structure and timing exactly:
+
+1. Introduction (~45 sec) — title card or short avatar intro
+2. The Form (~75 sec) — live capture of intake-form.html opened in browser, sample brief filled out
+3. Behind the Scenes (~2 min) — architecture diagram with each of the 5 scenarios highlighted in turn
+4. The Google Sheet (~90 sec) — Queue, Avatars, Voices tabs
+5. Day-to-Day Operation (~60 sec) — submission rhythm
+6. Troubleshooting (~75 sec) — Make execution history
+7. Closing (~30 sec) — outro / CTA
+
+**Production parameters:**
+- ElevenLabs voice: pick from active Voices tab options (Brian recommended as system default — nPczCjzI2devNBz1zQrb). Do NOT use Richards cloned voice (IuxDTLynYdvisya7jrK5) — it is intentionally hidden.
+- HeyGen avatar (if bookending with avatar intro/outro): pick from active Avatars tab options (Tyler recommended — Tyler-incasualsuit-20220721). Do NOT use Richards talking photos (e77c5c739e344e54af85ca96862e7ac3 or 9f5e74a5b06840a4b53d4c92e90f383c).
+- Resolution: 1920x1080, 30fps, H.264/AAC
+- Audio: -16 LUFS normalized
+
+**Branding:**
+- Header: "Chosen Agency · Content Pipeline V1"
+- Footer: "Chosen Agency × 1AltX"
+- Color palette: cream paper (#f5f1e8), ink (#1a1a1a), burnt orange accent (#c2410c) — match intake-form.html styling
+
+### Acceptance Criteria
+
+1. Final MP4 is between 7:00 and 9:30 in duration
+2. All 7 sections from VIDEO_SCRIPT.md are present in order
+3. Narration uses an active voice from the Voices tab (NOT Richard)
+4. Any avatar shots use an active avatar from the Avatars tab (NOT Richard)
+5. Captions present throughout (recommended in VIDEO_SCRIPT.md narration notes)
+6. B-roll matches scene direction in script (live form capture in Section 2, sheet captures in Section 4, Make UI capture in Section 6)
+7. Output files placed in clients/chosen-agency/deliverables/milestone-2/video/
+
+### Out of Scope
+
+- Do NOT modify any of the Make.com scenarios
+- Do NOT modify the Google Sheet structure or data
+- Do NOT edit intake-form.html (use it as-is for screen captures)
+- Do NOT use Richards personal avatars or cloned voice anywhere
+- Do NOT include AI tool brand names (HeyGen, ElevenLabs, OpenAI, Make.com) in the narration — the script already handles this. Reference docs are fine to show on-screen.
+
+### Deliverables
+
+1. clients/chosen-agency/deliverables/milestone-2/video/chosen-agency-v1-walkthrough.mp4 — final concat
+2. clients/chosen-agency/deliverables/milestone-2/video/chapter-timestamps.md — section start times for YouTube chapters
+3. Per-section MP4s in clients/chosen-agency/deliverables/milestone-2/video/scenes/ for future re-edits
+4. PR opened against poll branch with the above committed
+
+### Notes
+
+- The intake form posts to a live Make webhook; if a real submission is captured on screen for Section 2, the row will appear in the production sheet. Use a clearly-labeled test brief (e.g. Script ID VIDEO-DEMO-001) so it can be deleted post-shoot.
+- VIDEO_SCRIPT.md narration notes specify tone: confident, competent, non-condescending. Steady pace.
+
+### Questions / Blockers
+
+None at queue time. Triton can post here if anything in VIDEO_SCRIPT.md is ambiguous.
