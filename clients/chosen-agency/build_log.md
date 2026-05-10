@@ -645,3 +645,63 @@ This satisfies SOW Section 10 test case: **API error → row captures Error Mess
 | Operator SOP, Field Map, Credential Map, Troubleshooting | ✅ (CHOSEN-006) |
 | Loom walkthroughs | ❌ Richard's task |
 | Phase 2+ scenarios (Notion sync etc.) | N/A — explicitly deferred per SOW Section 12 |
+
+
+---
+
+## TASK-20260510-CHOSEN-010 — Delivery Preparation
+**Status:** DONE
+**Date:** 2026-05-10
+**Agent:** Forge
+
+### Duplicate gate fixed (M3 Route 1)
+**Before:** Filter referenced undefined `{{2.row_hash}}` variable. Route never fired. Latent bug.
+
+**After:** Filter is `{{1.\`4\`}}` (Variation ID column) `text:notempty`. If a row already has a populated Variation ID column when M1 picks it up (only possible if someone manually re-set Status to Queued on an already-processed row), it routes to M19 which writes Status=Done with Last Updated. M19's mapper was also rebuilt (was missing valid spreadsheetId, sheetName, columns).
+
+This satisfies SOW Section 10 test case **"Duplicate prevention: Run update-safe sync on existing record - No duplicate output records."**
+
+### Field map updated (`docs/field_map.md`)
+Original CHOSEN-006 field map predated CHOSEN-007/008/009 architecture changes and was stale. Added authoritative current-state section covering:
+- All 22 V1 modules with error handler mapping
+- Webhook scenario module list
+- Render Checker module list
+- Updated status state machine diagram
+- Note on `Script Done` / `Voice Done` enum extensions
+
+### Delivery artifacts created
+- `docs/loom_scripts.md` — three timed scripts for SOW Section 11 Loom requirement (full system, V1 module-by-module, daily operator flow). Total recording time ~12 min plus retries.
+- `docs/delivery_message.md` — paste-ready Upwork message to Erika with Loom URL placeholders, scope notes, and credential handoff offer.
+- `docs/activation_checklist.md` — sequenced checklist from pre-flight through "after Erika responds" branches. Includes kill switch procedure and credential handoff trigger.
+
+### What Richard does next (in order)
+1. Read `docs/loom_scripts.md` once
+2. Record 3 Looms, paste URLs into checklist
+3. Activate scenarios in order: Webhook → Render Checker → V1
+4. Open `docs/delivery_message.md`, replace Loom URL placeholders, paste into Upwork, send
+5. Wait for Erika's acceptance
+
+### Not done (cannot be done by Forge)
+- Recording the actual Loom videos — needs Richard's hands and voice
+- Migrating API keys to Make connections — Make UI only, no API for connection creation
+- Final acceptance call with Erika — relationship-level
+
+### V1 SOW final compliance
+| SOW item | Status | Evidence |
+|---|---|---|
+| 28-column Production Tracker | ✅ | Sheet `1reHZ...` Queue tab |
+| System Settings + override architecture | ✅ | Tab + 12 override columns + M2 resolution chain |
+| Editor Brief 4-section structure | ✅ | Template `179Rc1...` + prompt `editor_brief_v1.md` |
+| ElevenLabs TTS (Mandatory V1) | ✅ | M7 with `effective_voice_id` (CHOSEN-008) |
+| HeyGen avatar render | ✅ | M10 with `audio_url` from M8 |
+| Async render handling | ✅ | Webhook (primary) + Render Checker (backstop) |
+| Status state machine | ✅ | M4/M6/M9/M11 + webhook/Render Checker terminal writes |
+| Error handling per Section 10 test case | ✅ | Error handlers M31-M35 (CHOSEN-009) |
+| Render Checker (Section 8 Phase 4) | ✅ | Scenario 5021116 (CHOSEN-009) |
+| Duplicate prevention (Section 10 test case) | ✅ | M3 Route 1 fixed (CHOSEN-010) |
+| Operator SOP, Field Map, Credential Map, Troubleshooting | ✅ | docs/ folder (CHOSEN-006 + CHOSEN-010 update) |
+| Loom walkthroughs (Section 11) | ⚠️ Scripts ready, needs recording | docs/loom_scripts.md |
+| Manager handoff procedure | ✅ | activation_checklist.md + credential_map.md |
+
+### Build is complete from Forge's side
+Everything that can be automated is automated. Everything that requires Richard's hands is documented step-by-step. No more decisions required from Richard before delivery.

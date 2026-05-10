@@ -109,3 +109,112 @@ These rows provide global defaults used by V1 scenario Module 2 (SetVariables) w
 | RC-M3 | `builtin:BasicRouter` | Router: Completed / Failed | — | 2 routes |
 | RC-M4 | `google-sheets:updateRow` | Status → Done + save video URL | M2.video_url | Cols A (Status=Done), X (Raw Video Link), AB |
 | RC-M5 | `google-sheets:updateRow` | Status → Error + save error | M2.error.message | Cols A (Status=Error), AA (Error Message), AB |
+
+
+---
+
+## V1 Module List Update — 2026-05-10 (post CHOSEN-007/008/009)
+
+The original module list above (CHOSEN-006) reflected the polling-based architecture. The current V1 scenario (4894796) has been re-architected. Use this section as the authoritative reference.
+
+### V1 scenario `Chosen Agency - Content Pipeline V1` (id 4894796)
+
+**Top-level flow (3 modules):**
+
+| Module | Type | Purpose |
+|---|---|---|
+| M1 | google-sheets:filterRows | Trigger: Status=Queued, limit 5, sheet `1reHZ...` Queue tab |
+| M2 | util:SetVariables | Resolve `effective_voice_id`, `effective_avatar_id`, `variation_id`, `openai_model`, `is_done` |
+| M3 | builtin:BasicRouter | Duplicate gate: 2 routes |
+
+**Route 0 — Process new row (13 modules):**
+
+| Module | Type | Purpose | Error handler |
+|---|---|---|---|
+| M4 | google-sheets:updateRow | Status → Processing | — |
+| M5 | openai-gpt-3:CreateCompletion | OpenAI Script + Caption (gpt-4o) | M31 → Status=Error |
+| M29 | json:ParseJSON | Parse M5 output | — |
+| M23 | openai-gpt-3:CreateCompletion | OpenAI Editor Brief (gpt-4o, 4-section JSON) | M32 → Status=Error |
+| M30 | json:ParseJSON | Parse M23 output | — |
+| M24 | google-docs:createADocumentFromTemplate | Create Script Doc from template `1ZDum9...` | — |
+| M25 | google-docs:createADocumentFromTemplate | Create Editor Brief Doc from template `179Rc1...` | — |
+| M6 | google-sheets:updateRow | Status → Script Done + save Script Text, Caption Text, Doc URLs | — |
+| M7 | http:ActionSendData | ElevenLabs TTS at `effective_voice_id`, model `eleven_turbo_v2_5` | M33 → Status=Error |
+| M8 | google-drive:uploadAFile | Upload audio MP3 to `05_ElevenLabs_Audio` folder | M34 → Status=Error |
+| M9 | google-sheets:updateRow | Status → Voice Done + save Voice File URL | — |
+| M10 | http:ActionSendData | HeyGen `/v2/video/generate` with `audio_url={{8.webContentLink}}` and `callback_url` to webhook 5020000 | M35 → Status=Error |
+| M11 | google-sheets:updateRow | Status → Rendering + save Render Job ID | — |
+
+**Route 1 — Duplicate handler (1 module):**
+
+| Module | Type | Purpose |
+|---|---|---|
+| M19 | google-sheets:updateRow | Filter: `Variation ID` is not empty → Status → Done |
+
+**Error handlers (5 modules, attached as `onerror` to parents):**
+
+| ID | Parent | Purpose |
+|---|---|---|
+| M31 | M5 | Captures OpenAI script-gen failure |
+| M32 | M23 | Captures OpenAI brief-gen failure |
+| M33 | M7 | Captures ElevenLabs failure |
+| M34 | M8 | Captures Drive upload failure |
+| M35 | M10 | Captures HeyGen submit failure |
+
+Each error handler writes Status=Error + Error Message + Last Updated to the source row.
+
+**Total V1 module count: 22** (3 top-level + 13 in Route 0 + 1 in Route 1 + 5 error handlers)
+
+**Scheduling:** every 15 min (interval 900s), processes up to 5 rows per execution.
+
+---
+
+### Webhook scenario `Chosen Agency - HeyGen Webhook Receiver` (id 5020000)
+
+| Module | Type | Filter | Purpose |
+|---|---|---|---|
+| WH-M1 | gateway:CustomWebHook (hookId 2285825) | — | Listens for HeyGen POSTs |
+| WH-M2 | google-sheets:updateRow | `event_type = avatar_video.success` | Status → Done + save Raw Video Link, by row=`event_data.callback_id` |
+| WH-M3 | google-sheets:updateRow | `event_type = avatar_video.fail` | Status → Error + save Error Message |
+
+**Trigger:** webhook (instant). No schedule.
+
+---
+
+### Render Checker scenario `Chosen Agency — Render Checker` (id 5021116)
+
+| Module | Type | Purpose |
+|---|---|---|
+| RC-M1 | google-sheets:filterRows | V1 sheet, Status=Rendering, limit 10 |
+| RC-M2 | http:ActionSendData | GET HeyGen `/v1/video_status.get?video_id={{Render Job ID}}` |
+| RC-M3 | builtin:BasicRouter | 2 routes |
+| RC-M4 (Route 0) | google-sheets:updateRow | Filter `data.status=completed` → Status → Done + Raw Video Link |
+| RC-M5 (Route 1) | google-sheets:updateRow | Filter `data.status=failed` → Status → Error + Error Message |
+
+**Scheduling:** every 5 min (interval 300s). **Inactive by default** — activate as a backstop after webhook is verified working.
+
+---
+
+### Status state machine (current)
+
+```
+Queued
+  ↓ (V1 picks up)
+Processing
+  ↓ (after Doc creation)
+Script Done
+  ↓ (after audio upload)
+Voice Done
+  ↓ (after HeyGen submit)
+Rendering
+  ↓ (HeyGen renders async)
+  ├─ webhook callback success → Done
+  ├─ webhook callback fail → Error
+  ├─ Render Checker poll success → Done
+  └─ Render Checker poll fail → Error
+
+[Mid-pipeline error from any error handler] → Error
+[Already-processed row re-queued] → Done (via Route 1 duplicate handler)
+```
+
+Note: SOW Section 5 status enum lists Queued/Processing/Rendering/Ready for Editing/Editing/Ready for QA/Done/Error. The intermediate states `Script Done` and `Voice Done` written by V1 are operator-visibility extensions; the Status dropdown in the sheet accepts them as ad-hoc values. If strict enum compliance is required, M6 and M9 can have their Status writes removed (they only need the data field writes).
