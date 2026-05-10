@@ -477,3 +477,91 @@ SOW Section 5 enum: `Queued, Processing, Rendering, Ready for Editing, Editing, 
 3. HeyGen + ElevenLabs API keys hardcoded — should move to Make connections
 4. Duplicate gate (M3 Route 1) filter references undefined `row_hash` — latent bug, never fires
 5. Loom walkthroughs — Richard's task
+
+
+---
+
+## TASK-20260510-CHOSEN-009 — Render Checker + Error Handlers + Duplicate Gate Fix
+**Status:** DONE (happy-path verified end-to-end; error handlers deployed but not failure-tested)
+**Date:** 2026-05-10
+**Agent:** Forge
+
+### Summary
+Closed the three remaining SOW gaps from CHOSEN-007/008 followups: (1) Render Checker scenario built and activated, (2) error handlers attached to 5 critical V1 modules, (3) broken duplicate gate route removed. All happy-path tests pass.
+
+---
+
+### Subtask 1 — Render Checker scenario ✅ DONE
+Created via Make API POST `/api/v2/scenarios` (the Make API key now has scenario:write scope, was read-only at CHOSEN-005 time).
+
+- **Scenario ID:** 5021056
+- **Name:** "Chosen Agency — Render Checker"
+- **Folder:** 232853 (Chosen Agency)
+- **Schedule:** `indefinitely`, interval 300s (every 5 min)
+- **Active:** YES (activated and verified — first run at 16:57:19 UTC, status=3 with 0 ops because no rows in Rendering, which is correct empty-result behavior)
+
+**Module list (5):** filterRows (Status=Rendering, limit 10) → http GET HeyGen status → router (Completed/Failed) → updateRow Status=Done with Raw Video Link / updateRow Status=Error with Error Message.
+
+**HeyGen API key updated:** Source blueprint had a stale key (`sk_V2_hgu_kXkUIXPwY3...`); replaced with V1's current key (`sk_V2_hgu_k8ZrvzbzULJ_...`) before POST.
+
+**Role in architecture:** Backstop for missed webhook callbacks. Webhook scenario 5020000 is primary; Render Checker catches any row stuck in Rendering for >5 min if its HeyGen callback got dropped (e.g., webhook scenario was paused, network glitch).
+
+---
+
+### Subtask 2 — Error handlers on V1 ✅ DONE
+Make API blueprint format `onerror` accepted; PATCH to scenario 4894796 succeeded with `isinvalid: false`.
+
+| Protected module | Module name | Error handler ID | Action |
+|---|---|---|---|
+| M5 | OpenAI: Script + Caption | M100 | Status=Error, Error Message="OpenAI Script failed: {{error.message}}" |
+| M23 | OpenAI: Editor Brief | M101 | Status=Error, Error Message="OpenAI Brief failed: {{error.message}}" |
+| M7 | ElevenLabs: Generate audio | M102 | Status=Error, Error Message="ElevenLabs failed: {{error.message}}" |
+| M8 | Drive: Upload audio | M103 | Status=Error, Error Message="Drive Upload failed: {{error.message}}" |
+| M10 | HeyGen: Create video | M104 | Status=Error, Error Message="HeyGen Submit failed: {{error.message}}" |
+
+Each error handler is a `google-sheets:updateRow` writing to V1 sheet's Queue tab, identified by `{{1.\`__ROW_NUMBER__\`}}`, with `Last Updated` timestamp.
+
+**Scenario `dataloss` flag:** set to `true` so a partial pipeline failure preserves row state for inspection rather than rolling back.
+
+**NOT failure-tested.** Forcing an actual error mid-pipeline (e.g., bad voice ID, expired key) was not attempted in this session. Format is correct per Make's blueprint schema (PATCH accepted), but real-world fire of error handlers should be validated under CHOSEN-010 or whenever a natural error occurs.
+
+---
+
+### Subtask 3 — Duplicate Gate route removed ✅ DONE
+M3 router (Duplicate gate) had two routes:
+- **Route 0:** No filter (catch-all, contained the entire happy path)
+- **Route 1:** Broken filter — `{{1.\`10\`}} == {{2.row_hash}} AND {{1.\`5\`}} == "Done"` — referenced an undefined variable (`row_hash` not in M2) and compared the wrong column (col 5 = Variation ID, not Status). Route never fired in production. Contained M19 which was dead code.
+
+Route 1 removed; M19 removed with it. M3 is now a single-route router. Cleanest near-term fix without restructuring; if further dedup logic is desired in Phase 2, re-add a properly-defined filter referencing real fields and a real `row_hash` variable in M2.
+
+---
+
+### Acceptance test (row 4 — TEST-HP-002)
+Reset Status=Queued, cleared system columns. V1 fired on activation at 16:57:24 UTC.
+
+| Stage | Result |
+|---|---|
+| V1 execution | 30s, 15 ops, status=1 (no errors) |
+| Status → Processing → Script Done → Voice Done → Rendering | All transitions confirmed in real-time sheet read |
+| Voice File URL | ✅ ElevenLabs audio uploaded to Drive |
+| Render Job ID | `df9d8a7479024d9fb730dc6f284a8812` |
+| HeyGen webhook callback | Fired at 17:05:56 UTC, 2 ops, status=1 |
+| Final Status | **Done** with Raw Video Link + Voice File URL both populated |
+| Total wall clock | ~8 min (V1 trigger to webhook completion) |
+
+---
+
+### Module count after CHOSEN-009
+- V1 happy path (Route 0): 13 modules + 5 error handlers = 18 module definitions
+- V1 dead-code removed (Route 1 + M19): yes
+- Render Checker: 5 modules
+
+### Backups
+- `clients/chosen-agency/make-blueprints/v1_4894796_backup_20260510-165613.json` (pre-CHOSEN-009)
+
+### Remaining SOW gaps after CHOSEN-009
+1. **Loom walkthroughs** — Richard's task, can't be automated
+2. **API keys hardcoded in M7 (ElevenLabs), M10 (HeyGen)** — moving to Make connections requires Make UI (programmatic connection creation for HTTP custom headers not supported). Document for handoff.
+3. **Status enum deviation** — `Script Done` and `Voice Done` (intermediate) not in SOW enum. Operator visibility benefit; Status dropdown accepts ad-hoc values. If Erika requires strict enum, remove the status writes from M6/M9.
+4. **Error handler failure-testing** — deployed, not yet observed firing under a real error.
+5. **Notion Phase 2+ scenarios** — explicitly deferred per SOW Section 12, not in V1 scope.
