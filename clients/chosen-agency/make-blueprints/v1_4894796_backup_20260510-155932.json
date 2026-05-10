@@ -1,0 +1,3507 @@
+{
+  "code": "OK",
+  "response": {
+    "blueprint": {
+      "flow": [
+        {
+          "id": 1,
+          "mapper": {
+            "from": "share",
+            "limit": "1",
+            "filter": [
+              [
+                {
+                  "a": "A",
+                  "b": "Queued",
+                  "o": "text:equal"
+                }
+              ]
+            ],
+            "sheetId": "Queue",
+            "sortOrder": "asc",
+            "spreadsheetId": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo",
+            "tableFirstRow": "A1:BZ1",
+            "includesHeaders": true,
+            "valueRenderOption": "FORMATTED_VALUE",
+            "dateTimeRenderOption": "FORMATTED_STRING"
+          },
+          "module": "google-sheets:filterRows",
+          "version": 2,
+          "metadata": {
+            "expect": [
+              {
+                "name": "from",
+                "type": "select",
+                "label": "Search Method",
+                "required": true,
+                "validate": {
+                  "enum": [
+                    "drive",
+                    "share"
+                  ]
+                }
+              },
+              {
+                "name": "valueRenderOption",
+                "type": "select",
+                "label": "Value render option",
+                "validate": {
+                  "enum": [
+                    "FORMATTED_VALUE",
+                    "UNFORMATTED_VALUE",
+                    "FORMULA"
+                  ]
+                }
+              },
+              {
+                "name": "dateTimeRenderOption",
+                "type": "select",
+                "label": "Date and time render option",
+                "validate": {
+                  "enum": [
+                    "SERIAL_NUMBER",
+                    "FORMATTED_STRING"
+                  ]
+                }
+              },
+              {
+                "name": "limit",
+                "type": "uinteger",
+                "label": "Limit"
+              },
+              {
+                "name": "spreadsheetId",
+                "type": "text",
+                "label": "Spreadsheet ID",
+                "required": true
+              },
+              {
+                "name": "sheetId",
+                "type": "select",
+                "label": "Sheet Name",
+                "required": true
+              },
+              {
+                "name": "includesHeaders",
+                "type": "select",
+                "label": "Table contains headers",
+                "required": true,
+                "validate": {
+                  "enum": [
+                    true,
+                    false
+                  ]
+                }
+              },
+              {
+                "name": "tableFirstRow",
+                "type": "select",
+                "label": "Column range",
+                "required": true,
+                "validate": {
+                  "enum": [
+                    "A1:Z1",
+                    "A1:BZ1",
+                    "A1:CZ1",
+                    "A1:DZ1",
+                    "A1:MZ1",
+                    "A1:ZZ1",
+                    "A1:AZZ1",
+                    "A1:BZZ1",
+                    "A1:CZZ1",
+                    "A1:DZZ1",
+                    "A1:MZZ1",
+                    "A1:ZZZ1"
+                  ]
+                }
+              },
+              {
+                "name": "filter",
+                "type": "filter",
+                "label": "Filter",
+                "options": "rpc://google-sheets/2/rpcGetFilterKeys?includesHeaders=true"
+              },
+              {
+                "name": "orderBy",
+                "type": "select",
+                "label": "Order by"
+              },
+              {
+                "name": "sortOrder",
+                "type": "select",
+                "label": "Sort order",
+                "validate": {
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ]
+                }
+              }
+            ],
+            "restore": {
+              "expect": {
+                "from": {
+                  "label": "Select from all"
+                },
+                "orderBy": {
+                  "mode": "chose"
+                },
+                "sheetId": {
+                  "mode": "chose",
+                  "label": "Queue"
+                },
+                "sortOrder": {
+                  "mode": "chose",
+                  "label": "Ascending"
+                },
+                "tableFirstRow": {
+                  "label": "A-BZ"
+                },
+                "includesHeaders": {
+                  "mode": "chose",
+                  "label": "Yes"
+                },
+                "valueRenderOption": {
+                  "mode": "chose",
+                  "label": "Formatted value"
+                },
+                "dateTimeRenderOption": {
+                  "mode": "chose",
+                  "label": "Formatted string"
+                }
+              },
+              "parameters": {
+                "__IMTCONN__": {
+                  "data": {
+                    "scoped": "true",
+                    "connection": "google"
+                  },
+                  "label": "1AltX - Make.com (richard@1altx.com)"
+                }
+              }
+            },
+            "designer": {
+              "x": 0,
+              "y": 450,
+              "name": "Trigger: Queued rows"
+            },
+            "interface": [
+              {
+                "name": "__ROW_NUMBER__",
+                "type": "number",
+                "label": "Row number"
+              },
+              {
+                "name": "__SPREADSHEET_ID__",
+                "type": "text",
+                "label": "Spreadsheet ID"
+              },
+              {
+                "name": "__SHEET__",
+                "type": "text",
+                "label": "Sheet"
+              },
+              {
+                "name": "0",
+                "type": "text",
+                "label": "Status (A)"
+              },
+              {
+                "name": "1",
+                "type": "text",
+                "label": "Script ID (B)"
+              },
+              {
+                "name": "2",
+                "type": "text",
+                "label": "Script Name (C)"
+              },
+              {
+                "name": "3",
+                "type": "text",
+                "label": "Variation Number (D)"
+              },
+              {
+                "name": "4",
+                "type": "text",
+                "label": "Variation ID (E)"
+              },
+              {
+                "name": "5",
+                "type": "text",
+                "label": "Avatar ID (F)"
+              },
+              {
+                "name": "6",
+                "type": "text",
+                "label": "Voice ID (G)"
+              },
+              {
+                "name": "7",
+                "type": "text",
+                "label": "Audience (H)"
+              },
+              {
+                "name": "8",
+                "type": "text",
+                "label": "Current Belief (I)"
+              },
+              {
+                "name": "9",
+                "type": "text",
+                "label": "Desired Belief (J)"
+              },
+              {
+                "name": "10",
+                "type": "text",
+                "label": "Tone (K)"
+              },
+              {
+                "name": "11",
+                "type": "text",
+                "label": "Emotional Arc (L)"
+              },
+              {
+                "name": "12",
+                "type": "text",
+                "label": "Offer / CTA (M)"
+              },
+              {
+                "name": "13",
+                "type": "text",
+                "label": "Script Text (N)"
+              },
+              {
+                "name": "14",
+                "type": "text",
+                "label": "Caption Text (O)"
+              },
+              {
+                "name": "15",
+                "type": "text",
+                "label": "Override Voice ID (P)"
+              },
+              {
+                "name": "16",
+                "type": "text",
+                "label": "Override Avatar ID (Q)"
+              },
+              {
+                "name": "17",
+                "type": "text",
+                "label": "Override Tone (R)"
+              },
+              {
+                "name": "18",
+                "type": "text",
+                "label": "Override ElevenLabs Stability (S)"
+              },
+              {
+                "name": "19",
+                "type": "text",
+                "label": "Override ElevenLabs Similarity Boost (T)"
+              },
+              {
+                "name": "20",
+                "type": "text",
+                "label": "Script Doc Link (U)"
+              },
+              {
+                "name": "21",
+                "type": "text",
+                "label": "Brief Doc Link (V)"
+              },
+              {
+                "name": "22",
+                "type": "text",
+                "label": "Voice File URL (W)"
+              },
+              {
+                "name": "23",
+                "type": "text",
+                "label": "Raw Video Link (X)"
+              },
+              {
+                "name": "24",
+                "type": "text",
+                "label": "Render Job ID (Y)"
+              },
+              {
+                "name": "25",
+                "type": "text",
+                "label": "Assigned Editor (Z)"
+              },
+              {
+                "name": "26",
+                "type": "text",
+                "label": "Error Message (AA)"
+              },
+              {
+                "name": "27",
+                "type": "text",
+                "label": "Last Updated (AB)"
+              },
+              {
+                "name": "28",
+                "type": "text",
+                "label": "(AC)"
+              },
+              {
+                "name": "29",
+                "type": "text",
+                "label": "(AD)"
+              },
+              {
+                "name": "30",
+                "type": "text",
+                "label": "(AE)"
+              },
+              {
+                "name": "31",
+                "type": "text",
+                "label": "(AF)"
+              },
+              {
+                "name": "32",
+                "type": "text",
+                "label": "(AG)"
+              },
+              {
+                "name": "33",
+                "type": "text",
+                "label": "(AH)"
+              },
+              {
+                "name": "34",
+                "type": "text",
+                "label": "(AI)"
+              },
+              {
+                "name": "35",
+                "type": "text",
+                "label": "(AJ)"
+              },
+              {
+                "name": "36",
+                "type": "text",
+                "label": "(AK)"
+              },
+              {
+                "name": "37",
+                "type": "text",
+                "label": "(AL)"
+              },
+              {
+                "name": "38",
+                "type": "text",
+                "label": "(AM)"
+              },
+              {
+                "name": "39",
+                "type": "text",
+                "label": "(AN)"
+              },
+              {
+                "name": "40",
+                "type": "text",
+                "label": "(AO)"
+              },
+              {
+                "name": "41",
+                "type": "text",
+                "label": "(AP)"
+              },
+              {
+                "name": "42",
+                "type": "text",
+                "label": "(AQ)"
+              },
+              {
+                "name": "43",
+                "type": "text",
+                "label": "(AR)"
+              },
+              {
+                "name": "44",
+                "type": "text",
+                "label": "(AS)"
+              },
+              {
+                "name": "45",
+                "type": "text",
+                "label": "(AT)"
+              },
+              {
+                "name": "46",
+                "type": "text",
+                "label": "(AU)"
+              },
+              {
+                "name": "47",
+                "type": "text",
+                "label": "(AV)"
+              },
+              {
+                "name": "48",
+                "type": "text",
+                "label": "(AW)"
+              },
+              {
+                "name": "49",
+                "type": "text",
+                "label": "(AX)"
+              },
+              {
+                "name": "50",
+                "type": "text",
+                "label": "(AY)"
+              },
+              {
+                "name": "51",
+                "type": "text",
+                "label": "(AZ)"
+              },
+              {
+                "name": "52",
+                "type": "text",
+                "label": "(BA)"
+              },
+              {
+                "name": "53",
+                "type": "text",
+                "label": "(BB)"
+              },
+              {
+                "name": "54",
+                "type": "text",
+                "label": "(BC)"
+              },
+              {
+                "name": "55",
+                "type": "text",
+                "label": "(BD)"
+              },
+              {
+                "name": "56",
+                "type": "text",
+                "label": "(BE)"
+              },
+              {
+                "name": "57",
+                "type": "text",
+                "label": "(BF)"
+              },
+              {
+                "name": "58",
+                "type": "text",
+                "label": "(BG)"
+              },
+              {
+                "name": "59",
+                "type": "text",
+                "label": "(BH)"
+              },
+              {
+                "name": "60",
+                "type": "text",
+                "label": "(BI)"
+              },
+              {
+                "name": "61",
+                "type": "text",
+                "label": "(BJ)"
+              },
+              {
+                "name": "62",
+                "type": "text",
+                "label": "(BK)"
+              },
+              {
+                "name": "63",
+                "type": "text",
+                "label": "(BL)"
+              },
+              {
+                "name": "64",
+                "type": "text",
+                "label": "(BM)"
+              },
+              {
+                "name": "65",
+                "type": "text",
+                "label": "(BN)"
+              },
+              {
+                "name": "66",
+                "type": "text",
+                "label": "(BO)"
+              },
+              {
+                "name": "67",
+                "type": "text",
+                "label": "(BP)"
+              },
+              {
+                "name": "68",
+                "type": "text",
+                "label": "(BQ)"
+              },
+              {
+                "name": "69",
+                "type": "text",
+                "label": "(BR)"
+              },
+              {
+                "name": "70",
+                "type": "text",
+                "label": "(BS)"
+              },
+              {
+                "name": "71",
+                "type": "text",
+                "label": "(BT)"
+              },
+              {
+                "name": "72",
+                "type": "text",
+                "label": "(BU)"
+              },
+              {
+                "name": "73",
+                "type": "text",
+                "label": "(BV)"
+              },
+              {
+                "name": "74",
+                "type": "text",
+                "label": "(BW)"
+              },
+              {
+                "name": "75",
+                "type": "text",
+                "label": "(BX)"
+              },
+              {
+                "name": "76",
+                "type": "text",
+                "label": "(BY)"
+              },
+              {
+                "name": "77",
+                "type": "text",
+                "label": "(BZ)"
+              }
+            ],
+            "parameters": [
+              {
+                "name": "__IMTCONN__",
+                "type": "account:google",
+                "label": "Connection",
+                "required": true
+              }
+            ]
+          },
+          "parameters": {
+            "__IMTCONN__": 4472711
+          }
+        },
+        {
+          "id": 2,
+          "mapper": {
+            "scope": "roundtrip",
+            "variables": [
+              {
+                "name": "effective_voice_id",
+                "value": "{{ifempty(ifempty(1.`15`; 1.`6`); \"IuxDTLynYdvisya7jrK5\")}}"
+              },
+              {
+                "name": "effective_avatar_id",
+                "value": "{{ifempty(ifempty(1.`16`; 1.`5`); \"Tyler-incasualsuit-20220721\")}}"
+              },
+              {
+                "name": "variation_id",
+                "value": "{{if(1.`4`; 1.`4`; 1.`1` + \"_v\" + 1.`3` + \"_\" + formatDate(now; \"YYYYMMDDHHmmss\"))}}"
+              },
+              {
+                "name": "openai_model",
+                "value": "gpt-4o"
+              },
+              {
+                "name": "is_done",
+                "value": "false"
+              }
+            ]
+          },
+          "module": "util:SetVariables",
+          "version": 1,
+          "metadata": {
+            "expect": [
+              {
+                "name": "variables",
+                "spec": [
+                  {
+                    "name": "name",
+                    "type": "text",
+                    "label": "Variable name",
+                    "required": true
+                  },
+                  {
+                    "name": "value",
+                    "type": "any",
+                    "label": "Variable value"
+                  }
+                ],
+                "type": "array",
+                "label": "Variables"
+              },
+              {
+                "name": "scope",
+                "type": "select",
+                "label": "Variable lifetime",
+                "required": true,
+                "validate": {
+                  "enum": [
+                    "roundtrip",
+                    "execution"
+                  ]
+                }
+              }
+            ],
+            "restore": {
+              "expect": {
+                "scope": {
+                  "label": "One cycle"
+                },
+                "variables": {
+                  "items": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                  ]
+                }
+              }
+            },
+            "designer": {
+              "x": 300,
+              "y": 450,
+              "name": "Resolve config + hash"
+            },
+            "interface": [
+              {
+                "name": "row_hash",
+                "type": "any",
+                "label": "row_hash"
+              },
+              {
+                "name": "effective_voice_id",
+                "type": "any",
+                "label": "effective_voice_id"
+              },
+              {
+                "name": "effective_avatar_id",
+                "type": "any",
+                "label": "effective_avatar_id"
+              },
+              {
+                "name": "effective_duration",
+                "type": "any",
+                "label": "effective_duration"
+              },
+              {
+                "name": "word_count_target",
+                "type": "any",
+                "label": "word_count_target"
+              }
+            ]
+          },
+          "parameters": {}
+        },
+        {
+          "id": 3,
+          "mapper": null,
+          "module": "builtin:BasicRouter",
+          "routes": [
+            {
+              "flow": [
+                {
+                  "id": 4,
+                  "mapper": {
+                    "from": "drive",
+                    "mode": "select",
+                    "values": {
+                      "Status": "Processing",
+                      "Last Updated": "{{formatDate(now; \"YYYY-MM-DD HH:mm:ss\")}}"
+                    },
+                    "sheetId": "Queue",
+                    "rowNumber": "{{1.`__ROW_NUMBER__`}}",
+                    "sheetName": "Queue",
+                    "spreadsheetId": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo",
+                    "tableFirstRow": "A1:AZ1",
+                    "includesHeaders": true,
+                    "useColumnHeaders": true,
+                    "valueInputOption": "USER_ENTERED"
+                  },
+                  "module": "google-sheets:updateRow",
+                  "version": 2,
+                  "metadata": {
+                    "expect": [
+                      {
+                        "name": "mode",
+                        "type": "select",
+                        "label": "Search Method",
+                        "required": true,
+                        "validate": {
+                          "enum": [
+                            "select",
+                            "fromAll",
+                            "map"
+                          ]
+                        }
+                      },
+                      {
+                        "name": "valueInputOption",
+                        "type": "select",
+                        "label": "Value input option",
+                        "validate": {
+                          "enum": [
+                            "USER_ENTERED",
+                            "RAW"
+                          ]
+                        }
+                      },
+                      {
+                        "name": "from",
+                        "type": "select",
+                        "label": "Drive",
+                        "required": true,
+                        "validate": {
+                          "enum": [
+                            "drive",
+                            "share",
+                            "team"
+                          ]
+                        }
+                      },
+                      {
+                        "name": "spreadsheetId",
+                        "type": "file",
+                        "label": "Spreadsheet Name",
+                        "required": true
+                      },
+                      {
+                        "name": "sheetId",
+                        "type": "select",
+                        "label": "Sheet Name",
+                        "required": true
+                      },
+                      {
+                        "name": "rowNumber",
+                        "type": "uinteger",
+                        "label": "Row number",
+                        "required": true
+                      },
+                      {
+                        "name": "includesHeaders",
+                        "type": "select",
+                        "label": "Table contains headers",
+                        "required": true,
+                        "validate": {
+                          "enum": [
+                            true,
+                            false
+                          ]
+                        }
+                      },
+                      {
+                        "name": "useColumnHeaders",
+                        "type": "select",
+                        "label": "Use column headers as IDs of the columns",
+                        "required": true,
+                        "validate": {
+                          "enum": [
+                            true,
+                            false
+                          ]
+                        }
+                      },
+                      {
+                        "name": "values",
+                        "spec": [
+                          {
+                            "name": "row_id",
+                            "type": "text",
+                            "label": "row_id (A)"
+                          },
+                          {
+                            "name": "topic",
+                            "type": "text",
+                            "label": "topic (B)"
+                          },
+                          {
+                            "name": "target_duration_sec",
+                            "type": "text",
+                            "label": "target_duration_sec (C)"
+                          },
+                          {
+                            "name": "voice_id",
+                            "type": "text",
+                            "label": "voice_id (D)"
+                          },
+                          {
+                            "name": "avatar_id",
+                            "type": "text",
+                            "label": "avatar_id (E)"
+                          },
+                          {
+                            "name": "status",
+                            "type": "text",
+                            "label": "status (F)"
+                          },
+                          {
+                            "name": "script",
+                            "type": "text",
+                            "label": "script (G)"
+                          },
+                          {
+                            "name": "audio_url",
+                            "type": "text",
+                            "label": "audio_url (H)"
+                          },
+                          {
+                            "name": "heygen_video_id",
+                            "type": "text",
+                            "label": "heygen_video_id (I)"
+                          },
+                          {
+                            "name": "video_url",
+                            "type": "text",
+                            "label": "video_url (J)"
+                          },
+                          {
+                            "name": "row_hash",
+                            "type": "text",
+                            "label": "row_hash (K)"
+                          },
+                          {
+                            "name": "error",
+                            "type": "text",
+                            "label": "error (L)"
+                          },
+                          {
+                            "name": "poll_attempts",
+                            "type": "text",
+                            "label": "poll_attempts (M)"
+                          },
+                          {
+                            "name": "processed_at",
+                            "type": "text",
+                            "label": "processed_at (N)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(O)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(P)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(Q)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(R)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(S)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(T)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(U)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(V)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(W)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(X)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(Y)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(Z)"
+                          }
+                        ],
+                        "type": "collection",
+                        "label": "Values in columns",
+                        "metadata": [
+                          [
+                            [
+                              "row_id",
+                              "topic",
+                              "target_duration_sec",
+                              "voice_id",
+                              "avatar_id",
+                              "status",
+                              "script",
+                              "audio_url",
+                              "heygen_video_id",
+                              "video_url",
+                              "row_hash",
+                              "error",
+                              "poll_attempts",
+                              "processed_at"
+                            ]
+                          ]
+                        ]
+                      }
+                    ],
+                    "restore": {
+                      "expect": {
+                        "from": {
+                          "label": "My Drive"
+                        },
+                        "mode": {
+                          "label": "Search by path"
+                        },
+                        "sheetId": {
+                          "label": "Queue"
+                        },
+                        "spreadsheetId": {
+                          "path": [
+                            "1OuTq7QYItLLJdfRI0131Zq4FcZ8jtxbXudf5Zv3HvD0"
+                          ]
+                        },
+                        "includesHeaders": {
+                          "label": "Yes"
+                        },
+                        "useColumnHeaders": {
+                          "label": "Yes",
+                          "nested": [
+                            {
+                              "name": "values",
+                              "spec": [
+                                {
+                                  "name": "row_id",
+                                  "type": "text",
+                                  "label": "row_id (A)"
+                                },
+                                {
+                                  "name": "topic",
+                                  "type": "text",
+                                  "label": "topic (B)"
+                                },
+                                {
+                                  "name": "target_duration_sec",
+                                  "type": "text",
+                                  "label": "target_duration_sec (C)"
+                                },
+                                {
+                                  "name": "voice_id",
+                                  "type": "text",
+                                  "label": "voice_id (D)"
+                                },
+                                {
+                                  "name": "avatar_id",
+                                  "type": "text",
+                                  "label": "avatar_id (E)"
+                                },
+                                {
+                                  "name": "status",
+                                  "type": "text",
+                                  "label": "status (F)"
+                                },
+                                {
+                                  "name": "script",
+                                  "type": "text",
+                                  "label": "script (G)"
+                                },
+                                {
+                                  "name": "audio_url",
+                                  "type": "text",
+                                  "label": "audio_url (H)"
+                                },
+                                {
+                                  "name": "heygen_video_id",
+                                  "type": "text",
+                                  "label": "heygen_video_id (I)"
+                                },
+                                {
+                                  "name": "video_url",
+                                  "type": "text",
+                                  "label": "video_url (J)"
+                                },
+                                {
+                                  "name": "row_hash",
+                                  "type": "text",
+                                  "label": "row_hash (K)"
+                                },
+                                {
+                                  "name": "error",
+                                  "type": "text",
+                                  "label": "error (L)"
+                                },
+                                {
+                                  "name": "poll_attempts",
+                                  "type": "text",
+                                  "label": "poll_attempts (M)"
+                                },
+                                {
+                                  "name": "processed_at",
+                                  "type": "text",
+                                  "label": "processed_at (N)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(O)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(P)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(Q)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(R)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(S)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(T)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(U)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(V)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(W)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(X)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(Y)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(Z)"
+                                }
+                              ],
+                              "type": "collection",
+                              "label": "Values in columns",
+                              "metadata": [
+                                [
+                                  [
+                                    "row_id",
+                                    "topic",
+                                    "target_duration_sec",
+                                    "voice_id",
+                                    "avatar_id",
+                                    "status",
+                                    "script",
+                                    "audio_url",
+                                    "heygen_video_id",
+                                    "video_url",
+                                    "row_hash",
+                                    "error",
+                                    "poll_attempts",
+                                    "processed_at"
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        },
+                        "valueInputOption": {
+                          "mode": "chose",
+                          "label": "User entered"
+                        }
+                      },
+                      "parameters": {
+                        "__IMTCONN__": {
+                          "data": {
+                            "scoped": "true",
+                            "connection": "google"
+                          },
+                          "label": "1AltX - Make.com (richard@1altx.com)"
+                        }
+                      }
+                    },
+                    "designer": {
+                      "x": 900,
+                      "y": 300,
+                      "name": "Status → Processing"
+                    },
+                    "parameters": [
+                      {
+                        "name": "__IMTCONN__",
+                        "type": "account:google",
+                        "label": "Connection",
+                        "required": true
+                      }
+                    ]
+                  },
+                  "parameters": {
+                    "__IMTCONN__": 4472711
+                  }
+                },
+                {
+                  "id": 5,
+                  "mapper": {
+                    "model": "gpt-4o",
+                    "top_p": 1,
+                    "select": "chat",
+                    "messages": [
+                      {
+                        "role": "system",
+                        "content": "You are a professional content scriptwriter for short-form AI avatar videos. Given a content brief, generate a complete script and social media caption.\n\nRules:\n- Script: 60-90 seconds spoken (150-225 words). Conversational, direct, no stage directions.\n- Open with the hook - first sentence delivers value, no greetings or preamble.\n- Close by naturally weaving in the CTA.\n- Caption: 2-3 engaging sentences + 5-8 relevant hashtags. Match the tone.\n\nPACING (CRITICAL): The script will be sent to HeyGen for avatar voice synthesis. HeyGen DOES honor SSML break tags. Insert these tags inline within the script text using SINGLE QUOTES (apostrophes), NEVER double quotes:\n\n- After each sentence: <break time='0.4s'/>\n- Between major idea shifts or paragraph breaks: <break time='0.8s'/>\n- After hooks and rhetorical questions: <break time='0.6s'/>\n- Before the CTA: <break time='1.0s'/>\n- After surprising statements or emphasis points: <break time='0.5s'/>\n\nUse the SELF-CLOSING syntax with NO SPACE before the slash. Examples:\n- CORRECT: <break time='0.4s'/>\n- WRONG: <break time=\"0.4s\"/> (double quotes break JSON when this script is sent to APIs)\n- WRONG: <break time='0.4s' /> (space before slash)\n\nExample script: \"Did you know meditation can boost focus? <break time='0.6s'/> Just 10 minutes a morning is enough. <break time='0.4s'/> The science is solid. <break time='0.8s'/> Ready to try? <break time='1.0s'/> Download our app today.\"\n\nThe break tags only appear in the \"script\" field - NOT in the caption.\n\nReturn ONLY valid JSON:\n{\"script\": \"...\", \"caption\": \"...\"}\n\nNo preamble. No explanation. No markdown fences."
+                      },
+                      {
+                        "role": "user",
+                        "content": "Script Name: {{1.`2`}}\nAudience: {{1.`7`}}\nCurrent Belief: {{1.`8`}}\nDesired Belief: {{1.`9`}}\nTone: {{if(1.`17`; 1.`17`; 1.`10`)}}\nEmotional Arc: {{1.`11`}}\nOffer / CTA: {{1.`12`}}",
+                        "imageDetail": "auto"
+                      }
+                    ],
+                    "max_tokens": 2000,
+                    "temperature": 0.7,
+                    "n_completions": 1,
+                    "response_format": "json_object"
+                  },
+                  "module": "openai-gpt-3:CreateCompletion",
+                  "version": 1,
+                  "metadata": {
+                    "expect": [
+                      {
+                        "name": "select",
+                        "type": "select",
+                        "label": "Select Method",
+                        "required": true,
+                        "validate": {
+                          "enum": [
+                            "chat",
+                            "prompt"
+                          ]
+                        }
+                      },
+                      {
+                        "name": "temperature",
+                        "type": "number",
+                        "label": "Temperature",
+                        "validate": {
+                          "max": 2,
+                          "min": 0
+                        }
+                      },
+                      {
+                        "name": "top_p",
+                        "type": "number",
+                        "label": "Top P",
+                        "validate": {
+                          "max": 1,
+                          "min": 0
+                        }
+                      },
+                      {
+                        "name": "n_completions",
+                        "type": "number",
+                        "label": "Number"
+                      },
+                      {
+                        "name": "frequency_penalty",
+                        "type": "number",
+                        "label": "Frequency Penalty",
+                        "validate": {
+                          "max": 2,
+                          "min": -2
+                        }
+                      },
+                      {
+                        "name": "presence_penalty",
+                        "type": "number",
+                        "label": "Presence Penalty",
+                        "validate": {
+                          "max": 2,
+                          "min": -2
+                        }
+                      },
+                      {
+                        "name": "logit_bias",
+                        "spec": {
+                          "name": "value",
+                          "spec": [
+                            {
+                              "name": "token",
+                              "type": "text",
+                              "label": "Token ID",
+                              "required": true
+                            },
+                            {
+                              "name": "probability",
+                              "type": "number",
+                              "label": "Probability",
+                              "required": true,
+                              "validate": {
+                                "max": 100,
+                                "min": -100
+                              }
+                            }
+                          ],
+                          "type": "collection",
+                          "label": "Token Probability"
+                        },
+                        "type": "array",
+                        "label": "Token Probability"
+                      },
+                      {
+                        "name": "seed",
+                        "type": "integer",
+                        "label": "Seed"
+                      },
+                      {
+                        "name": "tool_choice",
+                        "type": "select",
+                        "label": "Tool Choice",
+                        "validate": {
+                          "enum": [
+                            "none",
+                            "auto",
+                            "required"
+                          ]
+                        }
+                      },
+                      {
+                        "name": "stop",
+                        "spec": {
+                          "name": "value",
+                          "type": "text",
+                          "label": "Stop Sequence"
+                        },
+                        "type": "array",
+                        "label": "Stop Sequences",
+                        "validate": {
+                          "maxItems": 4
+                        }
+                      },
+                      {
+                        "name": "additionalParameters",
+                        "spec": {
+                          "name": "value",
+                          "spec": [
+                            {
+                              "name": "key",
+                              "type": "text",
+                              "label": "Parameter Name",
+                              "required": true
+                            },
+                            {
+                              "name": "type",
+                              "type": "select",
+                              "label": "Input Type",
+                              "options": [
+                                {
+                                  "label": "Text",
+                                  "value": "text",
+                                  "nested": [
+                                    {
+                                      "name": "value",
+                                      "type": "text",
+                                      "label": "Parameter Value"
+                                    }
+                                  ],
+                                  "default": true
+                                },
+                                {
+                                  "label": "Number",
+                                  "value": "number",
+                                  "nested": [
+                                    {
+                                      "name": "value",
+                                      "type": "number",
+                                      "label": "Parameter Value"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "label": "Boolean",
+                                  "value": "boolean",
+                                  "nested": [
+                                    {
+                                      "name": "value",
+                                      "type": "boolean",
+                                      "label": "Parameter Value"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "label": "Date",
+                                  "value": "date",
+                                  "nested": [
+                                    {
+                                      "name": "value",
+                                      "type": "date",
+                                      "label": "Parameter Value"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "label": "Any",
+                                  "value": "any",
+                                  "nested": [
+                                    {
+                                      "name": "value",
+                                      "type": "any",
+                                      "label": "Parameter Value"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ],
+                          "type": "collection",
+                          "label": "Input Parameter"
+                        },
+                        "type": "array",
+                        "label": "Other Input Parameters"
+                      },
+                      {
+                        "name": "model",
+                        "type": "select",
+                        "label": "Model",
+                        "required": true
+                      },
+                      {
+                        "name": "max_tokens",
+                        "type": "uinteger",
+                        "label": "Max Output Tokens"
+                      },
+                      {
+                        "name": "messages",
+                        "spec": {
+                          "name": "value",
+                          "spec": [
+                            {
+                              "name": "role",
+                              "type": "select",
+                              "label": "Role",
+                              "options": {
+                                "store": [
+                                  {
+                                    "label": "User",
+                                    "value": "user",
+                                    "nested": [
+                                      {
+                                        "help": "Text content of the message on behalf of the selected __Role__.",
+                                        "name": "content",
+                                        "type": "text",
+                                        "label": "Text Content"
+                                      },
+                                      {
+                                        "name": "imageInputType",
+                                        "type": "select",
+                                        "label": "Image Input Type",
+                                        "options": [
+                                          {
+                                            "label": "URL",
+                                            "value": "url",
+                                            "nested": [
+                                              {
+                                                "help": "Make sure to use a publicly accessible URL.\nYou can test if your image is publicly accessible by opening the link in an incognito tab.",
+                                                "name": "imageUrl",
+                                                "type": "url",
+                                                "label": "Image URL"
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "label": "Image File",
+                                            "value": "file",
+                                            "nested": [
+                                              {
+                                                "name": "imageFile",
+                                                "spec": [
+                                                  {
+                                                    "help": "Accepted extensions: `.jpg`, `.jpeg`, `.png`, `.webp` and `.gif`.",
+                                                    "name": "imageFilename",
+                                                    "type": "filename",
+                                                    "label": "Image Filename",
+                                                    "semantic": "file:name",
+                                                    "extension": [
+                                                      "jpg",
+                                                      "jpeg",
+                                                      "png",
+                                                      "webp",
+                                                      "gif"
+                                                    ]
+                                                  },
+                                                  {
+                                                    "name": "imageData",
+                                                    "type": "buffer",
+                                                    "label": "Image Data",
+                                                    "semantic": "file:data"
+                                                  }
+                                                ],
+                                                "type": "collection",
+                                                "label": "Image"
+                                              }
+                                            ]
+                                          }
+                                        ],
+                                        "mappable": false
+                                      },
+                                      {
+                                        "help": "Recommended value: `Auto`",
+                                        "name": "imageDetail",
+                                        "type": "select",
+                                        "label": "Image Detail",
+                                        "options": [
+                                          {
+                                            "label": "Auto",
+                                            "value": "auto",
+                                            "default": true
+                                          },
+                                          {
+                                            "label": "High",
+                                            "value": "high"
+                                          },
+                                          {
+                                            "label": "Low",
+                                            "value": "low"
+                                          }
+                                        ]
+                                      }
+                                    ],
+                                    "default": true
+                                  },
+                                  {
+                                    "label": "Assistant",
+                                    "value": "assistant",
+                                    "nested": [
+                                      {
+                                        "help": "Text content of the message on behalf of the selected __Role__.",
+                                        "name": "content",
+                                        "type": "text",
+                                        "label": "Text Content"
+                                      },
+                                      {
+                                        "mode": "edit",
+                                        "name": "tool_calls",
+                                        "spec": {
+                                          "spec": [
+                                            {
+                                              "name": "type",
+                                              "type": "hidden",
+                                              "default": "function"
+                                            },
+                                            {
+                                              "help": "Map this directly from the output of a previous **Create a Completion** module. Look for `Choices[]: Message.Tool Calls[]: ID`.",
+                                              "name": "id",
+                                              "type": "text",
+                                              "label": "Tool call ID"
+                                            },
+                                            {
+                                              "name": "function",
+                                              "spec": [
+                                                {
+                                                  "help": "The name of the function previously called.",
+                                                  "name": "name",
+                                                  "type": "text",
+                                                  "label": "Name",
+                                                  "required": true
+                                                },
+                                                {
+                                                  "help": "The arguments previously output by the AI.",
+                                                  "name": "arguments",
+                                                  "type": "text",
+                                                  "label": "Arguments",
+                                                  "required": true
+                                                }
+                                              ],
+                                              "type": "collection",
+                                              "label": "Function"
+                                            }
+                                          ],
+                                          "type": "collection",
+                                          "label": "Tool Call"
+                                        },
+                                        "type": "array",
+                                        "label": "Tool Calls",
+                                        "labels": {
+                                          "add": "Add tool call"
+                                        },
+                                        "mappable": {
+                                          "help": "You can map the entire `Choices[]: Message.Tool Calls` array from a previous Create a Completion module here."
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "label": "Developer / System",
+                                    "value": "system",
+                                    "nested": [
+                                      {
+                                        "help": "Text content of the message on behalf of the selected __Role__.",
+                                        "name": "content",
+                                        "type": "text",
+                                        "label": "Text Content"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "label": "Tool",
+                                    "value": "tool",
+                                    "nested": [
+                                      {
+                                        "help": "The return of the function. This role should only be used when you have processed a previous function call and want to send the output of the function execution back to the AI.",
+                                        "name": "content",
+                                        "type": "text",
+                                        "label": "Text Content",
+                                        "required": true
+                                      },
+                                      {
+                                        "help": "Map this directly from the output of a previous **Create a Completion** module. Look for `Choices[]: Message.Tool Calls[]: ID`.",
+                                        "name": "tool_call_id",
+                                        "type": "text",
+                                        "label": "Tool Call ID.",
+                                        "required": true
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              "required": true
+                            }
+                          ],
+                          "type": "collection",
+                          "label": "Message"
+                        },
+                        "type": "array",
+                        "label": "Messages",
+                        "required": true
+                      },
+                      {
+                        "name": "response_format",
+                        "type": "select",
+                        "label": "Response Format",
+                        "validate": {
+                          "enum": [
+                            "text",
+                            "json_object"
+                          ]
+                        }
+                      },
+                      {
+                        "name": "prediction",
+                        "type": "text",
+                        "label": "Predicted Outputs"
+                      }
+                    ],
+                    "restore": {
+                      "expect": {
+                        "stop": {
+                          "mode": "chose"
+                        },
+                        "model": {
+                          "mode": "chose",
+                          "label": "gpt-4o-mini (system)Fast, affordable small model for focused tasks"
+                        },
+                        "select": {
+                          "label": "Create a Chat Completion (GPT and o1 models)"
+                        },
+                        "messages": {
+                          "mode": "chose",
+                          "items": [
+                            {
+                              "role": {
+                                "mode": "chose",
+                                "label": "Developer / System"
+                              }
+                            },
+                            {
+                              "role": {
+                                "mode": "chose",
+                                "label": "User"
+                              },
+                              "imageDetail": {
+                                "mode": "chose",
+                                "label": "Auto"
+                              },
+                              "imageInputType": {
+                                "mode": "chose",
+                                "label": "Empty"
+                              }
+                            }
+                          ]
+                        },
+                        "logit_bias": {
+                          "mode": "chose"
+                        },
+                        "tool_choice": {
+                          "mode": "chose",
+                          "label": "Empty"
+                        },
+                        "response_format": {
+                          "mode": "chose",
+                          "label": "Text"
+                        },
+                        "additionalParameters": {
+                          "mode": "chose"
+                        }
+                      },
+                      "parameters": {
+                        "__IMTCONN__": {
+                          "data": {
+                            "scoped": "true",
+                            "connection": "openai-gpt-3"
+                          },
+                          "label": "ClearEdgeAI"
+                        }
+                      }
+                    },
+                    "designer": {
+                      "x": 1200,
+                      "y": 300,
+                      "name": "OpenAI: Script + Caption (gpt-4o)"
+                    },
+                    "interface": [
+                      {
+                        "name": "result",
+                        "type": "any",
+                        "label": "Result"
+                      },
+                      {
+                        "name": "id",
+                        "type": "text",
+                        "label": "ID"
+                      },
+                      {
+                        "name": "object",
+                        "type": "text",
+                        "label": "Object"
+                      },
+                      {
+                        "name": "created",
+                        "type": "date",
+                        "label": "Created"
+                      },
+                      {
+                        "name": "model",
+                        "type": "text",
+                        "label": "Model"
+                      },
+                      {
+                        "name": "choices",
+                        "spec": [
+                          {
+                            "name": "text",
+                            "type": "text",
+                            "label": "Text"
+                          },
+                          {
+                            "name": "index",
+                            "type": "number",
+                            "label": "Index"
+                          },
+                          {
+                            "name": "logprobs",
+                            "type": "text",
+                            "label": "Log Probs"
+                          },
+                          {
+                            "name": "finish_reason",
+                            "type": "text",
+                            "label": "Finish Reason"
+                          },
+                          {
+                            "name": "message",
+                            "spec": [
+                              {
+                                "name": "role",
+                                "type": "text",
+                                "label": "Role"
+                              },
+                              {
+                                "name": "content",
+                                "type": "text",
+                                "label": "Content"
+                              },
+                              {
+                                "name": "tool_calls",
+                                "spec": [
+                                  {
+                                    "name": "id",
+                                    "type": "text",
+                                    "label": "ID"
+                                  },
+                                  {
+                                    "name": "type",
+                                    "type": "text",
+                                    "label": "Type"
+                                  },
+                                  {
+                                    "name": "function",
+                                    "spec": [
+                                      {
+                                        "name": "name",
+                                        "type": "text",
+                                        "label": "Name"
+                                      },
+                                      {
+                                        "name": "arguments",
+                                        "type": "text",
+                                        "label": "Arguments"
+                                      }
+                                    ],
+                                    "type": "collection",
+                                    "label": "Function"
+                                  }
+                                ],
+                                "type": "array",
+                                "label": "Tool Calls"
+                              },
+                              {
+                                "name": "refusal",
+                                "type": "text",
+                                "label": "Refusal"
+                              },
+                              {
+                                "name": "annotations",
+                                "spec": [
+                                  {
+                                    "name": "type",
+                                    "type": "text",
+                                    "label": "Type"
+                                  },
+                                  {
+                                    "name": "url_citation",
+                                    "spec": [
+                                      {
+                                        "name": "end_index",
+                                        "type": "number",
+                                        "label": "End Index"
+                                      },
+                                      {
+                                        "name": "start_index",
+                                        "type": "number",
+                                        "label": "Start Index"
+                                      },
+                                      {
+                                        "name": "title",
+                                        "type": "text",
+                                        "label": "Title"
+                                      },
+                                      {
+                                        "name": "url",
+                                        "type": "text",
+                                        "label": "URL"
+                                      }
+                                    ],
+                                    "type": "collection",
+                                    "label": "URL Citation"
+                                  }
+                                ],
+                                "type": "array",
+                                "label": "Annotations"
+                              }
+                            ],
+                            "type": "collection",
+                            "label": "Message"
+                          }
+                        ],
+                        "type": "array",
+                        "label": "Choices"
+                      },
+                      {
+                        "name": "usage",
+                        "spec": [
+                          {
+                            "name": "prompt_tokens",
+                            "type": "number",
+                            "label": "Prompt Tokens"
+                          },
+                          {
+                            "name": "completion_tokens",
+                            "type": "text",
+                            "label": "Completion Tokens"
+                          },
+                          {
+                            "name": "total_tokens",
+                            "type": "number",
+                            "label": "Total Tokens"
+                          },
+                          {
+                            "name": "prompt_tokens_details",
+                            "spec": [
+                              {
+                                "name": "cached_tokens",
+                                "type": "uinteger",
+                                "label": "Cached Tokens"
+                              },
+                              {
+                                "name": "text_tokens",
+                                "type": "uinteger",
+                                "label": "Text Tokens"
+                              },
+                              {
+                                "name": "image_tokens",
+                                "type": "uinteger",
+                                "label": "Image Tokens"
+                              },
+                              {
+                                "name": "audio_tokens",
+                                "type": "uinteger",
+                                "label": "Audio Tokens"
+                              }
+                            ],
+                            "type": "collection",
+                            "label": "Prompt Tokens Details"
+                          },
+                          {
+                            "name": "completion_tokens_details",
+                            "spec": [
+                              {
+                                "name": "reasoning_tokens",
+                                "type": "uinteger",
+                                "label": "Reasoning Tokens"
+                              },
+                              {
+                                "name": "text_tokens",
+                                "type": "uinteger",
+                                "label": "Text Tokens"
+                              },
+                              {
+                                "name": "audio_tokens",
+                                "type": "uinteger",
+                                "label": "Audio Tokens"
+                              },
+                              {
+                                "name": "accepted_prediction_tokens",
+                                "type": "uinteger",
+                                "label": "Accepted Prediction Tokens"
+                              },
+                              {
+                                "name": "rejected_prediction_tokens",
+                                "type": "uinteger",
+                                "label": "Rejected Prediction Tokens"
+                              }
+                            ],
+                            "type": "collection",
+                            "label": "Completion Tokens Details"
+                          }
+                        ],
+                        "type": "collection",
+                        "label": "Usage"
+                      },
+                      {
+                        "name": "service_tier",
+                        "type": "text",
+                        "label": "Service Tier"
+                      },
+                      {
+                        "name": "system_fingerprint",
+                        "type": "text",
+                        "label": "System Fingerprint"
+                      }
+                    ],
+                    "parameters": [
+                      {
+                        "name": "__IMTCONN__",
+                        "type": "account:openai-gpt-3",
+                        "label": "Connection",
+                        "required": true
+                      }
+                    ]
+                  },
+                  "parameters": {
+                    "__IMTCONN__": 3348536
+                  }
+                },
+                {
+                  "id": 29,
+                  "mapper": {
+                    "json": "{{5.choices[].message.content}}"
+                  },
+                  "module": "json:ParseJSON",
+                  "version": 1,
+                  "metadata": {
+                    "expect": [
+                      {
+                        "name": "json",
+                        "type": "text",
+                        "label": "JSON string",
+                        "required": true
+                      }
+                    ],
+                    "restore": {
+                      "parameters": {
+                        "type": {
+                          "label": "Choose a data structure"
+                        }
+                      }
+                    },
+                    "designer": {
+                      "x": 1500,
+                      "y": 300
+                    },
+                    "parameters": [
+                      {
+                        "name": "type",
+                        "type": "udt",
+                        "label": "Data structure"
+                      }
+                    ]
+                  },
+                  "parameters": {
+                    "type": ""
+                  }
+                },
+                {
+                  "id": 23,
+                  "mapper": {
+                    "model": "gpt-4o",
+                    "top_p": 1,
+                    "select": "chat",
+                    "messages": [
+                      {
+                        "role": "system",
+                        "content": "You are an expert video editor brief writer for short-form AI avatar content. Given a video script and its creative inputs, produce a detailed 4-section editing brief.\n\nReturn ONLY valid JSON with these exact keys:\n{\"review_priorities\":\"3-5 bullet points. Use \\n\\u2022 as separator.\",\"viewer_profile\":\"2 short paragraphs about who is watching and their context.\",\"emotional_open\":\"1 paragraph: viewer emotional state at frame one.\",\"emotional_close\":\"1 paragraph: viewer emotional state at final frame.\",\"arc_description\":\"2 paragraphs: how emotion moves from open to close.\",\"editing_directives\":\"Labeled sections (Pacing | B-Roll | Music | Text Overlays | Transitions), double newline between sections.\",\"line_by_line\":\"Format: Script Beat | Visual Direction | Timing Note. Newline between rows.\"}\n\nReturn nothing except the JSON object."
+                      },
+                      {
+                        "role": "user",
+                        "content": "Script Name: {{1.`2`}}\nAudience: {{1.`7`}}\nCurrent Belief: {{1.`8`}}\nDesired Belief: {{1.`9`}}\nTone: {{if(1.`17`; 1.`17`; 1.`10`)}}\nEmotional Arc: {{1.`11`}}\nOffer / CTA: {{1.`12`}}\n\nScript:\n{{29.script}}",
+                        "imageDetail": "auto"
+                      }
+                    ],
+                    "max_tokens": 2000,
+                    "temperature": 0.7,
+                    "n_completions": 1,
+                    "response_format": "json_object"
+                  },
+                  "module": "openai-gpt-3:CreateCompletion",
+                  "version": 1,
+                  "metadata": {
+                    "designer": {
+                      "x": 1800,
+                      "y": 300,
+                      "name": "OpenAI: Editor Brief (gpt-4o)"
+                    }
+                  },
+                  "parameters": {
+                    "__IMTCONN__": 3348536
+                  }
+                },
+                {
+                  "id": 30,
+                  "mapper": {
+                    "json": "{{23.choices[].message.content}}"
+                  },
+                  "module": "json:ParseJSON",
+                  "version": 1,
+                  "metadata": {
+                    "expect": [
+                      {
+                        "name": "json",
+                        "type": "text",
+                        "label": "JSON string",
+                        "required": true
+                      }
+                    ],
+                    "restore": {
+                      "parameters": {
+                        "type": {
+                          "label": "Choose a data structure"
+                        }
+                      }
+                    },
+                    "designer": {
+                      "x": 2100,
+                      "y": 300
+                    },
+                    "parameters": [
+                      {
+                        "name": "type",
+                        "type": "udt",
+                        "label": "Data structure"
+                      }
+                    ]
+                  },
+                  "parameters": {
+                    "type": ""
+                  }
+                },
+                {
+                  "id": 24,
+                  "mapper": {
+                    "from": "drive",
+                    "name": "Script_{{1.`1`}}_v{{1.`3`}}_{{formatDate(now; \"YYYYMMDD\")}}",
+                    "select": "dropdown",
+                    "document": "1ZDum9DDkuEGPMpoqo39XbAiF-D5-bGMExfOmSY3gm_A",
+                    "folderId": "1JN7T4lmeiXXe0G3OpNcSXrz_24cVdQr3",
+                    "requests": {
+                      "TONE": "{{if(1.`17`; 1.`17`; 1.`10`)}}",
+                      "AUDIENCE": "{{1.`7`}}",
+                      "OFFER_CTA": "{{1.`12`}}",
+                      "SCRIPT_ID": "{{1.`1`}}",
+                      "SCRIPT_NAME": "{{1.`2`}}",
+                      "SCRIPT_TEXT": "{{29.script}}",
+                      "CAPTION_TEXT": "{{29.caption}}",
+                      "LAST_UPDATED": "{{formatDate(now; \"YYYY-MM-DD HH:mm:ss\")}}",
+                      "VARIATION_ID": "{{2.variation_id}}",
+                      "EMOTIONAL_ARC": "{{1.`11`}}",
+                      "CURRENT_BELIEF": "{{1.`8`}}",
+                      "DESIRED_BELIEF": "{{1.`9`}}",
+                      "VARIATION_NUMBER": "{{1.`3`}}"
+                    },
+                    "destination": "drive"
+                  },
+                  "module": "google-docs:createADocumentFromTemplate",
+                  "version": 1,
+                  "metadata": {
+                    "designer": {
+                      "x": 2400,
+                      "y": 300,
+                      "name": "Docs: Create Script Doc"
+                    }
+                  },
+                  "parameters": {
+                    "__IMTCONN__": 4472711
+                  }
+                },
+                {
+                  "id": 25,
+                  "mapper": {
+                    "from": "drive",
+                    "name": "Brief_{{1.`1`}}_v{{1.`3`}}_{{formatDate(now; \"YYYYMMDD\")}}",
+                    "select": "dropdown",
+                    "document": "179Rc1u3mWVC-7hidFeyBLWxIp0Xxaocl_M52MsDc-4I",
+                    "folderId": "1tst1vRaFDk7Y2YFx2ihdYiNlzKwi56Zz",
+                    "requests": {
+                      "SCRIPT_ID": "{{1.`1`}}",
+                      "LAST_UPDATED": "{{formatDate(now; \"YYYY-MM-DD HH:mm:ss\")}}",
+                      "LINE_BY_LINE": "{{30.line_by_line}}",
+                      "EMOTIONAL_OPEN": "{{30.emotional_open}}",
+                      "VIEWER_PROFILE": "{{30.viewer_profile}}",
+                      "ARC_DESCRIPTION": "{{30.arc_description}}",
+                      "EMOTIONAL_CLOSE": "{{30.emotional_close}}",
+                      "VARIATION_NUMBER": "{{1.`3`}}",
+                      "REVIEW_PRIORITIES": "{{30.review_priorities}}",
+                      "EDITING_DIRECTIVES": "{{30.editing_directives}}"
+                    },
+                    "destination": "drive"
+                  },
+                  "module": "google-docs:createADocumentFromTemplate",
+                  "version": 1,
+                  "metadata": {
+                    "designer": {
+                      "x": 2700,
+                      "y": 300,
+                      "name": "Docs: Create Editor Brief"
+                    }
+                  },
+                  "parameters": {
+                    "__IMTCONN__": 4472711
+                  }
+                },
+                {
+                  "id": 6,
+                  "mapper": {
+                    "from": "drive",
+                    "mode": "select",
+                    "values": {
+                      "Status": "Script Done",
+                      "Script Text": "{{29.script}}",
+                      "Caption Text": "{{29.caption}}",
+                      "Last Updated": "{{formatDate(now; \"YYYY-MM-DD HH:mm:ss\")}}",
+                      "Brief Doc Link": "{{25.webViewLink}}",
+                      "Script Doc Link": "{{24.webViewLink}}"
+                    },
+                    "sheetId": "Queue",
+                    "rowNumber": "{{1.`__ROW_NUMBER__`}}",
+                    "sheetName": "Queue",
+                    "spreadsheetId": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo",
+                    "tableFirstRow": "A1:AZ1",
+                    "includesHeaders": true,
+                    "useColumnHeaders": true,
+                    "valueInputOption": "USER_ENTERED"
+                  },
+                  "module": "google-sheets:updateRow",
+                  "version": 2,
+                  "metadata": {
+                    "expect": [
+                      {
+                        "name": "mode",
+                        "type": "select",
+                        "label": "Search Method",
+                        "required": true,
+                        "validate": {
+                          "enum": [
+                            "select",
+                            "fromAll",
+                            "map"
+                          ]
+                        }
+                      },
+                      {
+                        "name": "valueInputOption",
+                        "type": "select",
+                        "label": "Value input option",
+                        "validate": {
+                          "enum": [
+                            "USER_ENTERED",
+                            "RAW"
+                          ]
+                        }
+                      },
+                      {
+                        "name": "from",
+                        "type": "select",
+                        "label": "Drive",
+                        "required": true,
+                        "validate": {
+                          "enum": [
+                            "drive",
+                            "share",
+                            "team"
+                          ]
+                        }
+                      },
+                      {
+                        "name": "spreadsheetId",
+                        "type": "file",
+                        "label": "Spreadsheet Name",
+                        "required": true
+                      },
+                      {
+                        "name": "sheetId",
+                        "type": "select",
+                        "label": "Sheet Name",
+                        "required": true
+                      },
+                      {
+                        "name": "rowNumber",
+                        "type": "uinteger",
+                        "label": "Row number",
+                        "required": true
+                      },
+                      {
+                        "name": "includesHeaders",
+                        "type": "select",
+                        "label": "Table contains headers",
+                        "required": true,
+                        "validate": {
+                          "enum": [
+                            true,
+                            false
+                          ]
+                        }
+                      },
+                      {
+                        "name": "useColumnHeaders",
+                        "type": "select",
+                        "label": "Use column headers as IDs of the columns",
+                        "required": true,
+                        "validate": {
+                          "enum": [
+                            true,
+                            false
+                          ]
+                        }
+                      },
+                      {
+                        "name": "values",
+                        "spec": [
+                          {
+                            "name": "row_id",
+                            "type": "text",
+                            "label": "row_id (A)"
+                          },
+                          {
+                            "name": "topic",
+                            "type": "text",
+                            "label": "topic (B)"
+                          },
+                          {
+                            "name": "target_duration_sec",
+                            "type": "text",
+                            "label": "target_duration_sec (C)"
+                          },
+                          {
+                            "name": "voice_id",
+                            "type": "text",
+                            "label": "voice_id (D)"
+                          },
+                          {
+                            "name": "avatar_id",
+                            "type": "text",
+                            "label": "avatar_id (E)"
+                          },
+                          {
+                            "name": "status",
+                            "type": "text",
+                            "label": "status (F)"
+                          },
+                          {
+                            "name": "script",
+                            "type": "text",
+                            "label": "script (G)"
+                          },
+                          {
+                            "name": "audio_url",
+                            "type": "text",
+                            "label": "audio_url (H)"
+                          },
+                          {
+                            "name": "heygen_video_id",
+                            "type": "text",
+                            "label": "heygen_video_id (I)"
+                          },
+                          {
+                            "name": "video_url",
+                            "type": "text",
+                            "label": "video_url (J)"
+                          },
+                          {
+                            "name": "row_hash",
+                            "type": "text",
+                            "label": "row_hash (K)"
+                          },
+                          {
+                            "name": "error",
+                            "type": "text",
+                            "label": "error (L)"
+                          },
+                          {
+                            "name": "poll_attempts",
+                            "type": "text",
+                            "label": "poll_attempts (M)"
+                          },
+                          {
+                            "name": "processed_at",
+                            "type": "text",
+                            "label": "processed_at (N)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(O)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(P)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(Q)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(R)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(S)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(T)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(U)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(V)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(W)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(X)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(Y)"
+                          },
+                          {
+                            "name": "undefined",
+                            "type": "text",
+                            "label": "(Z)"
+                          }
+                        ],
+                        "type": "collection",
+                        "label": "Values in columns",
+                        "metadata": [
+                          [
+                            [
+                              "row_id",
+                              "topic",
+                              "target_duration_sec",
+                              "voice_id",
+                              "avatar_id",
+                              "status",
+                              "script",
+                              "audio_url",
+                              "heygen_video_id",
+                              "video_url",
+                              "row_hash",
+                              "error",
+                              "poll_attempts",
+                              "processed_at"
+                            ]
+                          ]
+                        ]
+                      }
+                    ],
+                    "restore": {
+                      "expect": {
+                        "from": {
+                          "label": "My Drive"
+                        },
+                        "mode": {
+                          "label": "Search by path"
+                        },
+                        "sheetId": {
+                          "label": "Queue"
+                        },
+                        "spreadsheetId": {
+                          "path": [
+                            "1OuTq7QYItLLJdfRI0131Zq4FcZ8jtxbXudf5Zv3HvD0"
+                          ]
+                        },
+                        "includesHeaders": {
+                          "label": "Yes"
+                        },
+                        "useColumnHeaders": {
+                          "label": "Yes",
+                          "nested": [
+                            {
+                              "name": "values",
+                              "spec": [
+                                {
+                                  "name": "row_id",
+                                  "type": "text",
+                                  "label": "row_id (A)"
+                                },
+                                {
+                                  "name": "topic",
+                                  "type": "text",
+                                  "label": "topic (B)"
+                                },
+                                {
+                                  "name": "target_duration_sec",
+                                  "type": "text",
+                                  "label": "target_duration_sec (C)"
+                                },
+                                {
+                                  "name": "voice_id",
+                                  "type": "text",
+                                  "label": "voice_id (D)"
+                                },
+                                {
+                                  "name": "avatar_id",
+                                  "type": "text",
+                                  "label": "avatar_id (E)"
+                                },
+                                {
+                                  "name": "status",
+                                  "type": "text",
+                                  "label": "status (F)"
+                                },
+                                {
+                                  "name": "script",
+                                  "type": "text",
+                                  "label": "script (G)"
+                                },
+                                {
+                                  "name": "audio_url",
+                                  "type": "text",
+                                  "label": "audio_url (H)"
+                                },
+                                {
+                                  "name": "heygen_video_id",
+                                  "type": "text",
+                                  "label": "heygen_video_id (I)"
+                                },
+                                {
+                                  "name": "video_url",
+                                  "type": "text",
+                                  "label": "video_url (J)"
+                                },
+                                {
+                                  "name": "row_hash",
+                                  "type": "text",
+                                  "label": "row_hash (K)"
+                                },
+                                {
+                                  "name": "error",
+                                  "type": "text",
+                                  "label": "error (L)"
+                                },
+                                {
+                                  "name": "poll_attempts",
+                                  "type": "text",
+                                  "label": "poll_attempts (M)"
+                                },
+                                {
+                                  "name": "processed_at",
+                                  "type": "text",
+                                  "label": "processed_at (N)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(O)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(P)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(Q)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(R)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(S)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(T)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(U)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(V)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(W)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(X)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(Y)"
+                                },
+                                {
+                                  "name": "undefined",
+                                  "type": "text",
+                                  "label": "(Z)"
+                                }
+                              ],
+                              "type": "collection",
+                              "label": "Values in columns",
+                              "metadata": [
+                                [
+                                  [
+                                    "row_id",
+                                    "topic",
+                                    "target_duration_sec",
+                                    "voice_id",
+                                    "avatar_id",
+                                    "status",
+                                    "script",
+                                    "audio_url",
+                                    "heygen_video_id",
+                                    "video_url",
+                                    "row_hash",
+                                    "error",
+                                    "poll_attempts",
+                                    "processed_at"
+                                  ]
+                                ]
+                              ]
+                            }
+                          ]
+                        },
+                        "valueInputOption": {
+                          "mode": "chose",
+                          "label": "User entered"
+                        }
+                      },
+                      "parameters": {
+                        "__IMTCONN__": {
+                          "data": {
+                            "scoped": "true",
+                            "connection": "google"
+                          },
+                          "label": "1AltX - Make.com (richard@1altx.com)"
+                        }
+                      }
+                    },
+                    "designer": {
+                      "x": 3000,
+                      "y": 300,
+                      "name": "Status → Script Done + save script"
+                    },
+                    "parameters": [
+                      {
+                        "name": "__IMTCONN__",
+                        "type": "account:google",
+                        "label": "Connection",
+                        "required": true
+                      }
+                    ]
+                  },
+                  "parameters": {
+                    "__IMTCONN__": 4472711
+                  }
+                },
+                {
+                  "id": 10,
+                  "mapper": {
+                    "ca": "",
+                    "qs": [],
+                    "url": "https://api.heygen.com/v2/video/generate",
+                    "data": "{\n  \"video_inputs\": [\n    {\n      \"character\": {\n        \"type\": \"avatar\",\n        \"avatar_id\": \"{{2.effective_avatar_id}}\",\n        \"avatar_style\": \"normal\"\n      },\n      \"voice\": {\n        \"type\": \"text\",\n        \"input_text\": \"{{29.script}}\",\n        \"voice_id\": \"a9c42ba3dd4b441eac3fb3221c6fcf59\"\n      }\n    }\n  ],\n  \"dimension\": { \"width\": 1280, \"height\": 720 },\n  \"callback_id\": \"{{1.`__ROW_NUMBER__`}}\",\n  \"callback_url\": \"https://hook.us2.make.com/rqhdfwb9222mys1n5es1b8zsrsjpdpy9\"\n}",
+                    "gzip": true,
+                    "method": "post",
+                    "headers": [
+                      {
+                        "name": "X-Api-Key",
+                        "value": "sk_V2_hgu_k8ZrvzbzULJ_9kthjbeYQyc2MXZM3URBoAHk0VvwZJvD"
+                      },
+                      {
+                        "name": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "timeout": "60",
+                    "useMtls": false,
+                    "authPass": "",
+                    "authUser": "",
+                    "bodyType": "raw",
+                    "contentType": "application/json",
+                    "serializeUrl": false,
+                    "shareCookies": false,
+                    "parseResponse": true,
+                    "followRedirect": true,
+                    "useQuerystring": false,
+                    "followAllRedirects": false,
+                    "rejectUnauthorized": true
+                  },
+                  "module": "http:ActionSendData",
+                  "version": 3,
+                  "metadata": {
+                    "expect": [
+                      {
+                        "name": "url",
+                        "type": "url",
+                        "label": "URL",
+                        "required": true
+                      },
+                      {
+                        "name": "serializeUrl",
+                        "type": "boolean",
+                        "label": "Serialize URL",
+                        "required": true
+                      },
+                      {
+                        "name": "method",
+                        "type": "select",
+                        "label": "Method",
+                        "required": true,
+                        "validate": {
+                          "enum": [
+                            "get",
+                            "head",
+                            "post",
+                            "put",
+                            "patch",
+                            "delete",
+                            "options"
+                          ]
+                        }
+                      },
+                      {
+                        "name": "headers",
+                        "spec": [
+                          {
+                            "name": "name",
+                            "type": "text",
+                            "label": "Name",
+                            "required": true
+                          },
+                          {
+                            "name": "value",
+                            "type": "text",
+                            "label": "Value"
+                          }
+                        ],
+                        "type": "array",
+                        "label": "Headers"
+                      },
+                      {
+                        "name": "qs",
+                        "spec": [
+                          {
+                            "name": "name",
+                            "type": "text",
+                            "label": "Name",
+                            "required": true
+                          },
+                          {
+                            "name": "value",
+                            "type": "text",
+                            "label": "Value"
+                          }
+                        ],
+                        "type": "array",
+                        "label": "Query String"
+                      },
+                      {
+                        "name": "bodyType",
+                        "type": "select",
+                        "label": "Body type",
+                        "validate": {
+                          "enum": [
+                            "raw",
+                            "x_www_form_urlencoded",
+                            "multipart_form_data"
+                          ]
+                        }
+                      },
+                      {
+                        "name": "parseResponse",
+                        "type": "boolean",
+                        "label": "Parse response",
+                        "required": true
+                      },
+                      {
+                        "name": "authUser",
+                        "type": "text",
+                        "label": "User name"
+                      },
+                      {
+                        "name": "authPass",
+                        "type": "password",
+                        "label": "Password"
+                      },
+                      {
+                        "name": "timeout",
+                        "type": "uinteger",
+                        "label": "Timeout",
+                        "validate": {
+                          "max": 300,
+                          "min": 1
+                        }
+                      },
+                      {
+                        "name": "shareCookies",
+                        "type": "boolean",
+                        "label": "Share cookies with other HTTP modules",
+                        "required": true
+                      },
+                      {
+                        "name": "ca",
+                        "type": "cert",
+                        "label": "Self-signed certificate"
+                      },
+                      {
+                        "name": "rejectUnauthorized",
+                        "type": "boolean",
+                        "label": "Reject connections that are using unverified (self-signed) certificates",
+                        "required": true
+                      },
+                      {
+                        "name": "followRedirect",
+                        "type": "boolean",
+                        "label": "Follow redirect",
+                        "required": true
+                      },
+                      {
+                        "name": "useQuerystring",
+                        "type": "boolean",
+                        "label": "Disable serialization of multiple same query string keys as arrays",
+                        "required": true
+                      },
+                      {
+                        "name": "gzip",
+                        "type": "boolean",
+                        "label": "Request compressed content",
+                        "required": true
+                      },
+                      {
+                        "name": "useMtls",
+                        "type": "boolean",
+                        "label": "Use Mutual TLS",
+                        "required": true
+                      },
+                      {
+                        "name": "contentType",
+                        "type": "select",
+                        "label": "Content type",
+                        "validate": {
+                          "enum": [
+                            "text/plain",
+                            "application/json",
+                            "application/xml",
+                            "text/xml",
+                            "text/html",
+                            "custom"
+                          ]
+                        }
+                      },
+                      {
+                        "name": "data",
+                        "type": "buffer",
+                        "label": "Request content"
+                      },
+                      {
+                        "name": "followAllRedirects",
+                        "type": "boolean",
+                        "label": "Follow all redirect",
+                        "required": true
+                      }
+                    ],
+                    "restore": {
+                      "expect": {
+                        "qs": {
+                          "mode": "chose"
+                        },
+                        "method": {
+                          "mode": "chose",
+                          "label": "POST"
+                        },
+                        "headers": {
+                          "mode": "chose",
+                          "items": [
+                            null,
+                            null
+                          ]
+                        },
+                        "bodyType": {
+                          "label": "Raw"
+                        },
+                        "contentType": {
+                          "label": "JSON (application/json)"
+                        }
+                      }
+                    },
+                    "designer": {
+                      "x": 3300,
+                      "y": 300,
+                      "name": "HeyGen: Create video"
+                    },
+                    "parameters": [
+                      {
+                        "name": "handleErrors",
+                        "type": "boolean",
+                        "label": "Evaluate all states as errors (except for 2xx and 3xx )",
+                        "required": true
+                      },
+                      {
+                        "name": "useNewZLibDeCompress",
+                        "type": "hidden"
+                      }
+                    ]
+                  },
+                  "parameters": {
+                    "handleErrors": true,
+                    "useNewZLibDeCompress": true
+                  }
+                },
+                {
+                  "id": 11,
+                  "mapper": {
+                    "from": "drive",
+                    "mode": "select",
+                    "values": {
+                      "Status": "Rendering",
+                      "Last Updated": "{{formatDate(now; \"YYYY-MM-DD HH:mm:ss\")}}",
+                      "Render Job ID": "{{10.data.data.video_id}}"
+                    },
+                    "sheetId": "Queue",
+                    "rowNumber": "{{1.`__ROW_NUMBER__`}}",
+                    "sheetName": "Queue",
+                    "spreadsheetId": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo",
+                    "tableFirstRow": "A1:AZ1",
+                    "includesHeaders": true,
+                    "useColumnHeaders": true,
+                    "valueInputOption": "USER_ENTERED"
+                  },
+                  "module": "google-sheets:updateRow",
+                  "version": 2,
+                  "metadata": {
+                    "designer": {
+                      "x": 3600,
+                      "y": 300,
+                      "name": "Status → Rendering + save video_id"
+                    }
+                  },
+                  "parameters": {
+                    "__IMTCONN__": 4472711
+                  }
+                }
+              ]
+            },
+            {
+              "flow": [
+                {
+                  "id": 19,
+                  "filter": {
+                    "name": "Duplicate",
+                    "conditions": [
+                      [
+                        {
+                          "a": "{{1.`10`}}",
+                          "b": "{{2.row_hash}}",
+                          "o": "text:equal"
+                        },
+                        {
+                          "a": "{{1.`5`}}",
+                          "b": "Done",
+                          "o": "text:equal"
+                        }
+                      ]
+                    ]
+                  },
+                  "mapper": {
+                    "from": "drive",
+                    "mode": "select",
+                    "values": {
+                      "status": "Done (duplicate)"
+                    },
+                    "sheetId": "Queue",
+                    "rowNumber": "{{1.`__ROW_NUMBER__`}}",
+                    "spreadsheetId": "/1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo",
+                    "tableFirstRow": "A1:AZ1",
+                    "includesHeaders": true,
+                    "useColumnHeaders": true,
+                    "valueInputOption": "USER_ENTERED"
+                  },
+                  "module": "google-sheets:updateRow",
+                  "version": 2,
+                  "metadata": {
+                    "designer": {
+                      "x": 900,
+                      "y": 900,
+                      "name": "Status → Done (duplicate)"
+                    }
+                  },
+                  "parameters": {
+                    "__IMTCONN__": 4472711
+                  }
+                }
+              ]
+            }
+          ],
+          "version": 1,
+          "metadata": {
+            "designer": {
+              "x": 600,
+              "y": 450,
+              "name": "Router: Duplicate gate"
+            }
+          }
+        }
+      ],
+      "name": "Chosen Agency - Content Pipeline V1",
+      "metadata": {
+        "instant": false,
+        "version": 1,
+        "designer": {
+          "orphans": [],
+          "samples": {
+            "1": {
+              "0": "Queued",
+              "1": "TEST-001",
+              "2": "Why AI Content Works",
+              "3": "1",
+              "4": "",
+              "5": "",
+              "6": "",
+              "7": "Coaches and service-based entrepreneurs",
+              "8": "Creating content consistently is overwhelming and time-consuming",
+              "9": "AI-powered content creation is fast, authentic, and works for my brand",
+              "10": "Confident, conversational, encouraging",
+              "11": "Overwhelmed to Curious to Relieved and excited",
+              "12": "DM us CONTENT to get your first AI script free",
+              "13": "Feeling overwhelmed by the endless cycle of content creation? <break time='0.6s'/> You're not alone....",
+              "14": "Tired of the content creation grind? AI can help you produce fast, authentic content that fits your ...",
+              "15": "",
+              "16": "",
+              "17": "",
+              "18": "",
+              "19": "",
+              "20": "https://docs.google.com/document/d/1Qz7ueEoPk1XtOT7Cx5GiTSAkM-VWmOVL-8RmwuywgEY/edit?usp=drivesdk",
+              "21": "https://docs.google.com/document/d/1RX9IaviUOStDcJcJJgvTyDA3vhjPXseagAlSc2WcXwM/edit?usp=drivesdk",
+              "22": "https://drive.google.com/uc?id=1Ff5wlWppm0GeMkotT9gNSOaBSFQmUCvV&export=download",
+              "23": "https://files2.heygen.ai/aws_pacific/avatar_tmp/ea757de3db894710a86ad860048905f3/abbd364dc8594f06ae4...",
+              "24": "abbd364dc8594f06ae4661f483867a2a",
+              "25": "",
+              "26": "",
+              "27": "2026-05-05 13:31:38",
+              "__SHEET__": "Queue",
+              "__IMTINDEX__": 1,
+              "__IMTLENGTH__": 1,
+              "__ROW_NUMBER__": 2,
+              "__SPREADSHEET_ID__": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo"
+            },
+            "2": {
+              "is_done": "false",
+              "openai_model": "gpt-4o",
+              "variation_id": "TEST-001_v1_20260509182648",
+              "effective_voice_id": "IuxDTLynYdvisya7jrK5",
+              "effective_avatar_id": "Tyler-incasualsuit-20220721"
+            },
+            "4": {
+              "updatedRows": 1,
+              "updatedCells": 2,
+              "updatedRange": "Queue!A2:AB2",
+              "spreadsheetId": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo",
+              "updatedColumns": 2
+            },
+            "5": {
+              "id": "chatcmpl-DdlMIlYvnezA6FQvDd9r7nxb4Jwoq",
+              "model": "gpt-4o-2024-08-06",
+              "usage": {
+                "total_tokens": 856,
+                "prompt_tokens": 518,
+                "completion_tokens": 338,
+                "prompt_tokens_details": {
+                  "audio_tokens": 0,
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "audio_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "accepted_prediction_tokens": 0,
+                  "rejected_prediction_tokens": 0
+                }
+              },
+              "object": "chat.completion",
+              "result": "{\"script\": \"Feeling overwhelmed by the content creation grind? <break time='0.6s'/> You're not alone...",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "{\"script\": \"Feeling overwhelmed by the content creation grind? <break time='0.6s'/> You're not alone...",
+                    "refusal": null,
+                    "annotations": []
+                  },
+                  "logprobs": null,
+                  "finish_reason": "stop"
+                }
+              ],
+              "created": "2026-05-09T23:26:50Z",
+              "service_tier": "default",
+              "system_fingerprint": "fp_5c172149cc"
+            },
+            "6": {
+              "updatedRows": 1,
+              "updatedCells": 6,
+              "updatedRange": "Queue!A2:AB2",
+              "spreadsheetId": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo",
+              "updatedColumns": 6
+            },
+            "10": {
+              "data": {
+                "data": {
+                  "video_id": "05567a65008841c7aa0fde1d4d2d23f2"
+                },
+                "error": null
+              },
+              "headers": [
+                {
+                  "name": "server",
+                  "value": "gunicorn"
+                }
+              ],
+              "fileSize": 69,
+              "statusCode": 200,
+              "cookieHeaders": []
+            },
+            "11": {
+              "updatedRows": 1,
+              "updatedCells": 3,
+              "updatedRange": "Queue!A2:AB2",
+              "spreadsheetId": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo",
+              "updatedColumns": 3
+            },
+            "12": {
+              "i": 1
+            },
+            "14": {
+              "data": {
+                "code": 100,
+                "data": {
+                  "id": "05567a65008841c7aa0fde1d4d2d23f2",
+                  "error": null,
+                  "status": "processing",
+                  "gif_url": null,
+                  "duration": null,
+                  "video_url": null,
+                  "created_at": 1778369229,
+                  "callback_id": null,
+                  "caption_url": null,
+                  "thumbnail_url": null,
+                  "video_url_caption": null
+                },
+                "message": "Success"
+              },
+              "headers": [
+                {
+                  "name": "server",
+                  "value": "gunicorn"
+                }
+              ],
+              "fileSize": 273,
+              "statusCode": 200,
+              "cookieHeaders": []
+            },
+            "18": {
+              "updatedRange": "Queue!A2",
+              "spreadsheetId": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo"
+            },
+            "23": {
+              "id": "chatcmpl-DdlML1JJqRJuccRMSJpvcFTuFKvcV",
+              "model": "gpt-4o-2024-08-06",
+              "usage": {
+                "total_tokens": 1406,
+                "prompt_tokens": 540,
+                "completion_tokens": 866,
+                "prompt_tokens_details": {
+                  "audio_tokens": 0,
+                  "cached_tokens": 0
+                },
+                "completion_tokens_details": {
+                  "audio_tokens": 0,
+                  "reasoning_tokens": 0,
+                  "accepted_prediction_tokens": 0,
+                  "rejected_prediction_tokens": 0
+                }
+              },
+              "object": "chat.completion",
+              "result": "{\"review_priorities\":\"• Ensure transitions between emotional beats are smooth\\n• Confirm tone is con...",
+              "choices": [
+                {
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "{\"review_priorities\":\"• Ensure transitions between emotional beats are smooth\\n• Confirm tone is con...",
+                    "refusal": null,
+                    "annotations": []
+                  },
+                  "logprobs": null,
+                  "finish_reason": "stop"
+                }
+              ],
+              "created": "2026-05-09T23:26:53Z",
+              "service_tier": "default",
+              "system_fingerprint": "fp_2dd602437d"
+            },
+            "24": {
+              "id": "1hUSQPDzxGVlUaoWMUtTVQ2ueBM1MS97OtTo66wNbJxk",
+              "kind": "drive#file",
+              "name": "Script_TEST-001_v1_20260509",
+              "size": "1442",
+              "owners": [
+                {
+                  "me": true,
+                  "kind": "drive#user",
+                  "photoLink": "https://lh3.googleusercontent.com/a/ACg8ocJIlu9BEdxUnYB4wZC7YCYF98XAvXQ8Y1kIOA0coy6y1pgWiA=s64",
+                  "displayName": "Richard Mabbun",
+                  "emailAddress": "richard@1altx.com",
+                  "permissionId": "09086486721510054901"
+                }
+              ],
+              "shared": true,
+              "spaces": [
+                "drive"
+              ],
+              "parents": [
+                "1JN7T4lmeiXXe0G3OpNcSXrz_24cVdQr3"
+              ],
+              "starred": false,
+              "trashed": false,
+              "version": "4",
+              "iconLink": "https://drive-thirdparty.googleusercontent.com/16/type/application/vnd.google-apps.document",
+              "mimeType": "application/vnd.google-apps.document",
+              "ownedByMe": true,
+              "viewedByMe": true,
+              "createdTime": "2026-05-09T23:27:01.279Z",
+              "exportLinks": {
+                "text/html": "https://docs.google.com/feeds/download/documents/export/Export?id=1hUSQPDzxGVlUaoWMUtTVQ2ueBM1MS97Ot...",
+                "text/plain": "https://docs.google.com/feeds/download/documents/export/Export?id=1hUSQPDzxGVlUaoWMUtTVQ2ueBM1MS97Ot...",
+                "text/markdown": "https://docs.google.com/feeds/download/documents/export/Export?id=1hUSQPDzxGVlUaoWMUtTVQ2ueBM1MS97Ot...",
+                "application/pdf": "https://docs.google.com/feeds/download/documents/export/Export?id=1hUSQPDzxGVlUaoWMUtTVQ2ueBM1MS97Ot...",
+                "application/rtf": "https://docs.google.com/feeds/download/documents/export/Export?id=1hUSQPDzxGVlUaoWMUtTVQ2ueBM1MS97Ot...",
+                "application/zip": "https://docs.google.com/feeds/download/documents/export/Export?id=1hUSQPDzxGVlUaoWMUtTVQ2ueBM1MS97Ot...",
+                "text/x-markdown": "https://docs.google.com/feeds/download/documents/export/Export?id=1hUSQPDzxGVlUaoWMUtTVQ2ueBM1MS97Ot...",
+                "application/epub+zip": "https://docs.google.com/feeds/download/documents/export/Export?id=1hUSQPDzxGVlUaoWMUtTVQ2ueBM1MS97Ot...",
+                "application/vnd.oasis.opendocument.text": "https://docs.google.com/feeds/download/documents/export/Export?id=1hUSQPDzxGVlUaoWMUtTVQ2ueBM1MS97Ot...",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "https://docs.google.com/feeds/download/documents/export/Export?id=1hUSQPDzxGVlUaoWMUtTVQ2ueBM1MS97Ot..."
+              },
+              "permissions": [
+                {
+                  "id": "09086486721510054901",
+                  "kind": "drive#permission",
+                  "role": "owner",
+                  "type": "user",
+                  "deleted": false,
+                  "photoLink": "https://lh3.googleusercontent.com/a/ACg8ocJIlu9BEdxUnYB4wZC7YCYF98XAvXQ8Y1kIOA0coy6y1pgWiA=s64",
+                  "displayName": "Richard Mabbun",
+                  "emailAddress": "richard@1altx.com",
+                  "pendingOwner": false,
+                  "permissionDetails": [
+                    {
+                      "role": "owner",
+                      "inherited": true,
+                      "permissionType": "file"
+                    }
+                  ],
+                  "allowFileDiscovery": null
+                }
+              ],
+              "webViewLink": "https://docs.google.com/document/d/1hUSQPDzxGVlUaoWMUtTVQ2ueBM1MS97OtTo66wNbJxk/edit?usp=drivesdk",
+              "capabilities": {
+                "canCopy": true,
+                "canEdit": true,
+                "canShare": true,
+                "canTrash": true,
+                "canDelete": true,
+                "canRename": true,
+                "canComment": true,
+                "canUntrash": true,
+                "canDownload": true,
+                "canReadLabels": false,
+                "canAddChildren": false,
+                "canListChildren": false,
+                "canModifyLabels": false,
+                "canModifyContent": true,
+                "canReadRevisions": true,
+                "canStartApproval": false,
+                "canRemoveChildren": false,
+                "canAcceptOwnership": false,
+                "canAddMyDriveParent": false,
+                "canMoveItemOutOfDrive": true,
+                "canMoveItemWithinDrive": true,
+                "canRemoveMyDriveParent": true,
+                "canMoveItemIntoTeamDrive": true,
+                "canMoveChildrenWithinDrive": false,
+                "canModifyContentRestriction": true,
+                "canRemoveContentRestriction": false,
+                "canEnableInheritedPermissions": true,
+                "canChangeSecurityUpdateEnabled": false,
+                "canChangeViewersCanCopyContent": true,
+                "canDisableInheritedPermissions": false,
+                "canChangeItemDownloadRestriction": true,
+                "canModifyOwnerContentRestriction": true,
+                "canModifyEditorContentRestriction": true,
+                "canChangeCopyRequiresWriterPermission": true
+              },
+              "hasThumbnail": true,
+              "modifiedByMe": true,
+              "modifiedTime": "2026-05-09T23:27:01.279Z",
+              "permissionIds": [
+                "anyoneWithLink"
+              ],
+              "thumbnailLink": "https://lh3.googleusercontent.com/drive-storage/AJQWtBNVl89knhQ-T5gj1WaKOFnSuvh43HgzWgxQGJcg1cox13f6...",
+              "quotaBytesUsed": "1442",
+              "viewedByMeTime": "2026-04-28T16:18:45.287Z",
+              "isAppAuthorized": true,
+              "writersCanShare": true,
+              "modifiedByMeTime": "2026-05-09T23:27:01.279Z",
+              "thumbnailVersion": "1",
+              "explicitlyTrashed": false,
+              "lastModifyingUser": {
+                "me": true,
+                "kind": "drive#user",
+                "photoLink": "https://lh3.googleusercontent.com/a/ACg8ocJIlu9BEdxUnYB4wZC7YCYF98XAvXQ8Y1kIOA0coy6y1pgWiA=s64",
+                "displayName": "Richard Mabbun",
+                "emailAddress": "richard@1altx.com",
+                "permissionId": "09086486721510054901"
+              },
+              "linkShareMetadata": {
+                "securityUpdateEnabled": true,
+                "securityUpdateEligible": false
+              },
+              "downloadRestrictions": {
+                "itemDownloadRestriction": {
+                  "restrictedForReaders": false,
+                  "restrictedForWriters": false
+                },
+                "effectiveDownloadRestrictionWithContext": {
+                  "restrictedForReaders": false,
+                  "restrictedForWriters": false
+                }
+              },
+              "viewersCanCopyContent": true,
+              "clientEncryptionDetails": {
+                "decryptionMetadata": {}
+              },
+              "copyRequiresWriterPermission": false,
+              "inheritedPermissionsDisabled": false
+            },
+            "25": {
+              "id": "16UaXyTxM0B1y53qAhJLoYHw6JeJNQzA31dP5PHJ8Rqc",
+              "kind": "drive#file",
+              "name": "Brief_TEST-001_v1_20260509",
+              "size": "1511",
+              "owners": [
+                {
+                  "me": true,
+                  "kind": "drive#user",
+                  "photoLink": "https://lh3.googleusercontent.com/a/ACg8ocJIlu9BEdxUnYB4wZC7YCYF98XAvXQ8Y1kIOA0coy6y1pgWiA=s64",
+                  "displayName": "Richard Mabbun",
+                  "emailAddress": "richard@1altx.com",
+                  "permissionId": "09086486721510054901"
+                }
+              ],
+              "shared": true,
+              "spaces": [
+                "drive"
+              ],
+              "parents": [
+                "1tst1vRaFDk7Y2YFx2ihdYiNlzKwi56Zz"
+              ],
+              "starred": false,
+              "trashed": false,
+              "version": "4",
+              "iconLink": "https://drive-thirdparty.googleusercontent.com/16/type/application/vnd.google-apps.document",
+              "mimeType": "application/vnd.google-apps.document",
+              "ownedByMe": true,
+              "viewedByMe": true,
+              "createdTime": "2026-05-09T23:27:04.762Z",
+              "exportLinks": {
+                "text/html": "https://docs.google.com/feeds/download/documents/export/Export?id=16UaXyTxM0B1y53qAhJLoYHw6JeJNQzA31...",
+                "text/plain": "https://docs.google.com/feeds/download/documents/export/Export?id=16UaXyTxM0B1y53qAhJLoYHw6JeJNQzA31...",
+                "text/markdown": "https://docs.google.com/feeds/download/documents/export/Export?id=16UaXyTxM0B1y53qAhJLoYHw6JeJNQzA31...",
+                "application/pdf": "https://docs.google.com/feeds/download/documents/export/Export?id=16UaXyTxM0B1y53qAhJLoYHw6JeJNQzA31...",
+                "application/rtf": "https://docs.google.com/feeds/download/documents/export/Export?id=16UaXyTxM0B1y53qAhJLoYHw6JeJNQzA31...",
+                "application/zip": "https://docs.google.com/feeds/download/documents/export/Export?id=16UaXyTxM0B1y53qAhJLoYHw6JeJNQzA31...",
+                "text/x-markdown": "https://docs.google.com/feeds/download/documents/export/Export?id=16UaXyTxM0B1y53qAhJLoYHw6JeJNQzA31...",
+                "application/epub+zip": "https://docs.google.com/feeds/download/documents/export/Export?id=16UaXyTxM0B1y53qAhJLoYHw6JeJNQzA31...",
+                "application/vnd.oasis.opendocument.text": "https://docs.google.com/feeds/download/documents/export/Export?id=16UaXyTxM0B1y53qAhJLoYHw6JeJNQzA31...",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "https://docs.google.com/feeds/download/documents/export/Export?id=16UaXyTxM0B1y53qAhJLoYHw6JeJNQzA31..."
+              },
+              "permissions": [
+                {
+                  "id": "09086486721510054901",
+                  "kind": "drive#permission",
+                  "role": "owner",
+                  "type": "user",
+                  "deleted": false,
+                  "photoLink": "https://lh3.googleusercontent.com/a/ACg8ocJIlu9BEdxUnYB4wZC7YCYF98XAvXQ8Y1kIOA0coy6y1pgWiA=s64",
+                  "displayName": "Richard Mabbun",
+                  "emailAddress": "richard@1altx.com",
+                  "pendingOwner": false,
+                  "permissionDetails": [
+                    {
+                      "role": "owner",
+                      "inherited": true,
+                      "permissionType": "file"
+                    }
+                  ],
+                  "allowFileDiscovery": null
+                }
+              ],
+              "webViewLink": "https://docs.google.com/document/d/16UaXyTxM0B1y53qAhJLoYHw6JeJNQzA31dP5PHJ8Rqc/edit?usp=drivesdk",
+              "capabilities": {
+                "canCopy": true,
+                "canEdit": true,
+                "canShare": true,
+                "canTrash": true,
+                "canDelete": true,
+                "canRename": true,
+                "canComment": true,
+                "canUntrash": true,
+                "canDownload": true,
+                "canReadLabels": false,
+                "canAddChildren": false,
+                "canListChildren": false,
+                "canModifyLabels": false,
+                "canModifyContent": true,
+                "canReadRevisions": true,
+                "canStartApproval": false,
+                "canRemoveChildren": false,
+                "canAcceptOwnership": false,
+                "canAddMyDriveParent": false,
+                "canMoveItemOutOfDrive": true,
+                "canMoveItemWithinDrive": true,
+                "canRemoveMyDriveParent": true,
+                "canMoveItemIntoTeamDrive": true,
+                "canMoveChildrenWithinDrive": false,
+                "canModifyContentRestriction": true,
+                "canRemoveContentRestriction": false,
+                "canEnableInheritedPermissions": true,
+                "canChangeSecurityUpdateEnabled": false,
+                "canChangeViewersCanCopyContent": true,
+                "canDisableInheritedPermissions": false,
+                "canChangeItemDownloadRestriction": true,
+                "canModifyOwnerContentRestriction": true,
+                "canModifyEditorContentRestriction": true,
+                "canChangeCopyRequiresWriterPermission": true
+              },
+              "hasThumbnail": true,
+              "modifiedByMe": true,
+              "modifiedTime": "2026-05-09T23:27:04.762Z",
+              "permissionIds": [
+                "anyoneWithLink"
+              ],
+              "thumbnailLink": "https://lh3.googleusercontent.com/drive-storage/AJQWtBOtbbvXcb0gWQ2eDEPgTa6OntoCtLa7wlu-iG2tH9m_YfQm...",
+              "quotaBytesUsed": "1511",
+              "viewedByMeTime": "2026-04-28T16:18:51.291Z",
+              "isAppAuthorized": true,
+              "writersCanShare": true,
+              "modifiedByMeTime": "2026-05-09T23:27:04.762Z",
+              "thumbnailVersion": "1",
+              "explicitlyTrashed": false,
+              "lastModifyingUser": {
+                "me": true,
+                "kind": "drive#user",
+                "photoLink": "https://lh3.googleusercontent.com/a/ACg8ocJIlu9BEdxUnYB4wZC7YCYF98XAvXQ8Y1kIOA0coy6y1pgWiA=s64",
+                "displayName": "Richard Mabbun",
+                "emailAddress": "richard@1altx.com",
+                "permissionId": "09086486721510054901"
+              },
+              "linkShareMetadata": {
+                "securityUpdateEnabled": true,
+                "securityUpdateEligible": false
+              },
+              "downloadRestrictions": {
+                "itemDownloadRestriction": {
+                  "restrictedForReaders": false,
+                  "restrictedForWriters": false
+                },
+                "effectiveDownloadRestrictionWithContext": {
+                  "restrictedForReaders": false,
+                  "restrictedForWriters": false
+                }
+              },
+              "viewersCanCopyContent": true,
+              "clientEncryptionDetails": {
+                "decryptionMetadata": {}
+              },
+              "copyRequiresWriterPermission": false,
+              "inheritedPermissionsDisabled": false
+            },
+            "29": {
+              "script": "Feeling overwhelmed by the content creation grind? <break time='0.6s'/> You're not alone. <break tim...",
+              "caption": "Content creation doesn't have to be overwhelming. Discover how AI can transform your workflow and ke..."
+            },
+            "30": {
+              "line_by_line": "Feeling overwhelmed by the content creation grind? | Show a stressed entrepreneur at a desk cluttere...",
+              "emotional_open": "The viewer starts the video feeling overwhelmed and burdened by the demands of content creation. The...",
+              "viewer_profile": "The viewers are coaches and service-based entrepreneurs who are familiar with the demands of content...",
+              "arc_description": "The emotional journey begins with the viewer feeling a sense of overwhelm and frustration with their...",
+              "emotional_close": "By the final frame, the viewer feels relieved and excited, having been introduced to a solution that...",
+              "review_priorities": "• Ensure transitions between emotional beats are smooth\n• Confirm tone is confident, conversational,...",
+              "editing_directives": "Pacing:\nMaintain a steady, conversational pace, allowing pauses for breaks to emphasize key points a..."
+            }
+          }
+        },
+        "scenario": {
+          "dlq": false,
+          "slots": null,
+          "dataloss": false,
+          "maxErrors": 3,
+          "autoCommit": true,
+          "roundtrips": 1,
+          "sequential": true,
+          "confidential": false,
+          "freshVariables": false,
+          "autoCommitTriggerLast": true
+        }
+      }
+    },
+    "scheduling": {
+      "type": "indefinitely",
+      "interval": 900
+    },
+    "concept": false,
+    "created": "2026-04-28T20:06:24.552Z",
+    "last_edit": "2026-05-10T15:06:27.542Z",
+    "metadata": {
+      "input_spec": [],
+      "output_spec": []
+    },
+    "idSequence": 31
+  }
+}

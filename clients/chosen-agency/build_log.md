@@ -414,3 +414,66 @@ Pre-change blueprints saved for rollback:
 - `clients/chosen-agency/build_log.md` (this entry)
 - `clients/chosen-agency/make-blueprints/v1_4894796_backup_20260510-150522.json` (new)
 - `clients/chosen-agency/make-blueprints/webhook_5020000_backup_20260510-150522.json` (new)
+
+
+---
+
+## TASK-20260510-CHOSEN-008 — ElevenLabs Restoration
+**Status:** DONE (end-to-end verified)
+**Date:** 2026-05-10
+**Agent:** Forge (with Richard supervision)
+
+### Why
+SOW Section 9 lists ElevenLabs as "Mandatory V1." Build_log review showed CHOSEN-004 originally added ElevenLabs TTS to scenario 4894796, but at some point between CHOSEN-004 and today the modules were removed. Pre-CHOSEN-007 backup confirmed V1 had no ElevenLabs modules at start of this session — removal happened earlier (no commit explicitly logs it). HeyGen's built-in TTS was used instead with hardcoded voice_id `a9c42ba3...`. Erika needs configurable voices per row, which only ElevenLabs supports through the Override Voice ID + System Settings architecture.
+
+### Modules added (Route 0, between M6 and M10)
+- **M7** — `http:ActionSendData` — ElevenLabs: Generate audio
+  - URL: `https://api.elevenlabs.io/v1/text-to-speech/{{2.effective_voice_id}}`
+  - Header: `xi-api-key: sk_96777b...`
+  - Body: text from `{{29.script}}` (parsed OpenAI output, with `replace()` to escape quotes), model `eleven_turbo_v2_5`, default voice_settings (stability 0.5, similarity_boost 0.75)
+- **M8** — `google-drive:uploadAFile` — Drive: Upload audio
+  - Folder: `1Jkl7hDHQSvvKlSwVU8NXfXINUoZ-pOsJ` (05_ElevenLabs_Audio per SOW)
+  - Filename: `audio_{{Script ID}}_v{{Variation Number}}_{{timestamp}}.mp3`
+  - Source: `{{7.data}}` (raw audio buffer from M7)
+- **M9** — `google-sheets:updateRow` — Status → Voice Done + save URL
+  - Sheet: V1 Production Tracker, Queue tab
+  - Writes: `Status=Voice Done`, `Voice File URL={{8.webContentLink}}`, `Last Updated=now()`
+  - **Bugs fixed during port from test scenario:** corrected spreadsheetId (was leading-slash + old test sheet), Title Case column names, added `sheetName: "Queue"`, added `Last Updated` field
+
+### Module modified
+- **M10** (HeyGen Create) — voice section changed:
+  - **Before:** `"voice": { "type": "text", "input_text": "{{29.script}}", "voice_id": "a9c42ba3dd4b441eac3fb3221c6fcf59" }` (HeyGen TTS, hardcoded voice)
+  - **After:** `"voice": { "type": "audio", "audio_url": "{{8.webContentLink}}" }` (uses ElevenLabs audio from M8)
+  - Callback config (`callback_id`, `callback_url`) preserved from CHOSEN-007.
+
+### Override pattern restored
+M2 SetVariables already computes `effective_voice_id = ifempty(ifempty(Override Voice ID; Voice ID); "IuxDTLynYdvisya7jrK5")`. Now this variable actually gets used (in M7's URL path). Per-row voice overrides + System Settings defaults + fallback voice all functional.
+
+### Drive folder correction
+Original test scenario M8 uploaded audio to Chosen Agency root (`1xCplt3J0RNAPwDpWyjpqqXXTeTf3USPb`). New M8 uploads to `05_ElevenLabs_Audio` folder per SOW Section 7. Audio files now organized correctly.
+
+### Test result (row 3 — TEST-HP-001)
+Reset Status=Queued, cleared system columns. Ran V1 once.
+- V1 execution: 33s, 15 ops (was 12 before, +3 new modules) — no errors
+- Voice File URL populated: `https://drive.google.com/uc?id=1RDUBl4l06P-HQkOXd2OXvCJqBXDhY06c&export=download` ✅
+- Render Job ID: `44a6d417b5dc404ab5c3c61a59fddf22` ✅
+- HeyGen webhook fired → Status flipped to Done with Raw Video Link ✅
+- Total wall clock: ~6 min from V1 trigger to Status=Done
+
+### Module count
+- Pre-CHOSEN-008: 14 modules
+- Post-CHOSEN-008: 17 modules (route 0 has 13, route 1 has 1, top-level has 3)
+- Used packages: 14 → 17
+
+### Backup
+- `clients/chosen-agency/make-blueprints/v1_4894796_backup_20260510-162852.json` (pre-CHOSEN-008)
+
+### Status enum deviation (still present, pre-existing)
+SOW Section 5 enum: `Queued, Processing, Rendering, Ready for Editing, Editing, Ready for QA, Done, Error`. V1 also writes intermediate states `Script Done` (M6) and `Voice Done` (M9 — new). These aren't in the SOW enum but provide useful operator visibility during debugging. The Status dropdown in the sheet may accept these as ad-hoc values (no validation rejection observed). If Erika requires strict enum compliance, M6 and M9 status values can be removed (just write the data fields without status changes); the row still ends at `Done` via the webhook.
+
+### Still open after this session (unchanged from CHOSEN-007 list)
+1. Render Checker scenario as backstop for missed webhook callbacks
+2. Error handlers on M5, M23, M7, M8, M10 modules
+3. HeyGen + ElevenLabs API keys hardcoded — should move to Make connections
+4. Duplicate gate (M3 Route 1) filter references undefined `row_hash` — latent bug, never fires
+5. Loom walkthroughs — Richard's task
