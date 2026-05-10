@@ -705,3 +705,58 @@ Original CHOSEN-006 field map predated CHOSEN-007/008/009 architecture changes a
 
 ### Build is complete from Forge's side
 Everything that can be automated is automated. Everything that requires Richard's hands is documented step-by-step. No more decisions required from Richard before delivery.
+
+
+---
+
+## TASK-20260510-CHOSEN-008 — Render Checker activation + intake form delivery
+**Status:** DONE
+**Date:** 2026-05-10
+**Agent:** Forge
+
+### Summary
+Fixed Render Checker scenario invalid state, validated end-to-end, and added the intake form deliverable (form HTML + 2 supporting Make scenarios) to the repo.
+
+### Render Checker (5021116) fixes
+The scenario was created earlier in the day in an `isinvalid: true, islinked: false` state. Two missing pieces:
+1. M2 (`http:ActionSendData`) was missing the required `parameters` block (`handleErrors`, `useNewZLibDeCompress`).
+2. M1 trigger and route update modules used `mapper.from = "drive"`. V1 uses `mapper.from = "share"`. The "drive" value broke connection linkage — Make couldn't resolve the OAuth account.
+
+After patch: `isinvalid: false, islinked: true`. Activated. Two test runs (auto-fired + manual) both `status: 1`, 2 ops each. Working as the safety-net poll for any HeyGen callbacks the webhook missed.
+
+### Beyond-scope additions delivered today (now in repo)
+1. **Intake Form Receiver scenario (5021573)** — webhook `https://hook.us2.make.com/30h80b30koqjpmd2xknjxrrr686qkxcr` receives form POST → adds Queue row → triggers V1 via Make API.
+2. **HeyGen Avatar Lister scenario (5021656)** — webhook `https://hook.us2.make.com/axqmbdvrrgohpd4h59xg61sqrfs8tnuk` proxies HeyGen `/v2/avatars` for the form's avatar picker.
+3. **`clients/chosen-agency/intake-form.html`** — branded static HTML form. Auto-fetches and renders 7 curated HeyGen avatars with preview images + name/voice cards. Configurable via two `const` declarations at top of the script block (webhook URLs) and one `const` array (recommended avatar IDs).
+4. **V1 schedule changed to on-demand.** Eliminates spurious `BundleValidationError` entries that occurred on empty-queue polls every 5/15 min. V1 now fires only when intake form posts a brief.
+
+### Why these are beyond scope
+The original SOW (Section 11) lists 11 deliverables. None mention an intake form, an avatar discovery API, or webhook-driven scheduling. Erika's spec assumes operators manually populate the Queue tab. The intake form is a productized usability layer, not a contract item.
+
+These were added during the build day in response to Richard wanting to make the system "a little more useful." They make the system polished and reusable across 1AltX/dakona projects, but should not be billed under the Chosen Agency SOW.
+
+### Files updated
+- `clients/chosen-agency/docs/credential_map.md` — appended Section 6 with the new scenarios + form + handoff notes
+- `clients/chosen-agency/intake-form.html` — new
+
+### Scope vs. delivered scorecard
+| SOW Section 11 deliverable | Status |
+|---|---|
+| 1. Sheet backend | DONE |
+| 2. Doc templates | DONE |
+| 3. Make scenarios in approved phase scope | DONE (3 scenarios per SOW + 2 bonus) |
+| 4. API connections configured | DONE (with handoff procedure for keys) |
+| 5. Field map | DONE |
+| 6. Credential map | DONE |
+| 7. Loom: full system walkthrough | NOT YET RECORDED |
+| 8. Loom: per-scenario walkthroughs | NOT YET RECORDED |
+| 9. Operator SOP | DONE |
+| 10. Troubleshooting | DONE |
+| 11. Preserved test rows | DONE (20+ test rows completed end-to-end) |
+
+### Remaining to ship
+1. Record 3 Loom walkthroughs per `docs/loom_scripts.md` (~30 min)
+2. Send delivery message per `docs/delivery_message.md` (paste-ready, just needs Loom URLs)
+3. Wait for Erika's acceptance + her credentials
+4. Run 5-step credential handoff per `docs/credential_map.md` Section 4
+5. Apply for milestone release

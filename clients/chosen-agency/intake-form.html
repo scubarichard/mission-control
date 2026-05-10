@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Content Brief — Intake</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --paper: #f5f1e8;
+    --paper-2: #ebe5d3;
+    --accent: #c2410c;
+    --accent-soft: #fed7aa;
+    --rule: #1a1a1a;
+    --muted: #6b6b6b;
+    --error: #b91c1c;
+    --success: #15803d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 64px 32px 96px; }
+  header { border-bottom: 2px solid var(--rule); padding-bottom: 24px; margin-bottom: 48px; position: relative; }
+  .eyebrow { font-family: 'IBM Plex Sans', sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; font-weight: 600; color: var(--accent); margin-bottom: 12px; }
+  h1 { font-family: 'Fraunces', serif; font-weight: 400; font-size: clamp(40px, 6vw, 64px); line-height: 0.95; letter-spacing: -0.02em; margin-bottom: 16px; }
+  h1 em { font-style: italic; font-weight: 400; color: var(--accent); }
+  .lede { font-size: 17px; color: var(--muted); max-width: 540px; }
+  .meta { position: absolute; top: 0; right: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--muted); }
+  section { margin-bottom: 40px; }
+  .section-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--rule); }
+  .section-num { font-family: 'Fraunces', serif; font-size: 14px; font-weight: 500; color: var(--accent); }
+  .section-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 500; letter-spacing: -0.01em; }
+  .field { margin-bottom: 24px; }
+  .field-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 600px) { .field-grid-2 { grid-template-columns: 1fr; } }
+  label { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  label .req { color: var(--accent); }
+  label .hint { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--muted); font-size: 12px; margin-left: 6px; }
+  input[type="text"], textarea, select { width: 100%; background: transparent; border: none; border-bottom: 1.5px solid var(--rule); padding: 8px 0 12px; font-family: 'IBM Plex Sans', sans-serif; font-size: 16px; color: var(--ink); outline: none; transition: border-color 0.15s, padding-bottom 0.15s; border-radius: 0; }
+  input[type="text"]:focus, textarea:focus, select:focus { border-bottom-color: var(--accent); border-bottom-width: 2px; padding-bottom: 11px; }
+  textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
+  details.advanced { border-top: 1px dashed var(--rule); padding-top: 32px; margin-top: 16px; }
+  details.advanced > summary { cursor: pointer; font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; margin-bottom: 24px; list-style: none; display: flex; align-items: center; gap: 12px; user-select: none; }
+  details.advanced > summary::-webkit-details-marker { display: none; }
+  details.advanced > summary::before { content: "+"; font-family: 'IBM Plex Sans', sans-serif; font-size: 24px; font-weight: 300; line-height: 1; color: var(--accent); }
+  details.advanced[open] > summary::before { content: "−"; }
+  .actions { margin-top: 56px; padding-top: 32px; border-top: 2px solid var(--rule); display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  button.submit { background: var(--ink); color: var(--paper); border: 2px solid var(--ink); padding: 18px 40px; font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; cursor: pointer; transition: all 0.2s; }
+  button.submit:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--ink); }
+  button.submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  .actions-meta { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .status { margin-top: 24px; padding: 20px 24px; border-left: 4px solid var(--accent); background: var(--paper-2); font-size: 15px; display: none; }
+  .status.show { display: block; }
+  .status.success { border-left-color: var(--success); }
+  .status.error { border-left-color: var(--error); }
+  .status strong { display: block; font-family: 'Fraunces', serif; font-size: 18px; margin-bottom: 6px; font-weight: 500; }
+  .status code { background: rgba(0,0,0,0.06); padding: 2px 6px; font-size: 13px; font-family: monospace; }
+  .picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-top: 4px; }
+  .picker input[type="radio"] { position: absolute; opacity: 0; pointer-events: none; }
+  .picker label.card { display: block; border: 1.5px solid var(--rule); padding: 16px 18px; cursor: pointer; background: transparent; transition: all 0.15s; text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 400; margin: 0; line-height: 1.3; }
+  .picker label.card:hover { background: var(--paper-2); }
+  .picker input[type="radio"]:checked + label.card { border-color: var(--accent); background: var(--accent); color: var(--paper); border-width: 2px; padding: 15.5px 17.5px; }
+  .picker .card-label { display: block; font-family: 'Fraunces', serif; font-size: 17px; font-weight: 500; margin-bottom: 4px; letter-spacing: -0.01em; }
+  .picker .card-meta { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.65; font-family: 'IBM Plex Sans', sans-serif; font-weight: 500; }
+  .picker label.card.has-preview { padding: 0; overflow: hidden; }
+  .picker input[type="radio"]:checked + label.card.has-preview { padding: 0; }
+  .picker .preview-img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; background: var(--paper-2); }
+  .picker .preview-text { padding: 12px 14px; }
+  #avatarHint.loaded { color: var(--success); }
+  #avatarHint.error { color: var(--error); }
+  .custom-id { display: none; margin-top: 20px; }
+  .custom-id.show { display: block; }
+  footer { margin-top: 80px; padding-top: 24px; border-top: 1px solid var(--muted); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="meta">Pipeline V1</div>
+    <div class="eyebrow">Chosen Agency · Content Brief</div>
+    <h1>Submit a <em>brief</em>.</h1>
+    <p class="lede">Fill in the eight fields below. We'll generate a polished script, a detailed editor brief, voice audio, and an avatar render — usually within fifteen minutes of hitting submit.</p>
+  </header>
+
+  <form id="briefForm" novalidate>
+    <section>
+      <div class="section-head"><span class="section-num">01</span><span class="section-title">Identity</span></div>
+      <div class="field-grid-2">
+        <div class="field">
+          <label for="script_name">Script Name <span class="req">*</span></label>
+          <input type="text" id="script_name" name="script_name" required placeholder="e.g. The Hidden ROI of Repurposing">
+        </div>
+        <div class="field">
+          <label for="variation_number">Variation # <span class="hint">defaults to 1</span></label>
+          <input type="text" id="variation_number" name="variation_number" placeholder="1" inputmode="numeric">
+        </div>
+      </div>
+      <div class="field">
+        <label for="script_id">Script ID <span class="hint">auto-generated if blank</span></label>
+        <input type="text" id="script_id" name="script_id" placeholder="e.g. CA-001 or auto">
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head"><span class="section-num">02</span><span class="section-title">Talent</span></div>
+      <div class="field">
+        <label>Avatar <span class="hint" id="avatarHint">loading from HeyGen…</span></label>
+        <div class="picker" id="avatarPicker">
+          <input type="radio" id="av-default" name="avatar_choice" value="" checked>
+          <label for="av-default" class="card"><span class="card-label">Default</span><span class="card-meta">use system default</span></label>
+          <input type="radio" id="av-custom" name="avatar_choice" value="__custom__">
+          <label for="av-custom" class="card"><span class="card-label">Custom ID</span><span class="card-meta">Enter HeyGen ID</span></label>
+        </div>
+        <div class="custom-id" id="avatarCustomWrap">
+          <label for="override_avatar_id_custom">HeyGen Avatar / Talking Photo ID</label>
+          <input type="text" id="override_avatar_id_custom" placeholder="paste HeyGen ID">
+        </div>
+      </div>
+      <div class="field">
+        <label>Voice</label>
+        <div class="picker" id="voicePicker">
+          <input type="radio" id="vc-default" name="voice_choice" value="" checked>
+          <label for="vc-default" class="card"><span class="card-label">Default</span><span class="card-meta">system default voice</span></label>
+          <input type="radio" id="vc-custom" name="voice_choice" value="__custom__">
+          <label for="vc-custom" class="card"><span class="card-label">Custom ID</span><span class="card-meta">Enter ElevenLabs ID</span></label>
+        </div>
+        <div class="custom-id" id="voiceCustomWrap">
+          <label for="override_voice_id_custom">ElevenLabs Voice ID</label>
+          <input type="text" id="override_voice_id_custom" placeholder="paste ElevenLabs voice ID">
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head"><span class="section-num">03</span><span class="section-title">Audience &amp; Belief Shift</span></div>
+      <div class="field">
+        <label for="audience">Audience <span class="req">*</span></label>
+        <textarea id="audience" name="audience" required placeholder="e.g. busy entrepreneurs and solopreneurs scaling past 10k/month"></textarea>
+      </div>
+      <div class="field-grid-2">
+        <div class="field">
+          <label for="current_belief">Current Belief <span class="req">*</span></label>
+          <textarea id="current_belief" name="current_belief" required placeholder="What they believe now"></textarea>
+        </div>
+        <div class="field">
+          <label for="desired_belief">Desired Belief <span class="req">*</span></label>
+          <textarea id="desired_belief" name="desired_belief" required placeholder="What we want them to believe after watching"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head"><span class="section-num">04</span><span class="section-title">Style, Arc &amp; Offer</span></div>
+      <div class="field-grid-2">
+        <div class="field">
+          <label for="tone">Tone <span class="req">*</span></label>
+          <input type="text" id="tone" name="tone" required placeholder="e.g. confident, direct, no-fluff">
+        </div>
+        <div class="field">
+          <label for="emotional_arc">Emotional Arc <span class="req">*</span></label>
+          <input type="text" id="emotional_arc" name="emotional_arc" required placeholder="e.g. skeptical to convinced">
+        </div>
+      </div>
+      <div class="field">
+        <label for="offer_cta">Offer / CTA <span class="req">*</span></label>
+        <input type="text" id="offer_cta" name="offer_cta" required placeholder="e.g. Book a 15-min audit at example.com">
+      </div>
+    </section>
+
+    <details class="advanced">
+      <summary>ElevenLabs fine-tuning</summary>
+      <div class="field">
+        <label for="override_tone">Override Tone <span class="hint">overrides Tone above for prompt only</span></label>
+        <input type="text" id="override_tone" name="override_tone" placeholder="leave blank for default">
+      </div>
+      <div class="field-grid-2">
+        <div class="field">
+          <label for="override_stability">Override Stability <span class="hint">0.0 – 1.0</span></label>
+          <input type="text" id="override_stability" name="override_stability" placeholder="leave blank for default">
+        </div>
+        <div class="field">
+          <label for="override_similarity">Override Similarity <span class="hint">0.0 – 1.0</span></label>
+          <input type="text" id="override_similarity" name="override_similarity" placeholder="leave blank for default">
+        </div>
+      </div>
+    </details>
+
+    <div class="actions">
+      <button type="submit" class="submit" id="submitBtn">Submit Brief →</button>
+      <span class="actions-meta">Renders typically deliver in 5–15 min</span>
+    </div>
+    <div class="status" id="status"></div>
+  </form>
+
+  <footer>
+    <span>Chosen Agency × 1AltX</span>
+    <span>Content Pipeline V1</span>
+  </footer>
+</div>
+
+<script>
+const WEBHOOK_URL = 'https://hook.us2.make.com/30h80b30koqjpmd2xknjxrrr686qkxcr';
+const AVATAR_LIST_URL = 'https://hook.us2.make.com/axqmbdvrrgohpd4h59xg61sqrfs8tnuk';
+
+const RECOMMENDED_AVATAR_IDS = [
+  'Tyler-incasualsuit-20220721',
+  'Adrian_public_3_20240312',
+  'Marcus_expressive_2024120201',
+  'Anna_public_20240108',
+  'Susan_public_2_20240328',
+  'Daisy-insuit-20220818',
+  'Caroline_Business_Sitting_Front_public',
+];
+
+const form = document.getElementById('briefForm');
+const status = document.getElementById('status');
+const submitBtn = document.getElementById('submitBtn');
+const avatarCustomWrap = document.getElementById('avatarCustomWrap');
+const voiceCustomWrap = document.getElementById('voiceCustomWrap');
+const avatarPicker = document.getElementById('avatarPicker');
+const avatarHint = document.getElementById('avatarHint');
+
+async function loadAvatars() {
+  try {
+    const res = await fetch(AVATAR_LIST_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    const byId = new Map();
+    if (json.data?.avatars) for (const a of json.data.avatars) byId.set(a.avatar_id, { id: a.avatar_id, name: a.avatar_name, preview: a.preview_image_url });
+    if (json.data?.talking_photos) for (const p of json.data.talking_photos) if (!byId.has(p.talking_photo_id)) byId.set(p.talking_photo_id, { id: p.talking_photo_id, name: p.talking_photo_name, preview: p.preview_image_url });
+    const recommended = RECOMMENDED_AVATAR_IDS.map(id => byId.get(id)).filter(Boolean);
+    if (recommended.length === 0) { avatarHint.textContent = 'no recommended avatars resolved'; avatarHint.classList.add('error'); return; }
+    const customRadio = document.getElementById('av-custom');
+    recommended.forEach((a, i) => {
+      const slug = `av-${i}-${a.id.substring(0, 8)}`;
+      const radio = document.createElement('input'); radio.type = 'radio'; radio.id = slug; radio.name = 'avatar_choice'; radio.value = a.id;
+      const label = document.createElement('label'); label.htmlFor = slug; label.className = 'card has-preview';
+      if (a.preview) { const img = document.createElement('img'); img.className = 'preview-img'; img.src = a.preview; img.alt = a.name; img.loading = 'lazy'; label.appendChild(img); }
+      const tw = document.createElement('span'); tw.className = 'preview-text';
+      const ns = document.createElement('span'); ns.className = 'card-label'; ns.textContent = a.name;
+      const ms = document.createElement('span'); ms.className = 'card-meta'; ms.textContent = 'recommended';
+      tw.appendChild(ns); tw.appendChild(ms); label.appendChild(tw);
+      avatarPicker.insertBefore(radio, customRadio); avatarPicker.insertBefore(label, customRadio);
+      radio.addEventListener('change', e => { avatarCustomWrap.classList.toggle('show', e.target.value === '__custom__'); });
+    });
+    avatarHint.textContent = `${recommended.length} avatars`; avatarHint.classList.add('loaded');
+  } catch (err) { avatarHint.textContent = `failed: ${err.message}`; avatarHint.classList.add('error'); }
+}
+loadAvatars();
+
+document.querySelectorAll('input[name="avatar_choice"]').forEach(r => r.addEventListener('change', e => avatarCustomWrap.classList.toggle('show', e.target.value === '__custom__')));
+document.querySelectorAll('input[name="voice_choice"]').forEach(r => r.addEventListener('change', e => voiceCustomWrap.classList.toggle('show', e.target.value === '__custom__')));
+
+function slugify(s) { return s.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').substring(0, 40); }
+function genScriptId(name) { const ts = new Date().toISOString().slice(0, 16).replace(/[-T:]/g, ''); return `CA-${slugify(name) || 'brief'}-${ts}`; }
+function resolvePickerValue(name, customInputId) { const c = document.querySelector(`input[name="${name}"]:checked`); if (!c) return ''; if (c.value === '__custom__') return document.getElementById(customInputId).value.trim(); return c.value; }
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  status.classList.remove('show', 'success', 'error');
+  const data = Object.fromEntries(new FormData(form));
+  const required = ['script_name', 'audience', 'current_belief', 'desired_belief', 'tone', 'emotional_arc', 'offer_cta'];
+  const missing = required.filter(k => !data[k] || !data[k].trim());
+  if (missing.length) { status.innerHTML = `<strong>Missing fields</strong>Please fill in: ${missing.join(', ')}`; status.classList.add('show', 'error'); return; }
+  data.override_avatar_id = resolvePickerValue('avatar_choice', 'override_avatar_id_custom');
+  data.override_voice_id = resolvePickerValue('voice_choice', 'override_voice_id_custom');
+  delete data.avatar_choice; delete data.voice_choice;
+  if (!data.script_id || !data.script_id.trim()) data.script_id = genScriptId(data.script_name);
+  if (!data.variation_number || !data.variation_number.trim()) data.variation_number = '1';
+  submitBtn.disabled = true; submitBtn.textContent = 'Submitting…';
+  try {
+    const res = await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    status.innerHTML = `<strong>Brief submitted</strong>Script ID: <code>${data.script_id}</code> — the pipeline is running. Watch your sheet for status updates. Render usually arrives within 5–15 minutes.`;
+    status.classList.add('show', 'success');
+    form.reset(); avatarCustomWrap.classList.remove('show'); voiceCustomWrap.classList.remove('show');
+  } catch (err) {
+    status.innerHTML = `<strong>Submission failed</strong>${err.message}. Try again, or contact your operator if the issue persists.`;
+    status.classList.add('show', 'error');
+  } finally { submitBtn.disabled = false; submitBtn.textContent = 'Submit Brief →'; }
+});
+</script>
+</body>
+</html>

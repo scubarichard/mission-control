@@ -91,3 +91,34 @@ When Erika is ready to take over the system, these 5 steps transfer all ownershi
 | ElevenLabs Voice ID | `IuxDTLynYdvisya7jrK5` | System Settings tab + M2 hardcoded default |
 | HeyGen Avatar ID | `Adrian_public_3_20240312` | M2 hardcoded default |
 | OpenAI model | `gpt-4o` | M2 variable `openai_model` |
+
+---
+
+## 6. Additions — 2026-05-10
+
+### New scenarios beyond original V1 scope
+
+| Scenario | ID | Webhook URL / Trigger | Purpose | Status |
+|---|---|---|---|---|
+| Chosen Agency - Intake Form Receiver | 5021573 | https://hook.us2.make.com/30h80b30koqjpmd2xknjxrrr686qkxcr | Receives form POST → adds Queue row → triggers V1 | Active |
+| HeyGen Avatar Lister | 5021656 | https://hook.us2.make.com/axqmbdvrrgohpd4h59xg61sqrfs8tnuk | Returns HeyGen avatar list to the intake form for the picker UI | Active |
+
+### Updated default avatar
+
+| Setting | Old value | Current value | Where |
+|---|---|---|---|
+| Default Avatar ID | `Adrian_public_3_20240312` | `e77c5c739e344e54af85ca96862e7ac3` (1AltX brand: "Richard at his wooden desk") | M2 hardcoded fallback |
+
+> **At handoff:** Replace this default with Erika's preferred HeyGen avatar/talking-photo ID. Step 4 of the handoff procedure already covers this.
+
+### Intake form
+
+`clients/chosen-agency/intake-form.html` (in repo) is a static HTML page that posts to scenario 5021573. Host wherever (Drive, Netlify, GitHub Pages, embedded in client portal). The form auto-fetches recommended avatars from scenario 5021656 — no maintenance needed.
+
+> **At handoff:** Erika's developer can swap in her own webhook URLs by editing the two `const` declarations at the top of the script block. No other changes required.
+
+### V1 scheduling change
+
+V1 (4894796) is now `on-demand` only — no automatic polling. It fires when the Intake Form Receiver triggers it via Make API call. This eliminates spurious "BundleValidationError" entries in execution history that occurred on empty-queue polls.
+
+> **At handoff:** If Erika wants polling back (e.g., for batch sheet uploads), change scheduling type to `indefinitely` with the desired interval. V1 logic is unchanged.
