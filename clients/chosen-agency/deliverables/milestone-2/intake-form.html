@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Content Brief — Intake</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --paper: #f5f1e8;
+    --paper-2: #ebe5d3;
+    --accent: #c2410c;
+    --accent-soft: #fed7aa;
+    --rule: #1a1a1a;
+    --muted: #6b6b6b;
+    --error: #b91c1c;
+    --success: #15803d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 64px 32px 96px;
+  }
+  header {
+    border-bottom: 2px solid var(--rule);
+    padding-bottom: 24px;
+    margin-bottom: 48px;
+    position: relative;
+  }
+  .eyebrow {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: clamp(40px, 6vw, 64px);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  h1 em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--accent);
+  }
+  .lede {
+    font-size: 17px;
+    color: var(--muted);
+    max-width: 540px;
+  }
+  .meta {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+  }
+  section {
+    margin-bottom: 40px;
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .section-num {
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--accent);
+    font-feature-settings: "tnum";
+  }
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .field {
+    margin-bottom: 24px;
+  }
+  .field-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 600px) { .field-grid-2 { grid-template-columns: 1fr; } }
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  label .req { color: var(--accent); }
+  label .hint {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--muted);
+    font-size: 12px;
+    margin-left: 6px;
+  }
+  input[type="text"], textarea, select {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--rule);
+    padding: 8px 0 12px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 16px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s, padding-bottom 0.15s;
+    border-radius: 0;
+  }
+  input[type="text"]:focus, textarea:focus, select:focus {
+    border-bottom-color: var(--accent);
+    border-bottom-width: 2px;
+    padding-bottom: 11px;
+  }
+  textarea {
+    resize: vertical;
+    min-height: 64px;
+    line-height: 1.5;
+  }
+  .hint-text {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 6px;
+    font-style: italic;
+  }
+  details.advanced {
+    border-top: 1px dashed var(--rule);
+    padding-top: 32px;
+    margin-top: 16px;
+  }
+  details.advanced > summary {
+    cursor: pointer;
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 24px;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    user-select: none;
+  }
+  details.advanced > summary::-webkit-details-marker { display: none; }
+  details.advanced > summary::before {
+    content: "+";
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 24px;
+    font-weight: 300;
+    line-height: 1;
+    color: var(--accent);
+    transition: transform 0.2s;
+  }
+  details.advanced[open] > summary::before {
+    content: "−";
+  }
+  .actions {
+    margin-top: 56px;
+    padding-top: 32px;
+    border-top: 2px solid var(--rule);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  button.submit {
+    background: var(--ink);
+    color: var(--paper);
+    border: 2px solid var(--ink);
+    padding: 18px 40px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  button.submit:hover:not(:disabled) {
+    background: var(--accent);
+    border-color: var(--accent);
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  button.submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .actions-meta {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .status {
+    margin-top: 24px;
+    padding: 20px 24px;
+    border-left: 4px solid var(--accent);
+    background: var(--paper-2);
+    font-size: 15px;
+    display: none;
+  }
+  .status.show { display: block; }
+  .status.success { border-left-color: var(--success); }
+  .status.error { border-left-color: var(--error); }
+  .status strong {
+    display: block;
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .status code {
+    background: rgba(0,0,0,0.06);
+    padding: 2px 6px;
+    font-size: 13px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .picker {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+    margin-top: 4px;
+  }
+  .picker input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .picker label.card {
+    display: block;
+    border: 1.5px solid var(--rule);
+    padding: 16px 18px;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.15s;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 14px;
+    font-weight: 400;
+    margin: 0;
+    line-height: 1.3;
+  }
+  .picker label.card:hover {
+    background: var(--paper-2);
+  }
+  .picker input[type="radio"]:checked + label.card {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--paper);
+    border-width: 2px;
+    padding: 15.5px 17.5px;
+  }
+  .picker .card-label {
+    display: block;
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .picker .card-meta {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.65;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 500;
+  }
+  .picker label.card.has-preview {
+    padding: 0;
+    overflow: hidden;
+  }
+  .picker input[type="radio"]:checked + label.card.has-preview {
+    padding: 0;
+  }
+  .picker .preview-img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+    background: var(--paper-2);
+  }
+  .picker .preview-text {
+    padding: 12px 14px;
+  }
+  #avatarHint.loaded, #voiceHint.loaded { color: var(--success); }
+  #avatarHint.error, #voiceHint.error { color: var(--error); }
+  .custom-id {
+    display: none;
+    margin-top: 20px;
+  }
+  .custom-id.show { display: block; }
+  footer {
+    margin-top: 80px;
+    padding-top: 24px;
+    border-top: 1px solid var(--muted);
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="meta">Pipeline V1</div>
+    <div class="eyebrow">Chosen Agency · Content Brief</div>
+    <h1>Submit a <em>brief</em>.</h1>
+    <p class="lede">Fill in the eight fields below. We'll generate a polished script, a detailed editor brief, voice audio, and an avatar render — usually within fifteen minutes of hitting submit.</p>
+  </header>
+
+  <form id="briefForm" novalidate>
+    <section>
+      <div class="section-head">
+        <span class="section-num">01</span>
+        <span class="section-title">Identity</span>
+      </div>
+      <div class="field-grid-2">
+        <div class="field">
+          <label for="script_name">Script Name <span class="req">*</span></label>
+          <input type="text" id="script_name" name="script_name" required placeholder="e.g. The Hidden ROI of Repurposing">
+        </div>
+        <div class="field">
+          <label for="variation_number">Variation # <span class="hint">defaults to 1</span></label>
+          <input type="text" id="variation_number" name="variation_number" placeholder="1" inputmode="numeric">
+        </div>
+      </div>
+      <div class="field">
+        <label for="script_id">Script ID <span class="hint">auto-generated if blank</span></label>
+        <input type="text" id="script_id" name="script_id" placeholder="e.g. CA-001 or auto">
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <span class="section-num">02</span>
+        <span class="section-title">Talent</span>
+      </div>
+
+      <div class="field">
+        <label>Avatar <span class="hint" id="avatarHint">loading from HeyGen…</span></label>
+        <div class="picker" id="avatarPicker">
+          <input type="radio" id="av-default" name="avatar_choice" value="" checked>
+          <label for="av-default" class="card">
+            <span class="card-label">Default</span>
+            <span class="card-meta">use system default</span>
+          </label>
+          <input type="radio" id="av-custom" name="avatar_choice" value="__custom__">
+          <label for="av-custom" class="card">
+            <span class="card-label">Custom ID</span>
+            <span class="card-meta">Enter HeyGen ID</span>
+          </label>
+        </div>
+        <div class="custom-id" id="avatarCustomWrap">
+          <label for="override_avatar_id_custom">HeyGen Avatar / Talking Photo ID</label>
+          <input type="text" id="override_avatar_id_custom" placeholder="paste HeyGen ID">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Voice <span class="hint" id="voiceHint">loading…</span></label>
+        <div class="picker" id="voicePicker">
+          <input type="radio" id="vc-default" name="voice_choice" value="" checked>
+          <label for="vc-default" class="card">
+            <span class="card-label">Default</span>
+            <span class="card-meta">use system default</span>
+          </label>
+          <input type="radio" id="vc-custom" name="voice_choice" value="__custom__">
+          <label for="vc-custom" class="card">
+            <span class="card-label">Custom ID</span>
+            <span class="card-meta">Enter ElevenLabs ID</span>
+          </label>
+        </div>
+        <div class="custom-id" id="voiceCustomWrap">
+          <label for="override_voice_id_custom">ElevenLabs Voice ID</label>
+          <input type="text" id="override_voice_id_custom" placeholder="paste ElevenLabs voice ID">
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <span class="section-num">03</span>
+        <span class="section-title">Audience &amp; Belief Shift</span>
+      </div>
+      <div class="field">
+        <label for="audience">Audience <span class="req">*</span></label>
+        <textarea id="audience" name="audience" required placeholder="e.g. busy entrepreneurs and solopreneurs scaling past 10k/month"></textarea>
+      </div>
+      <div class="field-grid-2">
+        <div class="field">
+          <label for="current_belief">Current Belief <span class="req">*</span></label>
+          <textarea id="current_belief" name="current_belief" required placeholder="What they believe now"></textarea>
+        </div>
+        <div class="field">
+          <label for="desired_belief">Desired Belief <span class="req">*</span></label>
+          <textarea id="desired_belief" name="desired_belief" required placeholder="What we want them to believe after watching"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <span class="section-num">04</span>
+        <span class="section-title">Style, Arc &amp; Offer</span>
+      </div>
+      <div class="field-grid-2">
+        <div class="field">
+          <label for="tone">Tone <span class="req">*</span></label>
+          <input type="text" id="tone" name="tone" required placeholder="e.g. confident, direct, no-fluff">
+        </div>
+        <div class="field">
+          <label for="emotional_arc">Emotional Arc <span class="req">*</span></label>
+          <input type="text" id="emotional_arc" name="emotional_arc" required placeholder="e.g. skeptical to convinced">
+        </div>
+      </div>
+      <div class="field">
+        <label for="offer_cta">Offer / CTA <span class="req">*</span></label>
+        <input type="text" id="offer_cta" name="offer_cta" required placeholder="e.g. Book a 15-min audit at example.com">
+      </div>
+    </section>
+
+    <details class="advanced">
+      <summary>ElevenLabs fine-tuning</summary>
+      <div class="field">
+        <label for="override_tone">Override Tone <span class="hint">overrides Tone above for prompt only</span></label>
+        <input type="text" id="override_tone" name="override_tone" placeholder="leave blank for default">
+      </div>
+      <div class="field-grid-2">
+        <div class="field">
+          <label for="override_stability">Override Stability <span class="hint">0.0 – 1.0</span></label>
+          <input type="text" id="override_stability" name="override_stability" placeholder="leave blank for default">
+        </div>
+        <div class="field">
+          <label for="override_similarity">Override Similarity <span class="hint">0.0 – 1.0</span></label>
+          <input type="text" id="override_similarity" name="override_similarity" placeholder="leave blank for default">
+        </div>
+      </div>
+    </details>
+
+    <div class="actions">
+      <button type="submit" class="submit" id="submitBtn">Submit Brief →</button>
+      <span class="actions-meta">Renders typically deliver in 5–15 min</span>
+    </div>
+
+    <div class="status" id="status"></div>
+  </form>
+
+  <footer>
+    <span>Chosen Agency × 1AltX</span>
+    <span>Content Pipeline V1</span>
+  </footer>
+</div>
+
+<script>
+const WEBHOOK_URL = 'https://hook.us2.make.com/30h80b30koqjpmd2xknjxrrr686qkxcr';
+const AVATAR_LIST_URL = 'https://hook.us2.make.com/axqmbdvrrgohpd4h59xg61sqrfs8tnuk';
+
+// Pre-populated avatar + voice lists are managed in the Google Sheet:
+//   Tab "Avatars": avatar_id | display_name | description | active | sort_order | notes
+//   Tab "Voices":  voice_id  | display_name | provider    | active | sort_order | notes
+// Set active=TRUE to include in form, FALSE to hide. Sort by sort_order ascending.
+const SHEET_ID = '1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo';
+const AVATARS_GVIZ = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Avatars`;
+const VOICES_GVIZ = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Voices`;
+
+const form = document.getElementById('briefForm');
+const status = document.getElementById('status');
+const submitBtn = document.getElementById('submitBtn');
+const avatarCustomWrap = document.getElementById('avatarCustomWrap');
+const voiceCustomWrap = document.getElementById('voiceCustomWrap');
+const avatarPicker = document.getElementById('avatarPicker');
+const avatarHint = document.getElementById('avatarHint');
+const voicePicker = document.getElementById('voicePicker');
+const voiceHint = document.getElementById('voiceHint');
+
+// Parse Google's gviz JSONP-ish response into a normal array of row objects
+async function fetchGviz(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const text = await res.text();
+  // Strip JSONP wrapper: /*O_o*/\ngoogle.visualization.Query.setResponse(  ...JSON...  );
+  const jsonText = text.replace(/^[^{]*/, '').replace(/[^}]*$/, '');
+  const parsed = JSON.parse(jsonText);
+  const cols = parsed.table.cols.map(c => c.label);
+  return parsed.table.rows.map(r => {
+    const obj = {};
+    r.c.forEach((cell, i) => {
+      obj[cols[i]] = cell ? cell.v : null;
+    });
+    return obj;
+  });
+}
+
+// Fetch both HeyGen avatars + Avatars sheet, intersect, render cards
+async function loadAvatars() {
+  try {
+    const [hgRes, sheetRows] = await Promise.all([
+      fetch(AVATAR_LIST_URL).then(r => r.json()),
+      fetchGviz(AVATARS_GVIZ),
+    ]);
+
+    const byId = new Map();
+    if (hgRes.data?.avatars) {
+      for (const a of hgRes.data.avatars) {
+        byId.set(a.avatar_id, { name: a.avatar_name, preview: a.preview_image_url });
+      }
+    }
+    if (hgRes.data?.talking_photos) {
+      for (const p of hgRes.data.talking_photos) {
+        if (!byId.has(p.talking_photo_id)) {
+          byId.set(p.talking_photo_id, { name: p.talking_photo_name, preview: p.preview_image_url });
+        }
+      }
+    }
+
+    const active = sheetRows
+      .filter(r => r.avatar_id && (r.active === true || String(r.active).toUpperCase() === 'TRUE'))
+      .sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
+
+    if (active.length === 0) {
+      avatarHint.textContent = 'no active avatars in sheet';
+      avatarHint.classList.add('error');
+      return;
+    }
+
+    const customRadio = document.getElementById('av-custom');
+    let renderedCount = 0;
+
+    active.forEach((row, i) => {
+      const hg = byId.get(row.avatar_id);
+      const display = row.display_name || hg?.name || row.avatar_id.substring(0, 12);
+      const preview = hg?.preview;
+      const description = row.description || '';
+
+      const slug = `av-${i}-${row.avatar_id.substring(0, 8)}`.replace(/[^a-z0-9-]/gi, '');
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.id = slug;
+      radio.name = 'avatar_choice';
+      radio.value = row.avatar_id;
+
+      const label = document.createElement('label');
+      label.htmlFor = slug;
+      label.className = 'card has-preview';
+
+      if (preview) {
+        const img = document.createElement('img');
+        img.className = 'preview-img';
+        img.src = preview;
+        img.alt = display;
+        img.loading = 'lazy';
+        label.appendChild(img);
+      }
+
+      const textWrap = document.createElement('span');
+      textWrap.className = 'preview-text';
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'card-label';
+      nameSpan.textContent = display;
+      const descSpan = document.createElement('span');
+      descSpan.className = 'card-meta';
+      descSpan.textContent = description || (hg ? 'available' : 'unverified');
+      textWrap.appendChild(nameSpan);
+      textWrap.appendChild(descSpan);
+      label.appendChild(textWrap);
+
+      avatarPicker.insertBefore(radio, customRadio);
+      avatarPicker.insertBefore(label, customRadio);
+
+      radio.addEventListener('change', e => {
+        avatarCustomWrap.classList.toggle('show', e.target.value === '__custom__');
+      });
+
+      renderedCount++;
+    });
+
+    avatarHint.textContent = `${renderedCount} avatars`;
+    avatarHint.classList.add('loaded');
+  } catch (err) {
+    avatarHint.textContent = `failed: ${err.message}`;
+    avatarHint.classList.add('error');
+    console.error('Avatar load failed:', err);
+  }
+}
+
+async function loadVoices() {
+  try {
+    const sheetRows = await fetchGviz(VOICES_GVIZ);
+    const active = sheetRows
+      .filter(r => r.voice_id && (r.active === true || String(r.active).toUpperCase() === 'TRUE'))
+      .sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
+
+    if (active.length === 0) {
+      voiceHint.textContent = 'no active voices in sheet';
+      voiceHint.classList.add('error');
+      return;
+    }
+
+    const customRadio = document.getElementById('vc-custom');
+    active.forEach((row, i) => {
+      const slug = `vc-${i}-${row.voice_id.substring(0, 8)}`.replace(/[^a-z0-9-]/gi, '');
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.id = slug;
+      radio.name = 'voice_choice';
+      radio.value = row.voice_id;
+
+      const label = document.createElement('label');
+      label.htmlFor = slug;
+      label.className = 'card';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'card-label';
+      nameSpan.textContent = row.display_name || row.voice_id.substring(0, 12);
+      const metaSpan = document.createElement('span');
+      metaSpan.className = 'card-meta';
+      metaSpan.textContent = row.provider || 'voice';
+      label.appendChild(nameSpan);
+      label.appendChild(metaSpan);
+
+      voicePicker.insertBefore(radio, customRadio);
+      voicePicker.insertBefore(label, customRadio);
+
+      radio.addEventListener('change', e => {
+        voiceCustomWrap.classList.toggle('show', e.target.value === '__custom__');
+      });
+    });
+
+    voiceHint.textContent = `${active.length} voices`;
+    voiceHint.classList.add('loaded');
+  } catch (err) {
+    voiceHint.textContent = `failed: ${err.message}`;
+    voiceHint.classList.add('error');
+    console.error('Voice load failed:', err);
+  }
+}
+
+loadAvatars();
+loadVoices();
+
+document.querySelectorAll('input[name="avatar_choice"]').forEach(r => {
+  r.addEventListener('change', e => {
+    avatarCustomWrap.classList.toggle('show', e.target.value === '__custom__');
+  });
+});
+document.querySelectorAll('input[name="voice_choice"]').forEach(r => {
+  r.addEventListener('change', e => {
+    voiceCustomWrap.classList.toggle('show', e.target.value === '__custom__');
+  });
+});
+
+function slugify(s) {
+  return s.toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .substring(0, 40);
+}
+
+function genScriptId(name) {
+  const ts = new Date().toISOString().slice(0, 16).replace(/[-T:]/g, '');
+  const slug = slugify(name) || 'brief';
+  return `CA-${slug}-${ts}`;
+}
+
+function resolvePickerValue(name, customInputId) {
+  const checked = document.querySelector(`input[name="${name}"]:checked`);
+  if (!checked) return '';
+  if (checked.value === '__custom__') {
+    const v = document.getElementById(customInputId).value.trim();
+    return v;
+  }
+  return checked.value;
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  status.classList.remove('show', 'success', 'error');
+
+  const data = Object.fromEntries(new FormData(form));
+
+  const required = ['script_name', 'audience', 'current_belief', 'desired_belief', 'tone', 'emotional_arc', 'offer_cta'];
+  const missing = required.filter(k => !data[k] || !data[k].trim());
+  if (missing.length) {
+    status.innerHTML = `<strong>Missing fields</strong>Please fill in: ${missing.join(', ')}`;
+    status.classList.add('show', 'error');
+    return;
+  }
+
+  data.override_avatar_id = resolvePickerValue('avatar_choice', 'override_avatar_id_custom');
+  data.override_voice_id = resolvePickerValue('voice_choice', 'override_voice_id_custom');
+
+  delete data.avatar_choice;
+  delete data.voice_choice;
+
+  if (!data.script_id || !data.script_id.trim()) {
+    data.script_id = genScriptId(data.script_name);
+  }
+  if (!data.variation_number || !data.variation_number.trim()) {
+    data.variation_number = '1';
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Submitting…';
+
+  try {
+    const res = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    status.innerHTML = `<strong>Brief submitted</strong>Script ID: <code>${data.script_id}</code> — the pipeline is running. Watch your sheet for status updates. Render usually arrives within 5–15 minutes.`;
+    status.classList.add('show', 'success');
+    form.reset();
+    avatarCustomWrap.classList.remove('show');
+    voiceCustomWrap.classList.remove('show');
+  } catch (err) {
+    status.innerHTML = `<strong>Submission failed</strong>${err.message}. Try again, or contact your operator if the issue persists.`;
+    status.classList.add('show', 'error');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Brief →';
+  }
+});
+</script>
+</body>
+</html>
