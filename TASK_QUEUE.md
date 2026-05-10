@@ -4253,9 +4253,9 @@ Produce the LeadLUX v1.2 addendum video (5-7 min standalone MP4) per the product
 - Forge posted Slack handoff 2026-05-08 — Triton picks up production from here
 
 
-## TASK-20260510-TRITON-CHOSEN-001 — Chosen Agency V1 Walkthrough Video
+## TASK-20260510-FORGE-CHOSEN-001 — Chosen Agency V1 Walkthrough Video
 
-- **Assignee:** Triton
+- **Assignee:** Forge
 - **Status:** PENDING
 - **Priority:** MID
 - **From:** [Sonnet]
