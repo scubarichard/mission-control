@@ -1,0 +1,224 @@
+{
+  "code": "OK",
+  "response": {
+    "blueprint": {
+      "flow": [
+        {
+          "id": 1,
+          "mapper": {
+            "from": "drive",
+            "limit": "10",
+            "filter": [
+              [
+                {
+                  "a": "A",
+                  "b": "Rendering",
+                  "o": "text:equal"
+                }
+              ]
+            ],
+            "sheetId": "Queue",
+            "sortOrder": "asc",
+            "spreadsheetId": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo",
+            "tableFirstRow": "A1:BZ1",
+            "includesHeaders": true,
+            "valueRenderOption": "FORMATTED_VALUE",
+            "dateTimeRenderOption": "FORMATTED_STRING"
+          },
+          "module": "google-sheets:filterRows",
+          "version": 2,
+          "metadata": {
+            "designer": {
+              "x": 0,
+              "y": 0,
+              "name": "Trigger: Rendering rows"
+            }
+          },
+          "parameters": {
+            "__IMTCONN__": 4472711
+          }
+        },
+        {
+          "id": 2,
+          "mapper": {
+            "ca": "",
+            "qs": [],
+            "url": "https://api.heygen.com/v1/video_status.get?video_id={{1.`Render Job ID`}}",
+            "data": "",
+            "gzip": true,
+            "method": "get",
+            "headers": [
+              {
+                "name": "X-Api-Key",
+                "value": "sk_V2_hgu_k8ZrvzbzULJ_9kthjbeYQyc2MXZM3URBoAHk0VvwZJvD"
+              }
+            ],
+            "timeout": "30",
+            "useMtls": false,
+            "authPass": "",
+            "authUser": "",
+            "bodyType": "raw",
+            "contentType": "",
+            "serializeUrl": false,
+            "shareCookies": false,
+            "parseResponse": true,
+            "followRedirect": true,
+            "useQuerystring": false,
+            "followAllRedirects": false,
+            "rejectUnauthorized": true
+          },
+          "module": "http:ActionSendData",
+          "version": 3,
+          "metadata": {
+            "designer": {
+              "x": 300,
+              "y": 0,
+              "name": "HeyGen: Check render status"
+            }
+          }
+        },
+        {
+          "id": 3,
+          "module": "builtin:BasicRouter",
+          "routes": [
+            {
+              "flow": [
+                {
+                  "id": 4,
+                  "filter": {
+                    "name": "Completed",
+                    "conditions": [
+                      [
+                        {
+                          "a": "{{2.data.data.status}}",
+                          "b": "completed",
+                          "o": "text:equal"
+                        }
+                      ]
+                    ]
+                  },
+                  "mapper": {
+                    "from": "drive",
+                    "mode": "select",
+                    "values": {
+                      "Status": "Done",
+                      "Last Updated": "{{formatDate(now; \"YYYY-MM-DD HH:mm:ss\")}}",
+                      "Raw Video Link": "{{2.data.data.video_url}}"
+                    },
+                    "sheetId": "Queue",
+                    "rowNumber": "{{1.`__ROW_NUMBER__`}}",
+                    "sheetName": "Queue",
+                    "spreadsheetId": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo",
+                    "tableFirstRow": "A1:AZ1",
+                    "includesHeaders": true,
+                    "useColumnHeaders": true,
+                    "valueInputOption": "USER_ENTERED"
+                  },
+                  "module": "google-sheets:updateRow",
+                  "version": 2,
+                  "metadata": {
+                    "designer": {
+                      "x": 600,
+                      "y": -150,
+                      "name": "Status → Done + save video URL"
+                    }
+                  },
+                  "parameters": {
+                    "__IMTCONN__": 4472711
+                  }
+                }
+              ]
+            },
+            {
+              "flow": [
+                {
+                  "id": 5,
+                  "filter": {
+                    "name": "Failed",
+                    "conditions": [
+                      [
+                        {
+                          "a": "{{2.data.data.status}}",
+                          "b": "failed",
+                          "o": "text:equal"
+                        }
+                      ]
+                    ]
+                  },
+                  "mapper": {
+                    "from": "drive",
+                    "mode": "select",
+                    "values": {
+                      "Status": "Error",
+                      "Last Updated": "{{formatDate(now; \"YYYY-MM-DD HH:mm:ss\")}}",
+                      "Error Message": "HeyGen render failed: {{2.data.data.error.message}}"
+                    },
+                    "sheetId": "Queue",
+                    "rowNumber": "{{1.`__ROW_NUMBER__`}}",
+                    "sheetName": "Queue",
+                    "spreadsheetId": "1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo",
+                    "tableFirstRow": "A1:AZ1",
+                    "includesHeaders": true,
+                    "useColumnHeaders": true,
+                    "valueInputOption": "USER_ENTERED"
+                  },
+                  "module": "google-sheets:updateRow",
+                  "version": 2,
+                  "metadata": {
+                    "designer": {
+                      "x": 600,
+                      "y": 150,
+                      "name": "Status → Error + save error msg"
+                    }
+                  },
+                  "parameters": {
+                    "__IMTCONN__": 4472711
+                  }
+                }
+              ]
+            }
+          ],
+          "version": 1,
+          "metadata": {
+            "designer": {
+              "x": 450,
+              "y": 0,
+              "name": "Router: Completed / Failed"
+            }
+          }
+        }
+      ],
+      "name": "Chosen Agency — Render Checker",
+      "metadata": {
+        "instant": false,
+        "version": 1,
+        "designer": {
+          "orphans": []
+        },
+        "scenario": {
+          "dlq": false,
+          "dataloss": false,
+          "maxErrors": 3,
+          "autoCommit": true,
+          "roundtrips": 1,
+          "sequential": true,
+          "confidential": false,
+          "freshVariables": false,
+          "autoCommitTriggerLast": true
+        }
+      }
+    },
+    "scheduling": {
+      "type": "indefinitely",
+      "interval": 300
+    },
+    "concept": false,
+    "created": "2026-05-10T16:55:29.104Z",
+    "last_edit": "2026-05-10T16:55:29.104Z",
+    "metadata": {
+      "input_spec": [],
+      "output_spec": []
+    },
+    "idSequence": 6
+  }
+}
