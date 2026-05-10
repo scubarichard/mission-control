@@ -12,7 +12,22 @@ Milestone 1 ($150) is complete. **Milestone 2 ($1,338) is FUNDED, awaiting deliv
 
 ---
 
-## State of Play (as of May 10, 2026 ~13:56 CST)
+## State of Play (as of May 10, 2026 ~14:30 CST)
+
+### LATEST (May 10 morning session)
+
+**Webhook architecture is now WORKING end-to-end:**
+- V1 Module 10 sends `callback_url` + `callback_id` (callback_id = row number)
+- HeyGen calls back to webhook on render completion
+- Webhook scenario (5020000) receives callbacks and updates Sheet
+- **Critical fix discovered:** scheduling must be `immediately`, NOT `on-demand`
+  - `on-demand` queues callbacks but never processes them
+  - `immediately` triggers scenario on every webhook hit
+- Verified: 4 queued callbacks were drained successfully when scheduling fixed
+
+**Both V1 polling AND webhook now write to Sheet** — they race; webhook usually wins on fast renders. Polling is the safety net.
+
+**Next step:** Run V1 end-to-end with webhook active, verify clean. Then decide whether to remove polling loop (Modules 12-22).
 
 ### What works ✅
 - **V1 scenario (id 4894796) is at blueprint v74** — last known working state
