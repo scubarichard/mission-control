@@ -1378,7 +1378,7 @@ You are helpful, capable, and calm. You don't perform urgency. You get things do
 
 ---
 
-## TASK-20260512-TRITON-AUTOVID-001 â€” Full-auto catalog video for item 31 (Make.com Pipeline Diagnostic service)
+## TASK-20260512-NAUTILUS-AUTOVID-002 â€” Full-auto catalog video for item 31 (Make.com Pipeline Diagnostic service)
 
 - **Assignee:** Triton
 - **Status:** PENDING
