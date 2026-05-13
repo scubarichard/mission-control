@@ -1,3 +1,17 @@
+---
+
+## [Triton] Coordination Note — 2026-05-13
+
+**Triton status:** Available. LEADLUX-001 complete. No pending tasks.
+
+**Current assignments (as of 2026-05-13):**
+- Forge: CHOSEN-001 (video), DAKONA-HELPDSK-001, RPE-001 (awaiting approval), AUTOVID-001 (BLOCKED)
+- Nautilus: NAUTILUS-002 (Copilot Studio, low pri), Upwork triage (primary)
+- Triton: picking up FORGE-PERSONAL-001 (Freqtrade, low pri) from dax queue
+
+**Triton available for:** new tasks from Richard. Queue anything via TASK_QUEUE.md.
+
+---
 
 ---
 
