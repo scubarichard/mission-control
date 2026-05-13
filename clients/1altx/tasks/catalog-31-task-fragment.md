@@ -11,10 +11,6 @@
 - **Repo:** `scubarichard/dax` (this repo for task tracking); `scubarichard/1altx-site` for catalog.json update; `scubarichard/techwalkmint` for methodology
 - **Branch:** create `auto/catalog-31-production` from `main` on 1altx-site for the catalog.json change
 
-### ⚠️ SCOPE — READ FIRST
-
-This task produces ONE NEW VIDEO (catalog item 31). It does NOT involve reprocessing catalog items 01-30 or the "13 existing videos" referenced in CatalogMint SKILL.md. Those are already done. If you find yourself processing more than one final MP4, you are off-task — STOP.
-
 ### Context
 
 Following the close of the Dew Wealth Phase 1 engagement (May 12), 1AltX is positioning a new productized diagnostic service offering: structural diagnostics of Make.com pipelines for regulated firms (RIAs, family offices, accounting). The TechWalkMint methodology has been extended to document the diagnostic engagement variant. We now need a catalog video to market this service alongside the existing 30 catalog videos.

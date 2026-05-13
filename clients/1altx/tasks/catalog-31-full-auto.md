@@ -1,42 +1,24 @@
 ﻿# Catalog Item 31 — Full Auto Production Brief
 
-## ⚠️ SCOPE CLARIFICATION (READ THIS FIRST)
-
-**This task produces ONE NEW VIDEO. Catalog item 31. That is the entire scope.**
-
-You are NOT producing or reprocessing any of:
-- Catalog items 01-30 (already produced, finals exist in Dropbox catalogmint/final/)
-- The "13 existing videos" referenced in CatalogMint SKILL.md Phase 1 Workflow
-- Any prior CatalogMint batch work
-
-If you find yourself looking at items 01-30 or processing more than one final MP4, STOP. You are off-task. The only output of this task is `31-final.mp4` (one file) and one new entry in catalog.json.
-
----
-
-## What this task IS
-
 **Item:** 31 — "Make.com Pipeline Diagnostic for Regulated Firms"
 **Mode:** Full autopilot (zero human intervention until final unlisted URL)
 **Estimated runtime:** 30-50 minutes
 **Estimated cost:** $5-12 (HeyGen + ElevenLabs)
 
-Produce one new branded catalog video promoting a new 1AltX service offering. Upload to YouTube UNLISTED. Update catalog.json with one new entry (id "31"). Email Richard. Done.
-
 ---
 
 ## Success criteria
 
-- ONE 4-5 minute branded MP4 produced at `~/Dropbox/Companies/1AltX/Projects/_internal/catalogmint/final/31-final.mp4`
-- ONE YouTube upload as UNLISTED (never Public)
-- ONE new entry appended to `~/1altx-site/data/catalog.json` with id "31"
-- ONE commit + push to 1altx-site GitHub Pages
-- ONE email to richard@1altx.com with the unlisted URL
-
-If you produce more than one of any of those things, you are off-task.
+- Produce a 4-5 minute branded catalog video
+- Upload to 1AltX YouTube as UNLISTED (never Public)
+- Update 1altx-site catalog.json with new item entry
+- Commit and push to GitHub Pages
+- Email completion report to richard@1altx.com
+- All phases must pass internal QA before proceeding
 
 ---
 
-## Service offering (the subject of this single video)
+## Service offering (the subject of this video)
 
 - **ID:** 31
 - **Title:** Make.com Pipeline Diagnostic for Regulated Firms
@@ -49,19 +31,23 @@ If you produce more than one of any of those things, you are off-task.
 
 ---
 
-## Reference material (read for FORMAT and METHODOLOGY only, not as work-to-do)
+## Reference repositories
 
-These are reference documents. Read them to understand the format and tooling. DO NOT execute any production pipelines or batch jobs you find in them.
-
-| Reference | What to use it for | What NOT to use it for |
+| Repo | Purpose | Access path |
 |---|---|---|
-| TechWalkMint `SKILL.md` | Methodology for narrated walkthroughs | Don't produce a 20-minute architecture walkthrough; this is a 5-min marketing video |
-| TechWalkMint `references/catalog-adaptation.md` | Adapting walkthroughs for marketing/catalog format | — |
-| TechWalkMint `lessons-learned/project-b-lessons.md` | Diagnostic engagement context (informs the script content) | — |
-| CatalogMint `SKILL.md` | Wrapper format (intro/title/Scene 03/CTA/outro), card design, locked parameters | **DO NOT process "the 13 existing videos" — those are completed** |
-| CatalogMint `production-log.md` | Example of completed work format | **DO NOT reprocess any item listed there** |
+| TechWalkMint methodology | Script authoring rules, production model | `github.com/scubarichard/techwalkmint` (private — needs PAT) |
+| CatalogMint scripts | Existing video production pipeline | `~/Dropbox/Companies/1AltX/Projects/_internal/catalogmint` (Forge-local; Nautilus needs SMB or git-mirror) |
+| 1AltX website | Update target — `data/catalog.json` | `~/1altx-site` |
 
-**Critical:** CatalogMint SKILL.md has a section titled "Phase 1 Workflow (The 13 Existing Videos)." That phase is DONE. Items 01-30 are produced. Your task is item 31 (one new item) and nothing else.
+Read these first:
+- TechWalkMint `SKILL.md`
+- TechWalkMint `methodology/03-video-production-model.md`
+- TechWalkMint `references/catalog-adaptation.md`
+- TechWalkMint `lessons-learned/project-b-lessons.md`
+- CatalogMint `SKILL.md`
+- CatalogMint `production-log.md`
+
+Hybrid pattern: CatalogMint wrapper (intro/title/CTA/outro) + TechWalkMint-produced Scene 03 content (script + slides + voiceover). This hybrid is not yet documented in TechWalkMint — agent should draft `references/catalog-hybrid-pattern.md` as part of this task and commit alongside.
 
 ---
 
@@ -71,96 +57,123 @@ These are reference documents. Read them to understand the format and tooling. D
 - Voice: secret `ELEVENLABS-VOICE-ID-RICHARD` in Azure Key Vault `kvdaximpactcapital`
 - API key: secret `ELEVENLABS-API-KEY`
 - Model: `eleven_multilingual_v2`
-- Stability: 0.55, Similarity: 0.75, Style: 0, Speaker boost: true
+- Stability: 0.55 (marketing variant — slightly more animated than the 0.65 technical baseline)
+- Similarity: 0.75
+- Style: 0
+- Speaker boost: true
 
 **HeyGen:**
 - Avatar: Richard's custom avatar (ID in catalogmint configs)
-- Quality: high, Resolution: 1920x1080
+- Quality: high
+- Resolution: 1920x1080
 
-**FFmpeg:** H.264 + AAC, 30fps, 48kHz, -16 LUFS, lossless concat where possible
+**FFmpeg:**
+- Codec: H.264, AAC audio
+- Frame rate: 30 fps
+- Sample rate: 48 kHz
+- Loudness normalization: -16 LUFS
+- Concat method: lossless (`-c copy` when possible)
 
-**Cards (PIL):** `#0a0a0a` bg, `#58a6ff` accent, Plus Jakarta Sans (fallback Inter), 1920x1080
+**Cards (PIL):**
+- Background: `#0a0a0a`
+- Accent color: `#58a6ff`
+- Font: Plus Jakarta Sans (fallback: Inter)
+- Resolution: 1920x1080
 
 **CTA card script (EXACT WORDING — never modify):**
+
 > "You'll be amazed how much manual work disappears when the right automation kicks in. Visit onealtx.com and schedule a call — we'll scope it, size it, and give you a straight price."
 
 ---
 
-## Production scope (just for item 31)
+## Phase 1 — Draft (with internal QA)
 
-Produce exactly 5 scenes for one video:
+Generate 3 Scene 03 script variants, self-evaluate, pick best, regenerate if top score < 7.0/10. Generate Scene 01 intro + Scene 05 outro avatar scripts. Generate Scene 03 slide outline (4-6 slides). Internal QA gate: word count, banned words, no "you/your", no client names from private-mapping.md, sentence length cap, pause markers, all topics covered.
 
-1. **Scene 01** — HeyGen avatar intro (~20 sec). New script. Hook the prospect.
-2. **Scene 02** — Title card (3 sec). "Make.com Pipeline Diagnostic" / "For Regulated Firms"
-3. **Scene 03** — Methodology explainer (3-4 min). New script + new slides + ElevenLabs voiceover.
-4. **Scene 04** — CTA card (5 sec). Exact locked wording.
-5. **Scene 05** — HeyGen avatar outro (~20 sec). New script. Reinforce + direct to onealtx.com.
+Banned words (zero tolerance): "powerful", "elegant", "robust", "seamless", "revolutionary", "game-changing", "world-class", "best-in-class"
 
-Concat → loudness normalize → output to `31-final.mp4`. Upload UNLISTED. Update catalog.json. Email Richard. Done.
-
----
-
-## Scene 03 script requirements
-
-Length: 600-700 words spoken (~3-4 min audio).
-Sentence cap: 25 words max.
-Pause markers required: `[pause]` (0.7s), `[pause-think]` (1.0s), `[pause-long]` (1.5s).
-Banned words: "powerful", "elegant", "robust", "seamless", "revolutionary", "game-changing", "world-class", "best-in-class".
-No personal address ("you", "your") — use "the firm", "the client", "the team".
-No client names — use anonymized patterns ("a regulated wealth management firm").
-
-Topics the script must cover:
-1. What the diagnostic engagement is (structural review of existing system)
-2. What's delivered (bible, risk inventory, remediation plan, walkthrough video)
-3. Why it matters for regulated firms (compliance-aware, audit-friendly)
-4. The phased approach (Phase 1 diagnostic standalone; Phase 2+ if approved)
-5. What makes 1AltX's approach different (15+ years RIA experience, Make.com Advanced cert, audit-first discipline)
-6. CTA preview (Scene 04 delivers the full CTA)
-
-Internal QA: regenerate up to 3 times if any check fails (word count, banned words, no "you/your", no client names, sentence cap, pause markers, all 6 topics). After 3 retries, ABORT.
+Required topics:
+- What the diagnostic engagement is
+- What's delivered (bible, risk inventory, remediation plan, walkthrough video)
+- Why it matters for regulated firms (compliance-aware, audit-friendly)
+- The phased approach
+- What makes 1AltX's approach different
+- CTA preview
 
 ---
 
-## Slides for Scene 03
+## Phase 2 — Render assets
 
-4-6 slides total. One per script section. Brand colors only. No client logos.
+1. ElevenLabs audio for Scene 03 (split at pause markers, validate duration ±15%)
+2. ElevenLabs audio for Scene 01 + Scene 05
+3. HeyGen avatar render for Scene 01 (retry once on error)
+4. HeyGen avatar render for Scene 05
+5. Scene 03 slide images via PIL (4-6 PNGs, validate file size)
+6. Assemble Scene 03 video (slides + audio synced via FFmpeg)
+7. Title card (Scene 02, 3 sec hold)
+8. CTA card (Scene 04, 5 sec hold — EXACT locked wording)
+9. Internal QA gate: all MP4s exist, durations match, codecs consistent
 
 ---
 
-## Phase order (linear, no parallel)
+## Phase 3 — Assemble final
 
-1. **Draft** — Scene 01 script + Scene 03 script + Scene 03 slides + Scene 05 script. Internal QA pass.
-2. **Render audio** — ElevenLabs for Scene 01, 03, 05.
-3. **Render visuals** — HeyGen for Scene 01 + Scene 05. PIL slides for Scene 03. PIL cards for Scene 02 + Scene 04.
-4. **Assemble Scene 03** — slides + audio synced via FFmpeg.
-5. **Concat all 5 scenes** — single MP4 at 31-final.mp4. Loudness normalize.
-6. **Sanitize** — HARD GATE. Cross-reference all text against `private-mapping.md` from techwalkmint repo. If any client name match, ABORT and email diagnostic.
-7. **Publish** — YouTube upload as UNLISTED. Update catalog.json. Commit + push to 1altx-site.
-8. **Self-review** — score audio/visual/content/brand 1-10 each.
-9. **Notify** — email richard@1altx.com with unlisted URL + scores + cost + warnings.
+FFmpeg concat all 5 scenes. Loudness normalize to -16 LUFS. Output to `~/Dropbox/Companies/1AltX/Projects/_internal/catalogmint/final/31-final.mp4`. QA gate: duration 4-5 min, file size 50-200 MB, no frame drops, audio present.
+
+---
+
+## Phase 4 — Sanitization HARD GATE
+
+Cross-reference all generated text against `private-mapping.md` from techwalkmint repo. If any client name match: HARD ABORT, no retry, email diagnostic. No dollar figures under $5K, no specific company names, no personal emails.
+
+---
+
+## Phase 5 — Publish
+
+YouTube upload as UNLISTED (NEVER Public — non-negotiable). Update 1altx-site catalog.json with new item 31 entry. Commit and push to GitHub Pages.
+
+---
+
+## Phase 6 — Self-review
+
+Score audio quality, visual quality, content quality, brand consistency (1-10 each). If any < 7: flag "REVIEW BEFORE PUBLISHING". If all >= 8: flag "READY TO FLIP PUBLIC".
+
+---
+
+## Phase 7 — Notify
+
+Email richard@1altx.com with: unlisted URL, quality scores, recommended action (FLIP PUBLIC / REVIEW FIRST / RE-RUN), costs incurred, runtime, warnings, catalog.json diff, easy-rollback instructions.
+
+Subject: `[Catalog-31] AUTO production complete — review unlisted URL`
+
+Append production log entry at `~/Dropbox/Companies/1AltX/Projects/_internal/catalogmint/production-log.md`.
 
 ---
 
 ## Abort conditions (hard stops)
 
-Stop immediately and email Richard if:
-- You catch yourself processing more than one final video → ABORT (off-task)
-- Any client name appears in generated content (Phase 6 sanitization)
+- Any client name appears in generated content
 - Any API key fails authentication
 - Total cost projection exceeds $25
 - Same scene fails QA 3 times in a row
 - YouTube upload fails 3 consecutive attempts
 - Phase exceeds 2x expected runtime
-- GitHub push to 1altx-site fails
+- GitHub push fails
 
 ---
 
-## Final deliverables (count: exactly these, no more)
+## Quality standards
 
-- 1× `31-final.mp4` at `~/Dropbox/Companies/1AltX/Projects/_internal/catalogmint/final/31-final.mp4`
-- 1× YouTube video (UNLISTED, not Public)
-- 1× new entry in `~/1altx-site/data/catalog.json`
-- 1× commit pushed to scubarichard/1altx-site master
-- 1× email to richard@1altx.com with the unlisted URL
+- Audit-first: log every API call, every file written
+- Per-scene production: each scene a separate MP4, surgical re-renders
+- Pause discipline: real silence at markers
+- Neutral framing: no personal address
+- Brand consistency: 1AltX colors only
+- Sanitization: NO client names anywhere
+- Cold-spawn protection: phase reports a fresh agent could resume from
 
-Anything beyond this list is off-task.
+---
+
+## Reusability
+
+This task and brief are templates for future service-offering catalog videos. Items 32, 33+ just substitute the "Service offering" block at the top.
