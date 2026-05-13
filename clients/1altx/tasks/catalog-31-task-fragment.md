@@ -3,7 +3,7 @@
 
 ## TASK-20260512-NAUTILUS-AUTOVID-002 — Full-auto catalog video for item 31 (Make.com Pipeline Diagnostic service)
 
-- **Assignee:** Nautilus
+- **Assignee:** Triton
 - **Status:** PENDING
 - **Priority:** Medium
 - **From:** [Sonnet]
@@ -53,7 +53,7 @@ High-level phases (full detail in brief):
 
 ### Notes
 
-- **Asset access:** CatalogMint scripts and Dropbox folder live on Windows (Forge has direct access). If Nautilus picks this up, it needs SMB mount to `\\RICHARD-WS\Dropbox` or rsync of the catalogmint folder. Alternative: reassign to Forge by flipping Assignee in this header.
+- **Asset access:** CatalogMint scripts and Dropbox folder live on Windows (Forge has direct access). Triton is the assigned executor. Triton (Linux Surface laptop) will need to either (a) clone the catalogmint scripts from the Windows Dropbox folder via SMB / rsync, or (b) hand off Phase 2-3 rendering steps to Forge (which has direct local access to CatalogMint). Triton handles Phase 1 (script + slide drafting) and Phases 4-7 (sanitization, publish, notify); Forge can be invoked mid-task for rendering if needed.
 - **Credentials:** All API keys in Azure Key Vault `kvdaximpactcapital` and `kvdaxdakonapilot`. Service principal access required.
 - **Estimated runtime:** 30-50 minutes start to finish
 - **Estimated cost:** $5-12 (HeyGen + ElevenLabs combined)
@@ -62,4 +62,4 @@ High-level phases (full detail in brief):
 
 ### Questions / Blockers
 
-None at queue time. If the executing agent (Nautilus or Forge) hits a blocker, post here with `### [Nautilus] BLOCKER YYYY-MM-DD HH:MM` and flip status to `BLOCKED_BY_XXX` if dependent on another task.
+None at queue time. If the executing agent (Triton or Forge) hits a blocker, post here with `### [Triton] BLOCKER YYYY-MM-DD HH:MM` and flip status to `BLOCKED_BY_XXX` if dependent on another task.
