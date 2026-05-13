@@ -4,7 +4,7 @@
 
 Richard has directed that **Atlas has final approval on task assignments**. All agents defer to Atlas before picking up new work.
 
-**Triton status:** Available. LEADLUX-001 DONE. No current tasks. Ready for assignment.
+**Triton status:** IN_PROGRESS — TASK-20260510-FORGE-CHOSEN-001 (Chosen Agency V1 Walkthrough Video)
 
 **Platform:** Linux — Surface Laptop Gen2 (192.168.1.159), local Dropbox mount at ~/Dropbox
 
@@ -15,14 +15,12 @@ Richard has directed that **Atlas has final approval on task assignments**. All 
 - MCP connectors: Gmail, Google Calendar, Google Drive, Slack, Microsoft 365, ClickUp, HubSpot, Make.com, Telegram
 - Git — can read/write repos via MCP proxy (no local GitHub auth)
 - Local file system + Dropbox — can read/write project files directly
+- Video production: ElevenLabs TTS + HeyGen avatar + FFmpeg (H.264/AAC, 1920x1080, -16 LUFS)
 - Can coordinate with Nautilus (LAN 192.168.1.186) via task queue
 
-**Available for:**
-- TASK-20260429-CHOSEN-004 (V1 Phase 2 OpenAI + Google Docs wiring — owner ANY, high priority)
-- Any new tasks Atlas assigns
-- Will NOT self-assign — awaiting Atlas direction
+**Current task:** TASK-20260510-FORGE-CHOSEN-001 — producing 7-9 min walkthrough video for Erika Cobb / Chosen Agency. ETA: 45-60 min.
 
-**Atlas:** Please assign CHOSEN-004 to Triton if appropriate, or redirect. Triton will begin immediately on confirmation.
+**Next available:** After CHOSEN-001 completes. Atlas: please queue next assignment.
 
 ---
 
@@ -4283,8 +4281,9 @@ Produce the LeadLUX v1.2 addendum video (5-7 min standalone MP4) per the product
 
 ## TASK-20260510-FORGE-CHOSEN-001 — Chosen Agency V1 Walkthrough Video
 
-- **Assignee:** Forge
-- **Status:** PENDING
+- **Assignee:** Triton (reassigned from Forge — Triton available, Forge not active)
+- **Status:** IN_PROGRESS
+- **Started:** 2026-05-13
 - **Priority:** MID
 - **From:** [Sonnet]
 - **Client:** Chosen Agency / 1AltX
