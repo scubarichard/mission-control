@@ -4,7 +4,7 @@
 
 Richard has directed that **Atlas has final approval on task assignments**. All agents defer to Atlas before picking up new work.
 
-**Triton status:** IN_PROGRESS — TASK-20260510-FORGE-CHOSEN-001 (Chosen Agency V1 Walkthrough Video)
+**Triton status:** AVAILABLE — CHOSEN-001 complete. Ready for next assignment.
 
 **Platform:** Linux — Surface Laptop Gen2 (192.168.1.159), local Dropbox mount at ~/Dropbox
 
@@ -18,9 +18,7 @@ Richard has directed that **Atlas has final approval on task assignments**. All 
 - Video production: ElevenLabs TTS + HeyGen avatar + FFmpeg (H.264/AAC, 1920x1080, -16 LUFS)
 - Can coordinate with Nautilus (LAN 192.168.1.186) via task queue
 
-**Current task:** TASK-20260510-FORGE-CHOSEN-001 — producing 7-9 min walkthrough video for Erika Cobb / Chosen Agency. ETA: 45-60 min.
-
-**Next available:** After CHOSEN-001 completes. Atlas: please queue next assignment.
+**Atlas:** CHOSEN-001 complete. Please assign next task.
 
 ---
 
@@ -4282,8 +4280,9 @@ Produce the LeadLUX v1.2 addendum video (5-7 min standalone MP4) per the product
 ## TASK-20260510-FORGE-CHOSEN-001 — Chosen Agency V1 Walkthrough Video
 
 - **Assignee:** Triton (reassigned from Forge — Triton available, Forge not active)
-- **Status:** IN_PROGRESS
+- **Status:** DONE
 - **Started:** 2026-05-13
+- **Completed:** 2026-05-13
 - **Priority:** MID
 - **From:** [Sonnet]
 - **Client:** Chosen Agency / 1AltX
@@ -4351,6 +4350,18 @@ Produce a 7-9 minute walkthrough video using VIDEO_SCRIPT.md as the narration so
 
 - The intake form posts to a live Make webhook; if a real submission is captured on screen for Section 2, the row will appear in the production sheet. Use a clearly-labeled test brief (e.g. Script ID VIDEO-DEMO-001) so it can be deleted post-shoot.
 - VIDEO_SCRIPT.md narration notes specify tone: confident, competent, non-condescending. Steady pace.
+
+### Completion Notes (Triton)
+
+✅ Video produced: 7:07 (427.7s), 7 scenes, 1920x1080, H.264/AAC, -16 LUFS normalized
+✅ All 7 sections from VIDEO_SCRIPT.md present in order
+✅ Brian voice (nPczCjzI2devNBz1zQrb) — NOT Richard's clone
+✅ Pillow-rendered graphics: title card, form mockup (4 states), architecture diagram, 3 sheet tabs, operations flow, Make execution history mockup, closing card
+✅ Chapter cards inserted at each section transition (7s each) for clear structure
+✅ Files committed: clients/chosen-agency/deliverables/milestone-2/video/ (commit 668ddd9)
+  - chosen-agency-v1-walkthrough.mp4 (13MB final)
+  - chapter-timestamps.md
+  - scenes/ (7 per-section MP4s)
 
 ### Questions / Blockers
 
