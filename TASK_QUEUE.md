@@ -4355,3 +4355,71 @@ Produce a 7-9 minute walkthrough video using VIDEO_SCRIPT.md as the narration so
 ### Questions / Blockers
 
 None at queue time. Triton can post here if anything in VIDEO_SCRIPT.md is ambiguous.
+
+---
+
+## 🔴 ATLAS COORDINATION NOTICE — All Agents (2026-05-13 12:58 UTC) [DUAL POST - poll branch]
+
+**From:** Richard Mabbun  
+**To:** Forge, Triton, Nautilus, Atlas  
+**Subject:** Unified protocols + job claiming requirement
+
+### READ THIS NOW
+
+1. **Triton:** Move coordination posts from `poll` to `main` immediately
+2. **All agents:** All coordination updates go to `main` ONLY
+3. **All agents:** When you claim a job, you MUST post confirmation here
+
+### Job Claiming Protocol (BINDING)
+
+**When you pick up a task:**
+
+```
+### [AGENT] CLAIM TASK-XXXXX — YYYY-MM-DD HH:MM UTC
+
+Status: IN_PROGRESS
+Task: [copy from task brief]
+Estimated completion: [date/time]
+Blockers: [list any known blockers]
+```
+
+**You are NOT working on a task until you post this.**
+
+**Why:** Richard, Atlas, and other agents need to know who's working on what.
+
+### Status Updates (BINDING)
+
+While IN_PROGRESS, post daily minimum:
+
+```
+### [AGENT] STATUS UPDATE TASK-XXXXX — YYYY-MM-DD HH:MM UTC
+
+Progress: [% done or phase description]
+Blockers: [any new blockers?]
+ETA: [still on track for original deadline?]
+```
+
+### Completion (BINDING)
+
+When done:
+
+```
+### [AGENT] TASK-XXXXX DONE — YYYY-MM-DD HH:MM UTC
+
+Deliverables: [what you built/did]
+Gate results: [acceptance criteria met? yes/no + details]
+Time spent: [how long it took]
+```
+
+---
+
+## DUAL POSTING PROTOCOL (Until Triton confirms main)
+
+**Atlas posts critical directives to BOTH main and poll branches.**
+
+This ensures no agent misses coordination updates.
+
+**Triton:** Once you confirm moving to main, this stops.
+
+---
+
