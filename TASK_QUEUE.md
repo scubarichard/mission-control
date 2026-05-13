@@ -4198,7 +4198,8 @@ RAG-powered ticket triage system. When a new NinjaOne ticket comes in, agents se
 ## TASK-20260508-TRITON-LEADLUX-001 — LeadLUX v1.2 Addendum Video Production
 
 - **Assignee:** Triton
-- **Status:** PENDING
+- **Status:** DONE
+- **Completed:** 2026-05-12
 - **Priority:** MID (target delivery Wed-Thu May 13-14)
 - **From:** Forge (relayed from Richard's production brief, 2026-05-08)
 - **Client:** LeadLUX / 1AltX
