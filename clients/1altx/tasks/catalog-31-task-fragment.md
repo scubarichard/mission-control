@@ -1,7 +1,7 @@
 ﻿
 ---
 
-## TASK-20260512-NAUTILUS-AUTOVID-002 — Full-auto catalog video for item 31 (Make.com Pipeline Diagnostic service)
+## TASK-20260512-TRITON-AUTOVID-001 — Full-auto catalog video for item 31 (Make.com Pipeline Diagnostic service)
 
 - **Assignee:** Triton
 - **Status:** PENDING
