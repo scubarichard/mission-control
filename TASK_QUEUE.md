@@ -102,3 +102,217 @@ Save to: `C:\Users\18473\Dropbox\Companies\1AltX\CatalogMint\raw\avmoe-demo-raw.
 - If OBS is not installed, use Puppeteer screen capture via CDP
 
 **Status:** QUEUED
+
+---
+
+## [TRITON or NAUTILUS] CatalogMint — AVMOE Video Production — 2026-05-14
+
+**Priority:** HIGH
+**Assigned to:** Triton or Nautilus (whoever is available)
+**Requested by:** Richard via Claude
+**Depends on:** [FORGE] AVMOE Workflow Screen Recording (must be complete first)
+
+### Objective
+Produce a complete, polished CatalogMint video for the AVMOE (Automated Vertical Market Outreach Engine) 1AltX Upwork catalog listing. Follow the CatalogMint 5-scene structure exactly.
+
+---
+
+### Credentials (all in Key Vault: kvdaxdakonapilot)
+
+| Secret Name | Use |
+|---|---|
+| `HEYGEN-API-KEY` | HeyGen video generation |
+| `HEYGEN-AVATAR-ID` | Avatar: `0f0656d38e0545918de84dd25f2d31af` |
+| `HEYGEN-VOICE-ID` | HeyGen voice: `a9c42ba3dd4b441eac3fb3221c6fcf59` |
+| `elevenlabs-api-key` | ElevenLabs TTS (backup/SFX) |
+| `elevenlabs-voice-id-richard` | ElevenLabs voice: `IuxDTLynYdvisya7jrK5` |
+
+Pull all secrets via: `az keyvault secret show --vault-name kvdaxdakonapilot --name <name> --query "value" -o tsv`
+
+---
+
+### Input File
+Raw demo recording (from Forge task):
+`C:\Users\18473\Dropbox\Companies\1AltX\CatalogMint\raw\avmoe-demo-raw.mp4`
+
+---
+
+### Output Folder Structure
+```
+C:\Users\18473\Dropbox\Companies\1AltX\CatalogMint\
+├── raw\avmoe-demo-raw.mp4          ← Forge delivers this
+├── scenes\avmoe\
+│   ├── scene-01-intro.mp4
+│   ├── scene-02-title.mp4
+│   ├── scene-03-demo.mp4           ← copy of raw, untouched
+│   ├── scene-04-cta.mp4
+│   └── scene-05-outro.mp4
+├── final\avmoe-outreach-engine.mp4 ← FFmpeg concat output
+└── scripts\
+    ├── avmoe-intro.md
+    └── avmoe-outro.md
+```
+
+---
+
+### Scene 1 — Intro Avatar (HeyGen API)
+
+**Script (use verbatim):**
+> "Most companies spend five to twenty thousand dollars a year on contact databases — and still get reply rates under one percent. What if you could pull a verified list of every decision-maker in your target market from a free government database, have AI write a personal opener for each one, and launch a fully automated email campaign — all without buying a single contact? In this video I'll show you exactly how we built that system, and how we can build it for your business."
+
+**HeyGen API call:**
+```json
+{
+  "video_inputs": [{
+    "character": {
+      "type": "avatar",
+      "avatar_id": "0f0656d38e0545918de84dd25f2d31af",
+      "avatar_style": "normal"
+    },
+    "voice": {
+      "type": "text",
+      "input_text": "<script above>",
+      "voice_id": "a9c42ba3dd4b441eac3fb3221c6fcf59"
+    },
+    "background": {
+      "type": "color",
+      "value": "#1F4E79"
+    }
+  }],
+  "dimension": { "width": 1920, "height": 1080 }
+}
+```
+
+Poll `GET /v1/video_status.get?video_id=<id>` until status = "completed", then download MP4.
+Save as: `scenes/avmoe/scene-01-intro.mp4`
+
+---
+
+### Scene 2 — Title Card (FFmpeg generated)
+
+Generate a 4-second static title card using FFmpeg drawtext:
+
+```bash
+ffmpeg -f lavfi -i color=c=0x1F4E79:size=1920x1080:duration=4:rate=30 \
+  -vf "drawtext=text='Automated Vertical Market Outreach Engine':fontcolor=white:fontsize=64:x=(w-text_w)/2:y=(h-text_h)/2-60:fontfile=/path/to/Arial.ttf, \
+       drawtext=text='Free Data  →  AI Personalization  →  Booked Meetings':fontcolor=0xADD8E6:fontsize=36:x=(w-text_w)/2:y=(h-text_h)/2+40:fontfile=/path/to/Arial.ttf, \
+       drawtext=text='1AltX':fontcolor=white:fontsize=28:x=60:y=60:fontfile=/path/to/Arial.ttf" \
+  -c:v libx264 -pix_fmt yuv420p scenes/avmoe/scene-02-title.mp4
+```
+
+Save as: `scenes/avmoe/scene-02-title.mp4`
+
+---
+
+### Scene 3 — Demo (copy from Forge)
+
+Simply copy the raw recording untouched:
+```bash
+cp raw/avmoe-demo-raw.mp4 scenes/avmoe/scene-03-demo.mp4
+```
+
+---
+
+### Scene 4 — CTA Card (FFmpeg generated)
+
+```bash
+ffmpeg -f lavfi -i color=c=0x1F4E79:size=1920x1080:duration=4:rate=30 \
+  -vf "drawtext=text='1altx.com':fontcolor=white:fontsize=80:x=(w-text_w)/2:y=(h-text_h)/2-40:fontfile=/path/to/Arial.ttf, \
+       drawtext=text='Book a free scoping call':fontcolor=0xADD8E6:fontsize=40:x=(w-text_w)/2:y=(h-text_h)/2+60:fontfile=/path/to/Arial.ttf" \
+  -c:v libx264 -pix_fmt yuv420p scenes/avmoe/scene-04-cta.mp4
+```
+
+Save as: `scenes/avmoe/scene-04-cta.mp4`
+
+---
+
+### Scene 5 — Outro Avatar (HeyGen API)
+
+**Script (use verbatim — this is the LOCKED CatalogMint CTA):**
+> "You'll be amazed how much manual work disappears when the right automation kicks in. Visit onealtx.com and schedule a call — we'll scope it, size it, and give you a straight price."
+
+Same HeyGen API call as Scene 1 with this script.
+Save as: `scenes/avmoe/scene-05-outro.mp4`
+
+---
+
+### Final Assembly (FFmpeg concat)
+
+Create `concat-list.txt`:
+```
+file 'scenes/avmoe/scene-01-intro.mp4'
+file 'scenes/avmoe/scene-02-title.mp4'
+file 'scenes/avmoe/scene-03-demo.mp4'
+file 'scenes/avmoe/scene-04-cta.mp4'
+file 'scenes/avmoe/scene-05-outro.mp4'
+```
+
+Run:
+```bash
+ffmpeg -f concat -safe 0 -i concat-list.txt -c copy final/avmoe-outreach-engine.mp4
+```
+
+Validate output plays cleanly start to finish.
+
+---
+
+### YouTube Chapters (for description)
+
+```
+00:00 Introduction
+00:22 Title
+00:27 Live Demo — n8n Pipeline Overview
+01:00 Apollo Search & Contact Enrichment
+01:45 AI Icebreaker Generation
+02:15 Instantly Campaign Setup
+02:45 HubSpot CRM Integration
+03:05 Book a Call
+```
+
+---
+
+### Upwork Catalog Listing Copy
+
+**Title:**
+Automated B2B Outreach System — Public Data + AI Personalization + Cold Email at Scale
+
+**Description:**
+Most companies spend $5K–$20K/year on contact databases and still get reply rates under 1%.
+
+We built a fully automated outreach system that:
+- Sources verified decision-maker contacts from free government databases (SEC, NPI, NMLS, state boards)
+- Filters to your exact ICP — industry, size, geography, license type
+- Uses AI to write a unique, personalized opener for every single contact
+- Launches a multi-step cold email campaign automatically
+- Routes replies to HubSpot and books meetings via Calendly — no human in the loop
+
+Built and validated on the SEC-registered RIA market (2,917 verified firms, zero data cost).
+
+Works for any regulated vertical: CPAs, healthcare practices, law firms, mortgage brokers, insurance agencies, contractors, and more.
+
+**What you get:**
+- ICP definition and database sourcing for your vertical
+- Contact enrichment (email + decision-maker name)
+- AI icebreaker generation for every contact
+- Instantly campaign setup (sequence, A/B test, schedule)
+- HubSpot or CRM integration
+- Calendly auto-reply on positive responses
+- 30-day monitoring and optimization
+
+**Price:** Starting at $3,500 setup + $1,500/month management
+
+**Tags:** cold email, outreach automation, lead generation, B2B sales, n8n, Apollo, Instantly, AI personalization, HubSpot
+
+---
+
+### Completion Checklist
+
+- [ ] scene-01-intro.mp4 generated and plays cleanly
+- [ ] scene-02-title.mp4 generated (4 sec, branded)
+- [ ] scene-03-demo.mp4 copied from Forge raw
+- [ ] scene-04-cta.mp4 generated (4 sec, branded)
+- [ ] scene-05-outro.mp4 generated and plays cleanly
+- [ ] final/avmoe-outreach-engine.mp4 assembled and validated
+- [ ] Post completion to #dax-collab with file path
+
+**Status:** WAITING ON FORGE (screen recording)
