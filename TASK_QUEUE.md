@@ -44,3 +44,61 @@ Write results to `/mnt/user-data/outputs/ria_emails_scraped.csv` with columns:
 - Focus on quality over speed — we need real emails, not guesses
 
 **Status:** QUEUED
+
+---
+
+## [FORGE] AVMOE Workflow Screen Recording — 2026-05-14
+
+**Priority:** HIGH
+**Assigned to:** Forge
+**Requested by:** Richard via Claude
+
+### Objective
+Screen-record the full AVMOE (Automated Vertical Market Outreach Engine) pipeline running live in n8n. This recording becomes the demo scene (scene-03) for a CatalogMint video for the 1AltX Upwork catalog.
+
+### What to Record
+
+Use Puppeteer with Chrome DevTools Protocol or OBS to capture a clean screen recording of the following sequence:
+
+**Scene 1 — n8n workflow overview (30 sec)**
+- Open https://n8n.dakona.net/workflow/auDaMTx0FXQJUw72
+- Zoom out to show the full pipeline (all 4 phases visible)
+- Pan slowly left to right so viewer sees the entire flow
+- Pause 3 seconds on the Pipeline Config node
+
+**Scene 2 — Apollo Search live (45 sec)**
+- Trigger the workflow manually (click Run Pipeline)
+- Show the Apollo Search node executing
+- Show Filter New People → Bulk Enrich running
+- Pause on the Format Contacts node output showing real contact data
+
+**Scene 3 — Icebreaker generation (30 sec)**
+- Show Generate Icebreaker node firing against the Anthropic API
+- Show the Process Icebreaker output with a real generated icebreaker
+- Highlight the personalized text
+
+**Scene 4 — Instantly campaign (30 sec)**
+- Open https://app.instantly.ai and navigate to "Dakona RIA Outreach - IT and AI" campaign
+- Show the campaign settings (9 email addresses, 3-step sequence)
+- Show contacts populating in the leads tab
+
+**Scene 5 — HubSpot result (15 sec)**
+- Open HubSpot → DAX RIA Prospects pipeline
+- Show the deal stages
+
+### Recording Specs
+- Resolution: 1920x1080
+- Frame rate: 30fps
+- No cursor jitter — use smooth mouse movements
+- No audio needed (HeyGen avatar will narrate)
+- Clean browser — hide bookmarks bar, use incognito if needed
+
+### Output
+Save to: `C:\Users\18473\Dropbox\Companies\1AltX\CatalogMint\raw\avmoe-demo-raw.mp4`
+
+### Notes
+- Credentials are all in Key Vault — use existing n8n, Instantly, HubSpot logins
+- Keep each scene tight — total target runtime 2.5–3 minutes
+- If OBS is not installed, use Puppeteer screen capture via CDP
+
+**Status:** QUEUED
