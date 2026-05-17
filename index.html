@@ -23,10 +23,12 @@
   .sdot { width: 6px; height: 6px; border-radius: 50%; }
   .sg { background: #3fb950; box-shadow: 0 0 4px rgba(63,185,80,0.5); }
   .sr { background: #f85149; } .sy { background: #d29922; }
-  .tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
   .tab { padding: 7px 16px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: #8b949e; cursor: pointer; font-size: 13px; font-family: inherit; font-weight: 500; }
   .tab:hover { color: #e6edf3; background: #161b22; }
   .tab.active { color: #e6edf3; background: #161b22; border-color: #30363d; }
+  .tab.apex-tab { color: #f59e0b; }
+  .tab.apex-tab.active { border-color: #f59e0b44; background: #f59e0b0a; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
   .section { margin-bottom: 22px; }
   .section-hdr { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #30363d; }
@@ -82,12 +84,317 @@
   .ob-item { display: flex; align-items: center; gap: 4px; }
   .ob-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
   .last-poll { text-align: right; font-size: 10px; color: #6e7681; margin-top: 10px; }
+
+  /* APEX styles */
+  .apex-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .apex-stats { display: flex; gap: 20px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+  .apex-stat-applied { color: #3fb950; }
+  .apex-stat-skipped { color: #6e7681; }
+  .apex-stat-remaining { color: #e6edf3; }
+  .apex-progress { height: 3px; background: #1e1e24; border-radius: 2px; overflow: hidden; flex: 1; margin-right: 12px; }
+  .apex-progress-fill { height: 100%; background: #f59e0b; border-radius: 2px; transition: width 0.3s ease; }
+  .apex-progress-row { display: flex; align-items: center; margin-bottom: 16px; }
+  .apex-counter { font-size: 12px; color: #6e7681; font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+  .apex-job-card { background: #111114; border: 1px solid #1e1e24; border-radius: 12px; padding: 20px; margin-bottom: 12px; }
+  .apex-job-title { font-size: 17px; font-weight: 600; line-height: 1.4; margin-bottom: 12px; color: #f4f4f5; }
+  .apex-badges { display: flex; flex-wrap: wrap; gap: 8px; }
+  .apex-score-badge { background: #22c55e18; border: 1px solid #22c55e40; color: #22c55e; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+  .apex-score-mid { background: #f59e0b18; border: 1px solid #f59e0b40; color: #f59e0b; }
+  .apex-rate-badge { background: #ffffff08; border: 1px solid #ffffff15; color: #9ca3af; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+  .apex-close-badge { background: #1d4ed810; border: 1px solid #3b82f640; color: #93c5fd; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+  .apex-notes { margin-top: 12px; padding: 10px 12px; background: #451a0310; border: 1px solid #92400e30; border-radius: 6px; font-size: 12px; color: #fbbf24; line-height: 1.5; }
+  .apex-proposal-card { background: #111114; border: 1px solid #1e1e24; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
+  .apex-proposal-header { padding: 12px 16px; border-bottom: 1px solid #1e1e24; display: flex; align-items: center; justify-content: space-between; }
+  .apex-proposal-label { font-size: 11px; color: #4b5563; font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; text-transform: uppercase; }
+  .apex-copy-btn { padding: 6px 18px; border: none; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+  .apex-copy-btn-ready { background: #f59e0b; color: #0d0d0f; }
+  .apex-copy-btn-done { background: #16a34a; color: #fff; }
+  .apex-proposal-body { padding: 16px; max-height: 380px; overflow-y: auto; }
+  .apex-proposal-text { white-space: pre-wrap; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; color: #d1d5db; margin: 0; }
+  .apex-video-card { background: #111114; border: 1px solid #1e1e24; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
+  .apex-video-toggle { width: 100%; padding: 12px 16px; background: transparent; border: none; display: flex; align-items: center; justify-content: space-between; cursor: pointer; color: #6b7280; font-size: 11px; font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; text-transform: uppercase; }
+  .apex-video-body { padding: 4px 16px 16px; }
+  .apex-actions-primary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .apex-actions-secondary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .apex-btn-upwork { display: block; padding: 12px; background: #0c4a2310; border: 1px solid #16643440; border-radius: 8px; color: #4ade80; text-align: center; font-weight: 600; font-size: 14px; text-decoration: none; }
+  .apex-btn-next { padding: 12px; background: #ffffff06; border: 1px solid #1e1e24; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; font-family: inherit; }
+  .apex-btn-next-active { color: #9ca3af; }
+  .apex-btn-next-disabled { color: #374151; cursor: not-allowed; }
+  .apex-btn-skip { padding: 11px; background: #7f1d1d08; border: 1px solid #7f1d1d40; border-radius: 8px; color: #f87171; font-weight: 600; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .apex-btn-applied { padding: 11px; background: #14532d08; border: 1px solid #14532d40; border-radius: 8px; color: #86efac; font-weight: 600; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .apex-dots { display: flex; justify-content: center; gap: 6px; }
+  .apex-dot { height: 6px; border-radius: 3px; border: none; cursor: pointer; padding: 0; transition: all 0.2s; }
+  .apex-load-screen { text-align: center; padding-top: 60px; }
+  .apex-load-icon { width: 56px; height: 56px; margin: 0 auto 24px; border: 1px solid #27272a; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .apex-load-title { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+  .apex-load-desc { color: #6b7280; font-size: 14px; margin-bottom: 32px; max-width: 340px; margin-left: auto; margin-right: auto; }
+  .apex-load-btn { padding: 12px 32px; background: #f59e0b; color: #0d0d0f; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; }
+  .apex-spinner { width: 40px; height: 40px; margin: 0 auto 20px; border: 2px solid #27272a; border-top-color: #f59e0b; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg) } }
+  .apex-empty { text-align: center; padding-top: 60px; }
+  .apex-highlights { background: #111114; border: 1px solid #1e1e24; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+  .apex-highlights-label { font-size: 11px; color: #4b5563; font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+  .apex-highlight-item { font-size: 12px; color: #9ca3af; padding: 3px 0; display: flex; align-items: center; gap: 6px; }
+  .apex-highlight-num { color: #f59e0b; font-family: 'JetBrains Mono', monospace; font-size: 11px; min-width: 16px; }
+  .apex-bid { background: #111114; border: 1px solid #1e1e24; border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+  .apex-bid-label { font-size: 11px; color: #4b5563; font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+  .apex-bid-value { font-size: 13px; color: #d1d5db; }
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
+
+const SHEET_ID = "11cydvXB7zb38FGSqrLTXEnikIK5gec1FSe3nK3Hy_BY";
+const GDRIVE_MCP = "https://drivemcp.googleapis.com/mcp/v1";
+
+const LOAD_PROMPT = `Use the Google Drive tool to read the Google Sheets file with ID: ${SHEET_ID}
+
+Look for the sheet tab named "UpWork_Log".
+
+Return ONLY a raw JSON array (no markdown fences, no explanation, no preamble) of rows where ALL of these are true:
+- The "Cover Letter" column is not empty and not blank
+- The "Status" column does NOT contain "Submitted", "Skip", "SKIP", "Done", "Ignore"
+
+Each element must have exactly these fields (use null if missing):
+{
+  "row_number": <number>,
+  "job_title": <string>,
+  "upwork_link": <string>,
+  "cover_letter": <string>,
+  "video_script": <string|null>,
+  "video_url": <string|null>,
+  "proposed_rate": <string>,
+  "combined_score": <string|number>,
+  "highlights": <string|null>,
+  "bid_recommendation": <string|null>,
+  "notes": <string|null>,
+  "close_type": <string|null>,
+  "status": <string|null>
+}
+
+Return the raw JSON array only. Start your response with [ and end with ].`;
+
+async function fetchJobs() {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 8000,
+      mcp_servers: [{ type: "url", url: GDRIVE_MCP, name: "google-drive" }],
+      messages: [{ role: "user", content: LOAD_PROMPT }],
+    }),
+  });
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  const data = await res.json();
+  const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("");
+  const clean = text.replace(/```json\n?/gi, "").replace(/```\n?/g, "").trim();
+  const start = clean.indexOf("["); const end = clean.lastIndexOf("]");
+  if (start === -1 || end === -1) throw new Error("No JSON array in response");
+  return JSON.parse(clean.slice(start, end + 1));
+}
+
+function ScoreBadge({ score }) {
+  const n = parseFloat(score) || 0;
+  const cls = n >= 14 ? "apex-score-badge" : "apex-score-badge apex-score-mid";
+  return <span className={cls}>{score}/20</span>;
+}
+
+function ApexQueue() {
+  const [jobs, setJobs] = useState([]);
+  const [skipped, setSkipped] = useState(new Set());
+  const [applied, setApplied] = useState(new Set());
+  const [idx, setIdx] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
+
+  const activeJobs = jobs.filter(j => !skipped.has(j.row_number) && !applied.has(j.row_number));
+  const job = activeJobs[idx] || null;
+
+  const load = useCallback(async () => {
+    setLoading(true); setError(null);
+    try {
+      const data = await fetchJobs();
+      setJobs(data); setIdx(0); setSkipped(new Set()); setApplied(new Set()); setShowVideo(false);
+    } catch (e) { setError(e.message); }
+    finally { setLoading(false); }
+  }, []);
+
+  const copy = () => {
+    if (!job) return;
+    navigator.clipboard.writeText(job.cover_letter).then(() => {
+      setCopied(true); setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const advance = (dir = 1) => {
+    setShowVideo(false); setCopied(false);
+    const n = idx + dir;
+    if (n >= 0 && n < activeJobs.length) setIdx(n);
+    else if (n >= activeJobs.length) setIdx(0);
+  };
+
+  const markSkip = () => {
+    if (!job) return;
+    setSkipped(s => new Set([...s, job.row_number]));
+    setShowVideo(false); setCopied(false);
+    if (idx >= activeJobs.length - 1) setIdx(Math.max(0, idx - 1));
+  };
+
+  const markApplied = () => {
+    if (!job) return;
+    setApplied(a => new Set([...a, job.row_number]));
+    setShowVideo(false); setCopied(false);
+    if (idx >= activeJobs.length - 1) setIdx(Math.max(0, idx - 1));
+  };
+
+  const remaining = activeJobs.length;
+
+  if (!jobs.length && !loading) return (
+    <div className="apex-load-screen">
+      <div className="apex-load-icon">📋</div>
+      <div className="apex-load-title">APEX Submission Queue</div>
+      <div className="apex-load-desc">Loads all jobs with proposals ready to submit from UpWork_Log.</div>
+      <button className="apex-load-btn" onClick={load}>Load Queue</button>
+      {error && <p style={{color:'#f87171',fontSize:'13px',marginTop:'16px'}}>{error}</p>}
+    </div>
+  );
+
+  if (loading) return (
+    <div className="apex-load-screen">
+      <div className="apex-spinner"></div>
+      <p style={{color:'#9ca3af',fontSize:'14px'}}>Reading your sheet...</p>
+      <p style={{color:'#4b5563',fontSize:'12px',marginTop:'6px'}}>Usually 10–20 seconds</p>
+    </div>
+  );
+
+  if (!loading && jobs.length > 0 && remaining === 0) return (
+    <div className="apex-empty">
+      <div style={{fontSize:'40px',marginBottom:'16px'}}>✅</div>
+      <div style={{fontSize:'20px',fontWeight:600,marginBottom:'8px'}}>Queue Complete</div>
+      <div style={{color:'#6b7280',fontSize:'14px',marginBottom:'24px'}}>{applied.size} applied · {skipped.size} skipped</div>
+      <button className="apex-load-btn" style={{background:'transparent',color:'#9ca3af',border:'1px solid #27272a'}} onClick={load}>Reload Queue</button>
+    </div>
+  );
+
+  if (!job) return null;
+
+  const highlights = job.highlights ? job.highlights.split('|').map(h => h.trim()).filter(Boolean) : [];
+
+  return (
+    <div>
+      <div className="apex-topbar">
+        <div style={{fontFamily:'JetBrains Mono, monospace',fontSize:'13px',color:'#6b7280',letterSpacing:'1px'}}>APEX QUEUE</div>
+        <div className="apex-stats">
+          <span className="apex-stat-applied">{applied.size} applied</span>
+          <span className="apex-stat-skipped">{skipped.size} skipped</span>
+          <span className="apex-stat-remaining">{remaining} remaining</span>
+        </div>
+      </div>
+
+      <div className="apex-progress-row">
+        <div className="apex-progress">
+          <div className="apex-progress-fill" style={{width:`${((idx+1)/remaining)*100}%`}}></div>
+        </div>
+        <span className="apex-counter">{idx+1} / {remaining}</span>
+      </div>
+
+      <div className="apex-job-card">
+        <div className="apex-job-title">{job.job_title}</div>
+        <div className="apex-badges">
+          <ScoreBadge score={job.combined_score} />
+          {job.proposed_rate && <span className="apex-rate-badge">{job.proposed_rate}</span>}
+          {job.close_type && <span className="apex-close-badge">{job.close_type}</span>}
+        </div>
+        {job.notes && <div className="apex-notes">⚠️ {job.notes}</div>}
+      </div>
+
+      {job.bid_recommendation && (
+        <div className="apex-bid">
+          <span className="apex-bid-label">Bid</span>
+          <span className="apex-bid-value">{job.bid_recommendation}</span>
+        </div>
+      )}
+
+      {highlights.length > 0 && (
+        <div className="apex-highlights">
+          <div className="apex-highlights-label">Highlights</div>
+          {highlights.map((h, i) => (
+            <div key={i} className="apex-highlight-item">
+              <span className="apex-highlight-num">{i+1}.</span>
+              <span>{h}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="apex-proposal-card">
+        <div className="apex-proposal-header">
+          <span className="apex-proposal-label">Cover Letter</span>
+          <button className={`apex-copy-btn ${copied ? 'apex-copy-btn-done' : 'apex-copy-btn-ready'}`} onClick={copy}>
+            {copied ? '✓ Copied!' : 'Copy'}
+          </button>
+        </div>
+        <div className="apex-proposal-body">
+          <pre className="apex-proposal-text">{job.cover_letter}</pre>
+        </div>
+      </div>
+
+      {(job.video_script || job.video_url) && (
+        <div className="apex-video-card">
+          <button className="apex-video-toggle" onClick={() => setShowVideo(!showVideo)}>
+            <span>Video Script</span>
+            <span style={{fontSize:'11px'}}>{showVideo ? '▲ hide' : '▼ show'}</span>
+          </button>
+          {showVideo && (
+            <div className="apex-video-body">
+              {job.video_url && (
+                <div style={{marginBottom:'10px'}}>
+                  <a href={job.video_url} target="_blank" rel="noopener" style={{color:'#58a6ff',fontSize:'13px'}}>
+                    🎬 {job.video_url}
+                  </a>
+                </div>
+              )}
+              {job.video_script && <pre className="apex-proposal-text" style={{fontSize:'12px',color:'#9ca3af'}}>{job.video_script}</pre>}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="apex-actions-primary">
+        <a href={job.upwork_link} target="_blank" rel="noopener noreferrer" className="apex-btn-upwork">Open Upwork Job ↗</a>
+        <button
+          onClick={() => advance(1)}
+          disabled={idx >= activeJobs.length - 1}
+          className={`apex-btn-next ${idx >= activeJobs.length - 1 ? 'apex-btn-next-disabled' : 'apex-btn-next-active'}`}
+        >Next →</button>
+      </div>
+
+      <div className="apex-actions-secondary">
+        <button className="apex-btn-skip" onClick={markSkip}>Skip</button>
+        <button className="apex-btn-applied" onClick={markApplied}>✓ Applied</button>
+      </div>
+
+      {activeJobs.length > 1 && (
+        <div className="apex-dots">
+          {activeJobs.map((_, i) => (
+            <button key={i} className="apex-dot"
+              onClick={() => { setIdx(i); setShowVideo(false); setCopied(false); }}
+              style={{
+                width: i === idx ? 20 : 6,
+                background: i === idx ? '#f59e0b' : '#27272a',
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const agentDefs = [
   { id:'richard', name:'RICHARD', init:'RM', role:'Director', color:'#d4a843', row:0 },
@@ -201,7 +508,6 @@ function Infrastructure({liveStatus}) {
     </div>))}</div>);
 }
 
-/* ── Agent Office with Messenger Runners ──────────────────────────── */
 function NeuralCenter() {
   const [agentState, setAgentState] = useState({});
   const [messengers, setMessengers] = useState([]);
@@ -210,98 +516,62 @@ function NeuralCenter() {
   const containerRef = useRef(null);
   const deskRefs = useRef({});
   const [, forceUpdate] = useState(0);
-
   const rows = [[],[],[],[],[],[]];
   agentDefs.forEach(a => rows[a.row].push(a));
-
-  // Get actual desk position from DOM
   const getDeskPos = (agentId) => {
-    const el = deskRefs.current[agentId];
-    const container = containerRef.current;
+    const el = deskRefs.current[agentId]; const container = containerRef.current;
     if (!el || !container) return { x: 400, y: 200 };
-    const cRect = container.getBoundingClientRect();
-    const eRect = el.getBoundingClientRect();
+    const cRect = container.getBoundingClientRect(); const eRect = el.getBoundingClientRect();
     return { x: eRect.left - cRect.left + eRect.width / 2, y: eRect.top - cRect.top + eRect.height / 2 };
   };
-
   const spawnMessenger = useCallback((fromId, toId, label) => {
     const from = getDeskPos(fromId); const to = getDeskPos(toId);
     if (!from || !to) return;
     const id = msgId.current++;
-    const fromAgent = agentDefs.find(a => a.id === fromId);
-    const toAgent = agentDefs.find(a => a.id === toId);
-    // Classify: instruction flows down (lower row#), output flows up
-    const fromRow = fromAgent?.row || 0;
-    const toRow = toAgent?.row || 0;
-    let msgType = 'output';
-    if (fromRow < toRow) msgType = 'instruction';
-    else if (fromRow > toRow) msgType = 'output';
-    else msgType = 'handoff';
+    const fromAgent = agentDefs.find(a => a.id === fromId); const toAgent = agentDefs.find(a => a.id === toId);
+    const fromRow = fromAgent?.row || 0; const toRow = toAgent?.row || 0;
+    let msgType = fromRow < toRow ? 'instruction' : fromRow > toRow ? 'output' : 'handoff';
     setFlashes(prev => ({...prev, [fromId]: 'send'}));
     setMessengers(prev => [...prev.slice(-10), {id, fromId, toId, fromPos:{...from}, toPos:{...to}, label:(label||'').slice(0,18), color: fromAgent?.color||'#58a6ff', msgType, ts: Date.now()}]);
-    setTimeout(() => {
-      setFlashes(prev => ({...prev, [fromId]: null, [toId]: 'recv'}));
-      setTimeout(() => setFlashes(prev => ({...prev, [toId]: null})), 1200);
-    }, 1800);
+    setTimeout(() => { setFlashes(prev => ({...prev, [fromId]: null, [toId]: 'recv'})); setTimeout(() => setFlashes(prev => ({...prev, [toId]: null})), 1200); }, 1800);
   }, []);
-
   useEffect(() => {
     const sse = new EventSource('/api/events');
-    let lastTs = Date.now();
     sse.onmessage = e => {
-      const evt = JSON.parse(e.data);
-      lastTs = Date.now();
-      const fromId = nameToId[evt.agent] || evt.from;
+      const evt = JSON.parse(e.data); const fromId = nameToId[evt.agent] || evt.from;
       if (fromId) {
         setAgentState(prev => ({...prev, [fromId]: {action: evt.action, ts: evt.ts}}));
         const toId = evt.to ? (nameToId[evt.to]||evt.to) : null;
         if (toId) { spawnMessenger(fromId, toId, evt.action); }
-        else {
-          const others = agentDefs.filter(a => a.id !== fromId && a.id !== 'richard');
-          const t = others[Math.floor(Math.random()*others.length)];
-          spawnMessenger(fromId, t.id, evt.action);
-        }
+        else { const others = agentDefs.filter(a => a.id !== fromId && a.id !== 'richard'); const t = others[Math.floor(Math.random()*others.length)]; spawnMessenger(fromId, t.id, evt.action); }
       }
     };
-    // No fallback — only real events trigger messengers
     const ticker = setInterval(() => forceUpdate(n=>n+1), 100);
     return () => { sse.close(); clearInterval(ticker); };
   }, [spawnMessenger]);
-
-  const now = Date.now();
-  const THR = 30*60*1000;
-
+  const now = Date.now(); const THR = 30*60*1000;
   return (<div className="office">
     <div className="office-floor" ref={containerRef}>
-      {rows.map((row, ri) => (
-        <div key={ri} className="office-row">
-          {row.map(a => {
-            const isActive = a.id==='richard' || (agentState[a.id] ? (now-agentState[a.id].ts<THR) : true);
-            const flash = flashes[a.id];
-            return (<div key={a.id} ref={el => deskRefs.current[a.id] = el} className={`desk-unit ${isActive?'active':''}`} style={{animationDelay:`${Math.random()}s`}}>
-              <div className="desk-block">
-                {flash && <div className="desk-flash" style={{background:flash==='send'?'#3fb950':'#58a6ff'}}>{flash==='send'?'\u2934':'\u2935'}</div>}
-                <div className="monitor on" style={{borderColor:a.color,color:a.color}}></div>
-                <div className="mon-stand"></div>
-                <div className="char-head" style={{background:a.color}}>{a.init}</div>
-                <div className="char-body" style={{background:a.color,opacity:0.7}}></div>
-                <div className="char-legs">
-                  <div className="char-leg" style={{background:a.color,opacity:0.5}}></div>
-                  <div className="char-leg" style={{background:a.color,opacity:0.5}}></div>
-                </div>
-              </div>
-              <div className="desk-name" style={{color:isActive?a.color:'#6e7681'}}>{a.name}</div>
-              <div className="desk-role">{a.role}</div>
-            </div>);
-          })}
-        </div>
-      ))}
+      {rows.map((row, ri) => (<div key={ri} className="office-row">{row.map(a => {
+        const isActive = a.id==='richard' || (agentState[a.id] ? (now-agentState[a.id].ts<THR) : true);
+        const flash = flashes[a.id];
+        return (<div key={a.id} ref={el => deskRefs.current[a.id] = el} className={`desk-unit ${isActive?'active':''}`}>
+          <div className="desk-block">
+            {flash && <div className="desk-flash" style={{background:flash==='send'?'#3fb950':'#58a6ff'}}>{flash==='send'?'\u2934':'\u2935'}</div>}
+            <div className="monitor on" style={{borderColor:a.color,color:a.color}}></div>
+            <div className="mon-stand"></div>
+            <div className="char-head" style={{background:a.color}}>{a.init}</div>
+            <div className="char-body" style={{background:a.color,opacity:0.7}}></div>
+            <div className="char-legs"><div className="char-leg" style={{background:a.color,opacity:0.5}}></div><div className="char-leg" style={{background:a.color,opacity:0.5}}></div></div>
+          </div>
+          <div className="desk-name" style={{color:isActive?a.color:'#6e7681'}}>{a.name}</div>
+          <div className="desk-role">{a.role}</div>
+        </div>);
+      })}</div>))}
       {messengers.filter(m => now - m.ts < 2500).map(m => {
-        const from = m.fromPos; const to = m.toPos;
-        if (!from || !to) return null;
+        const from = m.fromPos; const to = m.toPos; if (!from || !to) return null;
         const t = Math.min((now - m.ts) / 1800, 1);
-        const x = from.x + (to.x - from.x) * t - 9;
-        const y = from.y + (to.y - from.y) * t - 30;
+        const x = from.x + (to.x - from.x) * t - 9; const y = from.y + (to.y - from.y) * t - 30;
         const typeLabel = m.msgType === 'instruction' ? '\u2193 Task' : m.msgType === 'output' ? '\u2191 Output' : '\u2194 Handoff';
         const typeColor = m.msgType === 'instruction' ? '#d29922' : m.msgType === 'output' ? '#3fb950' : '#58a6ff';
         return (<div key={m.id} className="messenger" style={{left:x,top:y}}>
@@ -314,24 +584,72 @@ function NeuralCenter() {
     <div className="office-bar">
       {agentDefs.filter(a=>a.id!=='richard').map(a => {
         const isActive = agentState[a.id] ? (now-agentState[a.id].ts<THR) : true;
-        return (<span key={a.id} className="ob-item">
-          <span className="ob-dot" style={{background:isActive?a.color:'#6e7681'}}></span>
-          <span style={{color:isActive?a.color:'#6e7681'}}>{a.name}</span>
-        </span>);
+        return (<span key={a.id} className="ob-item"><span className="ob-dot" style={{background:isActive?a.color:'#6e7681'}}></span><span style={{color:isActive?a.color:'#6e7681'}}>{a.name}</span></span>);
       })}
     </div>
   </div>);
+}
+
+function CostDashboard({ events }) {
+  const agentEvents = {}; const today = new Date().toDateString(); let todayCount = 0;
+  events.forEach(e => {
+    const agent = e.agent || 'Unknown';
+    if (!agentEvents[agent]) agentEvents[agent] = { total: 0, today: 0 };
+    agentEvents[agent].total++;
+    if (new Date(e.ts).toDateString() === today) { agentEvents[agent].today++; todayCount++; }
+  });
+  const costPerEvent = { 'ATLAS': 0.002, 'Forge': 0.01, 'Triton': 0.005, 'Claude Code': 0.01, 'Sonnet': 0.008 };
+  const agents = Object.entries(agentEvents).sort((a,b) => b[1].total - a[1].total);
+  const totalEstimate = agents.reduce((s, [name, d]) => s + d.total * (costPerEvent[name] || 0.005), 0);
+  const todayEstimate = agents.reduce((s, [name, d]) => s + d.today * (costPerEvent[name] || 0.005), 0);
+  return React.createElement('div', {className:'grid'},
+    React.createElement('div', {style:{gridColumn:'1/-1',display:'flex',gap:'20px',flexWrap:'wrap',marginBottom:'16px'}},
+      React.createElement('div', {className:'ic',style:{flex:1,textAlign:'center',padding:'20px'}}, React.createElement('div', {style:{fontSize:'32px',fontWeight:700,color:'#3fb950'}}, '$' + todayEstimate.toFixed(2)), React.createElement('div', {style:{fontSize:'12px',color:'#8b949e'}}, "Today's Estimated Spend")),
+      React.createElement('div', {className:'ic',style:{flex:1,textAlign:'center',padding:'20px'}}, React.createElement('div', {style:{fontSize:'32px',fontWeight:700,color:'#58a6ff'}}, '$' + totalEstimate.toFixed(2)), React.createElement('div', {style:{fontSize:'12px',color:'#8b949e'}}, 'Total Estimated Spend')),
+      React.createElement('div', {className:'ic',style:{flex:1,textAlign:'center',padding:'20px'}}, React.createElement('div', {style:{fontSize:'32px',fontWeight:700,color:'#d29922'}}, todayCount), React.createElement('div', {style:{fontSize:'12px',color:'#8b949e'}}, 'Events Today')),
+      React.createElement('div', {className:'ic',style:{flex:1,textAlign:'center',padding:'20px'}}, React.createElement('div', {style:{fontSize:'32px',fontWeight:700,color:'#8b949e'}}, events.length), React.createElement('div', {style:{fontSize:'12px',color:'#8b949e'}}, 'Total Events'))
+    ),
+    React.createElement('div', {style:{gridColumn:'1/-1'}},
+      React.createElement('h3', {style:{color:'#e6edf3',marginBottom:'12px'}}, 'Cost by Agent'),
+      ...agents.map(([name, data]) => {
+        const est = data.total * (costPerEvent[name] || 0.005); const pct = totalEstimate > 0 ? (est / totalEstimate * 100) : 0;
+        return React.createElement('div', {key:name,style:{display:'flex',alignItems:'center',gap:'12px',marginBottom:'8px'}},
+          React.createElement('div', {style:{width:'120px',fontSize:'13px',color:'#e6edf3',fontWeight:600}}, name),
+          React.createElement('div', {style:{flex:1,background:'#21262d',borderRadius:'4px',height:'20px',overflow:'hidden'}}, React.createElement('div', {style:{width:pct+'%',height:'100%',background:pct>40?'#f85149':pct>20?'#d29922':'#3fb950',borderRadius:'4px',transition:'width 0.3s'}})),
+          React.createElement('div', {style:{width:'80px',textAlign:'right',fontSize:'12px',color:'#8b949e'}}, '$'+est.toFixed(2)),
+          React.createElement('div', {style:{width:'50px',textAlign:'right',fontSize:'11px',color:'#6e7681'}}, data.total+' events')
+        );
+      })
+    ),
+    React.createElement('div', {style:{gridColumn:'1/-1',marginTop:'16px',padding:'12px',background:'#161b22',borderRadius:'8px',fontSize:'11px',color:'#6e7681'}},
+      'Note: Cost estimates are approximate. Check console.anthropic.com for exact billing.'
+    )
+  );
 }
 
 function App() {
   const [tab, setTab] = useState('portal');
   const [liveStatus, setLiveStatus] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [events, setEvents] = useState([]);
   useEffect(() => {
     const poll = () => { fetch('/api/status').then(r=>r.json()).then(d=>{setLiveStatus(d);setLastUpdate(new Date());}).catch(()=>{}); };
     poll(); const id = setInterval(poll, 30000); return () => clearInterval(id);
   }, []);
+  useEffect(() => {
+    const sse = new EventSource('/api/events');
+    sse.onmessage = e => { setEvents(prev => [JSON.parse(e.data), ...prev].slice(0, 500)); };
+    return () => sse.close();
+  }, []);
   const svcOk = k => { const s = liveStatus?.agents?.[statusApiMap[k]]?.status; return s === 'active' || s === 'live'; };
+  const tabs = [
+    {id:'portal',label:'Portal'},
+    {id:'feed',label:'Activity Feed'},
+    {id:'infra',label:'Infrastructure'},
+    {id:'neural',label:'Agent Office'},
+    {id:'costs',label:'Costs'},
+    {id:'apex',label:'⚡ APEX'},
+  ];
   return (<div className="app">
     <div className="header"><h1><span>DAX</span> Mission Control</h1><div className="meta">control.1altx.ai</div></div>
     <div className="status-bar">
@@ -340,8 +658,8 @@ function App() {
       </div>))}
     </div>
     <div className="tabs">
-      {[{id:'portal',label:'Portal'},{id:'feed',label:'Activity Feed'},{id:'infra',label:'Infrastructure'},{id:'neural',label:'Agent Office'},{id:'costs',label:'Costs'}].map(t => (
-        <button key={t.id} className={`tab ${tab===t.id?'active':''}`} onClick={()=>setTab(t.id)}>{t.label}</button>
+      {tabs.map(t => (
+        <button key={t.id} className={`tab ${t.id==='apex'?'apex-tab':''} ${tab===t.id?'active':''}`} onClick={()=>setTab(t.id)}>{t.label}</button>
       ))}
     </div>
     {tab==='portal' && <Portal />}
@@ -349,71 +667,9 @@ function App() {
     {tab==='infra' && <Infrastructure liveStatus={liveStatus} />}
     {tab==='neural' && <NeuralCenter />}
     {tab==='costs' && <CostDashboard events={events} />}
+    {tab==='apex' && <ApexQueue />}
     {lastUpdate && <div className="last-poll">Last poll: {lastUpdate.toLocaleTimeString()} (every 30s)</div>}
   </div>);
-}
-
-function CostDashboard({ events }) {
-  // Estimate costs from events by agent
-  const agentEvents = {};
-  const today = new Date().toDateString();
-  let todayCount = 0;
-
-  events.forEach(e => {
-    const agent = e.agent || 'Unknown';
-    if (!agentEvents[agent]) agentEvents[agent] = { total: 0, today: 0 };
-    agentEvents[agent].total++;
-    if (new Date(e.ts).toDateString() === today) {
-      agentEvents[agent].today++;
-      todayCount++;
-    }
-  });
-
-  // Rough cost estimates per event by agent/model
-  const costPerEvent = { 'ATLAS': 0.002, 'Forge': 0.01, 'Triton': 0.005, 'Claude Code': 0.01, 'Sonnet': 0.008 };
-
-  const agents = Object.entries(agentEvents).sort((a,b) => b[1].total - a[1].total);
-  const totalEstimate = agents.reduce((s, [name, d]) => s + d.total * (costPerEvent[name] || 0.005), 0);
-  const todayEstimate = agents.reduce((s, [name, d]) => s + d.today * (costPerEvent[name] || 0.005), 0);
-
-  return React.createElement('div', {className:'grid'},
-    React.createElement('div', {style:{gridColumn:'1/-1',display:'flex',gap:'20px',flexWrap:'wrap',marginBottom:'16px'}},
-      React.createElement('div', {className:'ic',style:{flex:1,textAlign:'center',padding:'20px'}},
-        React.createElement('div', {style:{fontSize:'32px',fontWeight:700,color:'#3fb950'}}, '$' + todayEstimate.toFixed(2)),
-        React.createElement('div', {style:{fontSize:'12px',color:'#8b949e'}}, "Today's Estimated Spend")
-      ),
-      React.createElement('div', {className:'ic',style:{flex:1,textAlign:'center',padding:'20px'}},
-        React.createElement('div', {style:{fontSize:'32px',fontWeight:700,color:'#58a6ff'}}, '$' + totalEstimate.toFixed(2)),
-        React.createElement('div', {style:{fontSize:'12px',color:'#8b949e'}}, 'Total Estimated Spend')
-      ),
-      React.createElement('div', {className:'ic',style:{flex:1,textAlign:'center',padding:'20px'}},
-        React.createElement('div', {style:{fontSize:'32px',fontWeight:700,color:'#d29922'}}, todayCount),
-        React.createElement('div', {style:{fontSize:'12px',color:'#8b949e'}}, 'Events Today')
-      ),
-      React.createElement('div', {className:'ic',style:{flex:1,textAlign:'center',padding:'20px'}},
-        React.createElement('div', {style:{fontSize:'32px',fontWeight:700,color:'#8b949e'}}, events.length),
-        React.createElement('div', {style:{fontSize:'12px',color:'#8b949e'}}, 'Total Events')
-      )
-    ),
-    React.createElement('div', {style:{gridColumn:'1/-1'}},
-      React.createElement('h3', {style:{color:'#e6edf3',marginBottom:'12px'}}, 'Cost by Agent'),
-      ...agents.map(([name, data]) => {
-        const est = data.total * (costPerEvent[name] || 0.005);
-        const pct = totalEstimate > 0 ? (est / totalEstimate * 100) : 0;
-        return React.createElement('div', {key:name,style:{display:'flex',alignItems:'center',gap:'12px',marginBottom:'8px'}},
-          React.createElement('div', {style:{width:'120px',fontSize:'13px',color:'#e6edf3',fontWeight:600}}, name),
-          React.createElement('div', {style:{flex:1,background:'#21262d',borderRadius:'4px',height:'20px',overflow:'hidden'}},
-            React.createElement('div', {style:{width:pct+'%',height:'100%',background:pct>40?'#f85149':pct>20?'#d29922':'#3fb950',borderRadius:'4px',transition:'width 0.3s'}})
-          ),
-          React.createElement('div', {style:{width:'80px',textAlign:'right',fontSize:'12px',color:'#8b949e'}}, '$'+est.toFixed(2)),
-          React.createElement('div', {style:{width:'50px',textAlign:'right',fontSize:'11px',color:'#6e7681'}}, data.total+' events')
-        );
-      })
-    ),
-    React.createElement('div', {style:{gridColumn:'1/-1',marginTop:'16px',padding:'12px',background:'#161b22',borderRadius:'8px',fontSize:'11px',color:'#6e7681'}},
-      'Note: Cost estimates are approximate based on event counts and average token usage per agent. Actual costs depend on prompt length and model used. Check console.anthropic.com for exact billing.'
-    )
-  );
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
