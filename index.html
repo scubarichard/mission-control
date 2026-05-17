@@ -179,16 +179,16 @@ function ApexControls() {
   const pause = async () => {
     setStatus('loading');
     try {
-      await fetch('https://n8n.dakona.net/api/v1/workflows/vuzR69FaM306OVWK', {method:'PATCH', headers:{'Content-Type':'application/json','X-N8N-API-KEY':'%%N8N_API_KEY%%'}, body:JSON.stringify({active:false})});
-      await fetch('https://n8n.dakona.net/api/v1/workflows/NDhSBSspusDzLP6XGKeP6', {method:'PATCH', headers:{'Content-Type':'application/json','X-N8N-API-KEY':'%%N8N_API_KEY%%'}, body:JSON.stringify({active:false})});
+      await fetch('https://n8n.dakona.net/api/v1/workflows/vuzR69FaM306OVWK', {method:'PATCH', headers:{'Content-Type':'application/json','X-N8N-API-KEY':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiM2UyNzA5OWItYTJkMy00MzM1LTgzYTAtOTFkYzk3MTIwM2EzIiwiaWF0IjoxNzczOTI2NzQ1fQ.-aJelQYwEppObYhbPmrr5Hp2U_g1lFy6EdiV6rMvWlw'}, body:JSON.stringify({active:false})});
+      await fetch('https://n8n.dakona.net/api/v1/workflows/NDhSBSspusDzLP6XGKeP6', {method:'PATCH', headers:{'Content-Type':'application/json','X-N8N-API-KEY':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiM2UyNzA5OWItYTJkMy00MzM1LTgzYTAtOTFkYzk3MTIwM2EzIiwiaWF0IjoxNzczOTI2NzQ1fQ.-aJelQYwEppObYhbPmrr5Hp2U_g1lFy6EdiV6rMvWlw'}, body:JSON.stringify({active:false})});
       setStatus('paused');
     } catch(e) { setStatus('running'); alert('Pause failed: ' + e.message); }
   };
   const resume = async () => {
     setStatus('loading');
     try {
-      await fetch('https://n8n.dakona.net/api/v1/workflows/vuzR69FaM306OVWK', {method:'PATCH', headers:{'Content-Type':'application/json','X-N8N-API-KEY':'%%N8N_API_KEY%%'}, body:JSON.stringify({active:true})});
-      await fetch('https://n8n.dakona.net/api/v1/workflows/NDhSBSspusDzLP6XGKeP6', {method:'PATCH', headers:{'Content-Type':'application/json','X-N8N-API-KEY':'%%N8N_API_KEY%%'}, body:JSON.stringify({active:true})});
+      await fetch('https://n8n.dakona.net/api/v1/workflows/vuzR69FaM306OVWK', {method:'PATCH', headers:{'Content-Type':'application/json','X-N8N-API-KEY':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiM2UyNzA5OWItYTJkMy00MzM1LTgzYTAtOTFkYzk3MTIwM2EzIiwiaWF0IjoxNzczOTI2NzQ1fQ.-aJelQYwEppObYhbPmrr5Hp2U_g1lFy6EdiV6rMvWlw'}, body:JSON.stringify({active:true})});
+      await fetch('https://n8n.dakona.net/api/v1/workflows/NDhSBSspusDzLP6XGKeP6', {method:'PATCH', headers:{'Content-Type':'application/json','X-N8N-API-KEY':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiM2UyNzA5OWItYTJkMy00MzM1LTgzYTAtOTFkYzk3MTIwM2EzIiwiaWF0IjoxNzczOTI2NzQ1fQ.-aJelQYwEppObYhbPmrr5Hp2U_g1lFy6EdiV6rMvWlw'}, body:JSON.stringify({active:true})});
       setStatus('running');
     } catch(e) { setStatus('paused'); alert('Resume failed: ' + e.message); }
   };
