@@ -202,6 +202,52 @@ function ScoreBadge({ score }) {
   return <span className={cls}>{score}/20</span>;
 }
 
+
+const N8N_PAUSE_07A = 'https://n8n.dakona.net/webhook/7a-toggle';
+const N8N_PAUSE_07B = 'https://n8n.dakona.net/webhook/7b-toggle';
+const BRIDGE_PAUSE  = 'https://bridge.dakona.net/execute/run_powershell';
+
+async function callN8nToggle(url, active) {
+  try {
+    await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({active}) });
+  } catch(e) { console.error('Toggle failed', e); }
+}
+
+function ApexControls() {
+  const [status, setStatus] = useState('running'); // running | paused | loading
+  const pause = async () => {
+    setStatus('loading');
+    try {
+      await fetch('https://n8n.dakona.net/api/v1/workflows/vuzR69FaM306OVWK', {method:'PATCH', headers:{'Content-Type':'application/json','X-N8N-API-KEY':'%%N8N_API_KEY%%'}, body:JSON.stringify({active:false})});
+      await fetch('https://n8n.dakona.net/api/v1/workflows/NDhSBSspusDzLP6XGKeP6', {method:'PATCH', headers:{'Content-Type':'application/json','X-N8N-API-KEY':'%%N8N_API_KEY%%'}, body:JSON.stringify({active:false})});
+      setStatus('paused');
+    } catch(e) { setStatus('running'); alert('Pause failed: ' + e.message); }
+  };
+  const resume = async () => {
+    setStatus('loading');
+    try {
+      await fetch('https://n8n.dakona.net/api/v1/workflows/vuzR69FaM306OVWK', {method:'PATCH', headers:{'Content-Type':'application/json','X-N8N-API-KEY':'%%N8N_API_KEY%%'}, body:JSON.stringify({active:true})});
+      await fetch('https://n8n.dakona.net/api/v1/workflows/NDhSBSspusDzLP6XGKeP6', {method:'PATCH', headers:{'Content-Type':'application/json','X-N8N-API-KEY':'%%N8N_API_KEY%%'}, body:JSON.stringify({active:true})});
+      setStatus('running');
+    } catch(e) { setStatus('paused'); alert('Resume failed: ' + e.message); }
+  };
+  const isLoading = status === 'loading';
+  const isPaused  = status === 'paused';
+  return (
+    <div className="apex-controls">
+      <span className="apex-controls-label">
+        <span className="apex-status-dot" style={{background: isPaused ? '#f59e0b' : '#3fb950'}}></span>
+        APEX {isPaused ? 'PAUSED' : 'RUNNING'}
+      </span>
+      <button className="apex-btn-pause"  onClick={pause}  disabled={isLoading || isPaused}>
+        {isLoading ? '...' : 'Pause'}
+      </button>
+      <button className="apex-btn-resume" onClick={resume} disabled={isLoading || !isPaused}>
+        {isLoading ? '...' : 'Resume'}
+      </button>
+    </div>
+  );
+}
 function ApexQueue() {
   const [jobs, setJobs] = useState([]);
   const [skipped, setSkipped] = useState(new Set());
@@ -286,6 +332,7 @@ function ApexQueue() {
   const highlights = job.highlights ? job.highlights.split('|').map(h => h.trim()).filter(Boolean) : [];
 
   return (
+      <ApexControls />
     <div>
       <div className="apex-topbar">
         <div style={{fontFamily:'JetBrains Mono, monospace',fontSize:'13px',color:'#6b7280',letterSpacing:'1px'}}>APEX QUEUE</div>
@@ -648,7 +695,7 @@ function App() {
     {id:'infra',label:'Infrastructure'},
     {id:'neural',label:'Agent Office'},
     {id:'costs',label:'Costs'},
-    {id:'apex',label:'ÃƒÂ¢Ã…Â¡Ã‚Â¡ APEX'},
+    {id:'apex',label:'APEX'},
   ];
   return (<div className="app">
     <div className="header"><h1><span>DAX</span> Mission Control</h1><div className="meta">control.1altx.ai</div></div>
