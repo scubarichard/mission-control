@@ -266,6 +266,8 @@
 
   .apex-empty { text-align: center; padding-top: 60px; }
 
+  .apex-toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: #16a34a; color: #fff; padding: 10px 22px; border-radius: 8px; font-size: 13px; font-weight: 600; z-index: 9999; white-space: nowrap; max-width: 88vw; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 4px 16px #00000060; pointer-events: none; }
+
   .apex-highlights { background: #111114; border: 1px solid #1e1e24; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
 
   .apex-highlights-label { font-size: 11px; color: #4b5563; font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
@@ -345,6 +347,7 @@ function ApexQueue() {
   const [error, setError] = React.useState(null);
   const [copied, setCopied] = React.useState(false);
   const [showVideo, setShowVideo] = React.useState(false);
+  const [appliedTitle, setAppliedTitle] = React.useState(null);
 
   const activeJobs = jobs.filter(j => !skipped.has(j.row_number) && !applied.has(j.row_number));
   const job = activeJobs[idx] || null;
@@ -374,15 +377,23 @@ function ApexQueue() {
 
   const markSkip = () => {
     if (!job) return;
-    setSkipped(s => new Set([...s, job.row_number]));
+    const rowNum = job.row_number;
+    setSkipped(s => new Set([...s, rowNum]));
     setShowVideo(false); setCopied(false);
     if (idx >= activeJobs.length - 1) setIdx(Math.max(0, idx - 1));
+    fetch("https://n8n.dakona.net/webhook/apex-mark-skipped", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({row_number: rowNum})
+    }).catch(e => console.error("Mark skipped failed:", e));
   };
 
   const markApplied = () => {
     if (!job) return;
     const rowNum = job.row_number;
+    const title = job.job_title;
     setApplied(a => new Set([...a, rowNum]));
+    setAppliedTitle("✓ Applied: " + title);
+    setTimeout(() => setAppliedTitle(null), 2500);
     setShowVideo(false); setCopied(false);
     if (idx >= activeJobs.length - 1) setIdx(Math.max(0, idx - 1));
     fetch("https://n8n.dakona.net/webhook/apex-mark-applied", {
@@ -419,6 +430,7 @@ function ApexQueue() {
   const highlights = job.highlights ? job.highlights.split("|").map(h => h.trim()).filter(Boolean) : [];
 
   return e("div", null,
+    appliedTitle && e("div", {className:"apex-toast"}, appliedTitle),
     e(ApexControls),
     e("div", {className:"apex-topbar"},
       e("div", {style:{fontFamily:"JetBrains Mono, monospace",fontSize:"13px",color:"#6b7280",letterSpacing:"1px"}}, "APEX QUEUE"),
