@@ -1391,3 +1391,126 @@ You are helpful, capable, and calm. You don't perform urgency. You get things do
 **Alt:** eBay used matched pair
 **ClickUp:** https://app.clickup.com/t/86e1f12nr
 - Do NOT change any tool configs, MCP settings, or workflow logic — persona text only
+
+---
+
+## TASK-20260518-FORGE-1ALTX-WAT-001 — WAT The Way: Repo + Airtable Seed Data
+- **Assignee:** Forge
+- **Status:** IN_PROGRESS
+- **Date:** 2026-05-18
+- **From:** Sonnet (Richard request)
+- **Client:** 1AltX → Word Aflame Tabernacle (WAT) — Upwork bake-off prospect
+- **Priority:** HIGH
+- **Deadline:** Mon 2026-05-25 EOD (Ricky decision window closes Tue 2026-05-26)
+- **Title:** Create wat-the-way-demo repo + generate 15 fully-linked Airtable seed CSVs supporting demo scenario for Upwork bake-off
+
+### Context
+
+Richard had a discovery call with Ricky Stanley (minister at Word Aflame Tabernacle, Lawrenceville GA) on 2026-05-18 for an Upwork bake-off — 5 developers competing. Ricky has a 40-page spec for "The Way," a discipleship platform tracking members from first visit through leadership. Tech stack pivoted on the call: Make.com → n8n (Ricky's web dev friend uses n8n).
+
+Richard committed to a free mockup as a good-faith pre-contract deliverable (same pattern as PNT). HTML mockup already built at `/mnt/user-data/outputs/the-way-mockup.html` (6 screens, 3 role views, click-through, technical annotations).
+
+This task generates the Airtable seed data that brings the mockup to life. Data must support a specific demo scenario: Marcus Johnson (DOJ Second Chance referral → Community Participant → Both crossover → Believer arc), the Davis family (4 linked members spanning Growing Strong kids → Next Generation youth → 2 adults), and a Pastor's Monday morning admin dashboard view.
+
+Source docs in Richard's Dropbox uploads (current Sonnet session):
+- TheWay-MasterDocument.docx (40-page spec)
+- TheWay-FullMockup.pdf (visual mockup)
+
+### Step 0 — Repo Init
+
+Create private repo: **1AltX-Clients/wat-the-way-demo**
+
+If `1AltX-Clients` org isn't accessible, fallback to **scubarichard/wat-the-way-demo** (private). Either way, post chosen path to #dax-collab before proceeding to Step 1.
+
+Initial structure:
+```
+wat-the-way-demo/
+├── README.md
+├── .gitignore                 (node, python, .env, /reference/)
+├── airtable-seed/
+│   ├── 01-members.csv
+│   ├── ... (15 CSVs total)
+│   └── SCHEMA.md
+├── mockup/
+│   └── the-way-mockup.html    (copy from Sonnet session output)
+├── demo-scenario/
+│   └── monday-morning-story.md
+└── reference/                 (gitignored)
+    ├── TheWay-MasterDocument.docx
+    └── TheWay-FullMockup.pdf
+```
+
+### Step 1 — Generate 15 seed CSVs
+
+Output to `/airtable-seed/`:
+
+1. **01-members.csv** (12 rows) — Marcus Johnson + Davis family (James, Maria, Emma 9, Jordan 15) + 7 others spanning Traveler/Seeker/Disciple/Servant zones. User Type field per row.
+2. **02-courses.csv** (8 rows) — Levels 1–2 (Prayer/Stewardship/James/Acts on Ministry; Financial Literacy/Wellbeing Nav on Community). Each row populated with Memory Verse (KJV), Daily Prayer Focus, Daily Action Prompt, BibleProject Video URL, KJV Reading Chapters, Grant Category, Pre/Post Questions.
+3. **03-pipeline-stages.csv** (12 rows) — One per member with timestamps. Marcus: Visitor (30d ago) → Seeker (21d ago) → Believer (recent).
+4. **04-checkpoints.csv** (6 rows) — Three-Gate System entries. Mix of Gate 1 only, Gates 1+2, all-three-green. James Davis must be all-three-green (Ricky clicks Advance Phase on him in the demo).
+5. **05-assessments.csv** (4 rows) — Marcus pre+post for both Financial Literacy AND Wellbeing Nav. Pre: confidence 1, behind on bills. Post: confidence 4, current on bills.
+6. **06-family-units.csv** (1 row) — Davis family, 4 linked Members.
+7. **07-bible-study-groups.csv** (3 rows) — Acts Study (Sarah M., Wed 7pm), Stewardship (James T., Tue 6:30pm), New Converts Q&A (Pastor Ricky, Sun 12pm). One group has a guest joined in last 7 days.
+8. **08-outreach-log.csv** (18 rows) — Last 30 days. Marcus's shepherd has entries on days 1/7/14/28.
+9. **09-quests.csv** (10 rows) — Mix of Prayer streak, Scripture, Outreach, Fasting. James Davis has 21-day prayer streak.
+10. **10-testimonies.csv** (3 rows) — Marcus's salvation (pending approval), James's financial breakthrough (approved), Maria's baptism (approved).
+11. **11-mentors.csv** (4 rows) — Shepherds, recurring across Pipeline + Outreach.
+12. **12-progress-log.csv** (8 rows) — Recent phase advancements.
+13. **13-prayer-calendar.csv** (4 rows) — Current month events.
+14. **14-needs-resources.csv** (6 rows) — **Real Gwinnett County orgs**: Gwinnett County Health Dept, United Way of Greater Atlanta Gwinnett, Gwinnett Coalition for Health & Human Services, Lawrenceville Co-op Ministry, etc.
+15. **15-kids-activities.csv** (4 rows) — Little Lights wks 3+4 (parent-guided), Growing Strong wks 7+8 (independent). Aligned with God's Word for Life.
+
+### Step 2 — SCHEMA.md
+
+For each of 15 tables document: field name + Airtable type (single line, long text, single select, multi select, linked record, formula, rollup, count, date, checkbox), Linked Record relationships, Formula/Rollup definitions, Import order.
+
+### Step 3 — README.md
+
+Project overview + demo scenario summary (1–2 paragraphs) + clear import instructions.
+
+### Constraints (non-negotiable)
+
+- **All scripture KJV** — UPCI tradition, denominational rule
+- **Linked Record fields use Airtable record IDs** (e.g. `rec1AbC2dE3fG4hI5j`), consistent across files
+- **Date anchor: 2026-05-18**. Look backward 90 days for history. Marcus's Day 28 final check due today.
+- **Gwinnett County realism** in Needs Resources — real org names
+- **Marcus arc must touch**: DOJ Second Chance referral, User Type crossover, Financial Lit + Wellbeing Nav, Day 1/7/14/28 timestamps, pending salvation testimony
+- **Davis family**: 4 Members linked to 1 Family Unit, kids in Growing Strong + Next Generation
+
+### Acceptance Criteria
+
+- [ ] Repo created with correct structure
+- [ ] All 15 CSVs match row count spec
+- [ ] SCHEMA.md complete (types + relationships + import order)
+- [ ] Fresh-base import test passes with no link errors
+- [ ] Marcus's pre/post assessment delta visible (confidence 1 → 4)
+- [ ] Davis family expandable as household
+- [ ] HTML mockup labels (greeting, member names, badges) match seed data
+- [ ] PR opened on main with import-test Loom attached
+
+### Status Updates
+
+Post to #dax-collab (C0APVGG486M) with `[Claude Code]` prefix at:
+1. Step 0 complete — post repo URL
+2. CSVs at 50% (after 8 tables drafted)
+3. PR opened — post PR URL + Loom of import test
+
+### Gate
+
+- [ ] Repo URL posted to Slack
+- [ ] All 15 CSVs drafted
+- [ ] SCHEMA.md complete
+- [ ] README.md complete
+- [ ] Fresh-base import test passed
+- [ ] PR opened
+- [ ] 100% status update posted to #dax-collab
+
+### Notes
+
+- Pre-contract good-faith deliverable. Win condition: Ricky picks Richard out of 5 bidders.
+- Long-term ceiling: custom 6-figure build + grant-funded retainer + UPCI national license.
+- HTML mockup at `/mnt/user-data/outputs/the-way-mockup.html` (Sonnet session 2026-05-18) — copy verbatim to repo `/mockup/`.
+- Source docs (spec + mockup PDF) in Richard's Dropbox uploads — Richard will share if needed.
+- Demo scenario narrative ("Marcus Johnson Monday morning") will be expanded into a narration-driven kinetic explainer video post-seed-data. Triton task to follow once data lands.
+
+---
