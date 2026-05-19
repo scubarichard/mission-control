@@ -1322,8 +1322,10 @@ Richard's remaining work after CHOSEN-006:
 
 ## TASK-20260507-FORGE-ATLAS-001 — Update Atlas Persona (Softer Voice/Tone)
 - **Assignee:** Forge
-- **Status:** PENDING
+- **Status:** DONE
 - **Date:** 2026-05-07
+- **Completed:** 2026-05-19
+- **Completed-By:** Forge
 - **From:** Sonnet (Richard request)
 - **Priority:** Medium
 - **Title:** Replace Atlas CLAUDE.md persona with softer, Claude-like tone
