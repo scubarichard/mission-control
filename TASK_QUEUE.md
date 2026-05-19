@@ -1376,4 +1376,18 @@ You are helpful, capable, and calm. You don't perform urgency. You get things do
 ### Notes
 - SSH access: `ssh -T -i ~/.ssh/id_rsa -J dkn8n@n8n.dakona.net daxadmin@172.16.0.5`
 - If CLAUDE.md doesn't exist yet, create it at `~/.openclaw/CLAUDE.md`
+
+---
+
+## TASK-20260519-RICHARD-HW-001 — RAM Upgrade: RICHARD-WS
+- **Assignee:** Richard
+- **Status:** PENDING (waiting for sale price)
+- **Date:** 2026-05-19
+- **Priority:** Low
+- **Title:** Purchase 32GB RAM kit for XPS 15 9510
+
+**Part:** Crucial CT2K16G4SFRA32A — 2×16GB DDR4-3200 SO-DIMM
+**Current price:** ~$250 — wait for Prime Day / Black Friday (~$60–80 target)
+**Alt:** eBay used matched pair
+**ClickUp:** https://app.clickup.com/t/86e1f12nr
 - Do NOT change any tool configs, MCP settings, or workflow logic — persona text only
