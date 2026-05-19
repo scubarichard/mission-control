@@ -1400,6 +1400,7 @@ You are helpful, capable, and calm. You don't perform urgency. You get things do
 - **Date:** 2026-05-18
 - **Completed:** 2026-05-19
 - **Completed-By:** Forge
+- **Airtable Base:** appO608pIDK2oZ3UU — https://airtable.com/appO608pIDK2oZ3UU (15 tables, all records imported, linked fields wired)
 - **From:** Sonnet (Richard request)
 - **Client:** 1AltX → Word Aflame Tabernacle (WAT) — Upwork bake-off prospect
 - **Priority:** HIGH
