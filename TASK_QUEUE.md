@@ -1517,3 +1517,21 @@ Post to #dax-collab (C0APVGG486M) with `[Claude Code]` prefix at:
 - Demo scenario narrative ("Marcus Johnson Monday morning") will be expanded into a narration-driven kinetic explainer video post-seed-data. Triton task to follow once data lands.
 
 ---
+
+## TASK-20260519-FORGE-1ALTX-WAT-002 — WAT The Way: Kinetic Explainer Video
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-05-19
+- **Completed:** 2026-05-19
+- **Completed-By:** Forge
+- **Client:** 1AltX → Word Aflame Tabernacle (WAT)
+- **Priority:** HIGH
+- **Deadline:** Mon 2026-05-25 EOD
+- **Title:** Produce kinetic explainer video — narration-driven walkthrough of The Way platform for Ricky's bake-off review
+- **Gates cleared:** PR #1 merged ✅ | Airtable base appO608pIDK2oZ3UU populated ✅
+- **Output:** `P:/_clients/wat-the-way-demo/walkthrough/wat-the-way-v1.mp4` — 438s (7:18), 9.58MB
+- **Scenes:** 8 (2 title cards intro/outro + 2 bridge cards + 4 mockup screen captures)
+- **Pipeline:** 1altx-autovid run.js — ElevenLabs Richard voice + Puppeteer HTML mockup capture
+- **Scene durations:** intro 32s · marcus 106s · bridge1 8s · davis 80s · bridge2 5s · admin 85s · tech 96s · outro 26s
+
+---
