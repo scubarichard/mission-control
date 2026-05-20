@@ -206,6 +206,7 @@ Not started — Richard can confirm if/when rename is wanted.
 - **Client:** Impact Capital Partners (ICP)
 - **Priority:** CRITICAL — Brett's team is live on dax.impact-cp.com TODAY
 - **Title:** DAX ICP deployment fixes — Brett's team is logging in
+- **[Forge] 2026-05-19 BLOCKER:** ICP deployment lock is active — unlock code required before any dax.impact-cp.com work. Awaiting Richard's go-ahead.
 
 ### Context
 
@@ -1529,9 +1530,10 @@ Post to #dax-collab (C0APVGG486M) with `[Claude Code]` prefix at:
 - **Deadline:** Mon 2026-05-25 EOD
 - **Title:** Produce kinetic explainer video — narration-driven walkthrough of The Way platform for Ricky's bake-off review
 - **Gates cleared:** PR #1 merged ✅ | Airtable base appO608pIDK2oZ3UU populated ✅
-- **Output:** `P:/_clients/wat-the-way-demo/walkthrough/wat-the-way-v1.mp4` — 438s (7:18), 9.58MB
-- **Scenes:** 8 (2 title cards intro/outro + 2 bridge cards + 4 mockup screen captures)
-- **Pipeline:** 1altx-autovid run.js — ElevenLabs Richard voice + Puppeteer HTML mockup capture
-- **Scene durations:** intro 32s · marcus 106s · bridge1 8s · davis 80s · bridge2 5s · admin 85s · tech 96s · outro 26s
+- **Output (v2 — re-rendered 2026-05-19):** `P:/_clients/wat-the-way-demo/walkthrough/wat-the-way-v1.mp4` — 430s (7:09), 19.69MB
+- **Scenes:** 8 — 4 HeyGen talking-head avatar clips (intro/bridge1/bridge2/outro) + 4 Puppeteer HTML mockup screen captures
+- **Pipeline:** HeyGen API (talking_photo `0f0656d38e0545918de84dd25f2d31af`, Richard voice clone) + autovid partial-rerender
+- **Scene durations:** intro 22.6s · marcus 106s · bridge1 5.7s · davis 80s · bridge2 4.1s · admin 85s · tech 96s · outro 30.2s
+- **Fix applied:** intro greeting corrected to "Hey Ricky —"; avatar scenes are real HeyGen talking-head video, not static title cards
 
 ---
