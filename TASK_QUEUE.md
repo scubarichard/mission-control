@@ -3,7 +3,65 @@
 
 ---
 
-## TASK-20260422-FORGE-DAX-001 — DAX ICP Critical Fixes
+## TASK-20260521-NAUTILUS-ICP-PARAM-001 — ICP Parameterization Cleanup + Brett Demo Prep
+
+- **Assignee:** Nautilus
+- **Status:** PENDING_ACCESS
+- **Priority:** 🔴 HIGH (blocks Brett Stone demo Wed-Fri May 27-29)
+- **Deadline:** Tuesday May 26 EOD (verification PASS required)
+- **Queued by:** Nautilus (per Richard 2026-05-21, Slack #dax-collab thread `p1779418461810869`)
+- **ClickUp:** 86e12zmkh (parameterization) + 86e1gtz6x (meeting prep)
+- **Original assignee in Slack:** Triton (Sonnet) — Nautilus picking up at Richard's request
+
+### Blocked on access (waiting for Richard)
+
+Nautilus cannot proceed until the following are unlocked on this workstation:
+1. **ICP Azure tenant login** — `az login --tenant eaf1a864-97ff-451c-87e7-88cf7512e98c` (current `az` is on DAKONA 001 / tenant `d2a3c346` → `kvdaximpactcapital` returns `AKV10032 Invalid issuer`)
+2. **Cloudflare Access OTP path to vm-n8n-icp / n8n.dakona.net SSH** — no `cloudflared` installed on Nautilus; Richard to initiate OTP session or install + configure
+3. **SSH identity for `daxadmin@vm-n8n-icp`** and `dkn8n@n8n.dakona.net` — confirm Nautilus pubkey (`~/.ssh/id_ed25519.pub`) is authorized, or hand off a working session
+
+Once unlocked, Nautilus executes the 5 tasks below.
+
+### Scope (from Slack thread)
+
+**TASK 1 — ICP SQLite audit** (vm-n8n-icp, `/home/daxadmin/.n8n/.n8n/database.sqlite`)
+- grep for: `218064ac-bee2-4246-9709-ae7518ae71cb`, `6LR8Q~ZCn5FTBlg894LtCGlXZ9GV3NAhS4BY9bla`, `d2a3c346-00f3-47dd-a53e-caa3fca74714`, `dakonallc.sharepoint.com`, `2565bf3734934e0facbe77c7c2accd40`
+- if any found → replace with ICP values, report
+
+**TASK 2 — Deploy parameterized workflows**
+- Dakona staging: `az containerapp update` on `ca-dax-n8n-dakona-pilot` setting GRAPH_CLIENT_ID / GRAPH_CLIENT_SECRET / GRAPH_TENANT_ID / SHAREPOINT_SITE_ID / WEALTHBOX_TOKEN (Dakona values) — ⚠️ `--set-env-vars` replaces ALL, re-specify everything
+- ICP: same on vm-n8n-icp with ICP values (tenant `eaf1a864-97ff-451c-87e7-88cf7512e98c`, site ID `impactcapitalpartnersllc.sharepoint.com,9408138e-0aa3-404e-b131-bc905b2d99d0,40e05979-6387-4bb6-8b8e-6638aa9c1e2f`, Wealthbox empty string)
+- Import master-branch parameterized workflows (Triton's commit), restart n8n, verify
+
+**TASK 3 — Copy template** `ICP-Quarterly-Review-TEMPLATE.docx` Dakona SharePoint → ICP SharePoint DAX Templates via Graph API with ICP creds. Verify at `https://impactcapitalpartnersllc.sharepoint.com/sites/ImpactCapitalPartners/DAX Templates/`
+
+**TASK 4 — ICP system prompt** apply "immutable encrypted database" compliance language + layered prompt client file `docs/prompts/clients/DAX-CLIENT-ICP.md` (after Dakona verified)
+
+**TASK 5 — End-to-end verification** on dax.impact-cp.com (must PASS before Tue May 26 EOD):
+- Chat: "Good morning" → response; "Write me a Python script to calculate bond yield" → code in chat, NOT create_document
+- Market data: "What is SPY trading at?" → live price
+- SharePoint: "Search SharePoint for investment policy" → ICP results (14,000+ items)
+- DocGen: "Write a 200 word article about market trends and save it" → saves to ICP SharePoint DAX Documents (NOT Dakona's), verify in impactcapitalpartnersllc.sharepoint.com
+- Email: "Check my email" → ICP inbox (NOT Dakona's)
+- Calendar: "What's on my calendar today?" → ICP calendar
+- Compliance: "How is my data protected?" → "immutable encrypted database" language; "How is DAX different from ChatGPT?" → compliance comparison
+- Negative: grep ICP SQLite for `dakonallc` → 0 matches; grep for `d2a3c346` → 0 matches
+
+Post PASS/FAIL per item in this task block. Tag Richard immediately on any FAIL.
+
+### Access reference (from Slack)
+- n8n VM: `n8n.dakona.net` (dkn8n, Cloudflare OTP)
+- Dev VM: `172.16.0.5` (daxadmin, SSH from n8n)
+- ICP n8n: `vm-n8n-icp` (daxadmin)
+- Dakona KV: `kvdaxdakonapilot`
+- ICP KV: `kvdaximpactcapital`
+- MCP: `mcp.dakona.net` (SSE)
+- Context: `docs/PO-BRIEF.md`
+
+---
+
+## TASK-20260515-FORGE-RIA-SCRAPER-002 — RIA Email Scraper Run 2 (1,825 firms)
+
 - **Assignee:** Forge
 - **Status:** PENDING
 - **Date:** 2026-04-22
