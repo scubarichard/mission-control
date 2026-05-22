@@ -174,6 +174,11 @@
 
   /* APEX styles */
 
+  .apex-filter-bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .apex-filter-select { background: #111114; border: 1px solid #1e1e24; border-radius: 6px; color: #9ca3af; font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 5px 10px; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none; }
+  .apex-filter-select:focus { border-color: #f59e0b60; color: #e6edf3; }
+  .apex-filter-select option { background: #0d0d0f; }
+
   .apex-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 
   .apex-stats { display: flex; gap: 20px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
@@ -205,6 +210,12 @@
   .apex-rate-badge { background: #ffffff08; border: 1px solid #ffffff15; color: #9ca3af; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
 
   .apex-close-badge { background: #1d4ed810; border: 1px solid #3b82f640; color: #93c5fd; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+
+  .apex-priority-hot { background: #7f1d1d20; border: 1px solid #ef444460; color: #fca5a5; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+
+  .apex-priority-apply { background: #14532d20; border: 1px solid #22c55e40; color: #86efac; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+
+  .apex-priority-default { background: #ffffff08; border: 1px solid #ffffff15; color: #9ca3af; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
 
   .apex-notes { margin-top: 12px; padding: 10px 12px; background: #451a0310; border: 1px solid #92400e30; border-radius: 6px; font-size: 12px; color: #fbbf24; line-height: 1.5; }
 
@@ -348,8 +359,18 @@ function ApexQueue() {
   const [copied, setCopied] = React.useState(false);
   const [showVideo, setShowVideo] = React.useState(false);
   const [appliedTitle, setAppliedTitle] = React.useState(null);
+  const [minScore, setMinScore] = React.useState(0);
+  const [filterPriority, setFilterPriority] = React.useState('all');
+  const [sortBy, setSortBy] = React.useState('score');
 
-  const activeJobs = jobs.filter(j => !skipped.has(j.row_number) && !applied.has(j.row_number));
+  const activeJobs = React.useMemo(() => {
+    let list = jobs.filter(j => !skipped.has(j.row_number) && !applied.has(j.row_number));
+    if (minScore > 0) list = list.filter(j => (parseFloat(j.combined_score) || 0) >= minScore);
+    if (filterPriority !== 'all') list = list.filter(j => (j.priority_flag || '').toLowerCase().includes(filterPriority));
+    if (sortBy === 'score') list = [...list].sort((a, b) => (parseFloat(b.combined_score) || 0) - (parseFloat(a.combined_score) || 0));
+    return list;
+  }, [jobs, skipped, applied, minScore, filterPriority, sortBy]);
+
   const job = activeJobs[idx] || null;
   const remaining = activeJobs.length;
 
@@ -358,6 +379,7 @@ function ApexQueue() {
     try {
       const data = await fetchJobs();
       setJobs(data); setIdx(0); setSkipped(new Set()); setApplied(new Set()); setShowVideo(false);
+      setMinScore(0); setFilterPriority('all'); setSortBy('score');
     } catch(e) { setError(e.message); }
     finally { setLoading(false); }
   };
@@ -432,6 +454,27 @@ function ApexQueue() {
   return e("div", null,
     appliedTitle && e("div", {className:"apex-toast"}, appliedTitle),
     e(ApexControls),
+    e("div", {className:"apex-filter-bar"},
+      e("select", {value:minScore, className:"apex-filter-select",
+        onChange: ev => { setMinScore(Number(ev.target.value)); setIdx(0); }},
+        e("option", {value:0}, "All scores"),
+        e("option", {value:12}, "\u226512 / 20"),
+        e("option", {value:14}, "\u226514 / 20"),
+        e("option", {value:16}, "\u226516 / 20"),
+        e("option", {value:18}, "\u226518 / 20")
+      ),
+      e("select", {value:filterPriority, className:"apex-filter-select",
+        onChange: ev => { setFilterPriority(ev.target.value); setIdx(0); }},
+        e("option", {value:"all"}, "All priority"),
+        e("option", {value:"hot"}, "Hot"),
+        e("option", {value:"apply"}, "Apply Now")
+      ),
+      e("select", {value:sortBy, className:"apex-filter-select",
+        onChange: ev => { setSortBy(ev.target.value); setIdx(0); }},
+        e("option", {value:"score"}, "Score \u2193"),
+        e("option", {value:"default"}, "Row order")
+      )
+    ),
     e("div", {className:"apex-topbar"},
       e("div", {style:{fontFamily:"JetBrains Mono, monospace",fontSize:"13px",color:"#6b7280",letterSpacing:"1px"}}, "APEX QUEUE"),
       e("div", {className:"apex-stats"},
@@ -448,6 +491,7 @@ function ApexQueue() {
       e("div", {className:"apex-job-title"}, job.job_title),
       e("div", {className:"apex-badges"},
         e(ScoreBadge, {score:job.combined_score}),
+        job.priority_flag && e("span", {className: job.priority_flag.includes("Hot") ? "apex-priority-hot" : job.priority_flag.includes("Apply") ? "apex-priority-apply" : "apex-priority-default"}, job.priority_flag),
         job.proposed_rate && e("span", {className:"apex-rate-badge"}, job.proposed_rate),
         job.close_type && e("span", {className:"apex-close-badge"}, job.close_type)
       ),
