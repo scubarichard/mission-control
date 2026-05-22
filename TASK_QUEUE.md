@@ -70,6 +70,7 @@ Post PASS/FAIL per item in this task block. Tag Richard immediately on any FAIL.
 - **Priority:** CRITICAL — Brett's team is live on dax.impact-cp.com TODAY
 - **Title:** DAX ICP deployment fixes — Brett's team is logging in
 - **[Forge] 2026-05-19 BLOCKER:** ICP deployment lock is active — unlock code required before any dax.impact-cp.com work. Awaiting Richard's go-ahead.
+- **[Forge] 2026-05-21 BLOCKER:** Task header says "RIA Email Scraper Run 2 (1,825 firms)" but body contains old ICP DAX task content. Content mismatch — cannot execute either interpretation. If this is the ICP task: deployment lock still active (no PETA unlock received). If this is an RIA scraper task: no body/instructions provided. Richard to clarify.
 
 ### Context
 
