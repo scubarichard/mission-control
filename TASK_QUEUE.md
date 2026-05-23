@@ -1375,3 +1375,35 @@ You are helpful, capable, and calm. You don't perform urgency. You get things do
 - SSH access: `ssh -T -i ~/.ssh/id_rsa -J dkn8n@n8n.dakona.net daxadmin@172.16.0.5`
 - If CLAUDE.md doesn't exist yet, create it at `~/.openclaw/CLAUDE.md`
 - Do NOT change any tool configs, MCP settings, or workflow logic — persona text only
+
+---
+
+## TASK-20260521-FORGE-1ALTX-WAT-003 — WAT The Way v3 Video Rebuild
+- **Assignee:** Forge
+- **Status:** DONE
+- **Completed:** 2026-05-23
+- **Client:** 1AltX → Word Aflame Tabernacle (WAT)
+- **Priority:** HIGH
+- **Title:** Rebuild WAT The Way demo from v2 → v3 (person-first choreography, SSML pacing, 5 illustrations)
+
+### Completed
+
+**Output:** `P:/_clients/wat-the-way-demo/walkthrough/wat-the-way-v3.mp4` — 491s (8:11), 26.8MB
+
+**Descript:** https://web.descript.com/43d991cd-15ac-4ff8-a2a8-9fb800073c5a
+_(Richard opens link and clicks Publish — API cannot auto-publish)_
+
+**What was built:**
+- 5 AI illustrations (gpt-image-1): Marcus Johnson + Davis family (James, Maria, Emma, Jordan)
+- Full SSML narration rewrite (ElevenLabs Eric, stability 0.50, similarity 0.75, break-tagged)
+- 4 HeyGen avatar clips at speed 0.9: intro (35s), bridge1 (10s), bridge2 (7s), outro (37s)
+- Mockup extended: `assessment-post`, `pipeline-crossover`, `family-dashboard` screens; `?focus=` param; gold `.focus-hl` highlights
+- 12-segment assembly: avatar intro → title card → marcus → bridge1 → title card → davis → bridge2 → title card → admin → title card → tech → avatar outro
+- Uploaded to Descript Drive `7cdcbe0e-d0f4-4b50-a31d-d2e01358a709`
+- CatalogMint SKILL.md updated with confirmed asset IDs
+
+**Render script:** `P:/_clients/1altx-autovid/tools/render-wat-v3.mjs`
+
+**4 Slack pings posted to #dax-collab thread 1779574292.169129:** start ✓, 50% ✓, illustrations-done ✓, render-done ✓
+
+**[Forge] 2026-05-23:** DONE — v3 assembled and uploaded. Richard clicks Publish in Descript.
