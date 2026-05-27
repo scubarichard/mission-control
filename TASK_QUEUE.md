@@ -1622,7 +1622,8 @@ try {
     );
     catalogStr = entries.map(v => {
       const tools = Array.isArray(v.tools) ? v.tools.join(', ') : (v.tools || '');
-      return `${v.title}\n${v.youtube_url}\nBest for: ${tools}`;
+      const desc = v.short_desc || v.summary || '';
+      return `[${v.project_id}] ${v.title}\n${desc}\n${v.youtube_url}\nBest for: ${tools}`;
     }).join('\n\n');
   }
 } catch (e) {
@@ -1674,7 +1675,7 @@ Return ONLY this JSON (no markdown):
   "close_type": "Fixed | Hourly",
   "highlights": ["key strength 1", "key strength 2"],
   "red_flags": "string or null",
-  "catalog_samples": [{"title": "...", "url": "..."}],
+  "catalog_samples": [{"project_id": "...", "title": "...", "url": "...", "why_relevant": "one sentence"}],
   "solution_approach": "2-3 sentence internal note on approach"
 }`;
 
