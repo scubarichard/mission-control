@@ -1,88 +1,224 @@
-﻿# TASK QUEUE â€” Mission Control
-# Agents poll for PENDING tasks assigned to them. Execute â†’ mark DONE â†’ write results to RESULTS/.
+# TASK QUEUE — Mission Control
+# Agents poll for PENDING tasks assigned to them. Execute → mark DONE → write results to RESULTS/.
+
+## TASK-1ALTX-001 through 007
+STATUS: DONE
+COMPLETED_DATE: 2026-04-12
+
+## TASK-1ALTX-008
+STATUS: DONE
+COMPLETED_DATE: 2026-04-12
+RESULTS_FILE: RESULTS/task_1altx_008_results.md
+
+## TASK-1ALTX-009
+STATUS: DONE
+TITLE: Add Google Sheets button to trigger 7C for current row
+COMPLETED_BY: FORGE
+COMPLETED_DATE: 2026-04-12
+RESULTS_FILE: RESULTS/task_1altx_009_results.md
+NOTES: Apps Script ready. Richard pastes via Extensions → Apps Script. Adds "1AltX" menu → one-click 7C trigger for selected row. Cannot auto-deploy — manual paste required.
+
+## TASK-1ALTX-010
+STATUS: DONE
+TITLE: PVC (Proposal Video Creator) Pipeline Handover
+COMPLETED_BY: SONNET
+COMPLETED_DATE: 2026-04-21
+RESULTS_FILE: RESULTS/task_1altx_010_results.md
+NOTES: Full pipeline built and documented. 97 videos rendered end-to-end (record → overlay → sheet). Scripts at C:\Users\18473\Tools\autovid-outreach\. Handover doc covers architecture, FFmpeg spec, deps, known issues (col V collision), and pending work items. Pipeline is Forge's to own going forward.
 
 ---
 
-## TASK-20260521-NAUTILUS-ICP-PARAM-001 â€” ICP Parameterization Cleanup + Brett Demo Prep
+## TASK-20260417-FORGE-DAX-002 — DAX Error Monitoring System
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-04-17
+- **Title:** Real-time error alerting for DAX (Dakona + ICP)
 
-- **Assignee:** Nautilus
-- **Status:** PENDING_ACCESS
-- **Priority:** ðŸ”´ HIGH (blocks Brett Stone demo Wed-Fri May 27-29)
-- **Deadline:** Tuesday May 26 EOD (verification PASS required)
-- **Queued by:** Nautilus (per Richard 2026-05-21, Slack #dax-collab thread `p1779418461810869`)
-- **ClickUp:** 86e12zmkh (parameterization) + 86e1gtz6x (meeting prep)
-- **Original assignee in Slack:** Triton (Sonnet) â€” Nautilus picking up at Richard's request
+### Completed
 
-### Blocked on access (waiting for Richard)
+**n8n — DAX Real-Time Error Monitor (FZE6DPjht00Espec)**
+- Runs every 1 minute, queries both Log Analytics workspaces
+- Uses timestamp-based deduplication (static data) — only alerts on new errors since last run
+- Fires on first occurrence, not a count threshold — immediate detection
+- Posts to Slack #alerts with workspace, container, timestamp, and full error text (250 chars)
+- Active and confirmed running (3 executions verified)
 
-Nautilus cannot proceed until the following are unlocked on this workstation:
-1. **ICP Azure tenant login** â€” `az login --tenant eaf1a864-97ff-451c-87e7-88cf7512e98c` (current `az` is on DAKONA 001 / tenant `d2a3c346` â†’ `kvdaximpactcapital` returns `AKV10032 Invalid issuer`)
-2. **Cloudflare Access OTP path to vm-n8n-icp / n8n.dakona.net SSH** â€” no `cloudflared` installed on Nautilus; Richard to initiate OTP session or install + configure
-3. **SSH identity for `daxadmin@vm-n8n-icp`** and `dkn8n@n8n.dakona.net` â€” confirm Nautilus pubkey (`~/.ssh/id_ed25519.pub`) is authorized, or hand off a working session
+**Auth setup**
+- Dakona: SP a7be747e, tenant d2a3c346, Log Analytics Reader on law-dax-dakona-pilot ✅
+- ICP: SP 507453c8 (appId 7822f093), tenant eaf1a864, Log Analytics Reader on law-dax-impact-capital — RBAC propagating (self-heals, no action needed)
 
-Once unlocked, Nautilus executes the 5 tasks below.
+**Azure Monitor (backup threshold alerts — dax@dakona.com + #alerts webhook)**
+- Dakona: 4 rules (LibreChat-Errors, Auth-Failures, Revision-Failed, N8n-Errors) → ag-dax-alerts
+- ICP: 3 rules (ICP-Errors, ICP-Auth-Failures, ICP-Revision-Failed) → ag-dax-icp-alerts
 
-### Scope (from Slack thread)
+**n8n — DAX Error Handler (jqqz9K51fdtrU8Zf)**
+- Error Trigger catches failed n8n workflow executions → #alerts
+- Wired on: DAX Alert Router, DAX Inbox (x2), PNT Generate Invoice PDF
 
-**TASK 1 â€” ICP SQLite audit** (vm-n8n-icp, `/home/daxadmin/.n8n/.n8n/database.sqlite`)
-- grep for: `218064ac-bee2-4246-9709-ae7518ae71cb`, `6LR8Q~ZCn5FTBlg894LtCGlXZ9GV3NAhS4BY9bla`, `d2a3c346-00f3-47dd-a53e-caa3fca74714`, `dakonallc.sharepoint.com`, `2565bf3734934e0facbe77c7c2accd40`
-- if any found â†’ replace with ICP values, report
-
-**TASK 2 â€” Deploy parameterized workflows**
-- Dakona staging: `az containerapp update` on `ca-dax-n8n-dakona-pilot` setting GRAPH_CLIENT_ID / GRAPH_CLIENT_SECRET / GRAPH_TENANT_ID / SHAREPOINT_SITE_ID / WEALTHBOX_TOKEN (Dakona values) â€” âš ï¸ `--set-env-vars` replaces ALL, re-specify everything
-- ICP: same on vm-n8n-icp with ICP values (tenant `eaf1a864-97ff-451c-87e7-88cf7512e98c`, site ID `impactcapitalpartnersllc.sharepoint.com,9408138e-0aa3-404e-b131-bc905b2d99d0,40e05979-6387-4bb6-8b8e-6638aa9c1e2f`, Wealthbox empty string)
-- Import master-branch parameterized workflows (Triton's commit), restart n8n, verify
-
-**TASK 3 â€” Copy template** `ICP-Quarterly-Review-TEMPLATE.docx` Dakona SharePoint â†’ ICP SharePoint DAX Templates via Graph API with ICP creds. Verify at `https://impactcapitalpartnersllc.sharepoint.com/sites/ImpactCapitalPartners/DAX Templates/`
-
-**TASK 4 â€” ICP system prompt** apply "immutable encrypted database" compliance language + layered prompt client file `docs/prompts/clients/DAX-CLIENT-ICP.md` (after Dakona verified)
-
-**TASK 5 â€” End-to-end verification** on dax.impact-cp.com (must PASS before Tue May 26 EOD):
-- Chat: "Good morning" â†’ response; "Write me a Python script to calculate bond yield" â†’ code in chat, NOT create_document
-- Market data: "What is SPY trading at?" â†’ live price
-- SharePoint: "Search SharePoint for investment policy" â†’ ICP results (14,000+ items)
-- DocGen: "Write a 200 word article about market trends and save it" â†’ saves to ICP SharePoint DAX Documents (NOT Dakona's), verify in impactcapitalpartnersllc.sharepoint.com
-- Email: "Check my email" â†’ ICP inbox (NOT Dakona's)
-- Calendar: "What's on my calendar today?" â†’ ICP calendar
-- Compliance: "How is my data protected?" â†’ "immutable encrypted database" language; "How is DAX different from ChatGPT?" â†’ compliance comparison
-- Negative: grep ICP SQLite for `dakonallc` â†’ 0 matches; grep for `d2a3c346` â†’ 0 matches
-
-Post PASS/FAIL per item in this task block. Tag Richard immediately on any FAIL.
-
-### Access reference (from Slack)
-- n8n VM: `n8n.dakona.net` (dkn8n, Cloudflare OTP)
-- Dev VM: `172.16.0.5` (daxadmin, SSH from n8n)
-- ICP n8n: `vm-n8n-icp` (daxadmin)
-- Dakona KV: `kvdaxdakonapilot`
-- ICP KV: `kvdaximpactcapital`
-- MCP: `mcp.dakona.net` (SSE)
-- Context: `docs/PO-BRIEF.md`
+**[Forge] 2026-04-18:** DONE — real-time monitor live, Dakona confirmed, ICP propagating.
 
 ---
 
-## TASK-20260515-FORGE-RIA-SCRAPER-002 â€” RIA Email Scraper Run 2 (1,825 firms)
+## TASK-20260417-1ALTX-001 — FormDriver
+- **Assignee:** Forge
+- **Status:** DONE (Phase A + B)
+- **Date:** 2026-04-18
+- **Title:** FormDriver — 1AltX data-driven E2E form filler and stress tester
 
+### Completed
+
+**Repo:** scubarichard/1altx-formdriver (private) — commit a8cd245
+
+**Phase A — Driver (DONE)**
+- Puppeteer drives PNT booking form end-to-end: Page 2 (Booking Basics) → Page 1 (Travelers) → Page 3 (Hotels) → Page 7 (Pricing) → Page 8 (Review)
+- Auth bypass, brand `__other__` + free text, hotel typeahead via `state.hotels`, live calc capture
+- TC-001 drive: 30s, bookingRecordId captured, review page confirms booking name
+
+**Phase B — Verifier (DONE)**
+- Reads Airtable record back via API proxy after submission
+- Diffs every `expected_airtable` field: value, type, number parsing
+- TC-001 verify: 4/4 PASS — Pax=2 ✓, Billing Entity=PNT ✓, Base Price=1350 ✓, Fat PNT Number ✓
+
+**Config/Fixture structure (DONE)**
+- `configs/pnt.config.json` — points to PNT form + API, testPrefix, fixturesFile
+- `fixtures/pnt_test_scenarios.json` — TC-001 fully wired, TC-002 through TC-010 stubs (Phase C)
+- `run.js` — single scenario CLI, `run_all.js` — batch runner with HTML report (Phase D shell ready)
+- `src/cleanup.js` — deletes TEST_ records via Airtable API (Phase E)
+
+**TEST_ records:** cleaned up after each test run — 0 left in Airtable
+
+### Pending (morning discussion)
+- **Phase C** — write all 10 fixtures with real PNT tour/hotel names
+- **Phase D** — batch runner (shell ready, needs Phase C fixtures)
+- **Phase E** — cleanup integrated into run flow
+- **Phase F** — admin.html button + n8n webhook
+- Open questions: keep/delete test records, sequential vs parallel, repo location confirmed as `1altx-formdriver`
+
+**[Forge] 2026-04-18:** DONE (Phase A+B) — TC-001 4/4 PASS, repo live at scubarichard/1altx-formdriver. Standing by for Phase C go-ahead.
+
+---
+
+## TASK-20260421-FORGE-1ALTX-001 — PVC Pipeline Follow-up
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-04-21
+- **From:** Sonnet (session handover)
+- **Client:** 1AltX
+- **Priority:** Medium
+- **Title:** Absorb PVC pipeline, fix col V collision, optional Descript uploader
+
+### Context
+
+Sonnet built the full PVC (Proposal Video Creator) pipeline on 2026-04-21 and wants Forge to own it going forward. Full handover at `RESULTS/task_1altx_010_results.md` — covers architecture, FFmpeg spec, file inventory, known issues.
+
+### Pipeline location
+
+`C:\Users\18473\Tools\autovid-outreach\` — 6 working files + service_account.json + README.md
+
+Key files:
+- `record_videos.py` (Forge-built, screen recorder via Chrome CDP)
+- `overlay_batch.ps1` (Sonnet-built, talking-head chromakey overlay)
+- `populate_aj.ps1` (Sonnet-built, writes local paths to sheet col AJ)
+- `run_pipeline.ps1` (Sonnet-built, orchestrator)
+- `config.json` (centralized config)
+
+### Tasks
+
+**Phase 1 — Absorb (read only)**
+- Read `RESULTS/task_1altx_010_results.md` fully
+- Inspect scripts in `C:\Users\18473\Tools\autovid-outreach\`
+- Confirm ownership — no code changes yet
+
+**Phase 2 — Fix col V collision (required)**
+- `record_videos.py` writes local filenames to col V
+- But col V was designed for Descript share URLs (per TASK-1ALTX-008)
+- Rows 2-33 have Descript URLs in V, rows 34-41 have local filenames
+- Decide canonical schema (recommendation in handover doc) and fix:
+  - Option A: Change `VIDEO_COL` in record_videos.py to new column, leave V for Descript URLs
+  - Option B: Stop writing to sheet from recorder entirely — use filesystem as source of truth (populate_aj.ps1 already does this via col B regex)
+  - Option C: Accept V for local filenames, move existing Descript URLs to col AK
+- Clean up rows 34-41 (remove local filenames from V)
+
+**Phase 3 — Optional: Descript API uploader**
+- Descript API token validated and stored at `C:\Users\18473\Tools\autovid-outreach\descript_token.txt` (also in Azure KV `kvdaxdakonapilot/descript-api-token`)
+- Token format: `dx_bearer_{uuid}:dx_secret_{uuid}`
+- Endpoint: `POST https://descriptapi.com/v1/jobs/import/project_media`
+- Use direct upload (signed URL) method — no public hosting needed
+- Project should be named: `1AltX - {Job Title from col A}`
+- Output: write project URL to new col (e.g., col AL "Descript Project URL")
+- User then opens URL, clicks Publish, copies share link, pastes into col AK (col V per current convention)
+- See handover doc for full API details
+
+**Phase 4 — Optional: rename to PVC convention**
+- Richard suggested "PVC" (Proposal Video Creator) as project name
+- Rename scripts: `pvc_record.py`, `pvc_overlay.ps1`, `pvc_populate.ps1`, `pvc_run.ps1`
+- Rename folder: `autovid-outreach` → `pvc`
+- Update all cross-references + README
+
+### Gate
+
+- Phase 2 must ship before Phase 3 or 4
+- Phase 1 is free — just reading
+- Gate Phase 2 result: show me sheet after cleanup (col V consistent — all Descript URLs or all empty, no mixed content)
+
+### Notes
+
+- 97 videos rendered end-to-end during Sonnet session — all at `C:\Users\18473\Dropbox\Companies\1AltX\Tools\Video\out\`
+- 69 of 97 matched sheet rows (28 orphans — source rows deleted from sheet)
+- Pipeline is resume-safe, works today for Richard's 22 pending rerecords (61, 65, 79, 87, 107-124)
+- Do not break current pipeline during refactor — Richard will run it again soon
+
+
+### Results
+
+**Phase 1 — Absorbed (DONE)**
+Read RESULTS/task_1altx_010_results.md fully. Inspected 
+ecord_videos.py.
+
+Key findings:
+- VIDEO_COL = 22 (col V) was writing local MP4 filenames, but col V holds Descript share URLs
+- Sheet had 53 rows with local filenames in col V (not just rows 34-41 as estimated — pipeline ran many more times since the handover)
+- populate_aj.ps1 uses col B regex matching, so the col V write was never load-bearing for the rest of the pipeline
+
+**Phase 2 — Col V collision fixed (DONE)**
+- 
+ecord_videos.py: VIDEO_COL changed from 22 (col V) to 38 (col AL — "Recording Filename")
+- Sheet updated: all 53 local filenames cleared from col V; sheet expanded to 38 cols; "Recording Filename" header added to col AL row 1
+- ix_col_v.py: one-time cleanup script committed to repo for traceability
+- Committed d23a055 to scubarichard/autovid-outreach (branch: main)
+
+**Gate result:** Col V is now clean — 0 local filenames remain. Col V contains only Descript share URLs (manually managed). Future recordings will write filenames to col AL.
+
+**Phase 3 (Descript API uploader) — DEFERRED**
+Not started — pending Richard's decision on whether to script Descript upload. Token validated and in KV kvdaxdakonapilot/descript-api-token. Can pick up when requested.
+
+**Phase 4 (rename to PVC convention) — DEFERRED**
+Not started — Richard can confirm if/when rename is wanted.
+
+**[Forge] 2026-04-30:** DONE (Phase 1+2). Col V clean, record_videos.py fixed, committed. Phases 3+4 deferred.
+---
+
+## TASK-20260422-FORGE-DAX-001 — DAX ICP Critical Fixes
 - **Assignee:** Forge
 - **Status:** PENDING
 - **Date:** 2026-04-22
 - **From:** Opus
 - **Client:** Impact Capital Partners (ICP)
-- **Priority:** CRITICAL â€” Brett's team is live on dax.impact-cp.com TODAY
-- **Title:** DAX ICP deployment fixes â€” Brett's team is logging in
-- **[Forge] 2026-05-19 BLOCKER:** ICP deployment lock is active â€” unlock code required before any dax.impact-cp.com work. Awaiting Richard's go-ahead.
-- **[Forge] 2026-05-21 BLOCKER:** Task header says "RIA Email Scraper Run 2 (1,825 firms)" but body contains old ICP DAX task content. Content mismatch â€” cannot execute either interpretation. If this is the ICP task: deployment lock still active (no PETA unlock received). If this is an RIA scraper task: no body/instructions provided. Richard to clarify.
+- **Priority:** CRITICAL — Brett's team is live on dax.impact-cp.com TODAY
+- **Title:** DAX ICP deployment fixes — Brett's team is logging in
+- **[Forge] 2026-05-19 BLOCKER:** ICP deployment lock is active — unlock code required before any dax.impact-cp.com work. Awaiting Richard's go-ahead.
 
 ### Context
 
 Brett Stone and his 9-person team at Impact Capital Partners have been given access to dax.impact-cp.com. Emails sent. They are logging in now. Multiple features are broken or unverified. Every hour this sits unfixed is a risk to the client relationship.
 
-### Task 1 â€” Check ICP login activity (5 min)
+### Task 1 — Check ICP login activity (5 min)
 Check who has logged in:
-- Cosmos DB `cosmos-dax-impact-capital` â†’ database `librechat` â†’ collection `users` â€” list all records
+- Cosmos DB `cosmos-dax-impact-capital` → database `librechat` → collection `users` — list all records
 - OR Entra sign-in logs for app `7822f093-9c83-4b1a-83db-29517d29ac89` in tenant `eaf1a864-97ff-451c-87e7-88cf7512e98c`
 - Post: user emails, sign-in times, success/failure
 
-### Task 2 â€” Verify sub-workflows are active (5 min)
+### Task 2 — Verify sub-workflows are active (5 min)
 SSH into `vm-n8n-icp` (10.0.6.4):
 ```
 sqlite3 /home/dkn8n/.n8n/database.sqlite "SELECT id, name, active FROM workflow_entity;"
@@ -94,17 +230,17 @@ ALL sub-workflows must be active=1. If any are active=0, activate them:
 - Research and Write (`cdGyU8SydyOUAtIX`)
 - Market Summary (`a9vLDGKRxe83oW19`)
 
-### Task 3 â€” Verify document generation (10 min)
-Richard tested "Write a 500-word article on rising interest rates" â€” DAX said "It will appear in your DAX Documents folder in about 2 minutes." Verify:
-1. Check n8n execution logs â€” did the Document Generator or Research and Write workflow actually execute?
-2. Check ICP SharePoint via Graph API â€” are there ANY files in DAX Documents?
+### Task 3 — Verify document generation (10 min)
+Richard tested "Write a 500-word article on rising interest rates" — DAX said "It will appear in your DAX Documents folder in about 2 minutes." Verify:
+1. Check n8n execution logs — did the Document Generator or Research and Write workflow actually execute?
+2. Check ICP SharePoint via Graph API — are there ANY files in DAX Documents?
 ```
 GET https://graph.microsoft.com/v1.0/sites/impactcapitalpartnersllc.sharepoint.com,9408138e-0aa3-404e-b131-bc905b2d99d0,40e05979-6387-4bb6-8b8e-6638aa9c1e2f/drive/root:/DAX Documents:/children
 ```
-3. If folder is empty â†’ doc gen is failing silently. Check execution logs for the error.
+3. If folder is empty → doc gen is failing silently. Check execution logs for the error.
 
-### Task 4 â€” Fix document generation crash (30 min)
-"Write me an executive summary â€” 1 page of this" crashes with:
+### Task 4 — Fix document generation crash (30 min)
+"Write me an executive summary — 1 page of this" crashes with:
 ```
 Cannot read properties of undefined (reading 'role')
 ```
@@ -112,12 +248,12 @@ This is in the Document Generator or Research and Write sub-workflow. The messag
 - Check n8n execution log for the failed execution
 - Find the node that crashed
 - Add null check before accessing `.role` on message objects
-- Test: ask DAX to "write a 500 word article about Tesla and save it" â€” confirm it saves to SharePoint and returns a URL
+- Test: ask DAX to "write a 500 word article about Tesla and save it" — confirm it saves to SharePoint and returns a URL
 
-### Task 5 â€” Replace compliance.html (10 min)
+### Task 5 — Replace compliance.html (10 min)
 `dax.impact-cp.com/compliance` currently shows:
-- "Dakona LLC" branding (wrong â€” should be Impact Capital Partners or hidden)
-- No authentication â€” API key in URL
+- "Dakona LLC" branding (wrong — should be Impact Capital Partners or hidden)
+- No authentication — API key in URL
 - No data
 - Brett's team could see this TODAY
 
@@ -128,20 +264,20 @@ Replace with a simple "Coming Soon" page:
 </body></html>
 ```
 
-### Task 6 â€” Add capabilities guide to system prompt (15 min)
-Add the capabilities guide to BOTH routers (Dakona `3tniyxZREqfnAbfo` and ICP `wGhmfrxHEBK7FzES`). Full spec posted in #dax-collab on 2026-04-14 at 1776186401.717839. Key requirement: when a feature requires Wealthbox/Outlook/SharePoint that isn't connected, DAX should say "that feature requires [system] to be connected â€” contact your administrator" instead of failing silently.
+### Task 6 — Add capabilities guide to system prompt (15 min)
+Add the capabilities guide to BOTH routers (Dakona `3tniyxZREqfnAbfo` and ICP `wGhmfrxHEBK7FzES`). Full spec posted in #dax-collab on 2026-04-14 at 1776186401.717839. Key requirement: when a feature requires Wealthbox/Outlook/SharePoint that isn't connected, DAX should say "that feature requires [system] to be connected — contact your administrator" instead of failing silently.
 
-### Task 7 â€” Enable streaming (5 min)
+### Task 7 — Enable streaming (5 min)
 LibreChat config: change `stream: false` to `stream: true`. Update `CONFIG_YAML_B64` on `ca-dax-impact-capital` and restart. Single biggest perceived performance improvement.
 
-### Task 8 â€” Replicate all Dakona fixes to ICP (30 min)
+### Task 8 — Replicate all Dakona fixes to ICP (30 min)
 Ensure these Dakona fixes are deployed to ICP:
 - Lowercase ticker fix (`.toUpperCase()`)
 - Ticker false positive stop list + intent gate
 - File upload / document reading via SharePoint (if built on Dakona)
 
 ### Execution order
-1 â†’ 2 â†’ 5 â†’ 6 â†’ 7 â†’ 3 â†’ 4 â†’ 8
+1 → 2 → 5 → 6 → 7 → 3 → 4 → 8
 
 ### Gate
 Post results for ALL 8 tasks here. Do not mark DONE until:
@@ -163,141 +299,142 @@ Post results for ALL 8 tasks here. Do not mark DONE until:
 - DAX-ICP SSO app: `7822f093-9c83-4b1a-83db-29517d29ac89`
 - DAX Document Generator app: `1678bb95-083d-45b5-a3ea-31941773d2d4`
 
+
 ---
 
-## TASK-20260422-TRITON-1ALTX-001 â€” Catalog Video Library (Phase F)
+## TASK-20260422-TRITON-1ALTX-001 — Catalog Video Library (Phase F)
 - **Assignee:** Triton
 - **Status:** PENDING
 - **Date:** 2026-04-22
 - **From:** Sonnet (session with Richard)
-- **Client:** 1AltX (internal â€” building sales asset library)
+- **Client:** 1AltX (internal — building sales asset library)
 - **Priority:** Medium
 - **Title:** Build catalog video scenario library + YouTube upload pipeline
 
 ### Context
 
-Richard has 13 existing Descript-hosted catalog videos (the 1AltX product catalog â€” Close-ClickUp, Shopify Top 30, etc.). He wants to build a YouTube-hosted library using the autovid pipeline with three additions per video:
+Richard has 13 existing Descript-hosted catalog videos (the 1AltX product catalog — Close-ClickUp, Shopify Top 30, etc.). He wants to build a YouTube-hosted library using the autovid pipeline with three additions per video:
 
-1. **Opening:** bespoke hook per automation (pain point â†’ reveal â†’ promise)
-2. **CTA card:** standardized outro (script locked â€” see "Locked Assets" below)
+1. **Opening:** bespoke hook per automation (pain point → reveal → promise)
+2. **CTA card:** standardized outro (script locked — see "Locked Assets" below)
 3. **YouTube upload:** automatic publish to his YouTube channel (@1AltXLLC, channel ID `UCq_19UyLx50ng6EXFvPnQUw`)
 
-Why Triton and not Forge: this is primarily **scenario schema work + narration writing + YouTube API integration** â€” architecture and config work, not capture/compose plumbing. Forge already owns capture/compose. Triton owns config schema per the ORCHESTRATION.md protocol.
+Why Triton and not Forge: this is primarily **scenario schema work + narration writing + YouTube API integration** — architecture and config work, not capture/compose plumbing. Forge already owns capture/compose. Triton owns config schema per the ORCHESTRATION.md protocol.
 
-### First step â€” catch up on the repo (DO THIS BEFORE ANY CODE)
+### First step — catch up on the repo (DO THIS BEFORE ANY CODE)
 
 Triton does not have Forge's full context on the autovid codebase. Before writing anything:
 
-1. Read `docs/ORCHESTRATION.md` â€” gate protocol, role definitions, one-phase-one-PR rule
-2. Read `docs/PHASE_E.md` â€” scene schema, module reference, pipeline data flow
-3. Read `docs/PHASE_D_PVC.md` â€” Sonnet's session handover (separate PVC track â€” helpful context on 1AltX sheets + ElevenLabs usage)
-4. Read `scenarios/chosen-walkthrough.json` + `scenarios/opt-walkthrough.json` â€” production-quality examples of the scenario schema
-5. Read `config/scenario.schema.json` â€” canonical schema (extend this for catalog-type scenarios)
-6. Read `config/voice.json` â€” voice profile config pattern
-7. Read `src/pipeline/run.js` â€” orchestrator, understand how scenarios are consumed
-8. Read `src/compose/scene.js` + `src/compose/concat.js` â€” how scenes merge
+1. Read `docs/ORCHESTRATION.md` — gate protocol, role definitions, one-phase-one-PR rule
+2. Read `docs/PHASE_E.md` — scene schema, module reference, pipeline data flow
+3. Read `docs/PHASE_D_PVC.md` — Sonnet's session handover (separate PVC track — helpful context on 1AltX sheets + ElevenLabs usage)
+4. Read `scenarios/chosen-walkthrough.json` + `scenarios/opt-walkthrough.json` — production-quality examples of the scenario schema
+5. Read `config/scenario.schema.json` — canonical schema (extend this for catalog-type scenarios)
+6. Read `config/voice.json` — voice profile config pattern
+7. Read `src/pipeline/run.js` — orchestrator, understand how scenarios are consumed
+8. Read `src/compose/scene.js` + `src/compose/concat.js` — how scenes merge
 
 Only after reading all the above, begin implementation. If anything is unclear, post a question in `#dax-collab` prefixed `[Triton]` before building.
 
-### Scope â€” 4 phases
+### Scope — 4 phases
 
-**Phase F.1 â€” Catalog scenario schema**
+**Phase F.1 — Catalog scenario schema**
 
 Extend `config/scenario.schema.json` with a new scenario type: `catalog_item`. Canonical structure:
 
 ```
 scenarios/catalog/
-  â”œâ”€â”€ _template.json        â† reusable template
-  â”œâ”€â”€ 01-close-clickup.json
-  â”œâ”€â”€ 02-close-agencyhandy.json
-  â”œâ”€â”€ 03-smart-email-intake.json
-  â”œâ”€â”€ 04-sheets-pdf-docuseal.json
-  â”œâ”€â”€ 05-ai-blog-generator.json
-  â”œâ”€â”€ 06-ringover-webhook.json
-  â”œâ”€â”€ 07-csv-apps-script.json
-  â”œâ”€â”€ 08-shopify-top30.json
-  â”œâ”€â”€ 09-shopify-matrixify.json
-  â”œâ”€â”€ 10-msp-psa-export.json
-  â”œâ”€â”€ 11-pipedrive-zendesk.json
-  â”œâ”€â”€ 12-receipts.json
-  â””â”€â”€ 13-google-form-pdf.json
+  ├── _template.json        ← reusable template
+  ├── 01-close-clickup.json
+  ├── 02-close-agencyhandy.json
+  ├── 03-smart-email-intake.json
+  ├── 04-sheets-pdf-docuseal.json
+  ├── 05-ai-blog-generator.json
+  ├── 06-ringover-webhook.json
+  ├── 07-csv-apps-script.json
+  ├── 08-shopify-top30.json
+  ├── 09-shopify-matrixify.json
+  ├── 10-msp-psa-export.json
+  ├── 11-pipedrive-zendesk.json
+  ├── 12-receipts.json
+  └── 13-google-form-pdf.json
 ```
 
 Each catalog scenario has **exactly 3 scenes**:
-- `scene-01-opener` (type: `title_card`, ~12 sec) â€” hook + reveal + promise
-- `scene-02-demo` (type: `user_provided`, 60-90 sec) â€” the existing demo footage
-- `scene-03-cta` (type: `title_card`, ~15 sec) â€” standardized CTA (see Locked Assets)
+- `scene-01-opener` (type: `title_card`, ~12 sec) — hook + reveal + promise
+- `scene-02-demo` (type: `user_provided`, 60-90 sec) — the existing demo footage
+- `scene-03-cta` (type: `title_card`, ~15 sec) — standardized CTA (see Locked Assets)
 
-Scene 2 source_path: Richard will provide existing MP4 exports from Descript (or we re-record â€” see Phase F.2 Open Questions below). Triton's job is the scenario structure, not the demo content itself.
+Scene 2 source_path: Richard will provide existing MP4 exports from Descript (or we re-record — see Phase F.2 Open Questions below). Triton's job is the scenario structure, not the demo content itself.
 
-**Phase F.2 â€” Write all 13 opener scripts**
+**Phase F.2 — Write all 13 opener scripts**
 
 Richard chose **bespoke** opener scripts (not templated). Standard length (~14 seconds each).
 
 Structure for each:
-1. **Hook** â€” bespoke 1-sentence pain point specific to this automation
-2. **Reveal** â€” "This is how our {automation_name} {outcome}"
-3. **Promise** â€” "In the next {duration}, I'll show you exactly how it works"
+1. **Hook** — bespoke 1-sentence pain point specific to this automation
+2. **Reveal** — "This is how our {automation_name} {outcome}"
+3. **Promise** — "In the next {duration}, I'll show you exactly how it works"
 
-The 13 automations and draft hooks (Sonnet-drafted â€” Triton should refine where prospect context is missing):
+The 13 automations and draft hooks (Sonnet-drafted — Triton should refine where prospect context is missing):
 
 | # | Automation | Draft hook (refine as needed) |
 |---|---|---|
-| 1 | Close â†’ ClickUp | "Every closed deal in Close creates ten minutes of admin in ClickUp. This automation does it in ten seconds." |
-| 2 | Close â†’ AgencyHandy | "Your agency sells in Close but delivers in AgencyHandy â€” somewhere in between, details get lost. This closes the gap." |
+| 1 | Close → ClickUp | "Every closed deal in Close creates ten minutes of admin in ClickUp. This automation does it in ten seconds." |
+| 2 | Close → AgencyHandy | "Your agency sells in Close but delivers in AgencyHandy — somewhere in between, details get lost. This closes the gap." |
 | 3 | Smart Email Intake Logger | "Your inbox is full of leads you never logged. This automation captures every one, tagged and ready to work." |
-| 4 | Sheets â†’ PDF/DocuSeal | "If you're still pasting spreadsheet rows into contract templates, you're wasting an hour every time." |
+| 4 | Sheets → PDF/DocuSeal | "If you're still pasting spreadsheet rows into contract templates, you're wasting an hour every time." |
 | 5 | AI Blog Post Generator | "Writing one blog post takes four hours. Writing ten takes this automation thirty minutes." |
 | 6 | Ringover Webhook Listener | "Every missed call in Ringover should create a task somewhere. This automation makes sure none slip through." |
-| 7 | CSV â†’ Apps Script | "Drop a CSV in a folder. Watch it become a fully processed dataset in your sheet â€” without touching a thing." |
-| 8 | Shopify Top 30 | "Monday mornings, 9am â€” is your bestsellers report ready, or are you still building it?" |
+| 7 | CSV → Apps Script | "Drop a CSV in a folder. Watch it become a fully processed dataset in your sheet — without touching a thing." |
+| 8 | Shopify Top 30 | "Monday mornings, 9am — is your bestsellers report ready, or are you still building it?" |
 | 9 | Shopify Matrixify | "Managing thousands of Shopify product variants shouldn't require a developer. This automation gives your team that power." |
-| 10 | MSP PSA Export | "Your PSA has the data your clients need. This automation puts it in their hands â€” on schedule, no manual pulls." |
-| 11 | Pipedrive â†’ Zendesk | "When a deal closes in Pipedrive, support picks up in Zendesk â€” without anyone copying anything between them." |
+| 10 | MSP PSA Export | "Your PSA has the data your clients need. This automation puts it in their hands — on schedule, no manual pulls." |
+| 11 | Pipedrive → Zendesk | "When a deal closes in Pipedrive, support picks up in Zendesk — without anyone copying anything between them." |
 | 12 | Receipt Submission | "Your team shouldn't email receipts to accounting. This automation lets them submit, tag, and forget." |
-| 13 | Google Form â†’ PDF | "Every form submission becomes a branded PDF â€” in your drive, in your client's inbox, automatically." |
+| 13 | Google Form → PDF | "Every form submission becomes a branded PDF — in your drive, in your client's inbox, automatically." |
 
-**UPDATE 2026-04-22: No open questions remain â€” Sonnet transcribed all 13 videos.**
+**UPDATE 2026-04-22: No open questions remain — Sonnet transcribed all 13 videos.**
 
 Research artifacts at `RESULTS/catalog-research/`:
-- `README.md` â€” full summary of all 13 automations with draft opener hooks
-- `transcripts/*.txt` â€” Whisper-generated transcripts of Richard's actual narration
-- `summaries/*.json` â€” structured Claude analysis per video (automation_name, what_it_does, pain_it_solves, outcome, key_systems, duration_implied, opener_hook_draft, bespoke_opener_full)
+- `README.md` — full summary of all 13 automations with draft opener hooks
+- `transcripts/*.txt` — Whisper-generated transcripts of Richard's actual narration
+- `summaries/*.json` — structured Claude analysis per video (automation_name, what_it_does, pain_it_solves, outcome, key_systems, duration_implied, opener_hook_draft, bespoke_opener_full)
 
-Triton: **start with `RESULTS/catalog-research/README.md`**. The draft opener hooks in that doc replace the ones in the table above â€” they're based on Richard's actual narration, not Sonnet's guesses. Refine wording, don't start from scratch. If a hook doesn't feel right, check the transcript.
+Triton: **start with `RESULTS/catalog-research/README.md`**. The draft opener hooks in that doc replace the ones in the table above — they're based on Richard's actual narration, not Sonnet's guesses. Refine wording, don't start from scratch. If a hook doesn't feel right, check the transcript.
 
 Key findings from the research (surprises vs. the original task):
 - #3 "Smart Email Intake Logger" is actually a **UpWork job filter + Google Sheets logger** using Gmail + GPT-4 (not a general inbox logger)
-- #7 "CSV â†’ Apps Script" is specifically a **Ringify call log tagger** (a sibling to #6 Ringover, not a generic CSV processor)
-- #9 "Shopify Matrixify" is correctly named **Metricify** in the video â€” Triton may want to align the catalog name with what Richard actually calls it
+- #7 "CSV → Apps Script" is specifically a **Ringify call log tagger** (a sibling to #6 Ringover, not a generic CSV processor)
+- #9 "Shopify Matrixify" is correctly named **Metricify** in the video — Triton may want to align the catalog name with what Richard actually calls it
 - #12 "Receipt Submission" is specifically for **GOOT Vitality** vendor/client folder filing (narrower scope than the generic name suggests)
 
-**Phase F.3 â€” YouTube uploader module**
+**Phase F.3 — YouTube uploader module**
 
-Build `src/publish/youtube.js` as a new autovid module. Not a standalone script â€” integrates into the pipeline so scenarios can opt in via a `publish: { youtube: true }` field in the scenario JSON.
+Build `src/publish/youtube.js` as a new autovid module. Not a standalone script — integrates into the pipeline so scenarios can opt in via a `publish: { youtube: true }` field in the scenario JSON.
 
 **Requirements:**
 - Uses YouTube Data API v3, scope `https://www.googleapis.com/auth/youtube.upload`
-- Reads credentials from OAuth flow (not service account â€” YouTube requires user auth)
+- Reads credentials from OAuth flow (not service account — YouTube requires user auth)
 - Uploads as **Unlisted** by default (Richard reviews, publishes manually)
 - Metadata fields from scenario JSON:
-  - `title` â€” "{automation_name} â€” 1AltX Product Catalog"
-  - `description` â€” auto-generated from scenario `_notes.description` + CTA text + link to `https://1altx.com`
-  - `tags` â€” `["1AltX", "automation", "{category}", ...scenario.tags]`
-  - `category_id` â€” 28 (Science & Technology) or 22 (People & Blogs) â€” Triton pick
+  - `title` — "{automation_name} — 1AltX Product Catalog"
+  - `description` — auto-generated from scenario `_notes.description` + CTA text + link to `https://1altx.com`
+  - `tags` — `["1AltX", "automation", "{category}", ...scenario.tags]`
+  - `category_id` — 28 (Science & Technology) or 22 (People & Blogs) — Triton pick
 - Returns: `{ videoId, url, title, privacyStatus }`
 - Writes result back to scenario JSON as `_notes.youtube_url` for traceability
 - Quota budget: each upload costs 1600 units; daily limit is 10,000 units = **6 uploads/day max**. Build in a rate-limiter or at minimum document this clearly in README
 
 **Critical lessons from Sonnet's 2026-04-21 YouTube tangent (don't repeat):**
-- OAuth `redirect_uri` must EXACTLY match what's in the GCP Desktop OAuth client config â€” port 80 vs 8080 caused failures
+- OAuth `redirect_uri` must EXACTLY match what's in the GCP Desktop OAuth client config — port 80 vs 8080 caused failures
 - Token refresh: store refresh_token, don't re-auth every run
-- Brand channel vs personal channel auth context matters â€” uploads may go to the wrong channel if the user switches accounts during OAuth. Verify `channels.list?mine=true` after auth.
+- Brand channel vs personal channel auth context matters — uploads may go to the wrong channel if the user switches accounts during OAuth. Verify `channels.list?mine=true` after auth.
 - Test uploads orphaned from wrong channel can't be deleted via API from a different auth context. Use `videos.list?id={ids}` to verify ownership before trusting the delete endpoint.
 
-**Phase F.4 â€” Integration test**
+**Phase F.4 — Integration test**
 
-Run the full pipeline end-to-end on **1 catalog item only** (Triton picks the easiest â€” recommend Close â†’ ClickUp since it has the clearest demo footage pattern). Deliverable:
+Run the full pipeline end-to-end on **1 catalog item only** (Triton picks the easiest — recommend Close → ClickUp since it has the clearest demo footage pattern). Deliverable:
 - Opener card rendered with bespoke narration in Richard's voice (ElevenLabs)
 - Demo scene embedded
 - CTA card rendered with locked CTA script (same ElevenLabs voice)
@@ -309,12 +446,12 @@ Once Phase F.4 passes review, Triton (or Forge) can batch-render and batch-uploa
 
 ### Locked assets (do not modify without Richard's approval)
 
-**CTA script (exact wording â€” used in scene-03-cta for all 13 videos):**
+**CTA script (exact wording — used in scene-03-cta for all 13 videos):**
 
-> "You'll be amazed how much manual work disappears when the right automation kicks in. Visit one alt X dot com and schedule a call â€” we'll scope it, size it, and give you a straight price."
+> "You'll be amazed how much manual work disappears when the right automation kicks in. Visit one alt X dot com and schedule a call — we'll scope it, size it, and give you a straight price."
 
 **CTA card visual spec (design):**
-- Background: dark (match Richard's DAX demo v2 title cards â€” coordinate with Forge for exact colors)
+- Background: dark (match Richard's DAX demo v2 title cards — coordinate with Forge for exact colors)
 - Logo: "1AltX" wordmark top-center
 - Main text: "onealtx.com"
 - Subtitle: "Schedule a call"
@@ -322,58 +459,69 @@ Once Phase F.4 passes review, Triton (or Forge) can batch-render and batch-uploa
 
 **Opener card visual spec (design):**
 - Eyebrow: "1ALTX PRODUCT CATALOG" (all caps)
-- Title: {automation_name} â€” e.g., "Close â†’ ClickUp"
+- Title: {automation_name} — e.g., "Close → ClickUp"
 - Subtitle: short pain statement, 4-6 words max
 - Duration: 12 seconds (matches audio)
 
 ### Credentials + infrastructure reference
 
 **Azure Key Vault (autovid uses `kvdaximpactcapital`, NOT kvdaxdakonapilot):**
-- `ELEVENLABS-API-KEY` â€” ElevenLabs API key
-- `ELEVENLABS-VOICE-ID-RICHARD` â€” Richard's voice clone ID (= `IuxDTLynYdvisya7jrK5`, verified in chosen scenario)
-- `ANTHROPIC-API-KEY` â€” Claude API key for narration generation (Phase E already wired)
+- `ELEVENLABS-API-KEY` — ElevenLabs API key
+- `ELEVENLABS-VOICE-ID-RICHARD` — Richard's voice clone ID (= `IuxDTLynYdvisya7jrK5`, verified in chosen scenario)
+- `ANTHROPIC-API-KEY` — Claude API key for narration generation (Phase E already wired)
 
-**YouTube OAuth (does NOT exist yet â€” Triton creates in Phase F.3):**
+**Dakona KV (`kvdaxdakonapilot`) — NOT used by autovid, but reference:**
+- `descript-api-token` — Descript API bearer (used by PVC track, not catalog track)
+- `github-token` — GitHub PAT for scubarichard
+
+**YouTube OAuth (does NOT exist yet — Triton creates in Phase F.3):**
 - Create Desktop OAuth 2.0 Client in GCP project `positive-bonbon-478413-p1` (same project Sonnet used 2026-04-21)
+- Or: new GCP project dedicated to 1AltX — Triton's call
 - Scope: `https://www.googleapis.com/auth/youtube.upload`
 - Store `client_secret.json` + `token.json` at `C:\Users\18473\Tools\autovid-youtube\` (NOT in repo)
 - Add to `.gitignore`: `youtube_*.json`, `token.json`
+- Refresh token stored securely; rotation not required but note expiry behavior in README
 
 **Paths:**
 - Repo clone: `C:\Users\18473\Dropbox\Companies\1AltX\Projects\_clients\1altx-autovid\`
 - Scenarios output: `scenarios/catalog/`
 - Artifacts (intermediate MP4s): `artifacts/catalog/{id}/`
-- Final output: `C:/Users/18473/Dropbox/Companies/1AltX/Catalog/Videos/{id}.mp4`
-- Existing catalog demo footage source: `C:/Users/18473/Dropbox/Companies/1AltX/Tools/Video/catalog/`
+- Final output: `C:/Users/18473/Dropbox/Companies/1AltX/Catalog/Videos/{id}.mp4` (Triton create this folder)
+- Existing catalog demo footage source: Richard will drop in `C:/Users/18473/Dropbox/Companies/1AltX/Tools/Video/catalog/` (coordinate with Richard on getting the 13 demo clips — may require re-exporting from Descript)
+
+**Sheet (if any tracking needed):**
+- No sheet yet — Triton decide if one is needed or if scenario JSONs are sufficient. Voting lean: scenario JSONs are sufficient, add a sheet only if Richard wants it for catalog management.
 
 ### Gate protocol (per ORCHESTRATION.md)
 
 1. Branch: `triton/catalog-video-library`
-2. Phase F.1 (schema) â†’ Sonnet pre-review â†’ commit
-3. Phase F.2 (13 opener scripts) â†’ Richard reviews â†’ commit
-4. Phase F.3 (YouTube uploader) â†’ Sonnet pre-review â†’ commit
-5. Phase F.4 (integration test, 1 video) â†’ Richard reviews Unlisted YouTube video â†’ IF PASS â†’ merge PR to main
-6. Batch render remaining 12 â†’ all upload Unlisted â†’ Richard publishes from YouTube Studio
+2. Phase F.1 (schema) → Sonnet pre-review → commit
+3. Phase F.2 (13 opener scripts) → Richard reviews the bespoke hooks (especially the 6 marked as open questions) → commit
+4. Phase F.3 (YouTube uploader) → Sonnet pre-review → commit
+5. Phase F.4 (integration test, 1 video) → Richard reviews the actual Unlisted YouTube video → IF PASS → merge PR to main
+6. Batch render remaining 12 → all upload to YouTube Unlisted → Richard publishes from YouTube Studio UI
 
-### Deliverables
+### Deliverables for this task (PENDING → DONE)
 
-- [ ] Branch created, all docs read
+- [ ] Branch created, all docs read (comment in gate result: "I read X, X, X")
 - [ ] Phase F.1: schema extended + `_template.json` committed
-- [ ] Phase F.2: all 13 opener scripts committed
+- [ ] Phase F.2: all 13 opener scripts committed (OPEN QUESTIONS resolved with Richard first)
 - [ ] Phase F.3: `src/publish/youtube.js` + `docs/PHASE_F_YOUTUBE.md` committed
 - [ ] Phase F.4: 1 catalog video rendered + uploaded to YouTube Unlisted
-- [ ] Gate result posted: YouTube URL
+- [ ] Gate result posted: YouTube URL + any surprises encountered
 
 ### Do NOT
 
-- Do not publish anything to YouTube as Public â€” all uploads Unlisted
-- Do not re-record existing catalog demo footage without explicit Richard ask
+- Do not publish anything to YouTube as Public. All uploads Unlisted. Richard publishes from YouTube Studio UI.
+- Do not re-record existing catalog demo footage without explicit Richard ask — reuse existing Descript-sourced MP4s if Richard provides them
 - Do not modify the locked CTA script
+- Do not touch Forge's catalog-commission-tracking-v2 branch or the main autovid pipeline — catalog scenarios are additive, not a refactor
 - Do not put credentials in the repo
+- Do not skip the "read the repo docs first" step — your context is not Forge's context
 
 ---
 
-## TASK-20260424-NAUTILUS-1ALTX-001 â€” PVC Pipeline Context Sync
+## TASK-20260424-NAUTILUS-1ALTX-001 — PVC Pipeline Context Sync
 - **Assignee:** Nautilus
 - **Status:** PENDING
 - **Date:** 2026-04-24
@@ -384,11 +532,13 @@ Once Phase F.4 passes review, Triton (or Forge) can batch-render and batch-uploa
 
 ### Context
 
-Richard built a local Windows pipeline called PVC (Proposal Video Creator) that generates personalized Upwork proposal videos. The pipeline runs on his Windows machine (cannot run on Linux). Nautilus does not need to run the pipeline â€” its role is to stay aware of pipeline state so it can assist with editing scripts, updating MEMORY.md, querying the Google Sheet, and other support tasks.
+Richard built a local Windows pipeline called PVC (Proposal Video Creator) that generates personalized Upwork proposal videos. The pipeline runs on his Windows machine (cannot run on Linux). A dedicated GitHub repo was created today to house the code and state file.
+
+Nautilus does not need to run the pipeline — it runs Windows-only (Chrome CDP, FFmpeg, PowerShell). Nautilus's role is to stay aware of pipeline state so it can assist with: editing scripts, updating MEMORY.md, querying the Google Sheet, drafting Descript API code, and any other support tasks assigned via this queue.
 
 ### Tasks
 
-**Step 1 â€” Clone the repo (one-time setup)**
+**Step 1 — Clone the repo (one-time setup)**
 
 ```bash
 cd ~
@@ -396,50 +546,194 @@ git clone https://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@github.com/scubaricha
 cd autovid-outreach
 ```
 
-**Step 2 â€” Read the state file**
+**Step 2 — Read the state file**
 
 ```bash
 cat ~/autovid-outreach/MEMORY.md
 ```
 
-**Step 3 â€” Read the README**
+**Step 3 — Read the README**
 
 ```bash
 cat ~/autovid-outreach/README.md
 ```
 
-**Step 4 â€” Confirm context loaded**
+**Step 4 — Confirm context loaded**
 
-Post a gate result below confirming: repo cloned, MEMORY.md state summary, last processed rows, known open items, what Nautilus is ready to help with.
+Post a gate result below confirming:
+- Repo cloned successfully
+- Current pipeline state as described in MEMORY.md (summary in your own words)
+- Last processed rows
+- Known open items
+- What Nautilus is ready to help with
 
 ### Standing instructions (add to your startup routine)
+
+At the start of any session where PVC pipeline work is relevant, run:
 
 ```bash
 git -C ~/autovid-outreach pull 2>/dev/null && cat ~/autovid-outreach/MEMORY.md
 ```
 
+This keeps your context current without re-cloning.
+
+### What Nautilus CAN help with (Linux-safe tasks)
+
+- Reading/editing scripts in the repo and pushing changes
+- Updating MEMORY.md with current pipeline state
+- Querying the Google Sheet via Python + service account (if credentials provided)
+- Drafting or testing Descript API calls (upload, publish endpoint research)
+- Writing documentation or README updates
+- Any task Richard assigns via this queue
+
+### What Nautilus CANNOT do
+
+- Run record_videos.py (requires Chrome CDP on Windows)
+- Run overlay_batch.ps1 (requires FFmpeg + PowerShell on Windows)
+- Run populate_aj.ps1 (PowerShell)
+- Run run_pipeline.ps1 (PowerShell orchestrator)
+
 ### Gate
 
+Post results here when complete:
 - [ ] Repo cloned
 - [ ] MEMORY.md read and summarized
 - [ ] Ready for PVC support tasks
 
 ---
 
-## TASK-20260429-FORGE-PERSONAL-001 â€” Freqtrade Install on vm-dax-dev
-- **Assignee:** Triton (reassigned from Forge)
-- **Status:** BLOCKED (Forge) â€” reassigned to Triton
+## TASK-20260425-FORGE-1ALTX-001 — AutoVid Phase F Scene Pipeline
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-04-25
+- **Client:** 1AltX (internal) / LeadLUX (first use case)
+- **Title:** Build Phase F scene pipeline — story document → HeyGen + ElevenLabs + Puppeteer → assembled MP4
+
+### Completed
+
+**Branch:** `phase-f-scene-pipeline` — commit `77469bb` pushed to `scubarichard/1altx-autovid`
+
+**New modules (18 files, 2,472 insertions):**
+
+| File | Purpose |
+|------|---------|
+| `src/parse/story-parser.js` | Markdown story doc → SceneObject[] (padded IDs, blockquote dialogue, screen target inference) |
+| `src/scenes/scene-types.js` | JSDoc typedefs: SceneObject, ScreenTarget, NavigationCue |
+| `src/scenes/scene-validator.js` | Strict/warn validation for all scene fields + mode-specific checks |
+| `src/scenes/scene-router.js` | Dispatch → 'heygen' or 'screen_voice' |
+| `src/avatar/heygen-config.js` | KV secret resolution for HeyGen API key, avatar ID, voice ID |
+| `src/avatar/heygen.js` | Full HeyGen render pipeline (submit → poll → download → verify duration) |
+| `src/capture/capture-utils.js` | Shared frame-capture → silent 1920×1080 MP4 |
+| `src/capture/pdf-renderer.js` | PDF → MP4 via local HTTP server + pdfjs-dist ESM + Puppeteer |
+| `src/capture/svg-renderer.js` | SVG → MP4 (inline in HTML, Puppeteer scroll capture) |
+| `src/capture/xlsx-renderer.js` | XLSX tab → dark-mode HTML via SheetJS → Puppeteer scroll capture → MP4 |
+| `src/compose/scene-composer.js` | SCREEN_VOICE orchestrator: TTS → capture → merge (dispatches to correct renderer) |
+| `src/compose/final-assembler.js` | Concat (simple or xfade) → final MP4 + optional deliverable copy |
+| `src/pipeline/run-scenes.js` | 8-phase CLI orchestrator: parse → validate → plan → config → render → assemble → report |
+| `config/phase-f.json` | HeyGen API settings, KV secret names, capture defaults |
+| `docs/PHASE_F.md` | Full usage guide, CLI reference, artifact layout, smoke test instructions |
+| `tests/test-story.md` | 5-scene 3-min smoke test story |
+| `tests/assets/test-diagram.svg` | Test SVG for capture smoke tests |
+
+**CLI:**
+```
+npm run phase-f -- --story path/to/story.md --project my-project [--output final.mp4]
+  --scene-id <id>         render one scene only
+  --resume                skip already-completed scenes
+  --test-mode             black placeholder MP4s (no API calls)
+  --crossfade <seconds>   xfade between scenes
+  --assets-base <dir>     resolve screen asset paths from this dir
+  --require-approval      show plan and pause for confirmation
+```
+
+**Smoke test result:**
+```
+5 scenes rendered (test-mode) → 210s / 0.32MB assembled → PASS
+```
+
+**New dependencies:** `pdfjs-dist@4.4.168` (PDF rendering), `xlsx@0.18.5` (SheetJS XLSX→HTML)
+
+**Bug fix:** `story-parser.js` CLI guard updated to use `import.meta.url` main-module check (was firing on any non-help argv[2] during import).
+
+**LeadLUX story document:** `Working Docs/VIDEO-STORY-DOCUMENT.md` (committed in earlier session) — 10 scenes ready to run against this pipeline. Next step: provision HeyGen API key + avatar/voice IDs in Key Vault and run live.
+
+**[Forge] 2026-04-25:** DONE — all 9 sub-tasks complete, branch pushed, smoke test green.
+
+---
+
+## TASK-20260428-FORGE-1ALTX-001 — SP-API Keep-Alive + Amazon Automation Skill
+- **Assignee:** Forge
+- **Status:** DONE
+- **Completed:** 2026-04-28
+- **Client:** 1AltX
+- **Title:** SP-API Keep-Alive (n8n) + Amazon Automation Skill
+
+### Completed
+
+**Part 1 — n8n keep-alive workflow**
+- Workflow ID: `BMwkR3GgNbn5csx2` — "Amazon SP-API Keep-Alive" — ACTIVE
+- Schedule: `0 14 * * *` (9:00 AM CDT / 14:00 UTC daily)
+- Flow: Azure KV token → fetch 4 LWA secrets → LWA exchange → `/sellers/v1/marketplaceParticipations` → Slack #dax-collab
+- Success path: `:white_check_mark: SP-API Keep-Alive OK — N marketplaces (US) — timestamp`
+- Failure path: `:x: SP-API Keep-Alive FAILED — error — timestamp`
+
+**Part 2 — Credential storage (KV from n8n)**
+- SP created: `sp-n8n-spapi-keepalive` (appId: `b0c684b1-3683-46e8-b684-29141f8053e6`)
+- Role: Key Vault Secrets User on `kvdaxdakonapilot` (rg-dax-dakona-pilot, DAKONA 001 sub)
+- SP credentials embedded in n8n Code node (encrypted in n8n DB)
+- LWA secrets stay in KV — only fetched at runtime
+
+**Part 3 — Windows task reduction**
+- PENDING: requires 3+ successful n8n runs first
+- After 3 confirmed runs: `Set-ScheduledTask -TaskName "SP-API Keep-Alive" -Trigger (New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At "09:00")`
+- First n8n run will be 2026-04-29 at 9 AM CDT
+
+**Part 4 — SKILL.md**
+- Created: `P:\_tools\skills\amazon-spapi\SKILL.md`
+- Covers: LWA flow, KV secrets, multi-seller model, regional endpoints, common endpoints, rate limits, error codes, starter n8n template, rotation checklist
+
+### ACTION REQUIRED (Richard)
+**Rotate `spapi-lwa-client-secret`** — was briefly exposed in chat history during today's setup:
+1. Amazon Developer Console → Your Apps → Edit → LWA credentials → Generate new client secret
+2. `az keyvault secret set --vault-name kvdaxdakonapilot --name spapi-lwa-client-secret --value "{new-secret}"`
+3. Verify keep-alive runs successfully after rotation
+
+**[Forge] 2026-04-28:** DONE — workflow live, SKILL.md written. Windows task reduction pending 3 successful n8n runs. Client secret rotation required (Richard action).
+
+---
+
+## TASK-20260429-FORGE-PERSONAL-001 — Freqtrade Install on vm-dax-dev
+- **Assignee:** Forge
+- **Status:** BLOCKED (Forge) — reassign to Triton
 - **Date:** 2026-04-29
-- **Client:** Personal (Richard Mabbun)
-- **Priority:** Low
+- **From:** Sonnet (session with Richard)
+- **Client:** Personal (Richard Mabbun — not Dakona, not 1AltX)
+- **Priority:** Low — personal project, no client dependency
 - **Title:** Install and configure Freqtrade crypto trading bot on vm-dax-dev
 
-### Blocking note (Forge â€” 2026-04-30)
-[Forge] Cannot execute from RICHARD-WS â€” SSH to 52.150.28.158:22 times out. NSG allows port 22, VM running. Likely local network block. **Triton should pick this up** â€” reassign to Triton (192.168.1.159).
+### Blocking note (Forge — 2026-04-30)
+[Forge] Cannot execute from RICHARD-WS — SSH to 52.150.28.158:22 times out. NSG allows port 22, VM running. Likely local network block. **Triton should pick this up** — reassign to Triton (192.168.1.159).
+
+### Context
+
+Richard wants to explore algorithmic crypto trading as a personal learning project. He's moving soon and his local machine (Nautilus) may be down for an extended period — the Azure VM is the right host since it stays up regardless of what's happening at his house. This is completely separate from DAX infrastructure; no Azure Container Apps, no ACR, no Key Vault integration needed. Keep it simple.
+
+### Why vm-dax-dev
+
+- Already running Ubuntu 24 — perfect for Freqtrade
+- Accessible via SSH through the jumpbox at n8n.dakona.net anytime
+- Runs 24/7 regardless of Richard's local machine status
+- Existing stack: n8n lives here too — Freqtrade runs in its own directory, completely isolated
+
+### What Freqtrade is
+
+Open-source Python crypto trading bot (github.com/freqtrade/freqtrade). Supports backtesting, dry-run (paper trading), and live trading. Connects to 30+ exchanges via the `ccxt` library. Richard wants to start in dry-run mode — no real money until he's reviewed at least 2-4 weeks of paper trading results.
 
 ### Tasks
 
-SSH into vm-dax-dev via the jumpbox. Install isolated from DAX stack:
+**Step 1 — Install Freqtrade (isolated from DAX stack)**
+
+SSH into vm-dax-dev via the jumpbox. Install in Richard's home directory, NOT anywhere near the DAX/n8n stack:
 
 ```bash
 sudo apt update && sudo apt install -y python3 python3-pip python3-venv git curl
@@ -449,83 +743,1080 @@ cd freqtrade-personal
 ./setup.sh -i
 source .venv/bin/activate
 freqtrade --version
+```
+
+**Step 2 — Generate baseline config**
+
+```bash
 freqtrade new-config --config config.json
-# Set: exchange=binance, spot, USDT, stake_amount=10, max_open_trades=3, dry_run=true
+```
+
+During config generation, set:
+- Exchange: **binance** (most Freqtrade community strategies are Binance-tested)
+- Trading mode: **spot** (not futures — simpler for learning)
+- Stake currency: **USDT**
+- Stake amount: **10** (small per-trade size for dry-run)
+- Max open trades: **3**
+- Dry run: **true** — DO NOT set to false
+
+Do not add real API keys. Leave exchange keys empty for now — dry-run doesn't need them.
+
+**Step 3 — Download a community strategy**
+
+```bash
 freqtrade create-userdir --userdir user_data
 cd user_data/strategies
 git clone https://github.com/freqtrade/freqtrade-strategies.git community
 ```
 
-Run backtest (SMAOffset recommended), then start dry-run in screen session.
+Recommended starting strategy: **NostalgiaForInfinityX** or **SMAOffset**. Pick whichever has the cleaner code and document which one was selected in the gate result.
+
+**Step 4 — Download historical data and run a backtest**
+
+```bash
+cd ~/freqtrade-personal
+source .venv/bin/activate
+freqtrade download-data --exchange binance --pairs BTC/USDT ETH/USDT SOL/USDT --timeframe 1h --days 30
+freqtrade backtesting --config config.json --strategy SMAOffset --userdir user_data --timerange 20250301-20250401
+```
+
+Capture the backtest output summary (win rate, total profit %, max drawdown, Sharpe ratio) and include in gate result.
+
+**Step 5 — Start dry-run with screen session**
+
+```bash
+sudo apt install -y screen
+screen -S freqtrade-dryrun
+cd ~/freqtrade-personal && source .venv/bin/activate
+freqtrade trade --config config.json --strategy SMAOffset --userdir user_data --dry-run
+# Detach: Ctrl+A then D
+screen -ls
+```
+
+**Step 6 — Enable Freqtrade REST API + UI (optional)**
+
+Add to config.json:
+```json
+"api_server": { "enabled": true, "listen_ip_address": "127.0.0.1", "listen_port": 8080, "username": "richard", "password": "choose-a-password" }
+```
+
+SSH tunnel: `ssh -L 8080:localhost:8080 vm-dax-dev-user@n8n.dakona.net` → http://localhost:8080
 
 ### Constraints
-- **Personal project only** â€” no DAX/KV/n8n integration
-- **Dry-run only** â€” `"dry_run": true`, no real exchange API keys
-- **Isolated** â€” all files under `~/freqtrade-personal/`
+
+- **Personal project only** — no DAX/KV/n8n integration
+- **Dry-run only** — `"dry_run": true`, no real exchange API keys
+- **Isolated** — all files under `~/freqtrade-personal/`
+- **screen, not systemd** — keep it simple
 
 ### Gate
-- [ ] `freqtrade --version` confirmed
+
+- [ ] Freqtrade installed and `freqtrade --version` confirmed
 - [ ] Config generated with dry_run: true
-- [ ] Strategy selected â€” name it
+- [ ] Strategy selected — name it here
 - [ ] Backtest results summary (win rate, profit %, max drawdown, Sharpe)
-- [ ] Dry-run started in screen session
+- [ ] Dry-run started in screen session — `screen -ls` output
+- [ ] SSH tunnel command for FreqUI documented
 
 ---
 
-## TASK-20260430-CHOSEN-005 â€” Render Checker: 1 Richard UI Action Remaining
-- **Assignee:** Richard
-- **Status:** PARTIAL â€” 1 Make UI action remaining
-- **Completed (partial):** 2026-05-01 by Forge
+## TASK-20260430-FORGE-DAKONA-001 — AVD Disk Monitor: Locate SP Credentials + Cross-Tenant Preflight
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-04-30
+- **From:** Opus (session with Richard)
+- **Client:** Dakona (MSP — all 12 RIA tenants)
+- **Priority:** Medium — blocks deployment of `Invoke-AVDDiskMonitor.ps1`
+- **Title:** Find dakona-csp-scanner credentials and verify cross-tenant authorization for AVD disk monitoring
+
+### Context
+
+Opus drafted `scripts/Invoke-AVDDiskMonitor.ps1` this session — a cross-tenant AVD C: drive capacity monitor that opens NinjaOne tickets at 80% used, mirroring the pattern from `Invoke-TenantAudit.ps1`. Before deploying it (Azure Automation runbook, every 4h), Richard wants to verify two things:
+
+1. **Where do the scanner SP credentials live**, and do they actually work today?
+2. **Does the SP have working cross-tenant authorization** for the specific APIs the disk monitor needs — ARM (host pools, session hosts) and Log Analytics (Perf table query)?
+
+The SP is named **`dakona-csp-scanner`** (created by `scripts/New-DakonaScanSP.ps1`). The Lighthouse onboarding pattern is in `scripts/Deploy-Lighthouse.ps1`.
+
+### Tasks
+
+**Phase 1 — Locate the credentials (~10 min)**
+
+Check in this order:
+1. MCP container env vars: `az containerapp show --name ca-dax-mcp-dakona-pilot --resource-group rg-dax-dakona-pilot --query "properties.template.containers[0].env" -o json`
+2. KV `kvdaxdakonapilot`: `az keyvault secret list --vault-name kvdaxdakonapilot --query "[?contains(name,'scan') || contains(name,'csp') || contains(name,'azure-sp')].name" -o tsv`
+3. Repo grep: `git -C /repo grep -l "AZURE_SP_CLIENT_ID" 2>/dev/null`
+
+Deliverable: where the 3 env vars are stored, whether secret has expired.
+
+**Phase 2 — Verify SP can authenticate (~5 min)**
+
+Token grab using client_credentials flow against `https://management.azure.com/.default`. If 401 → secret expired, stop.
+
+**Phase 3 — Build and run cross-tenant preflight (~30-45 min)**
+
+Write `scripts/Test-AVDMonitorAccess.ps1`. For each tenant, produce:
+
+| Column | Check |
+|---|---|
+| Client | displayName |
+| TenantId | tenant.tenantId |
+| Subs visible | subscriptions API count |
+| ARM HostPools readable | GET hostPools — 200 vs 401/403 |
+| LA workspaces visible | GET workspaces |
+| LA Perf query OK | Perf | take 1 against loganalytics.io |
+| Verdict | Ready / No AVD / No LA / No sub / Auth gap |
+
+Output: console table + JSON at `/tmp/avd-monitor-preflight-{timestamp}.json`
+
+Also check SP group membership vs `DakonaPrincipalId` in Deploy-Lighthouse.ps1.
+
+**Phase 4 — Inventory Lighthouse delegations (~10 min)**
+
+`az managedservices definition list` + `az managedservices assignment list`. Report which of 12 RIA clients have Lighthouse delegated.
+
+### Gate format
+
+```
+## Phase 1 — Credentials located
+## Phase 2 — SP membership
+## Phase 3 — Per-tenant access matrix
+## Phase 4 — Lighthouse inventory
+## Recommended next steps
+```
+
+### Constraints
+
+- **Read-only** — no deployments, no role assignments
+- **Don't print secret values**
+- **Don't deploy `Invoke-AVDDiskMonitor.ps1`** — preflight only
+
+### Reference files
+- `scripts/Invoke-AVDDiskMonitor.ps1`, `scripts/Invoke-TenantAudit.ps1`, `scripts/New-DakonaScanSP.ps1`, `scripts/Deploy-Lighthouse.ps1`
+
+
+### Results
+
+#### Phase 1 - Credentials located
+**BLOCKER: `dakona-csp-scanner` SP was never created.** `New-DakonaScanSP.ps1` exists in the repo but has never been run.
+- MCP container env vars: `AZURE_SP_TENANT_ID`, `AZURE_SP_CLIENT_ID`, `AZURE_SP_CLIENT_SECRET` - **all absent** from `ca-dax-mcp-dakona-pilot`
+- KV `kvdaxdakonapilot`: no secret matching `scan`, `csp`, or `azure-sp`
+- Repo: `AZURE_SP_CLIENT_ID` referenced in scripts but no stored credential anywhere
+- **Action required:** Richard must run `New-DakonaScanSP.ps1` to create the SP + secret, then run `Set-ScannerEnvVars.ps1` to inject into the container
+
+#### Phase 2 - SP membership
+**Skipped - SP does not exist.** Cannot test auth until Phase 1 is resolved.
+
+#### Phase 3 - Per-tenant access matrix (via rmabbun@dakona.com direct login)
+
+| Client | TenantId | AVD HostPools | LA Workspaces | Verdict |
+|---|---|---|---|---|
+| The RIA Works | 2bc67e7e | 1 | 1 | Ready |
+| Tidecrest Wealth Management | 6878179f | 1 | 1 | Ready |
+| DAKONA 001 | d2a3c346 | 2 | 3 | Ready |
+| Lopez and Company CPAs | 33f9ae74 | 1 | 0 | No LA workspace |
+| Inflection Capital Management | 5a8c35a2 | 1 | 0 | No LA workspace |
+| Uniting Wealth Partners | 6d3260f7 | 3 | 0 | No LA workspace |
+| Impact Capital Partners | eaf1a864 | 0 | 1 | No AVD |
+| MCPP Sub + 3x Azure subscription 1 | various | 0 | - | No AVD |
+
+Note: Access verified via direct rmabbun@dakona.com user login, NOT via dakona-csp-scanner SP (which does not exist).
+
+#### Phase 4 - Lighthouse inventory
+az managedservices assignment list returns **0 delegations** for ALL 6 client subscriptions checked. No formal Lighthouse onboarding has been deployed. Current cross-tenant access is via direct user account (rmabbun@dakona.com), not ARM managed services delegation.
+
+#### Recommended next steps
+1. **Run New-DakonaScanSP.ps1** - creates dakona-csp-scanner app registration + SP + 2yr secret + Graph permissions
+2. **Run Set-ScannerEnvVars.ps1** - injects AZURE_SP_* env vars into ca-dax-mcp-dakona-pilot container
+3. **Create LA workspaces** in Lopez, Inflection, Uniting Wealth tenants (or exclude those 3 from disk monitor scope)
+4. **Deploy Lighthouse** via Deploy-Lighthouse.ps1 for client subs - currently zero delegations; SP needs Reader role on client subs for ARM + LA access
+5. Re-run this preflight after Steps 1-4 to confirm SP auth + cross-tenant access before enabling Azure Automation runbook
+---
+
+## TASK-20260429-CHOSEN-004 — Chosen Agency V1 Phase 2: OpenAI + Google Docs Wiring
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-04-30
 - **Client:** Erika Cobb / Chosen Agency
+- **Priority:** High
+- **Title:** V1 Phase 2 — OpenAI script+brief generation + Google Docs creation wired into Make scenario 4894796
 
-### Outstanding action (Richard only â€” requires Make UI)
+### Completed
 
-Forge fixed M16+M17 via API. One step remains that requires UI (new scenario creation cannot be done via API):
+**Blueprint uploaded directly to Make scenario 4894796 via PATCH API — fully automated, no manual UI steps required.**
 
-**Richard must import Render Checker blueprint via Make UI:**
-- Org: 885318, Folder: 232853
-- Blueprint: `clients/chosen-agency/render-checker-blueprint.json` in repo
-- Name: `Chosen Agency â€” Render Checker`
-- Schedule: every 5 min, **keep INACTIVE** until acceptance tests pass
+Final upload: `lastEdit: 2026-04-30T21:51:26.569Z`, `isinvalid: False`
 
-Post scenario ID here when done â€” Forge will complete wiring via API.
+**Changes applied:**
+1. **Module 1 (filterRows)** — reads from V1 Production Tracker (1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo), tab Production Tracker, range A1:AZ1
+2. **Module 2 (SetVariables)** — effective_voice_id, effective_avatar_id, variation_id, openai_model=gpt-4o
+3. **Module 4 (route entry)** — filter: Status = Queued (stored on first module in route, not route object — Make schema quirk)
+4. **All updateRow modules** — spreadsheetId to V1 sheet, sheetId to Production Tracker, range A1:AZ1
+5. **Module 5 (OpenAI)** — gpt-4o, Chosen Agency content prompt, outputs {script, caption} JSON
+6. **Module 23 (NEW)** — OpenAI Editor Brief (gpt-4o), 7-key JSON mapping to 10 template placeholders
+7. **Module 24 (NEW)** — google-docs:createADocumentFromTemplate (map mode), Script Doc template, 13 placeholders
+8. **Module 25 (NEW)** — google-docs:createADocumentFromTemplate (map mode), Editor Brief template, 10 placeholders
+9. **Module 6 (updateRow: Script Done)** — writes Script Text, Caption Text, Script Doc Link, Brief Doc Link, Last Updated
+
+**Route 0 order:** 4 → 5 → 23 → 24 → 25 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 14 → 15
+
+**Key learnings (for future Make blueprint work):**
+- Route filters go on the FIRST MODULE in the route's flow, not on the route object
+- Module name is `google-docs:createADocumentFromTemplate` (not `createADocumentFromATemplate`)
+- Template mapper uses `document`/`name`/`requests` (flat dict), not `fileId`/`title`/`values` array
+- Blueprint PATCH accepts `filter` on modules but rejects it on route objects
+
+**Repo artifacts:** clients/chosen-agency/prompts/editor_brief_v1.md, clients/chosen-agency/build_log.md (committed dab6912)
+
+**Transfer notes:** Swap OpenAI conn, Google Sheets/Drive/Docs conn, all sheet/folder/template IDs at client handoff.
+
+### Richard: remaining steps
+1. Verify Google Docs connection on modules 24+25 shows correct Google account
+2. E2E test: 1 row with Status=Queued — should produce Script Doc + Editor Brief in Drive, sheet status → Script Done
+
+**[Forge] 2026-04-30:** DONE — blueprint fully live via API (filter, docs modules, all refs). 2 verification steps for Richard.
+
 
 ---
 
-## TASK-20260519-RICHARD-HW-001 â€” RAM Upgrade: RICHARD-WS
+# TASK-20260430-CHOSEN-005 — V1 Phase 4: Render Checker + Acceptance Test Suite
+
+**Status:** PARTIAL — 1 Make UI action remaining (Render Checker import); M16+M17 fixed via API by Forge 2026-05-01
+**Completed (partial):** 2026-05-01 by Forge
+**Owner:** Forge
+**Client:** Erika Cobb / Chosen Agency
+**Priority:** High
+**Created:** 2026-04-30 (late evening) by Richard
+**Estimated effort:** 3-5 hours
+**Depends on:** CHOSEN-004 (DONE)
+**Chained with:** CHOSEN-006 (must complete this BEFORE CHOSEN-006 starts)
+
+---
+
+## STRATEGIC CONTEXT
+
+V1 scenario (4894796) is functionally complete through Phase 3 but has zero error handling, no acceptance tests, and no standalone Render Checker. Per Erika's SOW Section 9 Step 6, the Render Checker is REQUIRED — safety net for HeyGen renders that exceed inline polling capacity.
+
+V1 today: inline polling in main scenario (Modules 12-18, 60 iter × 60s = 60 min max). HeyGen typically completes 2-5 min. For batch runs or slow renders, we need standalone Render Checker.
+
+This task delivers Render Checker + acceptance tests + error handling.
+
+---
+
+## CRITICAL RULES
+
+1. **SAVE PROGRESS AFTER EVERY SUBTASK.** Commit + push after each. Use messages like "[Forge] CHOSEN-005 Subtask N DONE: <description>".
+2. **TEST EACH SUBTASK BEFORE MOVING TO NEXT.**
+3. **IF ERROR:** Read it, attempt fix, re-test. Up to 3 retries per subtask. After 3 fails, post detailed error to Slack #dax-collab and STOP.
+4. **DO NOT modify V1 scenario 4894796 module logic** unless instructed — only ADD modules or error handler routes.
+5. **DO NOT touch test scenario 4820264.**
+6. **DO NOT delete V1 sheet or templates.**
+7. **DO NOT activate Render Checker schedule** until acceptance tests pass.
+
+---
+
+## REFERENCE
+
+- SOW: `clients/chosen-agency/builder-handoff.md`
+- Build log: `clients/chosen-agency/build_log.md`
+- V1 scenario: `4894796`
+- V1 sheet: `1reHZpPcnGy2PTXTqKTdR-otnbqEeRfDkhG3dR-yfHWo`
+- Make API key: `kvdaxdakonapilot/make-api-key` (read-scoped — escalate write fails to Richard)
+- HeyGen API key: live in V1 scenario Module 14 headers (rotated tonight, fresh)
+- Other secrets: `kvdaximpactcapital`
+
+**Working blueprint patterns proven tonight:**
+- OpenAI modules: must have `response_format: json_object` set
+- OpenAI integers: `max_tokens` (int), `temperature` (double), `top_p` (double), `n_completions` (int) — never strings
+- ElevenLabs body: use `replace(29.script; (newline); " ")` to strip control chars
+- Sheet refs: `spreadsheetId` no leading slash; `sheetName` must be set explicitly
+- Column names: V1 schema uses Title Case (`Status`, `Voice File URL`, `Render Job ID`)
+- Filters on inner-route modules go on the module itself, not on the route — see test scenario 4820264 pattern
+- `is_done` lives in Module 2's variables array, set to `"false"` initially, flipped to `"true"` by Module 21/22
+
+---
+
+## SUBTASKS
+
+### [Forge] 2026-05-01 Update: M16 + M17 fixed via API
+- M16 mapper: Status="Done", Raw Video Link={{14.data.data.video_url}}, Last Updated={{formatDate(now;"YYYY-MM-DD HH:mm:ss")}} ✅
+- M17 mapper: Status="Failed", Error Message="HeyGen render failed: {{14.data.data.error.message}}" ✅
+- Remaining: Richard must import Render Checker blueprint via Make UI (new scenario creation requires UI)
+
+### Subtask 1 — Build Render Checker scenario skeleton
+
+Create new Make scenario via API (or escalate to Richard for manual clone if write-scoped fails).
+- Name: `Chosen Agency — Render Checker`
+- Folder: `232853` (same as V1)
+- Schedule: every 5 min
+- Initially: INACTIVE
+
+Module flow:
+1. Trigger: `google-sheets:filterRows` — V1 sheet, Queue tab, filter Status = Rendering, limit 10
+2. `http:ActionSendData` — HeyGen check status URL `https://api.heygen.com/v1/video_status.get?video_id={{1.`Render Job ID`}}`, GET, X-Api-Key header (use V1 Module 14's key), parseResponse: true
+3. `builtin:BasicRouter` 2 routes: Completed and Failed
+4. `google-sheets:updateRow` (Completed): filter `{{2.data.data.status}} = "completed"`, sets Status=Done, Raw Video Link, Last Updated
+5. `google-sheets:updateRow` (Failed): filter `{{2.data.data.status}} = "failed"`, sets Status=Failed, Error Message, Last Updated
+
+No "still processing" route — leave row as Rendering for next checker run.
+
+ACCEPTANCE: scenario exists, all 5 modules present, filters on module level, inactive.
+SAVE: Update build_log.md with new scenario ID. Commit + push.
+
+### Subtask 2 — Test Render Checker
+
+Don't activate schedule. Manually click "Run once" via Make API.
+
+Test: V1 sheet has rows in "Rendering" state from earlier tests. Render Checker should pick them up, query HeyGen, update them.
+
+Expected: rows where HeyGen status=completed → Status=Done, Raw Video Link populated.
+
+ACCEPTANCE: at least one row updated successfully, no errors in scenario log.
+SAVE: Commit Render Checker test results to build_log.md.
+
+### Subtask 3 — Add error handler routes to V1 scenario (4894796)
+
+Add error handler routes to these 5 critical modules:
+- Module 5 (OpenAI Script + Caption)
+- Module 23 (OpenAI Editor Brief)
+- Module 7 (ElevenLabs)
+- Module 8 (Drive upload)
+- Module 10 (HeyGen create)
+
+Pattern:
+- Route filter: Make's `[Error]` built-in filter
+- First module in route: google-sheets:updateRow
+  - Status = "Error"
+  - Error Message = `"<Module name>: " + {{error.message}}`
+  - Last Updated = now()
+
+ACCEPTANCE: all 5 critical modules have error handlers, error route writes to V1 sheet correctly.
+SAVE: Push V1 scenario via Make API. Commit blueprint snapshot.
+
+### Subtask 4 — Build acceptance test row data
+
+Add 8 test rows to V1 sheet (rows 3-10) per SOW Section 18:
+
+Happy-path (rows 3-6): standard short-form content (sleep tips, productivity, mindset, business). Status=Queued, complete fields, overrides blank.
+
+Override (rows 7-10):
+- Row 7: Override Voice ID set
+- Row 8: Override Avatar ID set
+- Row 9: Override Tone set
+- Row 10: Override Stability + Override Similarity Boost set
+
+Use Google Sheets API via service account.
+
+ACCEPTANCE: 8 rows present, unique Script IDs, override columns populated only on rows 7-10.
+SAVE: Commit "test data populated" to build_log.md.
+
+### Subtask 5 — Run acceptance tests
+
+For each row 3-10:
+1. Trigger V1 scenario via Make API "Run once" (POST `/api/v2/scenarios/4894796/run`)
+2. Wait for completion (poll Make execution log)
+3. Verify outputs:
+   - Happy-path (3-6): all output cols populated, Status=Done
+   - Override (7-10): outputs reflect override values
+
+If row fails: log it, attempt 1 retry, move on.
+
+Expected runtime per row: 3-7 min.
+
+ACCEPTANCE: 8 of 8 rows produce expected outputs (or documented failures), override behavior verified on rows 7-10.
+SAVE: Append full test results matrix to build_log.md.
+
+### Subtask 6 — Final completion summary
+
+Append CHOSEN-005 completion entry to build_log.md:
+- Render Checker scenario ID + URL
+- Error handlers added to which V1 modules
+- Test results matrix
+- Deferred items
+- Slack post to #dax-collab
+
+ACCEPTANCE: build_log.md fully updated, Slack posted.
+SAVE: Final commit + push.
+
+---
+
+## ERROR-RECOVERY PROTOCOL
+
+If subtask fails:
+1. Read error
+2. Identify failing module/operation
+3. Check tonight's known patterns:
+   - String/int type errors → cast
+   - parseJSON → use Parse JSON modules
+   - Sheet name blank → set explicitly
+   - Column case → V1 uses Title Case
+   - Filter on route → move to module
+   - Control chars in body → `replace(text; (newline); " ")`
+4. Apply fix, re-test
+5. Up to 3 retries
+6. After 3 fails: post to Slack with subtask number + attempt + error. STOP.
+
+---
+
+## DONE WHEN
+
+All 6 subtasks complete. CHOSEN-006 unblocked.
+
+---
+
+# TASK-20260430-CHOSEN-006 — V1 Phase 6: Documentation Suite
+
+**Status:** DONE
+**Owner:** Forge
+**Started:** 2026-05-01 by Forge
+**Completed:** 2026-05-01 by Forge
+**Client:** Erika Cobb / Chosen Agency
+**Priority:** High
+**Created:** 2026-04-30 by Richard
+**Estimated effort:** 3-4 hours
+**Depends on:** CHOSEN-005 (Render Checker + tests passed)
+
+---
+
+## STRATEGIC CONTEXT
+
+Phase 6 deliverables per SOW Section 14:
+- Operator SOP
+- Field map
+- Credential map
+- Troubleshooting guide
+
+These go in Drive folder `10_Documentation` with Markdown copies in repo.
+
+Loom recordings (3 separate per SOW) are NOT in this task — Richard records.
+
+---
+
+## CRITICAL RULES
+
+1. SAVE AFTER EVERY DOC. Commit each as soon as drafted.
+2. DON'T BLOCK ON PERFECT. 80% draft — Richard polishes.
+3. REFERENCE ACTUAL ASSET STATE. Pull live blueprint from Make API for credential map. Pull live sheet schema from Sheets API for field map.
+4. NO LOOM RECORDINGS.
+
+---
+
+## SUBTASKS
+
+### Subtask 1 — Operator SOP
+
+Output: `clients/chosen-agency/docs/operator_sop.md`
+Audience: Erika and her editor — non-technical operators.
+
+Sections:
+1. What this system does (2-3 paragraphs, plain English)
+2. Daily workflow — step-by-step adding a row, field-by-field guidance, when to use Override
+3. Status meanings — what each of 8 statuses means + what to do when you see it
+4. Where outputs go — Drive folder map, Doc links, Sheet links
+5. What to do when something breaks — 3-step recovery (check Status, check Error Message, run Render Checker manually)
+6. What NOT to do — never edit Status manually except retry, never delete System Settings rows, etc.
+
+Length: 5-8 pages. Friendly second person.
+
+ACCEPTANCE: Markdown file created, scannable, no jargon.
+SAVE: Commit + push.
+
+### Subtask 2 — Field map
+
+Output: `clients/chosen-agency/docs/field_map.md`
+
+Format: Markdown table with: Source / Type / Required (Y/N) / Used by Module(s) / Sent to API as / Result column.
+
+Pull live V1 blueprint from Make API for accurate Module IDs. Pull live V1 sheet schema from Sheets API.
+
+Document all 28 V1 sheet columns + 13 System Settings rows.
+
+Length: 3-5 pages.
+
+ACCEPTANCE: All columns + settings documented.
+SAVE: Commit + push.
+
+### Subtask 3 — Credential map
+
+Output: `clients/chosen-agency/docs/credential_map.md`
+
+Sections:
+1. API keys table: Service / Where stored during build / Where stored long-term (Key Vault path) / Used by Modules / Rotation procedure
+2. Make connections table: name / service / owner / modules using
+3. Service accounts: Google SA email + permissions
+4. Handoff procedure: 5-step checklist for transferring to Erika + verification steps
+
+Pull live blueprint from Make API for connection IDs.
+
+Length: 2-4 pages.
+
+ACCEPTANCE: All services documented, handoff procedure clear.
+SAVE: Commit + push.
+
+### Subtask 4 — Troubleshooting guide
+
+Output: `clients/chosen-agency/docs/troubleshooting.md`
+
+Format: Symptom → Diagnosis → Fix.
+
+Include all issues debugged tonight:
+- "Module 5 fails with imageDetail error"
+- "Module 23 fails with parseJSON not found"
+- "Module 23 fails: max_tokens expected integer"
+- "Module 30 fails: Source is not valid JSON"
+- "Module 7 fails: Invalid control character"
+- "Module 7 fails: 404 Not Found"
+- "Module 10 fails: 401 Unauthorized"
+- "Polling never completes"
+- "Status stuck at Rendering"
+- "Sheet refs failing: rowNumber missing"
+- "Wrong column updated"
+
+For each: 2-4 sentences.
+
+Length: 2-4 pages.
+
+ACCEPTANCE: At least 10 issues documented.
+SAVE: Commit + push.
+
+### Subtask 5 — Upload all 4 docs to Drive
+
+Upload Markdown files as Google Docs to `10_Documentation` folder in Chosen Agency Drive.
+
+Use Drive API:
+1. Convert .md to Google Doc format
+2. Upload with appropriate name
+3. Verify in folder
+
+ACCEPTANCE: 4 Google Docs visible in 10_Documentation folder.
+SAVE: Commit "docs uploaded" + Drive Doc IDs to build_log.md.
+
+### Subtask 6 — Final completion summary
+
+Append CHOSEN-006 entry to build_log.md.
+Slack post to #dax-collab summarizing:
+- 4 docs drafted and uploaded
+- Loom recordings still needed (Richard's task)
+- Final acceptance run with Erika still needed
+- Migration to Erika's Drive folder still needed (waiting on her share)
+- Credential swap still needed (waiting on her account setup)
+
+---
+
+## ERROR-RECOVERY PROTOCOL
+
+Same as CHOSEN-005: 3 retries per subtask, then post to Slack and STOP.
+
+---
+
+## DONE WHEN
+
+All 4 docs drafted, uploaded, build_log.md updated, Slack notified.
+
+Richard's remaining work after CHOSEN-006:
+- Record 3 Loom walkthroughs
+- Final acceptance test with Erika
+- Migrate assets to Erika's Drive (waiting)
+- Swap credentials at handoff (waiting)
+
+---
+
+## TASK-20260507-FORGE-ATLAS-001 — Update Atlas Persona (Softer Voice/Tone)
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-05-07
+- **Completed:** 2026-05-19
+- **Completed-By:** Forge
+- **From:** Sonnet (Richard request)
+- **Priority:** Medium
+- **Title:** Replace Atlas CLAUDE.md persona with softer, Claude-like tone
+
+### Context
+
+Richard finds Atlas's current communication style too abrasive and intense. He wants Atlas to communicate more like Claude (Sonnet) — calm, warm, clear, structured, direct without being harsh. Atlas runs via OpenClaw (Claude Code CLI) on vm-dax-dev, interacts with Richard primarily via Telegram.
+
+### Task
+
+Find and update Atlas's CLAUDE.md (persona/system prompt) on vm-dax-dev.
+
+**Likely locations (check in order):**
+1. `~/.openclaw/CLAUDE.md`
+2. `~/.openclaw/agents/main/CLAUDE.md`
+3. `~/.openclaw/workspace/CLAUDE.md`
+4. Any CLAUDE.md under `~/` or `/opt/dax/`
+
+**Replace the personality/communication section with the following:**
+
+```
+## Communication Style
+
+You are Atlas. Your tone mirrors Claude (Anthropic Sonnet) — calm, grounded, and warm without being soft.
+
+Core principles:
+- Lead with the most important point first
+- Be direct and clear — no filler, no preamble
+- Keep responses concise and structured
+- Break complex things into small, manageable steps
+- Use plain language — avoid jargon unless necessary
+- Maintain a steady, patient tone even when tasks are difficult or repeated
+- Never sound urgent, alarming, or intense unless the situation genuinely requires it
+- When something is wrong, state it plainly and move immediately to the fix
+- Acknowledge the human side of requests — Richard is managing a lot; don't add cognitive load
+- When in doubt, do less and confirm rather than doing more and surprising
+
+You are helpful, capable, and calm. You don't perform urgency. You get things done quietly and report back clearly.
+```
+
+### Gate
+- [ ] CLAUDE.md located — post the path
+- [ ] Old persona section captured (post first 20 lines of old content for reference)
+- [ ] New persona section written
+- [ ] Atlas restarted / session refreshed so new persona takes effect
+- [ ] Post confirmation to #dax-collab (C0APVGG486M): "[Atlas] Persona updated — tone softened per Richard's request 2026-05-07"
+
+### Notes
+- SSH access: `ssh -T -i ~/.ssh/id_rsa -J dkn8n@n8n.dakona.net daxadmin@172.16.0.5`
+- If CLAUDE.md doesn't exist yet, create it at `~/.openclaw/CLAUDE.md`
+
+---
+
+## TASK-20260519-RICHARD-HW-001 — RAM Upgrade: RICHARD-WS
 - **Assignee:** Richard
 - **Status:** PENDING (waiting for sale price)
 - **Date:** 2026-05-19
 - **Priority:** Low
 - **Title:** Purchase 32GB RAM kit for XPS 15 9510
 
-**Part:** Crucial CT2K16G4SFRA32A â€” 2Ã—16GB DDR4-3200 SO-DIMM
-**Current price:** ~$250 â€” wait for Prime Day / Black Friday (~$60â€“80 target)
+**Part:** Crucial CT2K16G4SFRA32A — 2×16GB DDR4-3200 SO-DIMM
+**Current price:** ~$250 — wait for Prime Day / Black Friday (~$60–80 target)
 **Alt:** eBay used matched pair
 **ClickUp:** https://app.clickup.com/t/86e1f12nr
+- Do NOT change any tool configs, MCP settings, or workflow logic — persona text only
 
 ---
 
-## TASK-20260521-FORGE-1ALTX-WAT-003 â€” WAT The Way: Video v3 Rebuild
+## TASK-20260518-FORGE-1ALTX-WAT-001 — WAT The Way: Repo + Airtable Seed Data
 - **Assignee:** Forge
-- **Status:** CLEARED — intro approved by Richard 2026-05-21, full build authorized
-- **Date:** 2026-05-21
-- **Client:** 1AltX -> Word Aflame Tabernacle
+- **Status:** DONE
+- **Date:** 2026-05-18
+- **Completed:** 2026-05-19
+- **Completed-By:** Forge
+- **Airtable Base:** appO608pIDK2oZ3UU — https://airtable.com/appO608pIDK2oZ3UU (15 tables, all records imported, linked fields wired)
+- **From:** Sonnet (Richard request)
+- **Client:** 1AltX → Word Aflame Tabernacle (WAT) — Upwork bake-off prospect
 - **Priority:** HIGH
-- **Deadline:** Sun 2026-05-25 EOD
-- **Supersedes:** wat-the-way-v2.mp4
-- **Full brief:** `walkthrough/v3-rebuild-brief.md` (READ THIS FIRST)
-- **Core fix:** v1/v2 boring â€” one static screen per long narration section. v3 = one visual beat every 10-15 sec, synced to narration, person-illustration-first.
-- **Key changes:**
-  1. New honest avatar intro (~45s) â€” "I'm Richard's AI avatar..." + 4-act roadmap, NO problem recap
-  2. 5 AI illustrations (Marcus + Davis family) â€” dignified editorial style, person shown before their data
-  3. Screen choreography â€” zoom/highlight each data point as narration names it
-  4. Shorten title cards to ~2s silent
-  5. Human pacing â€” ElevenLabs SSML break tags, one idea per line, HeyGen speed 0.9
-  6. YouTube unlisted upload (was SKIPPED in v2)
-  7. Fill CatalogMint placeholders while in there
-- **GATE:** Do all prep first. Render HeyGen avatar LAST, only after Richard confirms intro script in #dax-collab.
-- **PROTOCOL:** Post status to #dax-collab at start / 50% / illustrations-done / render-done. (v1+v2 had ZERO status pings.)
+- **Deadline:** Mon 2026-05-25 EOD (Ricky decision window closes Tue 2026-05-26)
+- **Title:** Create wat-the-way-demo repo + generate 15 fully-linked Airtable seed CSVs supporting demo scenario for Upwork bake-off
+
+### Context
+
+Richard had a discovery call with Ricky Stanley (minister at Word Aflame Tabernacle, Lawrenceville GA) on 2026-05-18 for an Upwork bake-off — 5 developers competing. Ricky has a 40-page spec for "The Way," a discipleship platform tracking members from first visit through leadership. Tech stack pivoted on the call: Make.com → n8n (Ricky's web dev friend uses n8n).
+
+Richard committed to a free mockup as a good-faith pre-contract deliverable (same pattern as PNT). HTML mockup already built at `/mnt/user-data/outputs/the-way-mockup.html` (6 screens, 3 role views, click-through, technical annotations).
+
+This task generates the Airtable seed data that brings the mockup to life. Data must support a specific demo scenario: Marcus Johnson (DOJ Second Chance referral → Community Participant → Both crossover → Believer arc), the Davis family (4 linked members spanning Growing Strong kids → Next Generation youth → 2 adults), and a Pastor's Monday morning admin dashboard view.
+
+Source docs in Richard's Dropbox uploads (current Sonnet session):
+- TheWay-MasterDocument.docx (40-page spec)
+- TheWay-FullMockup.pdf (visual mockup)
+
+### Step 0 — Repo Init
+
+Create private repo: **1AltX-Clients/wat-the-way-demo**
+
+If `1AltX-Clients` org isn't accessible, fallback to **scubarichard/wat-the-way-demo** (private). Either way, post chosen path to #dax-collab before proceeding to Step 1.
+
+Initial structure:
+```
+wat-the-way-demo/
+├── README.md
+├── .gitignore                 (node, python, .env, /reference/)
+├── airtable-seed/
+│   ├── 01-members.csv
+│   ├── ... (15 CSVs total)
+│   └── SCHEMA.md
+├── mockup/
+│   └── the-way-mockup.html    (copy from Sonnet session output)
+├── demo-scenario/
+│   └── monday-morning-story.md
+└── reference/                 (gitignored)
+    ├── TheWay-MasterDocument.docx
+    └── TheWay-FullMockup.pdf
+```
+
+### Step 1 — Generate 15 seed CSVs
+
+Output to `/airtable-seed/`:
+
+1. **01-members.csv** (12 rows) — Marcus Johnson + Davis family (James, Maria, Emma 9, Jordan 15) + 7 others spanning Traveler/Seeker/Disciple/Servant zones. User Type field per row.
+2. **02-courses.csv** (8 rows) — Levels 1–2 (Prayer/Stewardship/James/Acts on Ministry; Financial Literacy/Wellbeing Nav on Community). Each row populated with Memory Verse (KJV), Daily Prayer Focus, Daily Action Prompt, BibleProject Video URL, KJV Reading Chapters, Grant Category, Pre/Post Questions.
+3. **03-pipeline-stages.csv** (12 rows) — One per member with timestamps. Marcus: Visitor (30d ago) → Seeker (21d ago) → Believer (recent).
+4. **04-checkpoints.csv** (6 rows) — Three-Gate System entries. Mix of Gate 1 only, Gates 1+2, all-three-green. James Davis must be all-three-green (Ricky clicks Advance Phase on him in the demo).
+5. **05-assessments.csv** (4 rows) — Marcus pre+post for both Financial Literacy AND Wellbeing Nav. Pre: confidence 1, behind on bills. Post: confidence 4, current on bills.
+6. **06-family-units.csv** (1 row) — Davis family, 4 linked Members.
+7. **07-bible-study-groups.csv** (3 rows) — Acts Study (Sarah M., Wed 7pm), Stewardship (James T., Tue 6:30pm), New Converts Q&A (Pastor Ricky, Sun 12pm). One group has a guest joined in last 7 days.
+8. **08-outreach-log.csv** (18 rows) — Last 30 days. Marcus's shepherd has entries on days 1/7/14/28.
+9. **09-quests.csv** (10 rows) — Mix of Prayer streak, Scripture, Outreach, Fasting. James Davis has 21-day prayer streak.
+10. **10-testimonies.csv** (3 rows) — Marcus's salvation (pending approval), James's financial breakthrough (approved), Maria's baptism (approved).
+11. **11-mentors.csv** (4 rows) — Shepherds, recurring across Pipeline + Outreach.
+12. **12-progress-log.csv** (8 rows) — Recent phase advancements.
+13. **13-prayer-calendar.csv** (4 rows) — Current month events.
+14. **14-needs-resources.csv** (6 rows) — **Real Gwinnett County orgs**: Gwinnett County Health Dept, United Way of Greater Atlanta Gwinnett, Gwinnett Coalition for Health & Human Services, Lawrenceville Co-op Ministry, etc.
+15. **15-kids-activities.csv** (4 rows) — Little Lights wks 3+4 (parent-guided), Growing Strong wks 7+8 (independent). Aligned with God's Word for Life.
+
+### Step 2 — SCHEMA.md
+
+For each of 15 tables document: field name + Airtable type (single line, long text, single select, multi select, linked record, formula, rollup, count, date, checkbox), Linked Record relationships, Formula/Rollup definitions, Import order.
+
+### Step 3 — README.md
+
+Project overview + demo scenario summary (1–2 paragraphs) + clear import instructions.
+
+### Constraints (non-negotiable)
+
+- **All scripture KJV** — UPCI tradition, denominational rule
+- **Linked Record fields use Airtable record IDs** (e.g. `rec1AbC2dE3fG4hI5j`), consistent across files
+- **Date anchor: 2026-05-18**. Look backward 90 days for history. Marcus's Day 28 final check due today.
+- **Gwinnett County realism** in Needs Resources — real org names
+- **Marcus arc must touch**: DOJ Second Chance referral, User Type crossover, Financial Lit + Wellbeing Nav, Day 1/7/14/28 timestamps, pending salvation testimony
+- **Davis family**: 4 Members linked to 1 Family Unit, kids in Growing Strong + Next Generation
+
+### Acceptance Criteria
+
+- [ ] Repo created with correct structure
+- [ ] All 15 CSVs match row count spec
+- [ ] SCHEMA.md complete (types + relationships + import order)
+- [ ] Fresh-base import test passes with no link errors
+- [ ] Marcus's pre/post assessment delta visible (confidence 1 → 4)
+- [ ] Davis family expandable as household
+- [ ] HTML mockup labels (greeting, member names, badges) match seed data
+- [ ] PR opened on main with import-test Loom attached
+
+### Status Updates
+
+Post to #dax-collab (C0APVGG486M) with `[Claude Code]` prefix at:
+1. Step 0 complete — post repo URL
+2. CSVs at 50% (after 8 tables drafted)
+3. PR opened — post PR URL + Loom of import test
+
+### Gate
+
+- [ ] Repo URL posted to Slack
+- [ ] All 15 CSVs drafted
+- [ ] SCHEMA.md complete
+- [ ] README.md complete
+- [ ] Fresh-base import test passed
+- [ ] PR opened
+- [ ] 100% status update posted to #dax-collab
+
+### Notes
+
+- Pre-contract good-faith deliverable. Win condition: Ricky picks Richard out of 5 bidders.
+- Long-term ceiling: custom 6-figure build + grant-funded retainer + UPCI national license.
+- HTML mockup at `/mnt/user-data/outputs/the-way-mockup.html` (Sonnet session 2026-05-18) — copy verbatim to repo `/mockup/`.
+- Source docs (spec + mockup PDF) in Richard's Dropbox uploads — Richard will share if needed.
+- Demo scenario narrative ("Marcus Johnson Monday morning") will be expanded into a narration-driven kinetic explainer video post-seed-data. Triton task to follow once data lands.
+
+---
+
+## TASK-20260519-FORGE-1ALTX-WAT-002 — WAT The Way: Kinetic Explainer Video
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-05-19
+- **Completed:** 2026-05-19
+- **Completed-By:** Forge
+- **Client:** 1AltX → Word Aflame Tabernacle (WAT)
+- **Priority:** HIGH
+- **Deadline:** Mon 2026-05-25 EOD
+- **Title:** Produce kinetic explainer video — narration-driven walkthrough of The Way platform for Ricky's bake-off review
+- **Gates cleared:** PR #1 merged ✅ | Airtable base appO608pIDK2oZ3UU populated ✅
+- **Output (v2 — re-rendered 2026-05-19):** `P:/_clients/wat-the-way-demo/walkthrough/wat-the-way-v1.mp4` — 430s (7:09), 19.69MB
+- **Scenes:** 8 — 4 HeyGen talking-head avatar clips (intro/bridge1/bridge2/outro) + 4 Puppeteer HTML mockup screen captures
+- **Pipeline:** HeyGen API (talking_photo `0f0656d38e0545918de84dd25f2d31af`, Richard voice clone) + autovid partial-rerender
+- **Scene durations:** intro 22.6s · marcus 106s · bridge1 5.7s · davis 80s · bridge2 4.1s · admin 85s · tech 96s · outro 30.2s
+- **Fix applied:** intro greeting corrected to "Hey Ricky —"; avatar scenes are real HeyGen talking-head video, not static title cards
+
+---
+
+## TASK-20260520-FORGE-1ALTX-APEX-001 — Apex: Add priority_flag badge to job card
+- **Assignee:** Forge
+- **Status:** PENDING
+- **Date:** 2026-05-20
+- **Client:** 1AltX internal
+- **Priority:** HIGH
+- **Title:** Add priority indicator badge to Apex job card in mc-pnt5/index.html
+
+### What to do
+
+In `P:\_clients\mc-pnt5\index.html`:
+
+**1. Add CSS after `.apex-close-badge` rule:**
+```css
+  .apex-priority-hot { background: #7f1d1d20; border: 1px solid #ef444460; color: #fca5a5; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+
+  .apex-priority-apply { background: #14532d20; border: 1px solid #22c55e40; color: #86efac; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+
+  .apex-priority-default { background: #ffffff08; border: 1px solid #ffffff15; color: #9ca3af; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+```
+
+**2. In the `apex-badges` div (inside the apex job card render), add this line after `e(ScoreBadge, {score:job.combined_score})`:**
+```js
+        job.priority_flag && e("span", {className: job.priority_flag.includes("Hot") ? "apex-priority-hot" : job.priority_flag.includes("Apply") ? "apex-priority-apply" : "apex-priority-default"}, job.priority_flag),
+```
+
+The `apex-badges` block should look like:
+```js
+      e("div", {className:"apex-badges"},
+        e(ScoreBadge, {score:job.combined_score}),
+        job.priority_flag && e("span", {className: job.priority_flag.includes("Hot") ? "apex-priority-hot" : job.priority_flag.includes("Apply") ? "apex-priority-apply" : "apex-priority-default"}, job.priority_flag),
+        job.proposed_rate && e("span", {className:"apex-rate-badge"}, job.proposed_rate),
+        job.close_type && e("span", {className:"apex-close-badge"}, job.close_type)
+      ),
+```
+
+No restart needed — static file, takes effect on next browser refresh.
+
+---
+
+## TASK-20260527-ATLAS-N8N-001 — Patch n8n Upwork 07C Workflow (3 nodes)
+- **Assignee:** Atlas (vm-dax-dev)
+- **Status:** PENDING
+- **Date:** 2026-05-27
+- **From:** Triton
+- **Priority:** CRITICAL — cover letters missing video share URL on line 1
+- **Title:** Apply 3-node patch to n8n workflow `f2RPzoJ2m45Odu4k` from vm-dax-dev (bypasses Cloudflare)
+
+### Background
+
+The `1AltX Upwork — Full Stack (Unified)` workflow (ID: `f2RPzoJ2m45Odu4k`) has a bug where the cover letter video URL isn't reliably placed on line 1. Triton has a patch ready but Cloudflare blocks the n8n API from all external IPs (error 1010). vm-dax-dev is on Azure and likely routes directly to the n8n origin — run the patch from there.
+
+### Task
+
+Run this Python script on vm-dax-dev. It GETs the workflow, patches 3 nodes by ID, then PUTs it back.
+
+```python
+import json, urllib.request
+
+N8N_BASE = "https://n8n.dakona.net"
+API_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NjNlYmM4NS04MTYwLTQ5NDktODIzOC1jMGFiNjgwNTgxMTEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiYWM0MmE5ODUtMTA5Ni00ODkxLTliYzQtZGQxYTBiNDNiYjFhIiwiaWF0IjoxNzczNzE0OTgwfQ.gBSwNl_frCaOvQylr5DLQubJmRGqcT-LRJpzcTWdCP4"
+WF_ID    = "f2RPzoJ2m45Odu4k"
+
+# Node e53dc5b6 = "Build Proposal Request"
+# Node 55aeb9f9 = "Map Sheet Fields"
+# Node 5290412c = "Build Slack Message"
+
+PATCHES = {
+"e53dc5b6-c222-4100-969b-c3e320712236": r"""
+const d = $('Find Row').first().json;
+
+let catalogStr = '';
+try {
+  const catalogItems = $('Fetch Catalog').all();
+  const catalogResponse = catalogItems[0]?.json || {};
+  if (catalogResponse.content) {
+    const raw = (catalogResponse.content || '').replace(/\n/g, '');
+    const decoded = Buffer.from(raw, 'base64').toString('utf8');
+    const catalog = JSON.parse(decoded);
+    const entries = (catalog.videos || []).filter(v =>
+      v.youtube_url && v.status !== 'catalog_only' && v.status !== 'off_positioning' && !v.flag
+    );
+    catalogStr = entries.map(v => {
+      const tools = Array.isArray(v.tools) ? v.tools.join(', ') : (v.tools || '');
+      const desc = v.short_desc || v.summary || '';
+      return `[${v.project_id}] ${v.title}\n${desc}\n${v.youtube_url}\nBest for: ${tools}`;
+    }).join('\n\n');
+  }
+} catch (e) {
+  catalogStr = '(Catalog unavailable - omit catalog section)';
+}
+
+const prompt = `You are Richard Mabbun's Upwork proposal writer for 1AltX LLC. Write complete, ready-to-send proposals in Richard's exact voice and format.
+
+== ABOUT RICHARD ==
+- Make.com Advanced Certified automation engineer
+- 20+ years IT and fintech systems experience
+- Former CEO of Itegria (MSP), 6x Inc5000, sold 2020
+- Top Rated on Upwork, 100% Job Success Score, 10+ five-star reviews
+- Specialties: n8n, Make.com, HubSpot, Pipedrive, GoHighLevel, Airtable, AI automation, webhook integrations, compliance systems for RIAs
+- Company: 1AltX LLC
+
+== RULE 0 — UPWORK TOS COMPLIANCE (ABSOLUTE) ==
+NEVER include: off-platform payments, external contact info, scheduling links, personal email, LinkedIn, WhatsApp, external websites (except approved YouTube catalog links).
+If job demands off-platform as hard requirement: set apply_recommendation = "skip".
+
+== JOB CONTEXT ==
+Title: ${d._jobTitle}
+Score: ${d._combinedScore}
+Richard Fit: ${d._richardFitTag}
+Engagement: ${d._engagementType}
+Difficulty: ${d._competitiveDifficulty}
+Matching Project: ${d._matchingProject}
+Notes: ${d._notes}
+Proposed Rate: ${d._proposedRate}
+Priority: ${d._priorityFlag}
+
+JOB DESCRIPTION:
+${d._jobLinkHtml || '(full description not available — use job title context to write a targeted proposal)'}
+
+== VIDEO ==
+A personalized Proposal Video has been produced for this posting.
+Do NOT include any video URL or placeholder text in the proposal body — the share link is prepended automatically as line 1 before sending.
+
+== APPROVED CATALOG ==
+${catalogStr || '(No catalog available — skip catalog references)'}
+
+Return ONLY this JSON (no markdown):
+{
+  "apply_recommendation": "apply | skip",
+  "skip_reason": "string or null",
+  "tos_check": "pass | flag: <reason>",
+  "full_proposal": "complete ready-to-send Upwork proposal text — MUST be under 5000 characters total",
+  "bid_recommendation": "$X/hr or $X fixed",
+  "close_type": "Fixed | Hourly",
+  "highlights": ["key strength 1", "key strength 2"],
+  "red_flags": "string or null",
+  "catalog_samples": [{"project_id": "...", "title": "...", "url": "...", "why_relevant": "one sentence"}],
+  "solution_approach": "2-3 sentence internal note on approach"
+}`;
+
+const requestBody = {
+  model: "claude-sonnet-4-6",
+  max_tokens: 4096,
+  messages: [{ role: "user", content: prompt }]
+};
+
+return [{ json: { ...d, _requestBody: requestBody } }];
+""",
+
+"55aeb9f9-e706-49ad-92d6-cbc0d456239c": r"""
+const d = $input.first().json;
+const isSkip = (d.apply_recommendation || '').toLowerCase() === 'skip';
+const existingNotes = d._notes || '';
+const redFlags = d.red_flags ? '⚠️ ' + d.red_flags : '';
+const skipReason = d.skip_reason ? '⏩ SKIP: ' + d.skip_reason : '';
+const notes = [skipReason, redFlags, existingNotes].filter(Boolean).join('\n');
+const highlightsStr = Array.isArray(d.highlights) ? d.highlights.join(' | ') : (d.highlights || '');
+
+if (isSkip) {
+  return [{ json: { row_number: d._rowNumber, 'Status': 'SKIP', 'Cover Letter': '', 'Notes': notes, 'TOS Check': d.tos_check || '' } }];
+}
+
+let coverLetter = d.full_proposal || '';
+const shareUrl = (d._videoShareUrl || '').trim();
+
+// Strip any video placeholder lines Claude may have written
+coverLetter = coverLetter.replace(/^I recorded this specifically[^\n]*/gim, '').trim();
+coverLetter = coverLetter.replace(/\[PASTE VIDEO LINK HERE\]/gi, '').trim();
+// Remove any stale share.descript.com URL lines already in the body
+coverLetter = coverLetter.replace(/^https:\/\/share\.descript\.com\/[^\s\n]+\n*/gim, '').trim();
+
+// Prepend share URL as line 1 — Upwork renders it as an embedded video player
+if (shareUrl.includes('share.descript.com')) {
+  coverLetter = shareUrl + '\n\n' + coverLetter;
+}
+
+// Hard-enforce 5000 char limit — trim at last newline to avoid mid-sentence cuts
+if (coverLetter.length > 5000) {
+  const cut = coverLetter.lastIndexOf('\n', 5000);
+  coverLetter = (cut > 0 ? coverLetter.slice(0, cut) : coverLetter.slice(0, 5000)).trimEnd();
+}
+
+return [{ json: {
+  row_number: d._rowNumber,
+  'Cover Letter': coverLetter,
+  'Highlights': highlightsStr,
+  'Bid Recommendation': d.bid_recommendation || '',
+  'Notes': notes,
+  'TOS Check': d.tos_check || '',
+  _jobTitle: d._jobTitle,
+  _rowNumber: d._rowNumber,
+  _combinedScore: d._combinedScore,
+  _videoShareUrl: shareUrl,
+  close_type: d.close_type || '',
+  bid_recommendation: d.bid_recommendation || '',
+  highlights: d.highlights,
+  red_flags: d.red_flags,
+  catalog_samples: d.catalog_samples || []
+} }];
+""",
+
+"5290412c-5b54-491e-b229-b4a41a141bba": r"""
+const d = $input.first().json;
+const jobTitle = d._jobTitle || 'Unknown Job';
+const rowNumber = d._rowNumber || '?';
+const closeType = d.close_type || 'N/A';
+const score = d._combinedScore || '?';
+const bidRec = d.bid_recommendation || '';
+const highlights = Array.isArray(d.highlights) ? d.highlights.join(', ') : (d.highlights || 'N/A');
+const redFlags = d.red_flags || 'None';
+const catalogList = (d.catalog_samples || []).map(s => `  - ${s.title}`).join('\n');
+const shareUrl = d._videoShareUrl || '';
+const videoLine = shareUrl ? `\n*Video:* ${shareUrl}` : '';
+const text = `*🔥 HOT LEAD* | ${jobTitle}\n*Row:* ${rowNumber} | *Score:* ${score} | *Close:* ${closeType}\n*Bid:* ${bidRec}\n*Highlights:* ${highlights}\n*Red Flags:* ${redFlags}\n*Catalog:*\n${catalogList}${videoLine}\n✅ Cover letter + proposal video ready in sheet.`;
+return [{ json: { text } }];
+"""
+}
+
+def api(method, path, body=None):
+    req = urllib.request.Request(
+        N8N_BASE + path,
+        data=json.dumps(body).encode() if body else None,
+        headers={"Content-Type": "application/json", "X-N8N-API-KEY": API_KEY},
+        method=method,
+    )
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return json.loads(r.read())
+
+print("Fetching workflow...")
+wf = api("GET", f"/api/v1/workflows/{WF_ID}")
+for key in ["createdAt", "updatedAt", "versionId"]:
+    wf.pop(key, None)
+
+patched = 0
+for n in wf["nodes"]:
+    if n["id"] in PATCHES:
+        n["parameters"]["jsCode"] = PATCHES[n["id"]]
+        print(f"Patched: {n['name']}")
+        patched += 1
+
+print(f"Patching {patched}/3 nodes...")
+result = api("PUT", f"/api/v1/workflows/{WF_ID}", wf)
+print("Done. updatedAt=" + result.get("updatedAt","?"))
+```
+
+### How to run
+
+SSH to vm-dax-dev, paste the script into `/tmp/n8n_patch.py`, then:
+```bash
+python3 /tmp/n8n_patch.py
+```
+
+Expected output:
+```
+Fetching workflow...
+Patched: Build Proposal Request
+Patched: Map Sheet Fields
+Patched: Build Slack Message
+Patching 3/3 nodes...
+Done. updatedAt=2026-05-27T...
+```
+
+### If Cloudflare still blocks from vm-dax-dev
+
+Try with the origin IP directly. First get the real IP:
+```bash
+curl -s https://n8n.dakona.net/healthz -v 2>&1 | grep Connected
+```
+If it returns a Cloudflare IP, the block will persist. In that case, post BLOCKED in the result and Triton will find another path.
+
+### Gate
+
+- [ ] Script ran successfully
+- [ ] 3/3 nodes patched
+- [ ] Post `updatedAt` timestamp as confirmation
+- [ ] If blocked: post the curl -v output so Triton can diagnose
+
+---
 
 ---
 
@@ -548,8 +1839,7 @@ Chapters file: `trackb-v2/final/trackb-chapters-v2.txt`
 - **Animated slides (4, 5, 6, 8, 11):** 5 xfade diagram clips built, exact hold durations, overlaid at PPTX bbox coords ✓
 - **Narration:** v2 script verbatim — hedged language, conclusion-first openings, N-8-N / Easy Ship pronunciation fixes ✓
 - **Hold times:** all 13 VO clips fit within hold — tightest slide11 (40.5s, hold 41s) ✓
-- **Avatar:** navy #1F3A5F, v2 intro/outro text, HeyGen talking-photo 0f0656d3 ✓
+- **Avatar:** navy #1F3A5F background, v2 intro/outro text, HeyGen talking-photo 0f0656d3 ✓
 - **CTA:** "1altx.com — book a call" in outro ✓
 
 ---
-
