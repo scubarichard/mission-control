@@ -2,8 +2,8 @@ name: Export DAX-Dev solution to git
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 */6 * * *'
+  # schedule disabled 2026-05-30 — PP_APP_ID/PP_CLIENT_SECRET/PP_TENANT_ID not set in repo secrets
+  # Re-enable after setting secrets: schedule: - cron: '0 */6 * * *'
 
 permissions:
   contents: write
