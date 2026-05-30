@@ -1843,3 +1843,57 @@ Chapters file: `trackb-v2/final/trackb-chapters-v2.txt`
 - **CTA:** "1altx.com — book a call" in outro ✓
 
 ---
+
+## TASK-20260530-FORGE-PNT-001 — S4 Corrections Batch 1
+
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-05-30
+- **Client:** PNT Central Brain
+
+### Completed
+
+6 fixes from Diana's folio review + António's margin call, plus regression suite expansion:
+
+- **Fix 1:** Deposit method label clarified (Flat vs Per Person, manual override wins)
+- **Fix 2:** Margin thresholds named constants (`MARGIN_GREEN_THRESHOLD = 20`, `MARGIN_AMBER_LOWER = 5`)
+- **Fix 3:** Proforma CN-only guard (`billingEntity !== 'CN'` check)
+- **Fix 4:** Release gate advisory mode (`RELEASE_GATE_MODE = 'advisory'`)
+- **Fix 5:** Margin display fix in finance.html
+- **Fix 6:** Cancellation scaffold schema (Action/Date/Notes fields in schema_s4_corrections.py)
+
+Regression: **208/208 PASS** (+54 assertions over pre-batch baseline)
+Tag: `pre-s4-corrections-20260530` on commit 9b973fe
+Merged to main per Richard's confirmation.
+
+---
+
+## TASK-20260530-FORGE-DAX-CI-001 — Disable export-dev-solution cron
+
+- **Assignee:** Forge
+- **Status:** DONE
+- **Date:** 2026-05-30
+
+### Root Cause
+
+`Export DAX-Dev solution to git` workflow fires every 6h in both `scubarichard/dax` and `scubarichard/mission-control`. Fails immediately at "Who am I (DAX-Dev)" step:
+`Error: Must provide either username/password or app-id/client-secret/tenant-id for authentication!`
+Secrets `PP_APP_ID`, `PP_CLIENT_SECRET`, `PP_TENANT_ID` are **not set** in either repo's secrets.
+
+### Action Taken
+
+Disabled `schedule:` cron trigger in both repos. `workflow_dispatch:` remains for manual use.
+- mission-control: commit 5888f0f
+- dax: commit a42b889
+
+### What Richard Needs To Do
+
+To re-enable the export: set these 4 secrets in **both** repos (Settings → Secrets → Actions):
+- `DAX_DEV_URL` — Power Platform environment URL
+- `PP_APP_ID` — Azure app registration client ID
+- `PP_CLIENT_SECRET` — Azure app registration client secret
+- `PP_TENANT_ID` — Azure tenant ID
+
+Then uncomment the `schedule:` block in `.github/workflows/export-dev-solution.yml` in both repos.
+
+---
